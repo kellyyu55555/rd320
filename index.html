@@ -610,7 +610,7 @@
             <template x-if="importSummary">
               <div class="mb-4 bg-cream rounded-2xl p-3 text-xs text-wood-dark/70 whitespace-pre-line" x-text="importSummary"></div>
             </template>
-            <form x-show="itemFormOpen" @submit.prevent="saveItem" class="grid sm:grid-cols-5 gap-3 mb-6 bg-cream rounded-2xl p-4 items-start">
+            <form id="itemEditForm" x-show="itemFormOpen" @submit.prevent="saveItem" class="grid sm:grid-cols-5 gap-3 mb-6 bg-cream rounded-2xl p-4 items-start scroll-mt-32">
               <div>
                 <label class="text-xs font-bold text-wood-dark/60">分類</label>
                 <select x-model="itemForm.categoryId" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
@@ -672,6 +672,14 @@
               </div>
 
             </form>
+            <div class="mb-4">
+              <div class="relative">
+                <input type="text" x-model="itemSearchText" placeholder="🔍 搜尋項目名稱或出版社，例如：毛毛蟲"
+                  class="w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2.5 text-sm pr-20">
+                <button type="button" x-show="itemSearchText" @click="itemSearchText=''" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-full bg-cream text-xs font-bold text-wood-dark/70 hover:bg-sage-light">清除</button>
+              </div>
+              <p x-show="itemSearchText.trim()" class="text-xs text-sage-dark font-bold mt-2" x-text="`找到 ${filteredItemGroups.reduce((n,g)=>n+g.list.length,0)} 筆符合的項目，可直接按「編輯」修改名稱、數量、照片`"></p>
+            </div>
             <div class="flex items-center justify-between gap-2 mb-3">
               <p class="text-xs text-wood-dark/50">點選類別即可展開／收合該類別的項目清單</p>
               <div class="flex items-center gap-2">
@@ -680,12 +688,12 @@
               </div>
             </div>
             <div class="space-y-3">
-              <template x-for="group in itemsByCategory" :key="groupKey(group)">
+              <template x-for="group in filteredItemGroups" :key="groupKey(group)">
                 <div class="border border-wood-light/30 rounded-2xl overflow-hidden">
                   <button type="button" @click="toggleGroup(group)" :aria-expanded="isGroupOpen(group)"
                     class="w-full flex items-center justify-between gap-3 px-4 py-3 bg-cream/60 hover:bg-cream transition text-left">
                     <span class="tag-badge" :style="`background:${group.bg};color:${group.text}`" x-text="`${group.emoji} ${group.name}（${group.list.length}）`"></span>
-                    <span class="text-xs font-bold text-wood-dark/60 whitespace-nowrap" x-text="isGroupOpen(group) ? '收合 ▲' : '展開 ▼'"></span>
+                    <span class="text-xs font-bold text-wood-dark/60 whitespace-nowrap" x-text="itemSearchText.trim() ? '' : (isGroupOpen(group) ? '收合 ▲' : '展開 ▼')"></span>
                   </button>
                   <div x-show="isGroupOpen(group)" class="px-3 pb-3">
                     <div class="overflow-x-auto">
@@ -720,6 +728,7 @@
                   </div>
                 </div>
               </template>
+              <p x-show="itemSearchText.trim() && filteredItemGroups.length===0" class="text-center text-wood-dark/40 text-sm py-8">找不到符合的項目，請換個關鍵字試試</p>
             </div>
           </div>
 
@@ -803,7 +812,7 @@ function kgApp() {
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
-    openGroups: {}, started: false, todayLabel: '', loginLogsError: '',
+    openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, authError: '',
     auth: null, db: null, storage: null, unsubs: [],
@@ -846,7 +855,7 @@ function kgApp() {
       this.auth.onAuthStateChanged(async (user) => {
         this.unsubs.forEach(fn => fn()); this.unsubs = [];
         this.currentUser = user; this.isAdmin = false;
-        this.openGroups = {}; // 每次登入／登出都重置，讓各學習區預設為收合
+        this.openGroups = {}; this.itemSearchText = ''; // 每次登入／登出都重置，讓各學習區預設為收合
         this.clearIdleTimer();
         if (user) {
           try {
@@ -1280,7 +1289,16 @@ function kgApp() {
     },
 
     groupKey(group) { return group.id || 'uncategorized'; },
-    isGroupOpen(group) { return !!this.openGroups[this.groupKey(group)]; },
+    isGroupOpen(group) { return !!this.itemSearchText.trim() || !!this.openGroups[this.groupKey(group)]; },
+    get filteredItemGroups() {
+      const kw = this.itemSearchText.trim().toLowerCase();
+      if (!kw) return this.itemsByCategory;
+      return this.itemsByCategory
+        .map(g => ({ ...g, list: g.list.filter(it =>
+          (it.name || '').toLowerCase().includes(kw) ||
+          (this.publisherNameOf(it.publisherId) || '').toLowerCase().includes(kw)) }))
+        .filter(g => g.list.length > 0);
+    },
     toggleGroup(group) { const k = this.groupKey(group); this.openGroups[k] = !this.openGroups[k]; },
     setAllGroups(open) { const next = {}; this.itemsByCategory.forEach(g => { next[this.groupKey(g)] = open; }); this.openGroups = next; },
 
@@ -1292,7 +1310,11 @@ function kgApp() {
     },
     openAddItemForCategory(catId) { this.resetItemForm(); this.itemForm.categoryId = catId; this.itemFormOpen = true; },
     resetItemForm() { this.photoUrlError = false; this.itemForm = { id:null, categoryId:'', name:'', total:1, photo:null, publisherId:'', photoMode:'upload' }; },
-    editItem(it) { this.itemFormOpen = true; this.photoUrlError = false; this.itemForm = { id:it.id, categoryId:it.categoryId, name:it.name, total:it.total, photo:it.photo||null, publisherId:it.publisherId||'', photoMode:'upload' }; },
+    editItem(it) {
+      this.itemFormOpen = true; this.photoUrlError = false;
+      this.itemForm = { id:it.id, categoryId:it.categoryId, name:it.name, total:it.total, photo:it.photo||null, publisherId:it.publisherId||'', photoMode:'upload' };
+      this.$nextTick(() => { const el = document.getElementById('itemEditForm'); if (el) el.scrollIntoView({ behavior:'smooth', block:'center' }); });
+    },
     async deleteItem(it) {
       const outstanding = this.records.some(r => r.itemId===it.id && this.statusOf(r)!=='returned');
       if (outstanding) { this.showToast('此項目仍有借閱中的紀錄，無法刪除'); return; }
