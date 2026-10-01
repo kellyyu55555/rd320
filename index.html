@@ -499,6 +499,40 @@
 
           <div class="paper-card rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🗒️</span> 護貝膜申請紀錄</h2>
+              <button type="button" @click="exportLaminateCSV()" class="px-4 py-2 rounded-xl bg-brand text-paper text-xs font-bold hover:bg-brand-dark transition">⬇️ 匯出總表（CSV）</button>
+            </div>
+            <div class="flex flex-wrap items-end gap-3 bg-cream rounded-2xl p-3 mb-4">
+              <div class="flex-1 min-w-[180px]"><label class="text-xs font-bold text-wood-dark/60">搜尋（老師、班級、用途、檔名）</label>
+                <input x-model="lamQ" @input="lamShowAll=false" placeholder="例如：王老師 或 語文區" class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
+              <div><label class="text-xs font-bold text-wood-dark/60">申請日期（起）</label><input type="date" x-model="lamFrom" @input="lamShowAll=false" class="mt-1 block rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
+              <div><label class="text-xs font-bold text-wood-dark/60">申請日期（迄）</label><input type="date" x-model="lamTo" @input="lamShowAll=false" class="mt-1 block rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
+              <div><label class="text-xs font-bold text-wood-dark/60">狀態</label>
+                <select x-model="lamStatus" @change="lamShowAll=false" class="mt-1 block rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"><option value="all">全部</option><option value="pending">待確認</option><option value="confirmed">已確認</option></select></div>
+              <button type="button" @click="lamQ='';lamFrom='';lamTo='';lamStatus='all';lamShowAll=false" class="px-3 py-2 rounded-xl bg-paper border border-wood-light/40 text-xs font-bold">清除</button>
+            </div>
+            <p class="text-xs text-sage-dark font-bold mb-3" x-text="`符合條件共 ${filteredLaminateRecords.length} 筆，合計 ${filteredLaminateRecords.reduce((n,r)=>n+Number(r.qty||0),0)} 張`"></p>
+            <div class="overflow-x-auto"><table class="w-full text-sm min-w-[640px]">
+              <thead><tr class="text-left text-wood-dark/50 text-xs tracking-wide border-b border-wood-light/30">
+                <th class="py-2 pr-3">申請日期</th><th class="py-2 pr-3">老師 / 班級</th><th class="py-2 pr-3">張數</th><th class="py-2 pr-3">用途</th><th class="py-2 pr-3">檔名</th><th class="py-2 pr-3">狀態</th></tr></thead>
+              <tbody>
+                <template x-for="r in visibleLaminateRecords" :key="r.id"><tr class="border-b border-wood-light/15 hover:bg-cream/60">
+                  <td class="py-3 pr-3 font-num" x-text="r.requestDate"></td>
+                  <td class="py-3 pr-3"><p class="font-bold" x-text="r.borrower"></p><p class="text-xs text-wood-dark/50" x-text="r.className"></p></td>
+                  <td class="py-3 pr-3 font-num" x-text="r.qty"></td>
+                  <td class="py-3 pr-3" x-text="r.purpose"></td>
+                  <td class="py-3 pr-3 text-xs" x-text="r.fileNote || '－'"></td>
+                  <td class="py-3 pr-3"><span class="tag-badge" :class="r.status==='confirmed' ? 'tag-returned' : 'tag-pending'" x-text="r.status==='confirmed' ? '已確認' : '待確認'"></span></td>
+                </tr></template>
+                <tr x-show="filteredLaminateRecords.length===0"><td colspan="6" class="py-8 text-center text-wood-dark/40">目前沒有符合條件的申請紀錄</td></tr>
+              </tbody></table></div>
+            <div x-show="filteredLaminateRecords.length>3" class="text-center mt-4">
+              <button @click="lamShowAll=!lamShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="lamShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredLaminateRecords.length-3} 筆 ▼`"></button>
+            </div>
+          </div>
+
+          <div class="paper-card rounded-3xl p-6 shadow-card">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">📋</span> 借還紀錄明細</h2>
               <div class="flex bg-sage-light rounded-full p-1 text-sm">
                 <button @click="recordFilter='all'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='all' ? 'bg-sage text-paper' : 'text-sage-dark'">全部</button>
@@ -900,6 +934,7 @@ function kgApp() {
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
+    lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
@@ -1589,6 +1624,31 @@ function kgApp() {
     get laminateAvailable() { return this.laminateStock ? Math.max(0, this.laminateRemaining - this.laminatePendingQty) : 0; },
     get pendingLaminateRequests() { return this.laminateRequests.filter(r => r.status === 'pending').sort((a,b) => (a.createdAt||0) - (b.createdAt||0)); },
     get recentLaminateRequests() { return [...this.laminateRequests].sort((a,b) => (b.createdAt||0) - (a.createdAt||0)).slice(0, 8); },
+    get filteredLaminateRecords() {
+      const kw = this.lamQ.trim().toLowerCase();
+      return this.laminateRequests.filter(r => {
+        if (this.lamStatus !== 'all' && r.status !== this.lamStatus) return false;
+        if (this.lamFrom && (r.requestDate || '') < this.lamFrom) return false;
+        if (this.lamTo && (r.requestDate || '') > this.lamTo) return false;
+        if (!kw) return true;
+        return [r.borrower, r.className, r.purpose, r.fileNote].some(v => (v || '').toLowerCase().includes(kw));
+      }).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    },
+    get visibleLaminateRecords() { return this.lamShowAll ? this.filteredLaminateRecords : this.filteredLaminateRecords.slice(0, 3); },
+    exportLaminateCSV() {
+      const rows = [['申請日期','老師','班級','張數','用途','檔案名稱','狀態','申請時間','確認時間']];
+      this.filteredLaminateRecords.forEach(r => rows.push([r.requestDate, r.borrower, r.className, r.qty, r.purpose, r.fileNote || '', r.status === 'confirmed' ? '已確認' : '待確認', r.requestTimestamp || '', r.confirmedTimestamp || '']));
+      rows.push([]);
+      rows.push(['符合筆數', this.filteredLaminateRecords.length]);
+      rows.push(['已確認張數合計', this.filteredLaminateRecords.filter(r => r.status === 'confirmed').reduce((n,r) => n + Number(r.qty||0), 0)]);
+      rows.push(['目前護貝膜剩餘張數', this.laminateStock ? this.laminateRemaining : '']);
+      rows.push(['匯出時間', this.getTaipeiTimestamp()]);
+      const csv = rows.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; }).join(',')).join('\r\n');
+      const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+      const a = document.createElement('a'); a.href = url; a.download = `護貝膜申請總表_${this.getTaipeiDateString()}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      this.showToast('已匯出護貝膜申請總表');
+    },
     async submitLaminate() {
       this.laminateError = '';
       const f = this.laminateForm, qty = Number(f.qty);
