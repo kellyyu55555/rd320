@@ -849,6 +849,9 @@ function kgApp() {
       if (!window.firebase) { this.authError = 'Firebase 尚未正確載入，請確認網路連線'; return; }
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       this.auth = firebase.auth();
+      // 登入狀態只保存在「這個分頁」：關閉分頁或視窗就立刻登出（重新整理不受影響）
+      try { await this.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION); }
+      catch (e) { console.error('設定登入保存方式失敗', e); }
       this.db = firebase.firestore();
       this.storage = firebase.storage();
 
