@@ -672,40 +672,51 @@
               </div>
 
             </form>
-            <div class="space-y-6">
-              <template x-for="group in itemsByCategory" :key="group.id">
-                <div>
-                  <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <p class="text-xs text-wood-dark/50">點選類別即可展開／收合該類別的項目清單</p>
+              <div class="flex items-center gap-2">
+                <button type="button" @click="setAllGroups(true)" class="px-3 py-1.5 rounded-full bg-paper border border-wood-light/40 text-xs font-bold text-wood-dark/70 hover:bg-cream transition">全部展開</button>
+                <button type="button" @click="setAllGroups(false)" class="px-3 py-1.5 rounded-full bg-paper border border-wood-light/40 text-xs font-bold text-wood-dark/70 hover:bg-cream transition">全部收合</button>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <template x-for="group in itemsByCategory" :key="groupKey(group)">
+                <div class="border border-wood-light/30 rounded-2xl overflow-hidden">
+                  <button type="button" @click="toggleGroup(group)" :aria-expanded="isGroupOpen(group)"
+                    class="w-full flex items-center justify-between gap-3 px-4 py-3 bg-cream/60 hover:bg-cream transition text-left">
                     <span class="tag-badge" :style="`background:${group.bg};color:${group.text}`" x-text="`${group.emoji} ${group.name}（${group.list.length}）`"></span>
-                  </div>
-                  <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[560px]">
-                      <thead>
-                        <tr class="text-left text-wood-dark/50 text-xs uppercase tracking-wide border-b border-wood-light/30">
-                          <th class="py-2 pr-3">照片</th><th class="py-2 pr-3">名稱</th>
-                          <th class="py-2 pr-3" x-show="isBookCategory(group.id)">出版社</th>
-                          <th class="py-2 pr-3">總數量</th><th class="py-2 pr-3">目前剩餘</th><th class="py-2 pr-3">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <template x-for="it in group.list" :key="it.id">
-                          <tr class="border-b border-wood-light/15">
-                            <td class="py-3 pr-3">
-                              <img x-show="photoOf(it)" :src="photoOf(it)" class="w-20 h-20 rounded-lg object-cover border border-wood-light/30">
-                            </td>
-                            <td class="py-3 pr-3 font-bold" x-text="it.name"></td>
-                            <td class="py-3 pr-3" x-show="isBookCategory(group.id)" x-text="publisherNameOf(it.publisherId) || '－'"></td>
-                            <td class="py-3 pr-3 font-num" x-text="it.total"></td>
-                            <td class="py-3 pr-3 font-num" x-text="it.remaining"></td>
-                            <td class="py-3 pr-3 flex gap-3">
-                              <button @click="editItem(it)" class="text-sage-dark font-bold text-xs hover:underline">編輯</button>
-                              <button @click="deleteItem(it)" class="text-coral font-bold text-xs hover:underline">刪除</button>
-                            </td>
+                    <span class="text-xs font-bold text-wood-dark/60 whitespace-nowrap" x-text="isGroupOpen(group) ? '收合 ▲' : '展開 ▼'"></span>
+                  </button>
+                  <div x-show="isGroupOpen(group)" class="px-3 pb-3">
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-sm min-w-[560px]">
+                        <thead>
+                          <tr class="text-left text-wood-dark/50 text-xs uppercase tracking-wide border-b border-wood-light/30">
+                            <th class="py-2 pr-3">照片</th><th class="py-2 pr-3">名稱</th>
+                            <th class="py-2 pr-3" x-show="isBookCategory(group.id)">出版社</th>
+                            <th class="py-2 pr-3">總數量</th><th class="py-2 pr-3">目前剩餘</th><th class="py-2 pr-3">操作</th>
                           </tr>
-                        </template>
-                        <tr x-show="group.list.length===0"><td :colspan="isBookCategory(group.id) ? 6 : 5" class="py-4 text-center text-wood-dark/30 text-xs">此類別尚無項目</td></tr>
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          <template x-for="it in group.list" :key="it.id">
+                            <tr class="border-b border-wood-light/15">
+                              <td class="py-3 pr-3">
+                                <img x-show="photoOf(it)" :src="photoOf(it)" class="w-20 h-20 rounded-lg object-cover border border-wood-light/30">
+                              </td>
+                              <td class="py-3 pr-3 font-bold" x-text="it.name"></td>
+                              <td class="py-3 pr-3" x-show="isBookCategory(group.id)" x-text="publisherNameOf(it.publisherId) || '－'"></td>
+                              <td class="py-3 pr-3 font-num" x-text="it.total"></td>
+                              <td class="py-3 pr-3 font-num" x-text="it.remaining"></td>
+                              <td class="py-3 pr-3 flex gap-3">
+                                <button @click="editItem(it)" class="text-sage-dark font-bold text-xs hover:underline">編輯</button>
+                                <button @click="deleteItem(it)" class="text-coral font-bold text-xs hover:underline">刪除</button>
+                              </td>
+                            </tr>
+                          </template>
+                          <tr x-show="group.list.length===0"><td :colspan="isBookCategory(group.id) ? 6 : 5" class="py-4 text-center text-wood-dark/30 text-xs">此類別尚無項目</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </template>
@@ -787,6 +798,7 @@ function kgApp() {
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
+    openGroups: {}, started: false, todayLabel: '',
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, authError: '',
     auth: null, db: null, storage: null, unsubs: [],
@@ -813,13 +825,15 @@ function kgApp() {
     ],
 
     async init() {
+      if (this.started) return;
+      this.started = true;
       const today = this.getTaipeiDateString();
       this.todayLabel = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
       this.borrowForm.borrowDate = today;
       this.returnForm.returnDate = today;
 
       if (!window.firebase) { this.authError = 'Firebase 尚未正確載入，請確認網路連線'; return; }
-      firebase.initializeApp(firebaseConfig);
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       this.auth = firebase.auth();
       this.db = firebase.firestore();
       this.storage = firebase.storage();
@@ -832,12 +846,20 @@ function kgApp() {
           try {
             const adminDoc = await this.db.collection('config').doc('admins').get();
             const emails = adminDoc.exists ? (adminDoc.data().emails || []) : [];
-            this.isAdmin = !!user.email && emails.includes(user.email);
-          } catch (e) { this.isAdmin = false; }
-          this.view = 'teacher';
-          if (this.isAdmin && window.Notification && Notification.permission === 'default') {
-            Notification.requestPermission();
+            const mail = (user.email || '').trim().toLowerCase();
+            this.isAdmin = !!mail && emails.some(m => String(m).trim().toLowerCase() === mail);
+          } catch (e) {
+            this.isAdmin = false;
+            console.error('讀取管理員名單失敗', e);
+            this.showToast(`無法確認管理員身分（${e.code || e.message}），請檢查 Firestore 規則`, 6000);
           }
+          this.view = 'teacher';
+          try {
+            if (this.isAdmin && window.Notification && Notification.permission === 'default') {
+              const r = Notification.requestPermission();
+              if (r && r.catch) r.catch(() => {});
+            }
+          } catch (e) {}
           this.logLoginEvent(user);
           this.subscribeAll();
           this.resetIdleTimer();
@@ -864,7 +886,17 @@ function kgApp() {
     async signIn() {
       this.authError = '';
       try { await this.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-      catch (e) { this.authError = '登入失敗，請再試一次'; }
+      catch (e) {
+        console.error('登入失敗', e);
+        const map = {
+          'auth/popup-closed-by-user': '登入視窗被關閉，請再試一次',
+          'auth/cancelled-popup-request': '',
+          'auth/popup-blocked': '瀏覽器擋住了登入視窗，請允許此網站的彈出視窗後再試一次',
+          'auth/unauthorized-domain': '此網址尚未加入 Firebase 的「授權網域」，請到 Firebase Authentication → 設定 → 授權網域 新增',
+          'auth/network-request-failed': '網路連線異常，請檢查網路後再試一次',
+        };
+        this.authError = (e.code in map) ? map[e.code] : `登入失敗（${e.code || e.message}），請再試一次`;
+      }
     },
     async signOutUser() { this.clearIdleTimer(); await this.auth.signOut(); },
 
@@ -885,9 +917,9 @@ function kgApp() {
     },
 
     subscribeAll() {
-      this.unsubs.push(this.db.collection('categories').orderBy('createdAt','asc').onSnapshot(s => { this.categories = s.docs.map(d => ({ id:d.id, ...d.data() })); }, () => this.showToast('讀取類別發生問題')));
-      this.unsubs.push(this.db.collection('items').orderBy('createdAt','asc').onSnapshot(s => { this.items = s.docs.map(d => ({ id:d.id, ...d.data() })); }, () => this.showToast('讀取項目發生問題')));
-      this.unsubs.push(this.db.collection('records').onSnapshot(s => { this.records = s.docs.map(d => ({ id:d.id, ...d.data() })); }, () => this.showToast('讀取借還紀錄發生問題')));
+      this.unsubs.push(this.db.collection('categories').orderBy('createdAt','asc').onSnapshot(s => { this.categories = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取類別發生問題')));
+      this.unsubs.push(this.db.collection('items').orderBy('createdAt','asc').onSnapshot(s => { this.items = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取項目發生問題')));
+      this.unsubs.push(this.db.collection('records').onSnapshot(s => { this.records = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取借還紀錄發生問題')));
       let returnReqFirstLoad = true;
       this.unsubs.push(this.db.collection('returnRequests').onSnapshot(s => {
         if (this.isAdmin && !returnReqFirstLoad) {
@@ -899,12 +931,12 @@ function kgApp() {
         }
         this.returnRequests = s.docs.map(d => ({ id:d.id, ...d.data() }));
         returnReqFirstLoad = false;
-      }, () => this.showToast('讀取歸還申請發生問題')));
-      this.unsubs.push(this.db.collection('publishers').orderBy('createdAt','asc').onSnapshot(s => { this.publishers = s.docs.map(d => ({ id:d.id, ...d.data() })); }, () => this.showToast('讀取出版社發生問題')));
+      }, this.snapErr('讀取歸還申請發生問題')));
+      this.unsubs.push(this.db.collection('publishers').orderBy('createdAt','asc').onSnapshot(s => { this.publishers = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取出版社發生問題')));
       this.unsubs.push(this.db.collection('roster').doc('classes').onSnapshot(d => { this.classes = d.exists ? (d.data().list||[]) : []; }, () => {}));
       this.unsubs.push(this.db.collection('roster').doc('teachers').onSnapshot(d => { this.teacherRoster = d.exists ? (d.data().list||[]) : []; }, () => {}));
       if (this.isAdmin) {
-        this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, () => this.showToast('讀取登入紀錄發生問題')));
+        this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取登入紀錄發生問題')));
       }
     },
 
@@ -1241,6 +1273,11 @@ function kgApp() {
       } catch (e) { this.showToast('刪除失敗，請再試一次'); }
     },
 
+    groupKey(group) { return group.id || 'uncategorized'; },
+    isGroupOpen(group) { return !!this.openGroups[this.groupKey(group)]; },
+    toggleGroup(group) { const k = this.groupKey(group); this.openGroups[k] = !this.openGroups[k]; },
+    setAllGroups(open) { const next = {}; this.itemsByCategory.forEach(g => { next[this.groupKey(g)] = open; }); this.openGroups = next; },
+
     get itemsByCategory() {
       const groups = this.categories.map(cat => ({ ...cat, list: this.items.filter(i => i.categoryId === cat.id) }));
       const orphan = this.items.filter(i => !this.categories.find(c => c.id === i.categoryId));
@@ -1277,6 +1314,7 @@ function kgApp() {
           await this.db.collection('items').add(data);
           this.showToast(`已新增項目：${data.name}`);
         }
+        this.openGroups[this.itemForm.categoryId || 'uncategorized'] = true;
         this.itemFormOpen = false; this.resetItemForm();
       } catch (e) { this.showToast('儲存失敗，請再試一次'); }
       this.submitting = false;
@@ -1383,7 +1421,8 @@ function kgApp() {
       catch (e) { this.showToast('刪除失敗，請再試一次'); }
     },
 
-    showToast(msg) { this.toast = msg; setTimeout(() => { this.toast=''; }, 2600); },
+    snapErr(label) { return (err) => { console.error(label, err); this.showToast(`${label}（${(err && (err.code || err.message)) || '未知錯誤'}）`, 6000); }; },
+    showToast(msg, ms = 2600) { this.toast = msg; clearTimeout(this._toastTimer); this._toastTimer = setTimeout(() => { this.toast=''; }, ms); },
 
     notifyNewReturnRequest(req) {
       const msg = `📥 有人歸還物品：${req.borrower||''}（${req.className||''}）申請歸還 ${req.itemName||''} × ${req.qty||''}`;
