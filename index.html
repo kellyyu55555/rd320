@@ -553,7 +553,7 @@
                   <span class="tag-badge" :style="`background:${cat.bg};color:${cat.text}`" x-text="`${cat.emoji} ${cat.name}`"></span>
                   <button @click="editCategory(cat)" class="text-sage-dark text-xs font-bold hover:underline">編輯</button>
                   <button @click="deleteCategory(cat)" class="text-coral text-xs font-bold hover:underline">刪除</button>
-                  <button x-show="isBookCategory(cat.id)" @click="publisherPanelOpen = !publisherPanelOpen" class="text-wood text-xs font-bold hover:underline">🏢 管理出版社</button>
+                  <button x-show="showPublisherBtn(cat)" @click="publisherPanelOpen = !publisherPanelOpen" class="text-wood text-xs font-bold hover:underline">🏢 管理出版社</button>
                 </div>
               </template>
             </div>
@@ -968,7 +968,8 @@ function kgApp() {
     getCategoryByName(name) { return this.categories.find(c => c.name === name) || { name: name || '未分類', emoji:'📦', bg:'#E7E0D2', text:'#6B4527' }; },
     categoryStyleByName(name) { const c = this.getCategoryByName(name); return `background:${c.bg};color:${c.text}`; },
     categoryEmojiByName(name) { return this.getCategoryByName(name).emoji; },
-    isBookCategory(id) { const c = this.categories.find(c => c.id === id); return !!(c && c.isBook); },
+    isBookCategory(id) { const c = this.categories.find(c => c.id === id); return !!(c && (c.isBook || c.name === '繪本書籍')); },
+    showPublisherBtn(cat) { return cat.name === '繪本書籍' || (!this.categories.some(c => c.name === '繪本書籍') && !!cat.isBook); },
     publisherNameOf(id) { if (!id) return ''; const p = this.publishers.find(p => p.id === id); return p ? p.name : ''; },
     photoOf(it) { return it && it.photo ? it.photo : null; },
     getItemById(id) { return this.items.find(i => i.id === id); },
