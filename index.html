@@ -410,15 +410,18 @@
                 <p class="text-[11px] text-wood-dark/50 mt-1" x-text="`目前可申請 ${laminateAvailable} 張`"></p></div>
               <div><label class="text-sm font-bold text-wood-dark/80">用途</label>
                 <textarea x-model="laminateForm.purpose" rows="2" required placeholder="例如：教室角落字卡、班級公約" class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></textarea></div>
-              <div><label class="text-sm font-bold text-wood-dark/80">要護貝的檔案（可多選，每個 20MB 內）</label>
-                <input type="file" multiple @change="addLaminateFiles($event)" class="mt-1 w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-sage file:text-paper file:font-bold file:text-xs">
-                <template x-for="(n, i) in laminateFileNames" :key="i"><div class="flex items-center justify-between text-xs mt-1 bg-cream rounded-lg px-2 py-1">
-                  <span x-text="'📎 ' + n"></span><button type="button" @click="removeLaminateFile(i)" class="text-coral font-bold">移除</button></div></template></div>
+              <div class="bg-cream rounded-2xl p-3 space-y-2">
+                <p class="text-sm font-bold text-wood-dark/80">① 先將要護貝的檔案上傳到雲端資料夾</p>
+                <a href="https://drive.google.com/drive/folders/1J8M-CQjOvRfuwrydiA5VINlis1R_JXEJ?usp=sharing" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-paper text-sm font-bold hover:bg-brand-dark transition">📂 開啟雲端資料夾上傳檔案</a>
+                <label class="text-xs font-bold text-wood-dark/70 block pt-1">② 填寫您上傳的檔案名稱（方便管理員找檔案）</label>
+                <input x-model="laminateForm.fileNote" required placeholder="例如：王老師_語文區字卡.pdf" class="w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                <label class="flex items-center gap-2 text-xs font-bold text-wood-dark/80"><input type="checkbox" x-model="laminateForm.uploaded" class="w-4 h-4 accent-sage"> 我已將檔案上傳到雲端資料夾</label>
+              </div>
               <div><label class="text-sm font-bold text-wood-dark/80">申請日期</label>
                 <input type="date" x-model="laminateForm.requestDate" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
               <p x-show="laminateError" x-text="laminateError" class="text-coral text-xs font-bold"></p>
               <p class="text-[11px] text-wood-dark/50">💡 送出後由管理員確認，確認後才會扣除護貝膜張數。</p>
-              <button type="submit" :disabled="submitting" class="w-full py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50" x-text="submitting ? '上傳送出中…' : '送出申請'"></button>
+              <button type="submit" :disabled="submitting" class="w-full py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50" x-text="submitting ? '送出中…' : '送出申請'"></button>
             </form>
           </div>
           <div class="md:col-span-3 space-y-4">
@@ -467,7 +470,7 @@
           <div class="paper-card rounded-3xl p-6 shadow-card">
             <div class="flex items-center justify-between gap-3 mb-3">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🧷</span> 護貝膜申請確認</h2>
-              <span class="tag-badge tag-borrowing" x-text="`${pendingLaminateRequests.length} 筆待確認`"></span>
+              <div class="flex items-center gap-2"><a href="https://drive.google.com/drive/folders/1J8M-CQjOvRfuwrydiA5VINlis1R_JXEJ?usp=sharing" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-full bg-brand text-paper text-xs font-bold hover:bg-brand-dark">📂 開啟雲端資料夾</a><span class="tag-badge tag-borrowing" x-text="`${pendingLaminateRequests.length} 筆待確認`"></span></div>
             </div>
             <div class="flex flex-wrap items-end gap-4 bg-cream rounded-2xl p-3 mb-4">
               <div><p class="text-xs font-bold text-wood-dark/60">目前剩餘</p><p class="font-num font-black text-2xl" x-text="laminateStock ? laminateRemaining + ' 張' : '尚未設定'"></p></div>
@@ -483,7 +486,7 @@
                   <div class="flex-1">
                     <p class="text-sm font-bold" x-text="`${req.borrower}（${req.className}）－${req.qty} 張`"></p>
                     <p class="text-xs text-wood-dark/60" x-text="`用途：${req.purpose}`"></p>
-                    <div class="flex flex-wrap gap-2 mt-1"><template x-for="f in (req.files||[])" :key="f.url"><a :href="f.url" target="_blank" rel="noopener" class="text-xs text-brand font-bold hover:underline" x-text="'📎 ' + f.name"></a></template></div>
+                    <p class="text-xs font-bold text-brand" x-text="`📄 檔案：${req.fileNote || '（未填寫）'}`"></p>
                     <p class="text-[11px] text-wood-dark/40" x-text="`申請時間：${req.requestTimestamp || req.requestDate}`"></p>
                   </div>
                   <button @click="confirmLaminateRequest(req)" class="px-4 py-2 rounded-xl bg-sage text-paper text-xs font-bold hover:bg-sage-dark whitespace-nowrap">✅ 確認</button>
@@ -891,15 +894,13 @@
 </div>
 
 <script>
-let laminateFileObjs = [];
 function kgApp() {
   return {
     view: 'teacher', formMode: 'borrow',
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
-    laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '', laminateFileNames: [],
-    laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'' },
+    laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, authError: '',
@@ -944,6 +945,7 @@ function kgApp() {
       catch (e) { console.error('設定登入保存方式失敗', e); }
       this.db = firebase.firestore();
       this.storage = firebase.storage();
+      try { this.storage.setMaxUploadRetryTime(20000); this.storage.setMaxOperationRetryTime(20000); } catch (e) {}
 
       this.auth.onAuthStateChanged(async (user) => {
         this.unsubs.forEach(fn => fn()); this.unsubs = [];
@@ -1587,16 +1589,6 @@ function kgApp() {
     get laminateAvailable() { return this.laminateStock ? Math.max(0, this.laminateRemaining - this.laminatePendingQty) : 0; },
     get pendingLaminateRequests() { return this.laminateRequests.filter(r => r.status === 'pending').sort((a,b) => (a.createdAt||0) - (b.createdAt||0)); },
     get recentLaminateRequests() { return [...this.laminateRequests].sort((a,b) => (b.createdAt||0) - (a.createdAt||0)).slice(0, 8); },
-    addLaminateFiles(e) {
-      const picked = Array.from(e.target.files || []); e.target.value = '';
-      for (const f of picked) {
-        if (f.size > 20 * 1024 * 1024) { this.showToast(`「${f.name}」超過 20MB，已略過`); continue; }
-        if (laminateFileObjs.length >= 5) { this.showToast('最多上傳 5 個檔案'); break; }
-        laminateFileObjs.push(f);
-      }
-      this.laminateFileNames = laminateFileObjs.map(f => f.name);
-    },
-    removeLaminateFile(i) { laminateFileObjs.splice(i, 1); this.laminateFileNames = laminateFileObjs.map(f => f.name); },
     async submitLaminate() {
       this.laminateError = '';
       const f = this.laminateForm, qty = Number(f.qty);
@@ -1604,24 +1596,18 @@ function kgApp() {
       if (!Number.isInteger(qty) || qty < 1) { this.laminateError = '申請張數需為大於 0 的整數'; return; }
       if (!this.laminateStock) { this.laminateError = '護貝膜庫存尚未設定，請洽管理員'; return; }
       if (qty > this.laminateAvailable) { this.laminateError = `目前僅可申請 ${this.laminateAvailable} 張（部分張數已有待確認的申請）`; return; }
-      if (laminateFileObjs.length === 0) { this.laminateError = '請至少上傳一個要護貝的檔案'; return; }
+      if (!f.fileNote.trim()) { this.laminateError = '請填寫您上傳的檔案名稱'; return; }
+      if (!f.uploaded) { this.laminateError = '請先將檔案上傳到雲端資料夾，並勾選「我已上傳」'; return; }
       this.submitting = true;
       try {
-        const files = [];
-        for (let i = 0; i < laminateFileObjs.length; i++) {
-          const file = laminateFileObjs[i];
-          const ref = this.storage.ref(`laminate-files/${Date.now()}_${i}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`);
-          await ref.put(file);
-          files.push({ name: file.name, url: await ref.getDownloadURL() });
-        }
         await this.db.collection('laminateRequests').add({
-          borrower: f.borrower.trim(), className: f.className, qty, purpose: f.purpose.trim(), files,
+          borrower: f.borrower.trim(), className: f.className, qty, purpose: f.purpose.trim(), fileNote: f.fileNote.trim(),
           requestDate: f.requestDate, requestTimestamp: this.getTaipeiTimestamp(), status: 'pending', createdAt: Date.now(),
         });
         this.showToast(`已送出護貝膜申請：${qty} 張，請等待管理員確認`);
-        this.laminateForm.borrower = ''; this.laminateForm.className = ''; this.laminateForm.qty = 1; this.laminateForm.purpose = '';
-        laminateFileObjs = []; this.laminateFileNames = [];
-      } catch (e) { console.error(e); this.laminateError = `送出失敗（${e.code || e.message}），請確認 Firebase 規則後再試一次`; }
+        this.laminateForm.borrower = ''; this.laminateForm.className = ''; this.laminateForm.qty = 1;
+        this.laminateForm.purpose = ''; this.laminateForm.fileNote = ''; this.laminateForm.uploaded = false;
+      } catch (e) { console.error(e); this.laminateError = `送出失敗（${e.code || e.message}），請確認 Firestore 規則後再試一次`; }
       this.submitting = false;
     },
     async confirmLaminateRequest(req) {
