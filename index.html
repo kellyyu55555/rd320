@@ -121,11 +121,16 @@
           <button @click="exportInventoryCSV()" class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-paper/15 hover:bg-paper/25 text-paper text-xs font-bold transition">⬇️ 下載財產清冊（CSV）</button>
           <span x-show="shareLinkNotice" x-text="shareLinkNotice" class="text-xs text-cream/90 font-bold"></span>
         </div>
-        <nav class="max-w-6xl mx-auto px-5 flex gap-2 pb-3">
+        <nav class="max-w-6xl mx-auto px-5 flex flex-wrap gap-2 pb-3">
           <button @click="view='teacher'"
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='teacher' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🧸 老師借還登記區
+          </button>
+          <button @click="view='laminate'"
+            class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='laminate' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🧷 護貝膜申請
           </button>
           <button x-show="isAdmin" @click="view='admin'"
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
@@ -389,6 +394,49 @@
           </div>
         </section>
 
+        <!-- ============ 護貝膜申請（老師端） ============ -->
+        <section x-show="view==='laminate'" class="grid md:grid-cols-5 gap-6">
+          <div class="md:col-span-2 paper-card rounded-3xl p-6 shadow-card h-fit">
+            <h2 class="font-heading font-black text-lg mb-4 flex items-center gap-2"><span class="text-2xl">🧷</span> 護貝膜申請</h2>
+            <form @submit.prevent="submitLaminate" class="space-y-4">
+              <div><label class="text-sm font-bold text-wood-dark/80">老師姓名</label>
+                <input list="laminateTeachers" x-model="laminateForm.borrower" required placeholder="例如：王老師" class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                <datalist id="laminateTeachers"><template x-for="n in teacherSuggestions" :key="n"><option :value="n"></option></template></datalist></div>
+              <div><label class="text-sm font-bold text-wood-dark/80">班級</label>
+                <select x-model="laminateForm.className" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"><option value="">請選擇班級</option>
+                  <template x-for="c in classes" :key="c"><option :value="c" x-text="c"></option></template></select></div>
+              <div><label class="text-sm font-bold text-wood-dark/80">申請張數</label>
+                <input type="number" min="1" :max="laminateAvailable" x-model.number="laminateForm.qty" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                <p class="text-[11px] text-wood-dark/50 mt-1" x-text="`目前可申請 ${laminateAvailable} 張`"></p></div>
+              <div><label class="text-sm font-bold text-wood-dark/80">用途</label>
+                <textarea x-model="laminateForm.purpose" rows="2" required placeholder="例如：教室角落字卡、班級公約" class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></textarea></div>
+              <div><label class="text-sm font-bold text-wood-dark/80">要護貝的檔案（可多選，每個 20MB 內）</label>
+                <input type="file" multiple @change="addLaminateFiles($event)" class="mt-1 w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-sage file:text-paper file:font-bold file:text-xs">
+                <template x-for="(n, i) in laminateFileNames" :key="i"><div class="flex items-center justify-between text-xs mt-1 bg-cream rounded-lg px-2 py-1">
+                  <span x-text="'📎 ' + n"></span><button type="button" @click="removeLaminateFile(i)" class="text-coral font-bold">移除</button></div></template></div>
+              <div><label class="text-sm font-bold text-wood-dark/80">申請日期</label>
+                <input type="date" x-model="laminateForm.requestDate" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
+              <p x-show="laminateError" x-text="laminateError" class="text-coral text-xs font-bold"></p>
+              <p class="text-[11px] text-wood-dark/50">💡 送出後由管理員確認，確認後才會扣除護貝膜張數。</p>
+              <button type="submit" :disabled="submitting" class="w-full py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50" x-text="submitting ? '上傳送出中…' : '送出申請'"></button>
+            </form>
+          </div>
+          <div class="md:col-span-3 space-y-4">
+            <div class="paper-card rounded-3xl p-5 shadow-card flex flex-wrap items-center gap-6">
+              <div><p class="text-xs font-bold text-wood-dark/60">護貝膜剩餘</p><p class="font-num font-black text-3xl" x-text="laminateStock ? laminateRemaining + ' 張' : '尚未設定'"></p></div>
+              <div><p class="text-xs font-bold text-wood-dark/60">待管理員確認</p><p class="font-num font-black text-xl" x-text="laminatePendingQty + ' 張'"></p></div>
+              <div><p class="text-xs font-bold text-wood-dark/60">目前可申請</p><p class="font-num font-black text-xl text-sage-dark" x-text="laminateAvailable + ' 張'"></p></div>
+            </div>
+            <div class="paper-card rounded-3xl p-5 shadow-card">
+              <h3 class="font-heading font-bold text-sm mb-2">最近申請</h3>
+              <template x-for="r in recentLaminateRequests" :key="r.id"><div class="flex items-center justify-between gap-2 border-b border-wood-light/15 py-2 text-sm">
+                <span x-text="`${r.borrower}（${r.className}）${r.qty} 張－${r.purpose}`"></span>
+                <span class="tag-badge" :class="r.status==='confirmed' ? 'tag-returned' : 'tag-pending'" x-text="r.status==='confirmed' ? '已確認' : '待確認'"></span></div></template>
+              <p x-show="laminateRequests.length===0" class="text-xs text-wood-dark/40 text-center py-4">目前沒有申請紀錄</p>
+            </div>
+          </div>
+        </section>
+
         <!-- ============ 管理者端 ============ -->
         <section x-show="view==='admin' && isAdmin" class="space-y-8">
 
@@ -413,6 +461,36 @@
                 </div>
               </template>
               <p x-show="pendingReturnRequests.length===0" class="text-xs text-wood-dark/40 text-center py-6">目前沒有待清點確認的歸還申請</p>
+            </div>
+          </div>
+
+          <div class="paper-card rounded-3xl p-6 shadow-card">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🧷</span> 護貝膜申請確認</h2>
+              <span class="tag-badge tag-borrowing" x-text="`${pendingLaminateRequests.length} 筆待確認`"></span>
+            </div>
+            <div class="flex flex-wrap items-end gap-4 bg-cream rounded-2xl p-3 mb-4">
+              <div><p class="text-xs font-bold text-wood-dark/60">目前剩餘</p><p class="font-num font-black text-2xl" x-text="laminateStock ? laminateRemaining + ' 張' : '尚未設定'"></p></div>
+              <div class="flex items-end gap-2 ml-auto">
+                <div><label class="text-xs font-bold text-wood-dark/60">調整剩餘張數（補貨／盤點）</label>
+                  <input type="number" min="0" x-model.number="laminateStockInput" class="mt-1 w-32 rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm"></div>
+                <button type="button" @click="adjustLaminateStock()" class="px-4 py-2 rounded-xl bg-wood text-paper text-sm font-bold hover:bg-wood-dark">更新庫存</button>
+              </div>
+            </div>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              <template x-for="req in pendingLaminateRequests" :key="req.id">
+                <div class="flex items-center gap-3 bg-cream rounded-xl p-3 border border-wood-light/30">
+                  <div class="flex-1">
+                    <p class="text-sm font-bold" x-text="`${req.borrower}（${req.className}）－${req.qty} 張`"></p>
+                    <p class="text-xs text-wood-dark/60" x-text="`用途：${req.purpose}`"></p>
+                    <div class="flex flex-wrap gap-2 mt-1"><template x-for="f in (req.files||[])" :key="f.url"><a :href="f.url" target="_blank" rel="noopener" class="text-xs text-brand font-bold hover:underline" x-text="'📎 ' + f.name"></a></template></div>
+                    <p class="text-[11px] text-wood-dark/40" x-text="`申請時間：${req.requestTimestamp || req.requestDate}`"></p>
+                  </div>
+                  <button @click="confirmLaminateRequest(req)" class="px-4 py-2 rounded-xl bg-sage text-paper text-xs font-bold hover:bg-sage-dark whitespace-nowrap">✅ 確認</button>
+                  <button @click="rejectLaminateRequest(req)" class="px-3 py-2 rounded-xl bg-paper text-coral text-xs font-bold border border-coral/40 hover:bg-coral/10 whitespace-nowrap">取消</button>
+                </div>
+              </template>
+              <p x-show="pendingLaminateRequests.length===0" class="text-xs text-wood-dark/40 text-center py-6">目前沒有待確認的護貝膜申請</p>
             </div>
           </div>
 
@@ -813,12 +891,15 @@
 </div>
 
 <script>
+let laminateFileObjs = [];
 function kgApp() {
   return {
     view: 'teacher', formMode: 'borrow',
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
+    laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '', laminateFileNames: [],
+    laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'' },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, authError: '',
@@ -853,6 +934,7 @@ function kgApp() {
       this.todayLabel = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
       this.borrowForm.borrowDate = today;
       this.returnForm.returnDate = today;
+      this.laminateForm.requestDate = today;
 
       if (!window.firebase) { this.authError = 'Firebase 尚未正確載入，請確認網路連線'; return; }
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -961,6 +1043,19 @@ function kgApp() {
       this.unsubs.push(this.db.collection('publishers').orderBy('createdAt','asc').onSnapshot(s => { this.publishers = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取出版社發生問題')));
       this.unsubs.push(this.db.collection('roster').doc('classes').onSnapshot(d => { this.classes = d.exists ? (d.data().list||[]) : []; }, () => {}));
       this.unsubs.push(this.db.collection('roster').doc('teachers').onSnapshot(d => { this.teacherRoster = d.exists ? (d.data().list||[]) : []; }, () => {}));
+      this.unsubs.push(this.db.collection('laminateStock').doc('main').onSnapshot(d => {
+        this.laminateStock = d.exists ? d.data() : null;
+        if (!d.exists && !d.metadata.fromCache && this.isAdmin && !this.laminateInit) {
+          this.laminateInit = true;
+          this.db.collection('laminateStock').doc('main').set({ remaining: 162, createdAt: Date.now() }).catch(() => {});
+        }
+      }, this.snapErr('讀取護貝膜庫存發生問題')));
+      let lamFirst = true;
+      this.unsubs.push(this.db.collection('laminateRequests').onSnapshot(s => {
+        if (this.isAdmin && !lamFirst) s.docChanges().forEach(c => { if (c.type === 'added') this.showToast(`🧷 新的護貝膜申請：${c.doc.data().borrower||''} ${c.doc.data().qty||''} 張`, 5000); });
+        this.laminateRequests = s.docs.map(d => ({ id:d.id, ...d.data() }));
+        lamFirst = false;
+      }, this.snapErr('讀取護貝膜申請發生問題')));
       if (this.isAdmin) {
         this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
       }
@@ -1485,6 +1580,76 @@ function kgApp() {
       if (!confirm(`確定要刪除老師「${name}」嗎？`)) return;
       try { await this.db.collection('roster').doc('teachers').set({ list: this.teacherRoster.filter(n => n !== name) }, { merge: true }); }
       catch (e) { this.showToast('刪除失敗，請再試一次'); }
+    },
+
+    get laminateRemaining() { return this.laminateStock ? Number(this.laminateStock.remaining || 0) : 0; },
+    get laminatePendingQty() { return this.laminateRequests.filter(r => r.status === 'pending').reduce((n, r) => n + Number(r.qty || 0), 0); },
+    get laminateAvailable() { return this.laminateStock ? Math.max(0, this.laminateRemaining - this.laminatePendingQty) : 0; },
+    get pendingLaminateRequests() { return this.laminateRequests.filter(r => r.status === 'pending').sort((a,b) => (a.createdAt||0) - (b.createdAt||0)); },
+    get recentLaminateRequests() { return [...this.laminateRequests].sort((a,b) => (b.createdAt||0) - (a.createdAt||0)).slice(0, 8); },
+    addLaminateFiles(e) {
+      const picked = Array.from(e.target.files || []); e.target.value = '';
+      for (const f of picked) {
+        if (f.size > 20 * 1024 * 1024) { this.showToast(`「${f.name}」超過 20MB，已略過`); continue; }
+        if (laminateFileObjs.length >= 5) { this.showToast('最多上傳 5 個檔案'); break; }
+        laminateFileObjs.push(f);
+      }
+      this.laminateFileNames = laminateFileObjs.map(f => f.name);
+    },
+    removeLaminateFile(i) { laminateFileObjs.splice(i, 1); this.laminateFileNames = laminateFileObjs.map(f => f.name); },
+    async submitLaminate() {
+      this.laminateError = '';
+      const f = this.laminateForm, qty = Number(f.qty);
+      if (!f.borrower.trim() || !f.className || !f.purpose.trim()) { this.laminateError = '請填寫老師姓名、班級與用途'; return; }
+      if (!Number.isInteger(qty) || qty < 1) { this.laminateError = '申請張數需為大於 0 的整數'; return; }
+      if (!this.laminateStock) { this.laminateError = '護貝膜庫存尚未設定，請洽管理員'; return; }
+      if (qty > this.laminateAvailable) { this.laminateError = `目前僅可申請 ${this.laminateAvailable} 張（部分張數已有待確認的申請）`; return; }
+      if (laminateFileObjs.length === 0) { this.laminateError = '請至少上傳一個要護貝的檔案'; return; }
+      this.submitting = true;
+      try {
+        const files = [];
+        for (let i = 0; i < laminateFileObjs.length; i++) {
+          const file = laminateFileObjs[i];
+          const ref = this.storage.ref(`laminate-files/${Date.now()}_${i}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`);
+          await ref.put(file);
+          files.push({ name: file.name, url: await ref.getDownloadURL() });
+        }
+        await this.db.collection('laminateRequests').add({
+          borrower: f.borrower.trim(), className: f.className, qty, purpose: f.purpose.trim(), files,
+          requestDate: f.requestDate, requestTimestamp: this.getTaipeiTimestamp(), status: 'pending', createdAt: Date.now(),
+        });
+        this.showToast(`已送出護貝膜申請：${qty} 張，請等待管理員確認`);
+        this.laminateForm.borrower = ''; this.laminateForm.className = ''; this.laminateForm.qty = 1; this.laminateForm.purpose = '';
+        laminateFileObjs = []; this.laminateFileNames = [];
+      } catch (e) { console.error(e); this.laminateError = `送出失敗（${e.code || e.message}），請確認 Firebase 規則後再試一次`; }
+      this.submitting = false;
+    },
+    async confirmLaminateRequest(req) {
+      const stockRef = this.db.collection('laminateStock').doc('main'), reqRef = this.db.collection('laminateRequests').doc(req.id);
+      try {
+        await this.db.runTransaction(async tx => {
+          const st = await tx.get(stockRef), rq = await tx.get(reqRef);
+          if (!rq.exists || rq.data().status !== 'pending') throw new Error('already');
+          const remain = st.exists ? Number(st.data().remaining || 0) : 0;
+          if (remain < req.qty) throw new Error('stock');
+          tx.update(stockRef, { remaining: remain - req.qty });
+          tx.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() });
+        });
+        this.showToast(`已確認：${req.borrower} 護貝膜 ${req.qty} 張`);
+      } catch (e) {
+        this.showToast(e.message === 'stock' ? '剩餘張數不足，請先補貨並調整庫存' : e.message === 'already' ? '此申請已被處理' : `確認失敗（${e.code || e.message}）`, 5000);
+      }
+    },
+    async rejectLaminateRequest(req) {
+      if (!confirm(`確定要取消「${req.borrower}」申請的 ${req.qty} 張護貝膜嗎？`)) return;
+      try { await this.db.collection('laminateRequests').doc(req.id).delete(); this.showToast('已取消該筆申請'); }
+      catch (e) { this.showToast('取消失敗，請再試一次'); }
+    },
+    async adjustLaminateStock() {
+      const n = Number(this.laminateStockInput);
+      if (this.laminateStockInput === '' || !Number.isInteger(n) || n < 0) { this.showToast('請輸入 0 以上的整數'); return; }
+      try { await this.db.collection('laminateStock').doc('main').set({ remaining: n }, { merge: true }); this.laminateStockInput = ''; this.showToast(`已將護貝膜剩餘張數設為 ${n} 張`); }
+      catch (e) { this.showToast(`更新失敗（${e.code || e.message}）`); }
     },
 
     snapErr(label) { return (err) => { console.error(label, err); this.showToast(`${label}（${(err && (err.code || err.message)) || '未知錯誤'}）`, 6000); }; },
