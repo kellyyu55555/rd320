@@ -763,13 +763,20 @@
           <div class="paper-card rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🔑</span> 登入紀錄查詢</h2>
-              <input x-model="loginSearchText" @input="loginLogsShowAll=false" placeholder="輸入姓名或 Email 查詢" class="rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm w-56">
+              <div class="flex items-center gap-2">
+                <input x-model="loginSearchText" @input="loginLogsShowAll=false" @input.debounce.600ms="searchLoginLogs()" @keydown.enter.prevent="searchLoginLogs()" placeholder="輸入姓名或 Email 查詢" class="rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm w-56">
+                <button type="button" @click="searchLoginLogs()" :disabled="loginSearching" class="px-4 py-2 rounded-xl bg-sage text-paper text-sm font-bold hover:bg-sage-dark transition disabled:opacity-50" x-text="loginSearching ? '查詢中…' : '🔍 查詢'"></button>
+              </div>
             </div>
             <div x-show="loginLogsError" x-cloak class="mb-4 bg-coral/10 border border-coral/40 rounded-2xl p-3 text-xs text-wood-dark/80">
               <p class="font-bold text-coral">⚠️ 無法讀取登入紀錄（錯誤代碼：<span class="font-num" x-text="loginLogsError"></span>）</p>
               <p class="mt-1" x-show="loginLogsError==='permission-denied'">原因：Firestore 安全規則不允許目前帳號讀取 <b>loginLogs</b> 集合。請到 Firebase 後台 → Firestore Database → 規則，允許管理員讀取 loginLogs（其他功能不受影響）。</p>
               <p class="mt-1" x-show="loginLogsError!=='permission-denied'">請稍後重新整理頁面再試；若持續發生，請把這個錯誤代碼提供給系統維護者。</p>
             </div>
+            <p x-show="!loginSearchText.trim()" class="text-xs text-wood-dark/50 mb-3">目前顯示最新登入紀錄。輸入姓名或 Email 後，會直接向資料庫查詢全部歷史紀錄。</p>
+            <p x-show="loginSearchText.trim() && loginSearching" class="text-xs text-sage-dark font-bold mb-3">正在向資料庫查詢全部歷史紀錄…</p>
+            <p x-show="loginSearchText.trim() && !loginSearching && loginSearchedKw===loginSearchText.trim() && !loginSearchError" class="text-xs text-sage-dark font-bold mb-3" x-text="`資料庫查詢完成，共找到 ${filteredLoginLogs.length} 筆紀錄（姓名／Email 需從開頭輸入才能查到較早的紀錄）`"></p>
+            <p x-show="loginSearchError" class="text-xs text-coral font-bold mb-3" x-text="`資料庫查詢失敗（${loginSearchError}），目前僅顯示已載入的最新紀錄`"></p>
             <div class="overflow-x-auto">
               <table class="w-full text-sm min-w-[480px]">
                 <thead>
@@ -791,8 +798,8 @@
                 </tbody>
               </table>
             </div>
-            <div x-show="filteredLoginLogs.length>10" class="text-center mt-4">
-              <button @click="loginLogsShowAll=!loginLogsShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="loginLogsShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredLoginLogs.length-10} 筆 ▼`"></button>
+            <div x-show="filteredLoginLogs.length>3" class="text-center mt-4">
+              <button @click="loginLogsShowAll=!loginLogsShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="loginLogsShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredLoginLogs.length-3} 筆 ▼`"></button>
             </div>
           </div>
         </section>
@@ -821,6 +828,7 @@ function kgApp() {
     publisherBatchText: '', publisherBatchSummary: '',
     categories: [], items: [], records: [], publishers: [], classes: [], teacherRoster: [], returnRequests: [],
     loginLogs: [], loginSearchText: '', loginLogsShowAll: false,
+    loginDbResults: [], loginSearchedKw: '', loginSearching: false, loginSearchError: '',
     newClassName: '', newTeacherRosterName: '',
     borrowForm: { borrower:'', className:'', categoryId:'', selected:{}, borrowDate:'', searchKeyword:'' },
     returnForm: { filterText:'', itemNameFilter:'', selected:{}, returnDate:'' },
@@ -1057,9 +1065,35 @@ function kgApp() {
     get filteredLoginLogs() {
       const kw = this.loginSearchText.trim().toLowerCase();
       if (!kw) return this.loginLogs;
-      return this.loginLogs.filter(l => (l.displayName||'').toLowerCase().includes(kw) || (l.email||'').toLowerCase().includes(kw));
+      const map = new Map();
+      this.loginLogs.filter(l => (l.displayName||'').toLowerCase().includes(kw) || (l.email||'').toLowerCase().includes(kw))
+        .forEach(l => map.set(l.id, l));
+      if (this.loginSearchedKw.toLowerCase() === kw) this.loginDbResults.forEach(l => map.set(l.id, l));
+      return [...map.values()].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     },
-    get visibleLoginLogs() { return this.loginLogsShowAll ? this.filteredLoginLogs : this.filteredLoginLogs.slice(0, 10); },
+    async searchLoginLogs() {
+      const kw = this.loginSearchText.trim();
+      this.loginLogsShowAll = false;
+      if (!kw) { this.loginDbResults = []; this.loginSearchedKw = ''; this.loginSearchError = ''; return; }
+      if (!this.isAdmin || !this.db) return;
+      this.loginSearching = true; this.loginSearchError = '';
+      try {
+        const col = this.db.collection('loginLogs');
+        const prefix = (field, v) => col.where(field, '>=', v).where(field, '<=', v + '\uf8ff').limit(500).get();
+        const variants = [...new Set([kw, kw.toLowerCase(), kw.charAt(0).toUpperCase() + kw.slice(1).toLowerCase()])];
+        const snaps = await Promise.all(variants.flatMap(v => [prefix('email', v), prefix('displayName', v)]));
+        const map = new Map();
+        snaps.forEach(sn => sn.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() })));
+        if (kw !== this.loginSearchText.trim()) { this.loginSearching = false; return; } // 輸入已變更，丟棄過時結果
+        this.loginDbResults = [...map.values()].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+        this.loginSearchedKw = kw;
+      } catch (e) {
+        console.error('查詢登入紀錄失敗', e);
+        this.loginSearchError = e.code || e.message || 'unknown';
+      }
+      this.loginSearching = false;
+    },
+    get visibleLoginLogs() { return this.loginLogsShowAll ? this.filteredLoginLogs : this.filteredLoginLogs.slice(0, 3); },
     compareStrokes(a,b) { try { return String(a).localeCompare(String(b),'zh-Hant-u-co-stroke'); } catch(e) { return String(a).localeCompare(String(b),'zh-Hant'); } },
     sortRecords(key) { if (this.recordSort.key===key) this.recordSort.dir*=-1; else { this.recordSort.key=key; this.recordSort.dir=1; } },
     sortArrow(key) { if (this.recordSort.key!==key) return '↕'; return this.recordSort.dir===1 ? '▲':'▼'; },
