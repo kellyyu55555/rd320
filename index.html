@@ -756,6 +756,11 @@
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🔑</span> 登入紀錄查詢</h2>
               <input x-model="loginSearchText" @input="loginLogsShowAll=false" placeholder="輸入姓名或 Email 查詢" class="rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm w-56">
             </div>
+            <div x-show="loginLogsError" x-cloak class="mb-4 bg-coral/10 border border-coral/40 rounded-2xl p-3 text-xs text-wood-dark/80">
+              <p class="font-bold text-coral">⚠️ 無法讀取登入紀錄（錯誤代碼：<span class="font-num" x-text="loginLogsError"></span>）</p>
+              <p class="mt-1" x-show="loginLogsError==='permission-denied'">原因：Firestore 安全規則不允許目前帳號讀取 <b>loginLogs</b> 集合。請到 Firebase 後台 → Firestore Database → 規則，允許管理員讀取 loginLogs（其他功能不受影響）。</p>
+              <p class="mt-1" x-show="loginLogsError!=='permission-denied'">請稍後重新整理頁面再試；若持續發生，請把這個錯誤代碼提供給系統維護者。</p>
+            </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm min-w-[480px]">
                 <thead>
@@ -798,7 +803,7 @@ function kgApp() {
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
-    openGroups: {}, started: false, todayLabel: '',
+    openGroups: {}, started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, authError: '',
     auth: null, db: null, storage: null, unsubs: [],
@@ -841,6 +846,7 @@ function kgApp() {
       this.auth.onAuthStateChanged(async (user) => {
         this.unsubs.forEach(fn => fn()); this.unsubs = [];
         this.currentUser = user; this.isAdmin = false;
+        this.openGroups = {}; // 每次登入／登出都重置，讓各學習區預設為收合
         this.clearIdleTimer();
         if (user) {
           try {
@@ -936,7 +942,7 @@ function kgApp() {
       this.unsubs.push(this.db.collection('roster').doc('classes').onSnapshot(d => { this.classes = d.exists ? (d.data().list||[]) : []; }, () => {}));
       this.unsubs.push(this.db.collection('roster').doc('teachers').onSnapshot(d => { this.teacherRoster = d.exists ? (d.data().list||[]) : []; }, () => {}));
       if (this.isAdmin) {
-        this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取登入紀錄發生問題')));
+        this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
       }
     },
 
