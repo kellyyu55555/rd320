@@ -133,9 +133,11 @@
             🧷 護貝膜申請
           </button>
           <button x-show="isAdmin" @click="view='admin'"
+            x-effect="if (!titleTimer) document.title = (isAdmin && adminPendingCount>0 ? `(${adminPendingCount}) ` : '') + baseTitle"
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='admin' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📋 管理者後台
+            <span x-show="adminPendingCount>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="adminPendingCount"></span>
           </button>
         </nav>
       </header>
@@ -451,6 +453,10 @@
 
         <!-- ============ 管理者端 ============ -->
         <section x-show="view==='admin' && isAdmin" class="space-y-8">
+          <div x-show="notifPerm!=='granted'" class="flex flex-wrap items-center justify-between gap-3 bg-mustard/20 border border-mustard/50 rounded-2xl p-4">
+            <p class="text-sm font-bold text-wood-dark/80" x-text="notifPerm==='unsupported' ? '🔔 此瀏覽器不支援系統通知，老師送出時仍會在頁面上方提示並發出提示音。' : (notifPerm==='denied' ? '🔕 通知已被瀏覽器封鎖，請在網址列的網站設定中允許「通知」，才能在其他視窗收到提醒。' : '🔔 開啟通知後，老師送出借還或申請時，即使切換到其他視窗也能立刻收到提醒。')"></p>
+            <button x-show="notifPerm==='default'" @click="enableNotifications()" class="px-4 py-2 rounded-xl bg-sage text-paper text-sm font-bold hover:bg-sage-dark">開啟通知</button>
+          </div>
 
           <div class="paper-card rounded-3xl p-6 shadow-card">
             <div class="flex items-center justify-between gap-3 mb-3">
@@ -964,6 +970,7 @@ function kgApp() {
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
+    notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
     teacherPick: '', pickForceOpen: false, deleteLogs: [], delLogQ: '', delLogShowAll: false,
     laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
@@ -1001,6 +1008,7 @@ function kgApp() {
       this.borrowForm.borrowDate = today;
       this.returnForm.returnDate = today;
       this.laminateForm.requestDate = today;
+      this.baseTitle = document.title;
 
       if (!window.firebase) { this.authError = 'Firebase 尚未正確載入，請確認網路連線'; return; }
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -1043,7 +1051,8 @@ function kgApp() {
 
       const idleEvents = ['mousemove','mousedown','keydown','touchstart','scroll','click'];
       idleEvents.forEach(evt => window.addEventListener(evt, () => this.resetIdleTimer(), { passive: true }));
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) this.resetIdleTimer(); });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) { this.resetIdleTimer(); this.stopTitleFlash(); } });
+      window.addEventListener('focus', () => this.stopTitleFlash());
     },
 
     resetIdleTimer() {
@@ -1094,12 +1103,25 @@ function kgApp() {
     subscribeAll() {
       this.unsubs.push(this.db.collection('categories').orderBy('createdAt','asc').onSnapshot(s => { this.categories = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取類別發生問題')));
       this.unsubs.push(this.db.collection('items').orderBy('createdAt','asc').onSnapshot(s => { this.items = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取項目發生問題')));
-      this.unsubs.push(this.db.collection('records').onSnapshot(s => { this.records = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取借還紀錄發生問題')));
+      let recFirst = true;
+      this.unsubs.push(this.db.collection('records').onSnapshot(s => {
+        if (this.isAdmin && !recFirst) {
+          const added = s.docChanges().filter(c => c.type === 'added' && !c.doc.metadata.hasPendingWrites).map(c => c.doc.data());
+          if (added.length) {
+            const f = added[0];
+            this.notifyAdmin('新的借用登記', added.length === 1
+              ? `${f.borrower||''}（${f.className||''}）借用 ${f.itemName||''} × ${f.qty||''}`
+              : `${f.borrower||''}（${f.className||''}）一次借用 ${added.length} 項`);
+          }
+        }
+        this.records = s.docs.map(d => ({ id:d.id, ...d.data() }));
+        recFirst = false;
+      }, this.snapErr('讀取借還紀錄發生問題')));
       let returnReqFirstLoad = true;
       this.unsubs.push(this.db.collection('returnRequests').onSnapshot(s => {
         if (this.isAdmin && !returnReqFirstLoad) {
           s.docChanges().forEach(change => {
-            if (change.type === 'added') {
+            if (change.type === 'added' && !change.doc.metadata.hasPendingWrites) {
               this.notifyNewReturnRequest({ id: change.doc.id, ...change.doc.data() });
             }
           });
@@ -1119,7 +1141,7 @@ function kgApp() {
       }, this.snapErr('讀取護貝膜庫存發生問題')));
       let lamFirst = true;
       this.unsubs.push(this.db.collection('laminateRequests').onSnapshot(s => {
-        if (this.isAdmin && !lamFirst) s.docChanges().forEach(c => { if (c.type === 'added') this.showToast(`🧷 新的護貝膜申請：${c.doc.data().borrower||''} ${c.doc.data().qty||''} 張`, 5000); });
+        if (this.isAdmin && !lamFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const d = c.doc.data(); this.notifyAdmin('新的護貝膜申請', `${d.borrower||''}（${d.className||''}）申請 ${d.qty||''} 張，用途：${d.purpose||''}`); } });
         this.laminateRequests = s.docs.map(d => ({ id:d.id, ...d.data() }));
         lamFirst = false;
       }, this.snapErr('讀取護貝膜申請發生問題')));
@@ -1307,6 +1329,7 @@ function kgApp() {
           summary.push(`${it.name}×${q}`);
         }
         this.showToast(`已登記借出：${summary.join('、')}`);
+        this.notifyLine(`📚 新的借用登記\n${this.borrowForm.borrower.trim()}（${this.borrowForm.className}）\n借用：${summary.join('、')}\n借用日：${this.borrowForm.borrowDate}`);
         this.borrowForm.borrower=''; this.teacherPick=''; this.borrowForm.className=''; this.borrowForm.categoryId='';
         this.borrowForm.selected={}; this.borrowForm.searchKeyword='';
       } catch (e) { this.borrowError = '借用登記失敗，請再試一次'; }
@@ -1338,6 +1361,7 @@ function kgApp() {
           summary.push(`${r.itemName}×${q}`);
         }
         this.showToast(`已送出歸還申請：${summary.join('、')}，請等待管理員清點確認`);
+        { const r0 = this.getRecord(entries[0][0]) || {}; this.notifyLine(`📥 新的歸還申請（待確認）\n${r0.borrower||''}（${r0.className||''}）\n歸還：${summary.join('、')}\n請至管理者後台清點確認`); }
         this.returnForm.selected={}; this.returnForm.filterText=''; this.returnForm.itemNameFilter='';
       } catch (e) { this.returnError = '歸還申請送出失敗，請再試一次'; }
       this.submitting = false;
@@ -1760,6 +1784,7 @@ function kgApp() {
           requestDate: f.requestDate, requestTimestamp: this.getTaipeiTimestamp(), status: 'pending', createdAt: Date.now(),
         });
         this.showToast(`已送出護貝膜申請：${qty} 張，請等待管理員確認`);
+        this.notifyLine(`🧷 新的護貝膜申請（待確認）\n${f.borrower.trim()}（${f.className}）\n張數：${qty} 張\n用途：${f.purpose.trim()}\n檔名：${f.fileNote.trim()}\n請至管理者後台確認`);
         this.laminateForm.borrower = ''; this.laminateForm.className = ''; this.laminateForm.qty = 1;
         this.laminateForm.purpose = ''; this.laminateForm.fileNote = ''; this.laminateForm.uploaded = false;
       } catch (e) { console.error(e); this.laminateError = `送出失敗（${e.code || e.message}），請確認 Firestore 規則後再試一次`; }
@@ -1796,16 +1821,53 @@ function kgApp() {
     snapErr(label) { return (err) => { console.error(label, err); this.showToast(`${label}（${(err && (err.code || err.message)) || '未知錯誤'}）`, 6000); }; },
     showToast(msg, ms = 2600) { this.toast = msg; clearTimeout(this._toastTimer); this._toastTimer = setTimeout(() => { this.toast=''; }, ms); },
 
-    notifyNewReturnRequest(req) {
-      const msg = `📥 有人歸還物品：${req.borrower||''}（${req.className||''}）申請歸還 ${req.itemName||''} × ${req.qty||''}`;
-      this.showToast(msg);
+    get adminPendingCount() { return this.pendingReturnRequests.length + this.pendingLaminateRequests.length; },
+    playBeep() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        this.audioCtx = this.audioCtx || new AC();
+        const ctx = this.audioCtx, now = ctx.currentTime;
+        [880, 1175].forEach((f, k) => {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+          g.gain.setValueAtTime(0.0001, now + k*0.22); g.gain.exponentialRampToValueAtTime(0.25, now + k*0.22 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, now + k*0.22 + 0.2);
+          o.start(now + k*0.22); o.stop(now + k*0.22 + 0.22);
+        });
+      } catch (e) {}
+    },
+    flashTitle(text) {
+      if (!document.hidden) return;
+      this.stopTitleFlash(); let on = false;
+      this.titleTimer = setInterval(() => { on = !on; document.title = on ? `🔔 ${text}` : this.baseTitle; }, 1000);
+    },
+    stopTitleFlash() { if (this.titleTimer) { clearInterval(this.titleTimer); this.titleTimer = null; document.title = this.baseTitle; } },
+    notifyAdmin(title, body) {
+      this.showToast(`🔔 ${title}：${body}`, 8000);
+      this.playBeep();
+      this.flashTitle(title);
       if (window.Notification && Notification.permission === 'granted') {
-        try {
-          new Notification('教具借還系統 － 新的歸還申請', {
-            body: `${req.borrower||''}（${req.className||''}）申請歸還 ${req.itemName||''} × ${req.qty||''}，請至管理者後台確認清點。`,
-          });
-        } catch (e) {}
+        try { new Notification(`教具借還系統 － ${title}`, { body: `${body}。請至管理者後台查看。`, tag: 'kg-' + Date.now(), requireInteraction: true }); } catch (e) {}
       }
+    },
+    async enableNotifications() {
+      if (!window.Notification) { this.notifPerm = 'unsupported'; return; }
+      try { this.notifPerm = await Notification.requestPermission(); } catch (e) {}
+      this.playBeep();
+      this.showToast(this.notifPerm === 'granted' ? '已開啟通知 ✅' : '通知未開啟，請在瀏覽器網站設定中允許通知', 4000);
+    },
+    async notifyLine(text) {
+      try {
+        const user = this.auth && this.auth.currentUser; if (!user) return;
+        const idToken = await user.getIdToken();
+        fetch('/.netlify/functions/line-notify', {
+          method: 'POST', keepalive: true,
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
+          body: JSON.stringify({ text }),
+        }).then(r => { if (!r.ok) console.warn('LINE 通知未送出', r.status); }).catch(e => console.warn('LINE 通知失敗', e));
+      } catch (e) { console.warn('LINE 通知失敗', e); }
+    },
+    notifyNewReturnRequest(req) {
+      this.notifyAdmin('新的歸還申請', `${req.borrower||''}（${req.className||''}）申請歸還 ${req.itemName||''} × ${req.qty||''}`);
     },
   };
 }
