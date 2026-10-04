@@ -159,8 +159,8 @@
               <form @submit.prevent="submitBorrow" class="space-y-4">
                 <div>
                   <label class="text-sm font-bold text-wood-dark/80">老師姓名</label>
-                  <div x-effect="if(!borrowForm.borrower && teacherPick!=='__other__') teacherPick=''">
-                  <select x-model="teacherPick" @change="borrowForm.borrower = (teacherPick==='__other__' ? '' : teacherPick)"
+                  <div>
+                  <select x-model="teacherPick" @change="$nextTick(() => { borrowForm.borrower = (teacherPick==='__other__' ? '' : teacherPick); })"
                     class="mt-1 w-full rounded-xl border bg-paper px-3 py-2 text-sm"
                     :class="!borrowForm.borrower.trim() ? 'border-coral/60' : 'border-wood-light/50'">
                     <option value="">請選擇老師</option>
@@ -184,7 +184,7 @@
 
                 <div>
                   <label class="text-sm font-bold text-wood-dark/80">① 選擇類別（可切換類別繼續複選其他項目）</label>
-                  <select x-model="borrowForm.categoryId" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                  <select x-model="borrowForm.categoryId" @change="if(borrowForm.searchKeyword.trim()) pickForceOpen=true" required class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
                     <option value="">請選擇類別</option>
                     <template x-for="cat in categories" :key="cat.id"><option :value="cat.id" x-text="`${cat.emoji} ${cat.name}`"></option></template>
                   </select>
@@ -199,7 +199,7 @@
                       <template x-for="r in borrowLookupMatches" :key="r.id">
                         <div class="flex items-center gap-2 bg-paper rounded-lg p-2 border border-wood-light/30">
                           <img x-show="photoOf(getItemById(r.itemId))" :src="photoOf(getItemById(r.itemId))" class="w-8 h-8 rounded-lg object-cover border border-wood-light/30">
-                          <div x-show="!photoOf(getItemById(r.itemId))" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div>
+                          <template x-if="!photoOf(getItemById(r.itemId))"><div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div></template>
                           <div class="flex-1">
                             <p class="text-xs font-bold" x-text="r.itemName"></p>
                             <p class="text-[11px] text-wood-dark/50" x-text="`${r.borrower}（${r.className}）－借用 ${r.borrowDate}，尚欠 ${outstanding(r)} 件`"></p>
@@ -213,11 +213,13 @@
 
                 <div>
                   <label class="text-sm font-bold text-wood-dark/80">🔍 搜尋品項關鍵字（可輸入品項名稱或出版社）</label>
-                  <input type="text" x-model="borrowForm.searchKeyword" placeholder="例如：毛毛蟲 或 信誼出版社"
+                  <input type="text" x-model="borrowForm.searchKeyword" @input="pickForceOpen=false" placeholder="例如：毛毛蟲 或 信誼出版社"
                     class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                  <button type="button" x-show="borrowForm.searchKeyword.trim() && borrowForm.categoryId" @click="pickForceOpen=!pickForceOpen"
+                    class="mt-2 text-xs font-bold text-sage-dark underline" x-text="pickForceOpen ? '↩︎ 回到搜尋結果（收合 ② 選擇借用項目）' : '▼ 展開 ② 選擇借用項目'"></button>
                 </div>
 
-                <template x-if="borrowForm.searchKeyword.trim()">
+                <template x-if="borrowForm.searchKeyword.trim() && !pickForceOpen">
                   <div>
                     <label class="text-sm font-bold text-wood-dark/80">搜尋結果（可複選）</label>
                     <div class="mt-1 grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
@@ -226,7 +228,7 @@
                           :class="[isBorrowItemSelected(it.id) ? 'selected' : '', it.remaining<=0 ? 'disabled' : '']">
                           <input type="checkbox" :checked="isBorrowItemSelected(it.id)" @click.stop="toggleBorrowItem(it)" class="absolute top-1.5 right-1.5 w-4 h-4 accent-sage">
                           <img x-show="photoOf(it)" :src="photoOf(it)" class="w-full h-16 object-cover rounded-lg">
-                          <div x-show="!photoOf(it)" class="w-full h-16 rounded-lg flex items-center justify-center text-2xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div>
+                          <template x-if="!photoOf(it)"><div class="w-full h-16 rounded-lg flex items-center justify-center text-2xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div></template>
                           <p class="text-xs font-bold leading-tight" x-text="it.name"></p>
                           <p class="text-[10px] text-wood-dark/40" x-text="categoryNameOf(it.categoryId)"></p>
                           <p class="text-[11px] font-num" :class="it.remaining<=0 ? 'text-coral' : 'text-sage-dark'" x-text="it.remaining<=0 ? '已借出' : `可借用 ${it.remaining}/${it.total}`"></p>
@@ -238,15 +240,16 @@
                   </div>
                 </template>
 
-                <template x-if="borrowForm.categoryId">
+                <template x-if="borrowForm.categoryId && (!borrowForm.searchKeyword.trim() || pickForceOpen)">
                   <div>
                     <label class="text-sm font-bold text-wood-dark/80">② 選擇借用項目（可複選）</label>
                     <div class="mt-1 grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
                       <template x-for="it in borrowCategoryItems" :key="it.id">
-                        <div @click="toggleBorrowItem(it)" class="item-pick-card rounded-xl p-2 bg-paper border border-wood-light/30 flex flex-col gap-1"
+                        <div @click="toggleBorrowItem(it)" class="item-pick-card rounded-xl p-2 bg-paper border border-wood-light/30 flex flex-col gap-1 relative"
                           :class="[isBorrowItemSelected(it.id) ? 'selected' : '', it.remaining<=0 ? 'disabled' : '']">
+                          <input type="checkbox" :checked="isBorrowItemSelected(it.id)" @click.stop="toggleBorrowItem(it)" class="absolute top-1.5 right-1.5 w-4 h-4 accent-sage">
                           <img x-show="photoOf(it)" :src="photoOf(it)" class="w-full h-16 object-cover rounded-lg">
-                          <div x-show="!photoOf(it)" class="w-full h-16 rounded-lg flex items-center justify-center text-2xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div>
+                          <template x-if="!photoOf(it)"><div class="w-full h-16 rounded-lg flex items-center justify-center text-2xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div></template>
                           <p class="text-xs font-bold leading-tight" x-text="it.name"></p>
                           <p class="text-[11px] font-num" :class="it.remaining<=0 ? 'text-coral' : 'text-sage-dark'" x-text="it.remaining<=0 ? '已借出' : `可借用 ${it.remaining}/${it.total}`"></p>
                           <p x-show="it.remaining<=0" class="text-[10px] text-wood-dark/50 leading-tight" x-text="`借出者：${currentBorrowersOf(it.id)}`"></p>
@@ -263,7 +266,7 @@
                     <template x-for="entry in selectedBorrowEntries" :key="entry.it.id">
                       <div class="flex items-center gap-2 bg-cream rounded-xl p-2 border border-wood-light/30">
                         <img x-show="photoOf(entry.it)" :src="photoOf(entry.it)" class="w-10 h-10 rounded-lg object-cover border border-wood-light/40">
-                        <div x-show="!photoOf(entry.it)" class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :style="categoryStyle(entry.it.categoryId)" x-text="categoryEmojiOf(entry.it.categoryId)"></div>
+                        <template x-if="!photoOf(entry.it)"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :style="categoryStyle(entry.it.categoryId)" x-text="categoryEmojiOf(entry.it.categoryId)"></div></template>
                         <div class="flex-1">
                           <p class="text-sm font-bold" x-text="entry.it.name"></p>
                           <p class="text-[10px] text-wood-dark/40" x-text="categoryNameOf(entry.it.categoryId)"></p>
@@ -342,7 +345,7 @@
                       <template x-for="r in returnDateLookupMatches" :key="r.id">
                         <div class="flex items-center gap-2 bg-paper rounded-lg p-2 border border-wood-light/30">
                           <img x-show="photoOf(getItemById(r.itemId))" :src="photoOf(getItemById(r.itemId))" class="w-8 h-8 rounded-lg object-cover border border-wood-light/30">
-                          <div x-show="!photoOf(getItemById(r.itemId))" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div>
+                          <template x-if="!photoOf(getItemById(r.itemId))"><div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div></template>
                           <div class="flex-1">
                             <p class="text-xs font-bold" x-text="r.itemName"></p>
                             <p class="text-[11px] text-wood-dark/50" x-text="`${r.borrower}（${r.className}）－歸還 ${r.qty} 件`"></p>
@@ -383,7 +386,7 @@
                 <template x-for="it in filteredBrowseItems" :key="it.id">
                   <div class="paper-card rounded-2xl p-4 shadow-card flex flex-col gap-3">
                     <img x-show="photoOf(it)" :src="photoOf(it)" class="w-full h-32 object-cover rounded-xl border border-wood-light/30">
-                    <div x-show="!photoOf(it)" class="w-full h-32 rounded-xl flex items-center justify-center text-4xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div>
+                    <template x-if="!photoOf(it)"><div class="w-full h-32 rounded-xl flex items-center justify-center text-4xl" :style="categoryStyle(it.categoryId)" x-text="categoryEmojiOf(it.categoryId)"></div></template>
                     <div class="flex items-start justify-between">
                       <span class="tag-badge" :style="categoryStyle(it.categoryId)" x-text="categoryNameOf(it.categoryId)"></span>
                     </div>
@@ -459,7 +462,7 @@
               <template x-for="req in pendingReturnRequests" :key="req.id">
                 <div class="flex items-center gap-3 bg-cream rounded-xl p-3 border border-wood-light/30">
                   <img x-show="photoOf(getItemById(req.itemId))" :src="photoOf(getItemById(req.itemId))" class="w-12 h-12 rounded-lg object-cover border border-wood-light/40">
-                  <div x-show="!photoOf(getItemById(req.itemId))" class="w-12 h-12 rounded-lg flex items-center justify-center text-xl" :style="categoryStyleByName(req.category)" x-text="categoryEmojiByName(req.category)"></div>
+                  <template x-if="!photoOf(getItemById(req.itemId))"><div class="w-12 h-12 rounded-lg flex items-center justify-center text-xl" :style="categoryStyleByName(req.category)" x-text="categoryEmojiByName(req.category)"></div></template>
                   <div class="flex-1">
                     <p class="text-sm font-bold" x-text="`${req.itemName} × ${req.qty}`"></p>
                     <p class="text-xs text-wood-dark/50" x-text="`${req.borrower}（${req.className}）`"></p>
@@ -539,16 +542,6 @@
           </div>
 
           <div class="paper-card rounded-3xl p-6 shadow-card">
-            <h2 class="font-heading font-black text-lg mb-3 flex items-center gap-2"><span class="text-2xl">🗑️</span> 刪除紀錄（誰刪除了什麼）</h2>
-            <div class="space-y-2 max-h-72 overflow-y-auto">
-              <template x-for="l in deleteLogs" :key="l.id"><div class="bg-cream rounded-xl p-3 border border-wood-light/30 text-sm">
-                <p><span class="tag-badge tag-pending" x-text="l.type"></span> <span class="font-bold" x-text="l.summary"></span></p>
-                <p class="text-xs text-wood-dark/50 mt-1" x-text="`刪除人：${l.deletedBy}　時間：${l.deletedAt}`"></p></div></template>
-              <p x-show="deleteLogs.length===0" class="text-xs text-wood-dark/40 text-center py-4">目前沒有刪除紀錄</p>
-            </div>
-          </div>
-
-          <div class="paper-card rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">📋</span> 借還紀錄明細</h2>
               <div class="flex bg-sage-light rounded-full p-1 text-sm">
@@ -577,7 +570,7 @@
                       <td class="py-3 pr-3"><p class="font-bold" x-text="r.borrower"></p><p class="text-xs text-wood-dark/50" x-text="r.className"></p></td>
                       <td class="py-3 pr-3">
                         <img x-show="photoOf(getItemById(r.itemId))" :src="photoOf(getItemById(r.itemId))" class="w-10 h-10 rounded-lg object-cover border border-wood-light/30">
-                        <div x-show="!photoOf(getItemById(r.itemId))" class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div>
+                        <template x-if="!photoOf(getItemById(r.itemId))"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div></template>
                       </td>
                       <td class="py-3 pr-3"><p x-text="r.itemName"></p><p class="text-xs text-wood-dark/50" x-text="r.category"></p></td>
                       <td class="py-3 pr-3 font-num" x-text="`${r.qty - r.returnedQty} / ${r.qty}`"></td>
@@ -934,6 +927,25 @@
               <button @click="loginLogsShowAll=!loginLogsShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="loginLogsShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredLoginLogs.length-3} 筆 ▼`"></button>
             </div>
           </div>
+
+          <div class="paper-card rounded-3xl p-6 shadow-card">
+            <h2 class="font-heading font-black text-lg mb-3 flex items-center gap-2"><span class="text-2xl">🗑️</span> 刪除紀錄（可還原誤刪資料）</h2>
+            <input x-model="delLogQ" @input="delLogShowAll=false" placeholder="🔍 搜尋老師名稱、項目或刪除人" class="w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm mb-3">
+            <div class="space-y-2">
+              <template x-for="l in visibleDeleteLogs" :key="l.id"><div class="bg-cream rounded-xl p-3 border border-wood-light/30 text-sm">
+                <p><span class="tag-badge tag-pending" x-text="l.type"></span> <span class="font-bold" x-text="l.summary"></span></p>
+                <p class="text-xs text-wood-dark/50 mt-1" x-text="`刪除人：${l.deletedBy}　時間：${l.deletedAt}`"></p>
+                <div class="mt-2 flex items-center gap-2">
+                  <button x-show="l.snapshot && !l.restored" @click="restoreDeleted(l)" class="px-3 py-1.5 rounded-lg bg-sage text-paper text-xs font-bold hover:bg-sage-dark">↩︎ 還原這筆</button>
+                  <span x-show="l.restored" class="text-xs font-bold text-sage-dark" x-text="`✅ 已還原（${l.restoredBy}　${l.restoredAt}）`"></span>
+                  <span x-show="!l.snapshot && !l.restored" class="text-[11px] text-wood-dark/40">（較早的刪除紀錄，無法還原）</span>
+                </div></div></template>
+              <p x-show="filteredDeleteLogs.length===0" class="text-xs text-wood-dark/40 text-center py-4">沒有符合的刪除紀錄</p>
+            </div>
+            <div x-show="filteredDeleteLogs.length>3" class="text-center mt-4">
+              <button @click="delLogShowAll=!delLogShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="delLogShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredDeleteLogs.length-3} 筆 ▼`"></button>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -952,7 +964,7 @@ function kgApp() {
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
-    teacherPick: '', deleteLogs: [],
+    teacherPick: '', pickForceOpen: false, deleteLogs: [], delLogQ: '', delLogShowAll: false,
     laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
@@ -1112,7 +1124,7 @@ function kgApp() {
         lamFirst = false;
       }, this.snapErr('讀取護貝膜申請發生問題')));
       if (this.isAdmin) {
-        this.unsubs.push(this.db.collection('deleteLogs').orderBy('createdAt','desc').limit(50).onSnapshot(s => { this.deleteLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取刪除紀錄發生問題')));
+        this.unsubs.push(this.db.collection('deleteLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.deleteLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取刪除紀錄發生問題')));
         this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
       }
     },
@@ -1295,7 +1307,7 @@ function kgApp() {
           summary.push(`${it.name}×${q}`);
         }
         this.showToast(`已登記借出：${summary.join('、')}`);
-        this.borrowForm.borrower=''; this.borrowForm.className=''; this.borrowForm.categoryId='';
+        this.borrowForm.borrower=''; this.teacherPick=''; this.borrowForm.className=''; this.borrowForm.categoryId='';
         this.borrowForm.selected={}; this.borrowForm.searchKeyword='';
       } catch (e) { this.borrowError = '借用登記失敗，請再試一次'; }
       this.submitting = false;
@@ -1356,8 +1368,8 @@ function kgApp() {
     },
 
     whoAmI() { const u = this.currentUser || {}; return u.displayName ? `${u.displayName}（${u.email || ''}）` : (u.email || '未知管理員'); },
-    async logDelete(type, summary) {
-      try { await this.db.collection('deleteLogs').add({ type, summary, deletedBy: this.whoAmI(), deletedAt: this.getTaipeiTimestamp(), createdAt: Date.now() }); }
+    async logDelete(type, summary, extra = {}) {
+      try { await this.db.collection('deleteLogs').add({ type, summary, ...extra, deletedBy: this.whoAmI(), deletedAt: this.getTaipeiTimestamp(), createdAt: Date.now() }); }
       catch (e) { console.error('寫入刪除紀錄失敗', e); this.showToast('已刪除，但刪除紀錄未能寫入，請檢查 Firestore 規則', 5000); }
     },
     async deleteLaminateRecord(r) {
@@ -1370,23 +1382,65 @@ function kgApp() {
           if (rq.data().status === 'confirmed') { const st = await tx.get(stockRef); tx.update(stockRef, { remaining: Number(st.data().remaining || 0) + Number(rq.data().qty || 0) }); }
           tx.delete(reqRef);
         });
-        await this.logDelete('護貝膜申請', `${r.borrower}（${r.className}）${r.qty} 張，用途：${r.purpose}，申請日 ${r.requestDate}${back ? `，已加回庫存 ${r.qty} 張` : ''}`);
+        const snap = JSON.parse(JSON.stringify(r)); delete snap.id;
+        await this.logDelete('護貝膜申請', `${r.borrower}（${r.className}）${r.qty} 張，用途：${r.purpose}，申請日 ${r.requestDate}${back ? `，已加回庫存 ${r.qty} 張` : ''}`,
+          { kind: 'laminate', teacher: r.borrower, targetId: r.id, snapshot: snap, stockBack: back ? Number(r.qty || 0) : 0 });
         this.showToast('已刪除該筆申請，張數已重新計算');
       } catch (e) { console.error(e); this.showToast(`刪除失敗（${e.code || e.message}）`); }
     },
     async deleteRecord(r) {
-      if (!confirm(`確定要刪除「${r.borrower}－${r.itemName}」這筆借還紀錄嗎？此動作無法復原。`)) return;
+      if (!confirm(`確定要刪除「${r.borrower}－${r.itemName}」這筆借還紀錄嗎？數量會重新計算，並可在最下方「刪除紀錄」還原。`)) return;
       try {
+        const snap = JSON.parse(JSON.stringify(r)); delete snap.id;
+        let stockBack = 0;
         if (this.statusOf(r) !== 'returned') {
           const it = this.items.find(i => i.id === r.itemId);
-          if (it) await this.db.collection('items').doc(it.id).update({ remaining: it.remaining + this.outstanding(r) });
+          if (it) { stockBack = this.outstanding(r); await this.db.collection('items').doc(it.id).update({ remaining: firebase.firestore.FieldValue.increment(stockBack) }); }
         }
         const rq = await this.db.collection('returnRequests').where('recordId', '==', r.id).get();
+        const returnReqs = rq.docs.map(d => ({ id: d.id, data: d.data() }));
         for (const d of rq.docs) await d.ref.delete();
         await this.db.collection('records').doc(r.id).delete();
-        await this.logDelete('借還紀錄', `${r.borrower}（${r.className}）－${r.itemName} ×${r.qty}，借用日 ${r.borrowDate}${this.statusOf(r) !== 'returned' ? `，已回補庫存 ${this.outstanding(r)}` : ''}`);
+        await this.logDelete('借還紀錄', `${r.borrower}（${r.className}）－${r.itemName} ×${r.qty}，借用日 ${r.borrowDate}${stockBack ? `，已回補庫存 ${stockBack}` : ''}`,
+          { kind: 'record', teacher: r.borrower, targetId: r.id, snapshot: snap, returnReqs, stockBack });
         this.showToast('已刪除該筆紀錄，數量已重新計算');
       } catch (e) { console.error(e); this.showToast(`刪除失敗（${e.code || e.message}）`); }
+    },
+
+    get filteredDeleteLogs() {
+      const kw = this.delLogQ.trim().toLowerCase();
+      if (!kw) return this.deleteLogs;
+      return this.deleteLogs.filter(l => [l.teacher, l.summary, l.deletedBy].some(v => (v || '').toLowerCase().includes(kw)));
+    },
+    get visibleDeleteLogs() { return this.delLogShowAll ? this.filteredDeleteLogs : this.filteredDeleteLogs.slice(0, 3); },
+    async restoreDeleted(l) {
+      if (!l.snapshot || l.restored) return;
+      if (!confirm(`確定要還原這筆${l.type}嗎？\n${l.summary}`)) return;
+      try {
+        if (l.kind === 'record') {
+          const ref = this.db.collection('records').doc(l.targetId);
+          if (!(await ref.get()).exists) {
+            const item = this.items.find(i => i.id === l.snapshot.itemId), back = Number(l.stockBack || 0);
+            if (back > 0 && item && item.remaining < back) { this.showToast('該項目目前剩餘數量不足，無法還原（可能已被借走）', 5000); return; }
+            await ref.set(l.snapshot);
+            if (back > 0 && item) await this.db.collection('items').doc(item.id).update({ remaining: firebase.firestore.FieldValue.increment(-back) });
+            for (const q of (l.returnReqs || [])) await this.db.collection('returnRequests').doc(q.id).set(q.data);
+          }
+        } else if (l.kind === 'laminate') {
+          const stockRef = this.db.collection('laminateStock').doc('main'), reqRef = this.db.collection('laminateRequests').doc(l.targetId);
+          await this.db.runTransaction(async tx => {
+            if ((await tx.get(reqRef)).exists) return;
+            if (l.snapshot.status === 'confirmed') {
+              const st = await tx.get(stockRef), remain = st.exists ? Number(st.data().remaining || 0) : 0, q = Number(l.snapshot.qty || 0);
+              if (remain < q) throw new Error('stock');
+              tx.update(stockRef, { remaining: remain - q });
+            }
+            tx.set(reqRef, l.snapshot);
+          });
+        }
+        await this.db.collection('deleteLogs').doc(l.id).update({ restored: true, restoredBy: this.whoAmI(), restoredAt: this.getTaipeiTimestamp() });
+        this.showToast('已還原，數量已重新計算');
+      } catch (e) { console.error(e); this.showToast(e.message === 'stock' ? '護貝膜剩餘張數不足，無法還原此筆已確認的申請' : `還原失敗（${e.code || e.message}）`, 5000); }
     },
 
     exportInventoryCSV() {
