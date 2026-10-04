@@ -159,10 +159,17 @@
               <form @submit.prevent="submitBorrow" class="space-y-4">
                 <div>
                   <label class="text-sm font-bold text-wood-dark/80">老師姓名</label>
-                  <input list="teacherNames" x-model="borrowForm.borrower" required placeholder="例如：王老師"
+                  <div x-effect="if(!borrowForm.borrower && teacherPick!=='__other__') teacherPick=''">
+                  <select x-model="teacherPick" @change="borrowForm.borrower = (teacherPick==='__other__' ? '' : teacherPick)"
                     class="mt-1 w-full rounded-xl border bg-paper px-3 py-2 text-sm"
                     :class="!borrowForm.borrower.trim() ? 'border-coral/60' : 'border-wood-light/50'">
-                  <datalist id="teacherNames"><template x-for="n in teacherSuggestions" :key="n"><option :value="n"></option></template></datalist>
+                    <option value="">請選擇老師</option>
+                    <template x-for="n in teacherSuggestions" :key="'bt_'+n"><option :value="n" x-text="n"></option></template>
+                    <option value="__other__">✏️ 其他（手動輸入姓名）</option>
+                  </select>
+                  <input x-show="teacherPick==='__other__'" x-model="borrowForm.borrower" placeholder="請輸入老師姓名，例如：王老師"
+                    class="mt-2 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                  </div>
                   <p x-show="!borrowForm.borrower.trim()" class="text-coral text-xs font-bold mt-1">必填</p>
                 </div>
                 <div>
@@ -314,8 +321,7 @@
                         <div class="flex items-center gap-2 bg-paper rounded-xl p-2 border border-wood-light/30">
                           <input type="checkbox" :checked="isReturnSelected(r.id)" @change="toggleReturnRecord(r)" class="w-4 h-4 accent-sage shrink-0">
                           <img x-show="photoOf(getItemById(r.itemId))" :src="photoOf(getItemById(r.itemId))" class="w-10 h-10 rounded-lg object-cover border border-wood-light/40">
-                          <div x-show="!photoOf(getItemById(r.itemId))" class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :style="categoryStyleByName(r.category)" x-text="categoryEmojiByName(r.category)"></div>
-                          <div class="flex-1">
+                            <div class="flex-1">
                             <p class="text-sm font-bold" x-text="r.itemName"></p>
                             <p class="text-xs text-wood-dark/50" x-text="`${r.borrower}（${r.className}）－尚欠 ${outstanding(r)} 件`"></p>
                             <p x-show="pendingReturnQtyOf(r.id)>0" class="text-[11px] text-mustard font-bold" x-text="`已有 ${pendingReturnQtyOf(r.id)} 件送出待管理員確認`"></p>
@@ -514,7 +520,7 @@
             <p class="text-xs text-sage-dark font-bold mb-3" x-text="`符合條件共 ${filteredLaminateRecords.length} 筆，合計 ${filteredLaminateRecords.reduce((n,r)=>n+Number(r.qty||0),0)} 張`"></p>
             <div class="overflow-x-auto"><table class="w-full text-sm min-w-[640px]">
               <thead><tr class="text-left text-wood-dark/50 text-xs tracking-wide border-b border-wood-light/30">
-                <th class="py-2 pr-3">申請日期</th><th class="py-2 pr-3">老師 / 班級</th><th class="py-2 pr-3">張數</th><th class="py-2 pr-3">用途</th><th class="py-2 pr-3">檔名</th><th class="py-2 pr-3">狀態</th></tr></thead>
+                <th class="py-2 pr-3">申請日期</th><th class="py-2 pr-3">老師 / 班級</th><th class="py-2 pr-3">張數</th><th class="py-2 pr-3">用途</th><th class="py-2 pr-3">檔名</th><th class="py-2 pr-3">狀態</th><th class="py-2 pr-3">操作</th></tr></thead>
               <tbody>
                 <template x-for="r in visibleLaminateRecords" :key="r.id"><tr class="border-b border-wood-light/15 hover:bg-cream/60">
                   <td class="py-3 pr-3 font-num" x-text="r.requestDate"></td>
@@ -523,11 +529,22 @@
                   <td class="py-3 pr-3" x-text="r.purpose"></td>
                   <td class="py-3 pr-3 text-xs" x-text="r.fileNote || '－'"></td>
                   <td class="py-3 pr-3"><span class="tag-badge" :class="r.status==='confirmed' ? 'tag-returned' : 'tag-pending'" x-text="r.status==='confirmed' ? '已確認' : '待確認'"></span></td>
+                  <td class="py-3 pr-3"><button @click="deleteLaminateRecord(r)" class="text-coral font-bold text-xs hover:underline">刪除</button></td>
                 </tr></template>
-                <tr x-show="filteredLaminateRecords.length===0"><td colspan="6" class="py-8 text-center text-wood-dark/40">目前沒有符合條件的申請紀錄</td></tr>
+                <tr x-show="filteredLaminateRecords.length===0"><td colspan="7" class="py-8 text-center text-wood-dark/40">目前沒有符合條件的申請紀錄</td></tr>
               </tbody></table></div>
             <div x-show="filteredLaminateRecords.length>3" class="text-center mt-4">
               <button @click="lamShowAll=!lamShowAll" class="text-sage-dark text-sm font-bold hover:underline" x-text="lamShowAll ? '收合紀錄 ▲' : `展開其餘 ${filteredLaminateRecords.length-3} 筆 ▼`"></button>
+            </div>
+          </div>
+
+          <div class="paper-card rounded-3xl p-6 shadow-card">
+            <h2 class="font-heading font-black text-lg mb-3 flex items-center gap-2"><span class="text-2xl">🗑️</span> 刪除紀錄（誰刪除了什麼）</h2>
+            <div class="space-y-2 max-h-72 overflow-y-auto">
+              <template x-for="l in deleteLogs" :key="l.id"><div class="bg-cream rounded-xl p-3 border border-wood-light/30 text-sm">
+                <p><span class="tag-badge tag-pending" x-text="l.type"></span> <span class="font-bold" x-text="l.summary"></span></p>
+                <p class="text-xs text-wood-dark/50 mt-1" x-text="`刪除人：${l.deletedBy}　時間：${l.deletedAt}`"></p></div></template>
+              <p x-show="deleteLogs.length===0" class="text-xs text-wood-dark/40 text-center py-4">目前沒有刪除紀錄</p>
             </div>
           </div>
 
@@ -935,6 +952,7 @@ function kgApp() {
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
+    teacherPick: '', deleteLogs: [],
     laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
@@ -1094,6 +1112,7 @@ function kgApp() {
         lamFirst = false;
       }, this.snapErr('讀取護貝膜申請發生問題')));
       if (this.isAdmin) {
+        this.unsubs.push(this.db.collection('deleteLogs').orderBy('createdAt','desc').limit(50).onSnapshot(s => { this.deleteLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取刪除紀錄發生問題')));
         this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
       }
     },
@@ -1336,6 +1355,25 @@ function kgApp() {
       } catch (e) { this.showToast('取消失敗，請再試一次'); }
     },
 
+    whoAmI() { const u = this.currentUser || {}; return u.displayName ? `${u.displayName}（${u.email || ''}）` : (u.email || '未知管理員'); },
+    async logDelete(type, summary) {
+      try { await this.db.collection('deleteLogs').add({ type, summary, deletedBy: this.whoAmI(), deletedAt: this.getTaipeiTimestamp(), createdAt: Date.now() }); }
+      catch (e) { console.error('寫入刪除紀錄失敗', e); this.showToast('已刪除，但刪除紀錄未能寫入，請檢查 Firestore 規則', 5000); }
+    },
+    async deleteLaminateRecord(r) {
+      const back = r.status === 'confirmed';
+      if (!confirm(`確定要刪除「${r.borrower}」的護貝膜申請（${r.qty} 張）嗎？${back ? `\n此申請已確認，刪除後會把 ${r.qty} 張加回剩餘張數。` : ''}`)) return;
+      const stockRef = this.db.collection('laminateStock').doc('main'), reqRef = this.db.collection('laminateRequests').doc(r.id);
+      try {
+        await this.db.runTransaction(async tx => {
+          const rq = await tx.get(reqRef); if (!rq.exists) return;
+          if (rq.data().status === 'confirmed') { const st = await tx.get(stockRef); tx.update(stockRef, { remaining: Number(st.data().remaining || 0) + Number(rq.data().qty || 0) }); }
+          tx.delete(reqRef);
+        });
+        await this.logDelete('護貝膜申請', `${r.borrower}（${r.className}）${r.qty} 張，用途：${r.purpose}，申請日 ${r.requestDate}${back ? `，已加回庫存 ${r.qty} 張` : ''}`);
+        this.showToast('已刪除該筆申請，張數已重新計算');
+      } catch (e) { console.error(e); this.showToast(`刪除失敗（${e.code || e.message}）`); }
+    },
     async deleteRecord(r) {
       if (!confirm(`確定要刪除「${r.borrower}－${r.itemName}」這筆借還紀錄嗎？此動作無法復原。`)) return;
       try {
@@ -1343,9 +1381,12 @@ function kgApp() {
           const it = this.items.find(i => i.id === r.itemId);
           if (it) await this.db.collection('items').doc(it.id).update({ remaining: it.remaining + this.outstanding(r) });
         }
+        const rq = await this.db.collection('returnRequests').where('recordId', '==', r.id).get();
+        for (const d of rq.docs) await d.ref.delete();
         await this.db.collection('records').doc(r.id).delete();
-        this.showToast('已刪除該筆紀錄');
-      } catch (e) { this.showToast('刪除失敗，請再試一次'); }
+        await this.logDelete('借還紀錄', `${r.borrower}（${r.className}）－${r.itemName} ×${r.qty}，借用日 ${r.borrowDate}${this.statusOf(r) !== 'returned' ? `，已回補庫存 ${this.outstanding(r)}` : ''}`);
+        this.showToast('已刪除該筆紀錄，數量已重新計算');
+      } catch (e) { console.error(e); this.showToast(`刪除失敗（${e.code || e.message}）`); }
     },
 
     exportInventoryCSV() {
