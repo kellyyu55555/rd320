@@ -44,7 +44,10 @@ exports.handler = async (event) => {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ to: id, messages: [{ type: 'text', text }] }),
     });
-    return r.ok;
+    if (r.ok) return { ok: true };
+    let detail = ''; try { detail = (await r.text()).slice(0, 300); } catch (e) {}
+    return { ok: false, status: r.status, detail };
   }));
-  return json(200, { sent: results.filter(Boolean).length, failed: results.filter(x => !x).length });
+  const failed = results.filter(x => !x.ok);
+  return json(200, { sent: results.length - failed.length, failed: failed.length, errors: failed.map(x => ({ status: x.status, detail: x.detail })) });
 };
