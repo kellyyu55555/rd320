@@ -1873,7 +1873,11 @@ function kgApp() {
         });
         const body = await r.text().catch(() => '');
         if (!r.ok) { console.warn('LINE 通知未送出', r.status, body); say(`LINE 通知未送出（${r.status}）${body.slice(0, 120)}`); }
-        else if (verbose) { this.showToast(`LINE 測試訊息已送出：${body}`, 6000); }
+        else {
+          let j = {}; try { j = JSON.parse(body); } catch (e) {}
+          if (!(j.sent > 0)) { console.warn('LINE 拒絕了訊息', body); say(`LINE 拒絕了訊息：${JSON.stringify(j.errors || body).slice(0, 220)}`); }
+          else if (verbose) this.showToast('✅ LINE 測試訊息已送出，請查看 LINE', 6000);
+        }
       } catch (e) { console.warn('LINE 通知失敗', e); say(`LINE 通知失敗：${e.message || e}`); }
     },
     testLine() { return this.notifyLine('✅ LINE 通知測試：教具借還系統已連線成功', true); },
