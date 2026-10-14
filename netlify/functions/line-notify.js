@@ -8,6 +8,14 @@ const DEFAULT_FIREBASE_API_KEY = 'AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU';
 const json = (statusCode, obj) => ({ statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
 
 exports.handler = async (event) => {
+  // 診斷用：用瀏覽器直接開此網址，可確認環境變數是否已設定（不會顯示任何機密內容）
+  if (event.httpMethod === 'GET') {
+    return json(200, {
+      ok: true,
+      lineTokenSet: !!process.env.LINE_CHANNEL_ACCESS_TOKEN,
+      lineToCount: (process.env.LINE_TO || '').split(',').map(s => s.trim()).filter(Boolean).length,
+    });
+  }
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' });
 
   // 1. 驗證呼叫者已登入 Firebase（避免外人亂發通知）
