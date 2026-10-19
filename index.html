@@ -2969,7 +2969,7 @@ function kgApp() {
         const user = firebase.auth().currentUser;
         if (!user) { console.warn('LINE 通知：尚未登入'); say('LINE 通知未送出：尚未登入'); return; }
         const idToken = await user.getIdToken();
-        const r = await fetch('/line-notify', {
+        const r = await fetch('/api/line-notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
           body: JSON.stringify({ text }),
