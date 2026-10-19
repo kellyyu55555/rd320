@@ -43,3 +43,4 @@ exports.handler = async (event) => {
   const failed = results.filter(x => !x.ok);
   return json(200, { sent: results.length - failed.length, failed: failed.length, errors: failed.map(x => ({ status: x.status, detail: x.detail })) });
 };
+// test commit
