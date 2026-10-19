@@ -1883,7 +1883,7 @@ function bind(){
     if(o.ownerEmail&&d.notifyLineTo)d.notifyLineTo(o.ownerEmail,`↩️ 週誌被退回，請修改\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n原因：${reason.trim()}\n請至系統「📝 週誌」修改後重新送出`).then(r=>{if(r&&r.noBinding)alert("已退回。這位老師尚未綁定 LINE，所以沒有 LINE 通知（她開啟系統時會看到退件原因）。")}).catch(()=>{});
     alert("已退回，老師會看到退件原因")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.updf){const L=ds.updf==="cur"?cur:logs.find(l=>l.id===ds.updf);if(ds.updf==="cur"){clearTimeout(saveT);await saveCur()}if(L)uploadPdf(L);return}
-  if(ds.lbind){let r;try{r=await d.lineBindInit()}catch(x){r=null}if(r&&r.code)alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`);else alert("取得綁定碼失敗："+((r&&r.error)||"請確認 Netlify 的 LINE 函式已部署"));return}
+  if(ds.lbind){let r;try{r=await d.lineBindInit()}catch(x){r=null}if(r&&r.code)alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`);else alert("取得綁定碼失敗："+((r&&r.error)||"請確認 LINE 綁定功能已部署"));return}
   if(ds.fillteach){if(fillTeach(cur)){render();later()}else alert("管理員尚未在「老師／班級組合」設定這個班級的老師，請直接輸入或從下拉選單選擇姓名。");return}
   if(ds.saveprefs){try{await d.db.collection("weeklyPrefs").doc((d.currentUser||{}).uid).set(prefsOf(cur));status("已存為預設 ✓（之後新增的週誌會自動帶入）")}catch(x){alert("儲存預設失敗（"+(x.code||x.message)+"）。請確認 Firestore 規則已加入 weeklyPrefs。")}return}
   if(ds.useprefs){const P=prefs;if(!P){alert("還沒有儲存過預設，請先填好內容後按「存為預設」");return}if(!confirm("要用預設資料取代目前的班級、年齡層、老師、背景說明與簽名嗎？"))return;cur.cls=P.cls||"";cur.ages=Object.assign({},cur.ages,P.ages||{});cur.t1=P.t1||"";cur.t2=P.t2||"";cur.teachers=tch(cur);cur.bg=P.bg||"";cur.lz.recorder=P.recorder||"";cur.lz.leader=P.leader||"";cur.lz.director=P.director||"";render();later();return}
@@ -2957,7 +2957,8 @@ function kgApp() {
     async fnPost(name, body) {
       const user = firebase.auth().currentUser; if (!user) throw new Error('未登入');
       const idToken = await user.getIdToken();
-          const r = await fetch('https://workers.dev' + name, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify(body) });
+      const path = name.startsWith('/') ? name : '/' + name;
+      const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify(body) });
       const t = await r.text(); try { return JSON.parse(t); } catch (e) { return { ok: false, error: `伺服器回應異常（${r.status}）` }; }
     },
     notifyLineTo(email, text) { return this.fnPost('line-notify', { toEmail: email, text }); },
@@ -2969,7 +2970,7 @@ function kgApp() {
         const user = firebase.auth().currentUser;
         if (!user) { console.warn('LINE 通知：尚未登入'); say('LINE 通知未送出：尚未登入'); return; }
         const idToken = await user.getIdToken();
-        const r = await fetch('/.netlify/functions/line-notify', {
+        const r = await fetch('/line-notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
           body: JSON.stringify({ text }),
