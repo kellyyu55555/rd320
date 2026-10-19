@@ -2957,7 +2957,7 @@ function kgApp() {
     async fnPost(name, body) {
       const user = firebase.auth().currentUser; if (!user) throw new Error('未登入');
       const idToken = await user.getIdToken();
-      const r = await fetch('/api/' + name, {, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify(body) });
+      const r = await fetch('https://workers.dev' + name, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify({ text }) });
       const t = await r.text(); try { return JSON.parse(t); } catch (e) { return { ok: false, error: `伺服器回應異常（${r.status}）` }; }
     },
     notifyLineTo(email, text) { return this.fnPost('line-notify', { toEmail: email, text }); },
@@ -2969,7 +2969,7 @@ function kgApp() {
         const user = firebase.auth().currentUser;
         if (!user) { console.warn('LINE 通知：尚未登入'); say('LINE 通知未送出：尚未登入'); return; }
         const idToken = await user.getIdToken();
-        const r = await fetch('/api/line-notify', {
+                const r = await fetch('https://workers.dev', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
           body: JSON.stringify({ text }),
