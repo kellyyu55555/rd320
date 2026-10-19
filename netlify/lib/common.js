@@ -1,45 +1,51 @@
-// Netlify Function：推播 LINE 訊息
-//  1. 一般呼叫（{ text }）：傳給管理員（環境變數 LINE_TO）。任何已登入的使用者都能觸發（例如老師送出申請）。
-//  2. 管理員呼叫（{ text, toEmail }）：傳給指定老師（需該老師已完成 LINE 綁定），只有管理員能用，例如週誌退件通知。
-// 環境變數：LINE_CHANNEL_ACCESS_TOKEN、LINE_TO（管理員 userId，逗號分隔）、（選填）FIREBASE_API_KEY、FIREBASE_PROJECT_ID
-const { json, whoami, isAdmin, store, linePush } = require('../lib/common');
+// 共用工具：驗證 Firebase 登入、判斷是否為管理員、LINE 推播、綁定資料儲存
+const API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU';
+const PROJECT = process.env.FIREBASE_PROJECT_ID || 'rd320-3681667';
 
-exports.handler = async (event) => {
-  // 診斷用：瀏覽器直接開此網址，確認環境變數是否已設定（不會顯示機密）
-  if (event.httpMethod === 'GET') {
-    return json(200, {
-      ok: true,
-      lineTokenSet: !!process.env.LINE_CHANNEL_ACCESS_TOKEN,
-      lineToCount: (process.env.LINE_TO || '').split(',').map(s => s.trim()).filter(Boolean).length,
-      webhookSecretSet: !!process.env.LINE_CHANNEL_SECRET,
-    });
-  }
-  if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' });
+const json = (statusCode, obj) => ({ statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
 
-  const me = await whoami(event);
-  if (!me) return json(401, { error: 'invalid token' });
+// 驗證呼叫者已登入 Firebase，回傳 { email, uid, token }
+async function whoami(event) {
+  const h = event.headers || {};
+  const token = (h.authorization || h.Authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: token }),
+  });
+  if (!r.ok) return null;
+  const u = ((await r.json()).users || [])[0];
+  if (!u || !u.email) return null;
+  return { email: u.email.toLowerCase(), uid: u.localId, token };
+}
 
-  let body = {};
-  try { body = JSON.parse(event.body || '{}'); } catch (e) {}
-  const text = String(body.text || '').trim().slice(0, 900);
-  if (!text) return json(400, { error: 'empty text' });
-  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return json(500, { error: 'LINE 尚未設定（缺少 LINE_CHANNEL_ACCESS_TOKEN）' });
+// 用呼叫者自己的登入憑證讀取 config/admins，判斷是否為管理員
+async function isAdmin(me) {
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/config/admins`, {
+    headers: { Authorization: 'Bearer ' + me.token },
+  });
+  if (!r.ok) return false;
+  const j = await r.json();
+  const vals = ((((j.fields || {}).emails || {}).arrayValue || {}).values || []).map(v => String(v.stringValue || '').toLowerCase());
+  return vals.includes(me.email);
+}
 
-  // 傳給指定老師（僅管理員）
-  if (body.toEmail) {
-    if (!(await isAdmin(me))) return json(403, { error: '只有管理員可以傳給指定老師' });
-    let bound = null;
-    try { bound = await (await store(event)).get('email:' + String(body.toEmail).toLowerCase(), { type: 'json' }); }
-    catch (e) { return json(500, { error: '讀取綁定資料失敗：' + e.message }); }
-    if (!bound || !bound.userId) return json(200, { ok: true, sent: 0, noBinding: true });
-    const r = await linePush(bound.userId, text);
-    return json(200, { ok: true, sent: r.ok ? 1 : 0, failed: r.ok ? 0 : 1, errors: r.ok ? [] : [{ status: r.status, detail: r.detail }] });
-  }
+// Netlify Blobs：存「綁定碼」與「Email ↔ LINE userId」
+async function store(event) {
+  const { getStore, connectLambda } = await import('@netlify/blobs');
+  try { connectLambda(event); } catch (e) {}
+  return getStore('line-bind');
+}
 
-  // 傳給管理員
-  const to = (process.env.LINE_TO || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (!to.length) return json(500, { error: 'LINE 尚未設定（缺少 LINE_TO）' });
-  const results = await Promise.all(to.map(id => linePush(id, text)));
-  const failed = results.filter(x => !x.ok);
-  return json(200, { sent: results.length - failed.length, failed: failed.length, errors: failed.map(x => ({ status: x.status, detail: x.detail })) });
-};
+async function linePush(to, text) {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const r = await fetch('https://api.line.me/v2/bot/message/push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ to, messages: [{ type: 'text', text }] }),
+  });
+  if (r.ok) return { ok: true };
+  let detail = ''; try { detail = (await r.text()).slice(0, 300); } catch (e) {}
+  return { ok: false, status: r.status, detail };
+}
+
+module.exports = { json, whoami, isAdmin, store, linePush };
