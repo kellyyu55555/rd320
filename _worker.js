@@ -26,16 +26,25 @@ async function whoami(request, env) {
   return { email: u.email.toLowerCase(), uid: u.localId, token };
 }
 
-// 用呼叫者自己的登入憑證讀取 config/admins，判斷是否為管理員
+// 判斷是否為管理員：先看環境變數 ADMIN_EMAILS（逗號分隔），再用呼叫者自己的登入憑證讀取 config/admins
 async function isAdmin(me, env) {
+  const fixed = String(env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+  if (fixed.includes(me.email)) return true;
+
   const project = env.FIREBASE_PROJECT_ID || DEFAULT_PROJECT;
-  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/config/admins`, {
+  const key = env.FIREBASE_API_KEY || DEFAULT_API_KEY;
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/config/admins?key=${key}`, {
     headers: { Authorization: 'Bearer ' + me.token },
   });
-  if (!r.ok) return false;
+  if (!r.ok) {
+    let t = ''; try { t = (await r.text()).slice(0, 200); } catch (e) {}
+    me.adminErr = 'Firestore ' + r.status + ' ' + t;
+    return false;
+  }
   const j = await r.json();
   const vals = ((((j.fields || {}).emails || {}).arrayValue || {}).values || []).map(v => String(v.stringValue || '').toLowerCase());
-  return vals.includes(me.email);
+  if (!vals.includes(me.email)) { me.adminErr = '名單裡沒有 ' + me.email; return false; }
+  return true;
 }
 
 async function linePush(env, to, text) {
@@ -77,7 +86,7 @@ async function notify(request, env) {
 
   // 傳給指定老師（僅管理員）
   if (body.toEmail) {
-    if (!(await isAdmin(me, env))) return json(403, { error: '只有管理員可以傳給指定老師' });
+    if (!(await isAdmin(me, env))) return json(403, { error: '只有管理員可以傳給指定老師', detail: me.adminErr || '', build: 'v3' });
     let bound = null;
     try { bound = await kv(env).get('email:' + String(body.toEmail).toLowerCase(), 'json'); }
     catch (e) { return json(500, { error: '讀取綁定資料失敗：' + e.message }); }
@@ -146,7 +155,7 @@ async function webhook(request, env) {
     if (ev.type === 'follow') {
       await lineReply(env, ev.replyToken, '歡迎加入仁德幼兒園的教具借還系統通知 👋\n如要接收週誌退件通知，請先在系統「📝 週誌」按「取得綁定碼」，再把「綁定 123456」這段文字傳給我。');
     } else if (ev.type === 'message' && ev.message && ev.message.type === 'text' && uid) {
-      const m = String(ev.message.text).match(/綁定\s*(\d{6})/);
+      const m = String(ev.message.text).trim().match(/^(?:綁定\s*)?(\d{6})$/);
       if (!m) continue;
       let k; try { k = kv(env); } catch (e) { await lineReply(env, ev.replyToken, '❌ 系統尚未完成綁定功能的設定，請通知管理員。'); continue; }
       const rec = await k.get('code:' + m[1], 'json');
@@ -163,7 +172,7 @@ async function webhook(request, env) {
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
-    const m = path.match(/^\/(?:\.netlify\/functions|api)\/(line-notify|line-bind|line-webhook)$/);
+    const m = path.match(/^(?:\/\.netlify\/functions|\/api)?\/(line-notify|line-bind|line-webhook)$/);
     try {
       if (m) {
         if (m[1] === 'line-notify') return await notify(request, env);
