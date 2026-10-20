@@ -1,12 +1,14 @@
-   worker.js
-   wrangler.jsonc
-   package.json
-   package-lock.json
-   node_modules
-   netlify
-   drive-upload.gs
-   firestore.rules
-   firestore-step1.rules
-   .assetsignore
-   .gitignore
-   README.md
+_worker.js
+wrangler.jsonc
+package.json
+package-lock.json
+node_modules
+netlify
+functions
+drive-upload.gs
+firestore.rules
+firestore-step1.rules
+.assetsignore
+.gitignore
+.git
+README.md
