@@ -163,7 +163,7 @@ async function webhook(request, env) {
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
-    const m = path.match(/^\/(?:\.netlify\/functions|api)\/(line-notify|line-bind|line-webhook)$/);
+    const m = path.match(/^(?:\/\.netlify\/functions|\/api)?\/(line-notify|line-bind|line-webhook)$/);
     try {
       if (m) {
         if (m[1] === 'line-notify') return await notify(request, env);
