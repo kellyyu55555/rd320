@@ -146,7 +146,7 @@ async function webhook(request, env) {
     if (ev.type === 'follow') {
       await lineReply(env, ev.replyToken, '歡迎加入仁德幼兒園的教具借還系統通知 👋\n如要接收週誌退件通知，請先在系統「📝 週誌」按「取得綁定碼」，再把「綁定 123456」這段文字傳給我。');
     } else if (ev.type === 'message' && ev.message && ev.message.type === 'text' && uid) {
-      const m = String(ev.message.text).trim().match(/^(?:綁定\s*)?(\d{6})$/);
+      const m = String(ev.message.text).match(/綁定\s*(\d{6})/);
       if (!m) continue;
       let k; try { k = kv(env); } catch (e) { await lineReply(env, ev.replyToken, '❌ 系統尚未完成綁定功能的設定，請通知管理員。'); continue; }
       const rec = await k.get('code:' + m[1], 'json');
@@ -163,7 +163,7 @@ async function webhook(request, env) {
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
-    const m = path.match(/^(?:\/\.netlify\/functions|\/api)?\/(line-notify|line-bind|line-webhook)$/);
+    const m = path.match(/^\/(?:\.netlify\/functions|api)\/(line-notify|line-bind|line-webhook)$/);
     try {
       if (m) {
         if (m[1] === 'line-notify') return await notify(request, env);
