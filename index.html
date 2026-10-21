@@ -1785,10 +1785,10 @@ function docHtml(L,mode){
 const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.ws.slots;return `<div class="fw"><section class="sheet sh fit"><h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:#2f5597;text-decoration:underline">${esc(L.cls)}在地文化社區踏查</span>教學活動學習單</h2><table class="blue">${C()}${[0,1].map(i=>{const s=S[i]||{id:"",cap:""};const img=s.id&&photos[s.id]?`<img src="${photos[s.id]}" alt="">`:"";return `<tr><td colspan="12" class="wsbox">${img||(E?'<span class="wsph">學習單掃描</span>':"")}${E?`<br><label class="wkb" style="display:inline-block">${s.id?"更換掃描檔":"＋ 上傳學習單掃描檔"}<input type="file" accept="image/*" data-upws="${i}" style="display:none"></label>${s.id?`<button type="button" class="xb" data-xws="${i}">刪除</button>`:""}`:""}</td></tr><tr><td colspan="12" class="wscap">${E?`<textarea data-k="ws.slots.${i}.cap" rows="1" placeholder="學習單說明">${esc(s.cap)}</textarea>`:nl(s.cap)}</td></tr>`}).join("")}</table></section></div>`};
  const stratCell=()=>{const sel=(L.lz.sopts||[]).filter(o=>SOPTS.includes(o));
   const optsEl=E?`<details class="sdd"><summary>${sel.length?esc(sel.join("、")):"請選擇▾"}</summary><div class="sddp">${SOPTS.map(o=>`<label><input type="checkbox" data-sopt="${o}" ${sel.includes(o)?"checked":""}>${o}</label>`).join("")}</div></details>`:esc(sel.join("、"));
-  let x=`<div>引導說明：</div>${RT_("lz.guide",3)}${E?"":"<div><br></div>"}<div>說明：</div>${RT_("lz.strategy",4)}`;
+  let x=`<div>引導說明：</div>${RT_("lz.guide",3)}${E?"":"<div><br></div>"}<div>課程調整策略：</div>${RT_("lz.strategy",4)}`;
   if(E)x+=`<div>課程調整策略：(${optsEl})</div>`;
-  if(E)x+=`<div style="margin:3px 0"><button type="button" class="wkb" data-sgen="1">✨ 依「說明」生成課程調整策略（勾選項目＋完整文字）</button> <span id="sgenst" style="font-size:12px;font-weight:700;color:#375623"></span></div>`;
-  if(E&&genPrev&&genPrev.id===L.id)x+=`<div style="border:1px solid #b6d3b0;background:#f2f8ee;border-radius:8px;padding:6px 10px;margin:4px 0"><div style="font-size:12px;font-weight:700;color:#375623">整理後的完整文字（確認後按「套用」，會取代上方的說明內容）</div>${genPrev.full.split("\n").map(l=>`<div>${esc(l)}</div>`).join("")}<div style="margin-top:4px"><button type="button" class="wkb on" data-sgenok="1">套用到說明欄</button> <button type="button" class="wkb" data-sgenno="1">關閉</button></div></div>`;
+  if(E)x+=`<div style="margin:3px 0"><button type="button" class="wkb" data-sgen="1">✨ 依上方「課程調整策略」文字，生成勾選項目＋完整文字</button> <span id="sgenst" style="font-size:12px;font-weight:700;color:#375623"></span></div>`;
+  if(E&&genPrev&&genPrev.id===L.id)x+=`<div style="border:1px solid #b6d3b0;background:#f2f8ee;border-radius:8px;padding:6px 10px;margin:4px 0"><div style="font-size:12px;font-weight:700;color:#375623">整理後的完整文字（確認後按「套用」，會取代上方「課程調整策略」的內容）</div>${genPrev.full.split("\n").map(l=>`<div>${esc(l)}</div>`).join("")}<div style="margin-top:4px"><button type="button" class="wkb on" data-sgenok="1">套用到上方欄位</button> <button type="button" class="wkb" data-sgenno="1">關閉</button></div></div>`;
   if(E)x+=`<details class="sex"><summary>📋 範例（來自各班已完成的週誌，按「套用」後再修改成自己的）</summary><div class="sexl">${STRAT_EX.map((e,i)=>`<div class="sexi"><div class="sexh">${esc(e.from)}　${(e.o||[]).map(o=>`<span class="sextag">${o}</span>`).join("")}</div><div class="sext">${esc(e.x.slice(0,100))}${e.x.length>100?"…":""}</div><button type="button" class="wkb" data-sex="${i}">套用這個範例</button></div>`).join("")}</div></details>`;
   return x};
  let h="";
@@ -1948,9 +1948,9 @@ function bind(){
    if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n${cur.cls}（${tch(cur)||cur.ownerName||""}）\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert("已送出！管理員會收到通知。");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
-   if(!String(r.text).trim()){say("請先在上方「說明」欄輸入內容，再按這個按鈕。");return}
-   if(!r.opts.length){say("說明裡沒有找到明確的策略關鍵字，請補充做法（例如：口語提醒、老師陪伴、簡化步驟），或自行勾選。");return}
-   cur.lz.sopts=r.opts;genPrev={id:cur.id,full:r.full,opts:r.opts};await saveCur();render();say("已依說明勾選："+r.opts.join("、")+"，並整理出完整文字（請確認）");return}
+   if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
+   if(!r.opts.length){say("文字裡沒有找到明確的策略關鍵字，請補充做法（例如：口語提醒、老師陪伴、簡化步驟），或自行勾選。");return}
+   cur.lz.sopts=r.opts;genPrev={id:cur.id,full:r.full,opts:r.opts};await saveCur();render();say("已依文字勾選："+r.opts.join("、")+"，並整理出完整文字（請確認）");return}
   if(ds.sgenok!==undefined&&b.hasAttribute("data-sgenok")){if(cur&&genPrev&&genPrev.id===cur.id){cur.lz.strategy=genPrev.full;cur.lz.sopts=genPrev.opts;genPrev=null;await saveCur();render()}return}
   if(ds.sgenno!==undefined&&b.hasAttribute("data-sgenno")){genPrev=null;render();return}
   if(ds.sex!==undefined&&b.hasAttribute("data-sex")){const ex=STRAT_EX[+ds.sex];if(ex&&cur){cur.lz.sopts=(ex.o||[]).filter(o=>SOPTS.includes(o));cur.lz.strategy=ex.x;await saveCur();render()}return}
