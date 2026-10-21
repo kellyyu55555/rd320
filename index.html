@@ -1947,7 +1947,7 @@ function bind(){
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
    clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail];cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=cur.ownerName||su.displayName||"";cur.submittedByEmail=cur.ownerEmail||su.email||"";if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
-   if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n送出者：${who(cur)}\n班級：${cur.cls}${tch(cur)?`（${tch(cur)}）`:""}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
+   if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert("已送出！管理員會收到通知。");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
    if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
