@@ -1664,6 +1664,16 @@ const EDIT_CSS=`#weeklyRoot .wk textarea,#weeklyRoot .wk input[type=text],#weekl
 #weeklyRoot .wk .sheet>table,#weeklyRoot .wk .sheet>h1,#weeklyRoot .wk .sheet>h2{min-width:640px}
 #weeklyRoot .wk .evb{cursor:pointer}#weeklyRoot .wk .evb:hover{background:#eef6e8}
 #weeklyRoot .wk .dp{position:relative;display:inline-block}
+#weeklyRoot .sdd{display:inline-block;position:relative;vertical-align:middle}
+#weeklyRoot .sdd summary{cursor:pointer;border:1px solid #8a6d3b;border-radius:8px;padding:1px 12px;background:#fff8e7;font-size:13pt;list-style:none;display:inline-block;min-width:120px}
+#weeklyRoot .sddp{position:absolute;z-index:30;left:0;top:108%;background:#fff;border:1px solid #cdbf9e;border-radius:10px;padding:8px 14px;box-shadow:0 6px 18px rgba(0,0,0,.18);min-width:200px}
+#weeklyRoot .sddp label{display:block;white-space:nowrap;padding:3px 0;font-size:13pt;cursor:pointer}
+#weeklyRoot .sdev{font-size:11pt;color:#7a6f57;margin-top:8px}
+#weeklyRoot .sex{margin-top:10px}#weeklyRoot .sex summary{cursor:pointer;color:#2f5597;font-size:12pt}
+#weeklyRoot .sexl{max-height:320px;overflow:auto;border:1px solid #e0d6bd;border-radius:8px;padding:6px;margin-top:4px;background:#fffdf7}
+#weeklyRoot .sexi{border-bottom:1px dashed #d9cfb5;padding:6px 2px}#weeklyRoot .sexh{font-size:11pt;font-weight:700;color:#5b4a2a}
+#weeklyRoot .sextag{background:#e2efda;color:#375623;border-radius:999px;padding:0 7px;font-size:10pt;margin-right:3px;font-weight:400}
+#weeklyRoot .sext{font-size:11pt;color:#444;margin:3px 0}
 #weeklyRoot .wk .xb{font-size:11px;color:#c0392b;border:1px solid #c0392b;border-radius:10px;padding:0 6px;background:#fff;cursor:pointer;margin-top:4px}
 #weeklyRoot .wk .rte{min-height:1.6em;border:1px dashed #b9ae94;background:#fffef6;padding:2px 4px;border-radius:3px;white-space:pre-wrap;line-height:1.5;overflow-wrap:anywhere}
 #weeklyRoot .wk .rte:focus{outline:2px solid #8fa37e}
@@ -1694,6 +1704,9 @@ const iso=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+Stri
 const tch=L=>[L.t1,L.t2].map(x=>String(x||"").trim()).filter(Boolean).join("、")||String(L.teachers||"");
 const RTM="<!--rt-->";
 const STRAT_DEF=RTM+"<div>● 說明：</div><div><br></div><div>● 發展(疑似)調整策略：</div>";
+const SOPTS=["幼兒喜好應用","口語提示","同儕支持","成人支持","幼兒喜好運用","活動簡化","環境支持","隱性支持"];
+const STRAT_EX=[{"from": "仙草花班・第5週", "o": ["幼兒喜好應用", "環境支持"], "x": "這週老師有提前貼好語文區幼兒的位置圖，帶幼兒辨認課程進行的位置並事先告知用餐完後，到語文區看書等待老師上課，也有運用手指歌讓幼兒熟悉收拾轉銜的音樂，運用唱跳手指謠的方式吸引幼兒參與活動，培養幼兒喜歡吟唱歌謠的情境，幼兒喜歡熟悉的音樂手指謠，會跟隨老師一起唱跳手指謠後，進入課程，課程參與度高。"}, {"from": "仙草花班・第6-7週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "面對孩子的情緒，老師先給予安撫與陪伴，再透過鼓勵、示範及口語引導的方式，將動作拆解成簡單的小步驟，讓孩子慢慢嘗試，增加孩子們的信心及成就感。並在時間允許的情況下，給孩子們多點練習的機會，讓孩子們能夠更加熟練。"}, {"from": "仙草花班・第8-9週", "o": ["成人支持"], "x": "老師帶著幼兒觀察、數一數圖卡上的積木，確認顏色與數量；再將胡蘿蔔想像成三層樓，從下往上一層一層完成。透過實際操作，引導幼兒一起檢查積木的顏色與方向，發現不正確時再一起調整。1. 找到兩片橘色大加加積木注意橘色積木的方向(視情況調整旋轉)2. 排好不會拼，可以排列好顏色形狀後，對準卡榫用手由上往下壓幼兒實際操作後，大部分幼兒已理解操作方式，但有發現少部分班上較年幼幼兒較少操作大加加積木，有以下問題需要老師在旁指導與示範:1. 手指力氣不夠2. 顏色辨識力較差3. 比較不會旋轉大加加積木"}, {"from": "仙草花班・第10-11週", "o": [], "x": "除了課程時間外，也利用各項轉銜時間，例如：收拾後，排隊等待出發大肌肉活動時；以及用餐完畢，等待午睡時；都可以帶著孩子們進行練唱，增加孩子們的歌詞記憶，此外，在語文區也都將手指謠及兒歌區換成新的歌曲，搭配按鈕，讓孩子們能夠有多次的練習機會。"}, {"from": "山茶花班・第5週", "o": ["成人支持", "活動簡化"], "x": "在團討引導時,我可以將顏色與生活常見物品連結（如：「跟香蕉一樣的黃色」、「跟葡萄一樣的紫色」），幫助孩子建立記憶點。對於容易混淆的孩子，我可以先將教具簡化為「紅、黃、藍」三原色，待熟練後再逐步加入綠、紫、橘等顏色。"}, {"from": "山茶花班・第6-7週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "串珠區我要先以循序漸進的方式進行，先從兩種形狀交替的簡單序列開始，降低幼兒學習難度，幫助他們建立基本的序列概念。活動中透過老師示範、口語提示及實際操作，引導幼兒一邊觀察、一邊說出排列規律，再自己完成串珠。對於容易混淆或需要協助的幼兒，給予適時提醒與鼓勵，引導孩子自己找出下一個形狀，而非直接提供答案。"}, {"from": "山茶花班・第8-9週", "o": ["同儕支持", "成人支持", "活動簡化"], "x": "提供分解步驟圖卡（圖像鷹架）：將複雜的積木完成圖，拆解為「步驟 1、步驟 2、步驟 3」的視覺化步驟圖，降級操作難度，幫助幼兒對照理解。採「師生/同儕共建」學習模式：安排搭建經驗較豐富的幼兒擔任「小幫手」，或採小組合作搭建，透過同儕示範（觀察學習）減少對教師單一引導的依賴。"}, {"from": "山茶花班・第10-11週", "o": ["同儕支持", "成人支持", "活動簡化"], "x": "老師發現孩子們在操作拼圖時，有些孩子還是會遇到一些困難，例如:不知道拼圖該放在哪裡、找不到適合的拼圖片，或是拼了很久還是無法完成。當孩子拼圖卡關時，老師會先觀察一下，鼓勵孩子再試試看。也會在團討的時候,請班上已經完成拼圖的孩子分享經驗,引導他們觀察圖案的顏色、形狀與線條，找找看相同的線索；也可以陪孩子先挑出四周邊角，從簡單的地方開始拼。"}, {"from": "幸運草班・第6-7週", "o": ["幼兒喜好應用", "同儕支持", "成人支持", "活動簡化", "環境支持"], "x": "持續維持固定的作息與轉銜音樂，幫助孩子建立對活動流程的熟悉感與安全感。在學習區活動中，依照孩子目前的能力與興趣調整教具難易度，先提供簡單、容易操作的教具，讓孩子從成功經驗中建立信心，再逐步增加挑戰。對於較需要協助的孩子，老師會給予適度的陪伴與示範，並減少過多的指令，讓孩子有更多自主探索的機會。同時透過輪流、分享及合作遊戲，引導孩子學習與同儕互動，培養等待、分享與一起遊戲的能力，讓孩子在穩定且愉快的環境中逐步提升適應力與自主性。"}, {"from": "幸運草班・第8-9週", "o": [], "x": "先開放全區讓孩子都能習慣進區名牌在學習區的功用，讓孩子建立良好的規則感，無論能力學習進度，先穩定建立好學習區的規則"}, {"from": "幸運草班・第10-11週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "先採取分步引導，將進區流程拆解為「找名牌、拿名牌、放任務板、進入學習區」，一次聚焦一個步驟，幫助幼兒逐步理解操作順序。再運用圖像提示：在任務板上加入學習區照片或圖示，讓幼兒透過視覺線索找到對應位置，降低對口語指令的依賴。依幼兒的理解與操作能力，進行個別的協助，運用示範、手勢、口語提醒或陪同操作等方式，引導幼兒完成任務。"}, {"from": "梔子花班・第4週", "o": ["口語提示", "成人支持"], "x": "我會在旁邊觀察並聆聽孩子遇到問題時的反應，了解他們為什麼會選擇放棄，並在當下和孩子一起討論問題，透過提問或給予選擇的方式，引導孩子說出自己的想法。讓孩子在嘗試的過程中慢慢找到答案，即使遇到失敗，也能從中學習，並培養自己思考與解決問題的能力。"}, {"from": "梔子花班・第5週", "o": ["活動簡化"], "x": "提供簡單的「轉轉實驗紀錄表」，讓孩子透過畫圖記下「加寬盤面」或「減輕重量」後，陀螺旋轉時間的變化。在 LAQ / 加加積木區設置「進區牌」，想進區的孩子需先取牌，無牌即代表額滿，藉此培養自主秩序，減少衝突。"}, {"from": "梔子花班・第6-7週", "o": ["幼兒喜好應用", "成人支持"], "x": "透過製作精美的操作範本吸引孩子主動參與，並搭配「學習區挑戰賽」的任務機制，引導孩子完成指定區域的挑戰後，再自由選擇自己喜愛的學習區。這樣的方式不僅提升孩子自主探索的動機，也讓教師能在個別指導與兼顧全班需求之間取得更好的平衡。當孩子不知道自己想去哪一區時，我便順勢詢問：「你喜歡做什麼呢？」得知孩子喜歡畫畫後，我引導她到語文區嘗試製作小書，並告訴她：「小書除了可以畫畫，也可以寫上文字，做一本屬於自己的故事書。」操作過程中，孩子主動詢問：「可以教我寫字嗎？」我便把握孩子主動引導，不僅回應了孩子的學習需求，也幫助她逐漸找到自己想探索的方向與目標。"}, {"from": "梔子花班・第8-9週", "o": ["成人支持", "活動簡化"], "x": "透過團體討論及個別教學，讓幼兒先觀察 LAQ 立體的基本組合示範圖，認識會使用到的零件以及如何連接組裝，將示範圖調整為步驟分解圖，讓幼兒可以對照分解圖開始拼，學習區活動結束前五分鐘先預告幼兒，在播放收拾音樂，讓幼兒有心理準備先收拾尚未用到的零件，讓幼兒可以在收拾音樂結束前，確實將 LAQ收完"}, {"from": "風鈴草班・第5週", "o": ["成人支持"], "x": "增加1-10數字卡及操作圖卡，引導幼兒利用寶石搭配數字卡，進行 1-10的點數、排序級數與量的配對，來增加難度。"}, {"from": "風鈴草班・第6-7週", "o": ["成人支持", "活動簡化"], "x": "將前滾翻動作分解，引導幼兒練習「蹲下、掌心貼在前方地墊上、低頭、抱膝、向前滾」，並由老師協助調整姿勢。後續持續增加滾動及身體控制的練習經驗，依幼兒能力給予不同程度的協助，讓幼兒逐步建立動作能力與信心。"}, {"from": "風鈴草班・第8-9週", "o": ["口語提示", "成人支持"], "x": "老師增加「剪刀、石頭、布的輸贏規則圖示卡」來引導幼兒，並告知幼兒自己的部分完成後，要跟對方說: 『換你了』。希望幼兒在進行桌遊遊戲時，能透過視覺提示以及反覆的練習，慢慢理解遊戲進行方式以及輸贏建立在以正確方式進行遊戲的概念。"}];
+const SEEDCLS=["幸運草班","梔子花班","仙草花班","風鈴草班","山茶花班"];
 const RT_FONTS=["標楷體","微軟正黑體","新細明體","Noto Sans TC","Arial","Times New Roman"],RT_SIZES=[10,11,12,14,16,18,20,24,28,32];
 const TXT_COL=[["#d32f2f","紅"],["#e65100","橘"],["#f9a825","黃"],["#2e7d32","綠"],["#1565c0","藍"],["#6a1b9a","紫"],["#6d4c41","咖啡"],["#616161","灰"],["#000000","黑"]];
 const HL_COL=[["#d9d9d9","灰底"],["#fff59d","黃底"],["#c8e6c9","綠底"],["#f8bbd0","粉底"],["#bbdefb","藍底"],["#ffffff","無底色"]];
@@ -1742,12 +1755,13 @@ function fillWalk(L){const W=(WALK[L.walk.src]||{})[String(L.walk.month)];if(W)L
 function fillGm(L){const g=GM[L.gm.month];if(!g)return false;L.gm.text=[g.name].concat(g.gates.map(x=>[x.title,"器材："+(x.equip||""),"玩法："+(x.play||""),"培養能力："+(x.abil||"")].join("\n"))).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
 function newLog(){const t=new Date();t.setDate(t.getDate()-((t.getDay()+6)%7));const b=new Date(t);b.setDate(b.getDate()+4);const u=d.currentUser||{},f=iso(t),m=+f.slice(5,7),P=prefs||{};
  const L={id:"w"+Date.now(),status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:u.displayName||"",createdAt:Date.now(),status:"draft",cls:P.cls||"",sem:semOf(f),dateFrom:f,dateTo:iso(b),ages:Object.assign({"大班":false,"中班":false,"小班":false,"幼幼班":false,"大中混齡":false,"中小混齡":false,"兩歲專班":false},P.ages||{}),t1:P.t1!=null?P.t1:(u.displayName||""),t2:P.t2||"",bg:P.bg||"",inc:{walk:true,gm:true,lz:true,ws:true},weeks:calcWeeks(f,iso(b)),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
- walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:STRAT_DEF,effect:"",recorder:P.recorder!=null?P.recorder:(u.displayName||""),leader:P.leader||"",director:P.director||""}};
+ walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:"",sopts:[],dev:"",effect:"",recorder:P.recorder!=null?P.recorder:(u.displayName||""),leader:P.leader||"",director:P.director||""}};
  L.teachers=tch(L);fillWalk(L);fillGm(L);return L}
 function fillTeach(L){const ts=(d.pairObjs||[]).filter(p=>p.c===L.cls).map(p=>p.t).filter(Boolean);if(!ts.length)return false;L.t1=ts[0]||"";L.t2=ts[1]||"";L.teachers=tch(L);return true}
 function prefsOf(L){return{cls:L.cls||"",ages:L.ages,t1:L.t1||"",t2:L.t2||"",bg:L.bg||"",recorder:L.lz.recorder||"",leader:L.lz.leader||"",director:L.lz.director||"",updatedAt:Date.now()}}
 function fmtGm(s){return lines(s).map(l=>{let m;if(/^第.關[：:]/.test(l))return `<div><b>${esc(l)}</b></div>`;if(m=l.match(/^(器材|玩法|培養能力)([：:])(.*)$/))return `<div><b>${m[1]}${m[2]}</b>${esc(m[3])}</div>`;return `<div>${esc(l)}</div>`}).join("")}
 function docHtml(L,mode){
+ if(L.lz){if(L.lz.strategy===STRAT_DEF)L.lz.strategy="";L.lz.sopts=Array.isArray(L.lz.sopts)?L.lz.sopts:[];L.lz.dev=L.lz.dev||""}
  const E=mode==="edit",C=(n)=>"<colgroup>"+"<col style='width:8.333%'>".repeat(12)+"</colgroup>";
  const T=(p,r)=>E?`<textarea data-k="${p}" rows="${r||1}">${esc(G(L,p))}</textarea>`:nl(G(L,p));
  const RT_=(p,rows,fmt)=>E?`<div class="rte" contenteditable="true" data-rk="${p}" style="min-height:${(rows||1)*1.5}em">${rtHtml(G(L,p),fmt)}</div>`:rtHtml(G(L,p),fmt);
@@ -1760,6 +1774,13 @@ function docHtml(L,mode){
   if(caps)o.push(`<tr>${pr.map((p,j)=>`<td colspan="6" class="cap">${p?(E?`<textarea data-k="${sec}.photos.${i+j}.cap" rows="1" placeholder="照片說明">${esc(p.cap)}</textarea>`:nl(p.cap)):""}</td>`).join("")}</tr>`)}
   return o.join("")+(E?`<tr><td colspan="12" class="c"><label class="wkb" style="display:inline-block">＋ 上傳照片（可多選）<input type="file" accept="image/*" multiple data-up="${sec}" style="display:none"></label></td></tr>`:"")};
 const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.ws.slots;return `<div class="fw"><section class="sheet sh fit"><h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:#2f5597;text-decoration:underline">${esc(L.cls)}在地文化社區踏查</span>教學活動學習單</h2><table class="blue">${C()}${[0,1].map(i=>{const s=S[i]||{id:"",cap:""};const img=s.id&&photos[s.id]?`<img src="${photos[s.id]}" alt="">`:"";return `<tr><td colspan="12" class="wsbox">${img||(E?'<span class="wsph">學習單掃描</span>':"")}${E?`<br><label class="wkb" style="display:inline-block">${s.id?"更換掃描檔":"＋ 上傳學習單掃描檔"}<input type="file" accept="image/*" data-upws="${i}" style="display:none"></label>${s.id?`<button type="button" class="xb" data-xws="${i}">刪除</button>`:""}`:""}</td></tr><tr><td colspan="12" class="wscap">${E?`<textarea data-k="ws.slots.${i}.cap" rows="1" placeholder="學習單說明">${esc(s.cap)}</textarea>`:nl(s.cap)}</td></tr>`}).join("")}</table></section></div>`};
+ const stratCell=()=>{const sel=(L.lz.sopts||[]).filter(o=>SOPTS.includes(o));
+  const optsEl=E?`<details class="sdd"><summary>${sel.length?esc(sel.join("、")):"請選擇▾"}</summary><div class="sddp">${SOPTS.map(o=>`<label><input type="checkbox" data-sopt="${o}" ${sel.includes(o)?"checked":""}>${o}</label>`).join("")}</div></details>`:esc(sel.join("、"));
+  let x=`<div>課程調整策略：(${optsEl})</div><div>說明：</div>${RT_("lz.strategy",4)}`;
+  const devFilled=String(L.lz.dev||"").replace(RTM,"").replace(/<[^>]*>|&nbsp;/g,"").trim();
+  if(E)x+=`<div class="sdev">發展(疑似)調整策略（選填，有需要再填）：</div>${RT_("lz.dev",2)}`;else if(devFilled)x+=`<div>發展(疑似)調整策略：</div>${RT_("lz.dev",1)}`;
+  if(E)x+=`<details class="sex"><summary>📋 範例（來自各班已完成的週誌，按「套用」後再修改成自己的）</summary><div class="sexl">${STRAT_EX.map((e,i)=>`<div class="sexi"><div class="sexh">${esc(e.from)}　${(e.o||[]).map(o=>`<span class="sextag">${o}</span>`).join("")}</div><div class="sext">${esc(e.x.slice(0,100))}${e.x.length>100?"…":""}</div><button type="button" class="wkb" data-sex="${i}">套用這個範例</button></div>`).join("")}</div></details>`;
+  return x};
  let h="";
  if(L.inc.walk)h+=`<div class="fw"><section class="sheet sh fit">${head("blue","在地文化社區踏查","#2f5597")}<tr><td colspan="12"><div class="lbl">${E?`<select data-k="walk.label">${LABELS.map(x=>`<option ${L.walk.label===x?"selected":""}>${x}</option>`).join("")}</select>`:esc(L.walk.label)}</div>${E?RT_("walk.goals",4):bulletsRich(L.walk.goals,"●")}</td></tr>${photoRows("walk",true)}</table></section></div>`;
  if(L.inc.walk&&L.inc.ws!==false)h+=wsSheet();
@@ -1769,7 +1790,7 @@ const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.
   const band=t=>`<tr class="band"><th colspan="12">${t}</th></tr>`,sec=t=>`<tr><th colspan="12" style="text-align:left">${t}</th></tr>`;
   const hd2=`<tr><th colspan="4">項目</th><th>達成</th><th>改進</th><th colspan="4">項目</th><th>達成</th><th>改進</th></tr>`;
   const two=(a,p)=>[0,1,2].map(i=>`<tr><td colspan="4">${a[i][0]} ${a[i][1]}</td>${ev(p+a[i][0])}<td colspan="4">${a[i+3][0]} ${a[i+3][1]}</td>${ev(p+a[i+3][0])}</tr>`).join("");
-  h+=`<section class="sheet sh">${head("green","學習區","#548235")}${band("師生互動及正向態度")}<tr><td colspan="12">${RT_("lz.interact",5)}</td></tr>${band("教保服務人員-教學省思自評表")}${sec("教學前省思")}<tr><th colspan="4" style="text-align:left">1、課程規劃</th><th>達成</th><th>改進</th><th colspan="4" style="text-align:left">2、活動設計</th><th>達成</th><th>改進</th></tr>${[0,1,2].map(i=>`<tr><td colspan="4">${EV_PRE[0][i][0]} ${EV_PRE[0][i][1]}</td>${ev("p"+EV_PRE[0][i][0])}<td colspan="4">${EV_PRE[1][i][0]} ${EV_PRE[1][i][1]}</td>${ev("p"+EV_PRE[1][i][0])}</tr>`).join("")}${sec("教學中省思-師生互動")}${hd2}${two(EV_MID,"m")}${sec("教學後省思-課程統整、協同教學")}${hd2}${two(EV_POST,"a")}<tr><td colspan="12"><b>【教學省思】</b><br>${RT_("lz.reflect",5)}</td></tr><tr><td colspan="2" class="lb"><u>本次</u>課程調整策略</td><td colspan="10">${RT_("lz.strategy",4)}</td></tr>${band("上次執行成效")}<tr><td colspan="12">${RT_("lz.effect",4)}</td></tr><tr><td colspan="4">紀錄老師：${I("lz.recorder")}</td><td colspan="4">教保組長：${I("lz.leader")}</td><td colspan="4">園長：${I("lz.director")}</td></tr></table></section>`}
+  h+=`<section class="sheet sh">${head("green","學習區","#548235")}${band("師生互動及正向態度")}<tr><td colspan="12">${RT_("lz.interact",5)}</td></tr>${band("教保服務人員-教學省思自評表")}${sec("教學前省思")}<tr><th colspan="4" style="text-align:left">1、課程規劃</th><th>達成</th><th>改進</th><th colspan="4" style="text-align:left">2、活動設計</th><th>達成</th><th>改進</th></tr>${[0,1,2].map(i=>`<tr><td colspan="4">${EV_PRE[0][i][0]} ${EV_PRE[0][i][1]}</td>${ev("p"+EV_PRE[0][i][0])}<td colspan="4">${EV_PRE[1][i][0]} ${EV_PRE[1][i][1]}</td>${ev("p"+EV_PRE[1][i][0])}</tr>`).join("")}${sec("教學中省思-師生互動")}${hd2}${two(EV_MID,"m")}${sec("教學後省思-課程統整、協同教學")}${hd2}${two(EV_POST,"a")}<tr><td colspan="12"><b>【教學省思】</b><br>${RT_("lz.reflect",5)}</td></tr><tr><td colspan="2" class="lb"><u>本次</u>課程調整策略</td><td colspan="10">${stratCell()}</td></tr>${band("上次執行成效")}<tr><td colspan="12">${RT_("lz.effect",4)}</td></tr><tr><td colspan="4">紀錄老師：${I("lz.recorder")}</td><td colspan="4">教保組長：${I("lz.leader")}</td><td colspan="4">園長：${I("lz.director")}</td></tr></table></section>`}
  return `<div class="wk">${h}</div>`}
 const FIT_JS=`(function(){var maxH=Math.floor((297-20)*96/25.4)-6;function fit(){document.querySelectorAll('.sheet.fit').forEach(function(s){var w=s.parentNode;function vis(z){s.style.transformOrigin='top left';s.style.transform='scale('+z+')';s.style.width=(100/z)+'%';return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+'px';w.style.overflow='hidden'})}window.addEventListener('load',function(){setTimeout(fit,300)})})();`;
 const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
@@ -1805,6 +1826,44 @@ const folderBar=cs=>{const a=cs.filter(c=>FD()[c]).map(folderLink).join("");retu
 const myClasses=()=>[...new Set([...logs.filter(l=>l.uid===(d.currentUser||{}).uid).map(l=>l.cls),prefs&&prefs.cls].filter(Boolean))];
 const tm=ts=>ts?new Date(ts).toLocaleString("zh-TW",{hour12:false}):"";
 const tabs=()=>d.isAdmin?`<div class="wkbar"><button class="wkb ${mode==="mine"?"on":""}" data-mode="mine">📝 我的週誌</button><button class="wkb ${mode==="all"?"on":""}" data-mode="all">🗂️ 全部老師週誌</button></div>`:"";
+const hid=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h).toString(36)};
+const seedCol=()=>d.db.collection("weeklySeeds");
+function seedToLog(s,id,wp,gp){const u=d.currentUser||{},m=+String(s.dateFrom||"").slice(5,7)||9,A=s.ages||{},W_=s.walk||{},G_=s.gm||{},Z=s.lz||{};
+ const L={id,status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:u.displayName||"",createdAt:Date.now(),importKey:s.sid,cls:s.cls,sem:semOf(s.dateFrom),dateFrom:s.dateFrom,dateTo:s.dateTo,
+  ages:{"大班":!!A["大班"],"中班":!!A["中班"],"小班":!!A["小班"],"幼幼班":!!A["幼幼班"],"大中混齡":!!A["大中混齡"],"中小混齡":!!A["中小混齡"],"兩歲專班":!!A["兩歲專班"]},
+  t1:s.t1||"",t2:s.t2||"",bg:s.bg||"",inc:{walk:!!s.walk,gm:!!s.gm,lz:true,ws:false},weeks:s.weeks||calcWeeks(s.dateFrom,s.dateTo),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
+  walk:{src:"c35",month:WALK.c35[m]?m:9,label:W_.label||"學習目標",goals:W_.goals||"",photos:wp||[]},
+  gm:{month:GM[m]?m:9,text:G_.text||"",inds:G_.inds||"",abil:G_.abil||"",res:G_.res||"",photos:gp||[]},
+  ev:Object.assign({},s.ev||{}),
+  lz:{interact:Z.interact||"",reflect:Z.reflect||"",strategy:Z.strategy||"",sopts:(Z.sopts||[]).filter(o=>SOPTS.includes(o)),dev:"",effect:Z.effect||"",recorder:Z.recorder||"",leader:Z.leader||"",director:Z.director||""}};
+ L.teachers=tch(L);return L}
+async function seedUpload(files){const st=t=>{const e=root.querySelector("#wkseedst");if(e)e.textContent=t};let nl=0,np=0;
+ for(const f of files){let j;try{j=JSON.parse(await f.text())}catch(e){st("檔案格式錯誤："+f.name);return}
+  if(j.type!=="weekly-seed"||!Array.isArray(j.logs)){st("這不是週誌匯入檔："+f.name);return}
+  for(const lg of j.logs){const id="sd_"+j.cls+"_"+lg.weeks,meta=Object.assign({},lg);delete meta.photoData;st("匯入中："+j.cls+" "+lg.weeks+"…");
+   try{await seedCol().doc(id).set(Object.assign(meta,{cls:j.cls,uploadedAt:Date.now()}));const ph=lg.photoData||{},ids=Object.keys(ph);
+    for(let i=0;i<ids.length;i+=4){await Promise.all(ids.slice(i,i+4).map(pid=>seedCol().doc(id).collection("photos").doc(pid).set({data:ph[pid]})));np+=Math.min(4,ids.length-i)}nl++}
+   catch(e){st("匯入失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已加入 weeklySeeds。");return}}}
+ st("✅ 完成：匯入 "+nl+" 份週誌、"+np+" 張照片")}
+async function seedImport(cls){const st=t=>{const e=root.querySelector("#wkimpst");if(e)e.textContent=t};const uid=(d.currentUser||{}).uid;
+ let snap;try{snap=await seedCol().where("cls","==",cls).get()}catch(e){alert("讀取失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已更新。");return}
+ const seeds=snap.docs.map(x=>Object.assign({sid:x.id},x.data())).sort((a,b)=>String(a.dateFrom).localeCompare(String(b.dateFrom)));
+ if(!seeds.length){alert("「"+cls+"」還沒有可匯入的週誌，請管理員先到「週誌總覽」匯入資料。");return}
+ const have=new Set(logs.filter(l=>l.uid===uid&&l.importKey).map(l=>l.importKey)),todo=seeds.filter(s=>!have.has(s.sid));
+ if(!todo.length){alert("「"+cls+"」的歷史週誌你都已經匯入過了。");return}
+ if(!confirm("找到「"+cls+"」"+seeds.length+" 份週誌（"+seeds.map(s=>s.weeks).join("、")+"），其中 "+todo.length+" 份還沒匯入。\n要匯入到「我的週誌」嗎？匯入後可以自由修改。"))return;
+ let n=0;
+ for(const s of todo){st("匯入中 "+(n+1)+"/"+todo.length+"："+s.weeks+"…");
+  try{const ps=await seedCol().doc(s.sid).collection("photos").get(),pm={};ps.docs.forEach(x=>pm[x.id]=x.data().data);
+   const idMap={},mp=arr=>(arr||[]).map(p=>{const nid="ph"+Date.now()+Math.random().toString(36).slice(2,6);idMap[p.id]=nid;return{id:nid,cap:p.cap||""}});
+   const id="w"+Date.now()+Math.random().toString(36).slice(2,5),L=seedToLog(s,id,mp(s.walk&&s.walk.photos),mp(s.gm&&s.gm.photos));
+   await col().doc(id).set(L);const olds=Object.keys(idMap);
+   for(let i=0;i<olds.length;i+=4)await Promise.all(olds.slice(i,i+4).map(o=>col().doc(id).collection("photos").doc(idMap[o]).set({data:pm[o]||"",createdAt:Date.now()})));n++}
+  catch(e){st("匯入失敗（"+(e.code||e.message)+"）");alert("匯入失敗（"+(e.code||e.message)+"）。已匯入 "+n+" 份。");return}}
+ st("✅ 已匯入 "+n+" 份");alert("已匯入 "+n+" 份「"+cls+"」的週誌，請在下方清單開啟修改。")}
+const impCard=()=>{const def=SEEDCLS.includes((prefs||{}).cls)?prefs.cls:(myClasses().find(c=>SEEDCLS.includes(c))||SEEDCLS[0]);
+ return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#f2f7fb;border-color:#b9d3ea"><div><b>📥 匯入已完成的週誌</b><span style="font-size:12px;color:#7a6f57">　第 4～11 週的週誌已由管理員整理好，選擇班級後一次匯入，就能在「我的週誌」開啟修改。</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="wkimpcls" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 8px;font-size:14px">${SEEDCLS.map(c=>`<option ${c===def?"selected":""}>${c}</option>`).join("")}</select><button class="wkb on" data-impseed="1">匯入此班週誌</button><span id="wkimpst" style="font-size:12px;font-weight:700;color:#375623"></span></div></div>`};
+const seedCard=()=>`<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a"><div><b>📦 匯入歷史週誌資料（管理員・一次性）</b><span style="font-size:12px;color:#7a6f57">　選擇「週誌匯入_○○班.json」檔案（可一次選多個），資料會放進系統，各班老師就能自己匯入並修改。</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" id="wkseedfile" accept=".json,application/json" multiple><span id="wkseedst" style="font-size:12px;font-weight:700;color:#375623"></span></div></div>`;
 function listHtml(){return(mode==="all"&&d.isAdmin)?allHtml():mineHtml()}
 function allHtml(){const kw=q.trim(),by={};logs.forEach(l=>{const c=l.cls||"（未填班級）";(by[c]=by[c]||[]).push(l)});const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,"zh-Hant"));
  const okS=l=>stF==="all"||(stF==="submitted"?l.status==="submitted":l.status!=="submitted"),okQ=l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw));
@@ -1813,11 +1872,11 @@ function allHtml(){const kw=q.trim(),by={};logs.forEach(l=>{const c=l.cls||"（�
  if(clsSel==null)rows=rows.slice(0,10);
  return `<div class="wk" style="font-family:inherit">${tabs()}<div class="wkbar"><b style="font-size:18px">🗂️ 全部老師週誌</b><select id="wksf" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 8px;font-size:13px"><option value="all" ${stF==="all"?"selected":""}>全部狀態</option><option value="submitted" ${stF==="submitted"?"selected":""}>只看已送出</option><option value="draft" ${stF==="draft"?"selected":""}>只看草稿</option></select><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
- ${folderBar(Object.keys(FD()))}<p style="font-size:13px;font-weight:700;margin:4px 0">點選班級，查看該班的全部週誌：</p><div class="wkbar">${chip("*","全部班級",logs)}${names.map(n=>chip(n,n,by[n])).join("")}</div>
+ ${seedCard()}${folderBar(Object.keys(FD()))}<p style="font-size:13px;font-weight:700;margin:4px 0">點選班級，查看該班的全部週誌：</p><div class="wkbar">${chip("*","全部班級",logs)}${names.map(n=>chip(n,n,by[n])).join("")}</div>
  <p style="font-size:14px;font-weight:700;margin:10px 0 6px">${clsSel==null?"📥 最新送出的週誌（最多 10 份）":clsSel==="*"?"📁 全部班級的週誌":`📁 ${esc(clsSel)} 的全部週誌`}（${rows.length}）</p>
  ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${badge(l)}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　老師：${esc(tch(l)||l.ownerName||l.ownerEmail||"")}${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button><button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">沒有符合條件的週誌</p>`}</div>`}
 function mineHtml(){const adm=false,kw=q.trim();const rows=logs.filter(l=>l.uid===(d.currentUser||{}).uid).filter(l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw))).sort((a,b)=>String(b.dateFrom).localeCompare(String(a.dateFrom)));
- return `<div class="wk" style="font-family:inherit">${tabs()}${d.isAdmin?"":`<div class="wkcard" style="background:#f2f8ee"><div style="font-size:13px"><b>🔔 綁定 LINE 通知</b>　${lineBound===true?'<span style="color:#375623;font-weight:700">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>':'<span style="color:#7a6f57">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>'}</div><button class="wkb" data-lbind="1">${lineBound===true?"重新綁定":"取得綁定碼"}</button></div>`}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
+ return `<div class="wk" style="font-family:inherit">${tabs()}${d.isAdmin?"":`<div class="wkcard" style="background:#f2f8ee"><div style="font-size:13px"><b>🔔 綁定 LINE 通知</b>　${lineBound===true?'<span style="color:#375623;font-weight:700">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>':'<span style="color:#7a6f57">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>'}</div><button class="wkb" data-lbind="1">${lineBound===true?"重新綁定":"取得綁定碼"}</button></div>`}${impCard()}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
  ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${esc(l.sem||"")}${badge(l)}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}${adm?`　｜　${esc(l.ownerName||l.ownerEmail||"")}`:""}</span>${reasonLine(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${adm&&l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">${adm?"查看／編輯":"編輯"}</button><button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button><button class="wkb" data-dup="${l.id}">複製</button><button class="wkb" data-rm="${l.id}" style="color:#c0392b">刪除</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">還沒有週誌，按「＋ 新增週誌」開始填寫</p>`}</div>`}
 function editorHtml(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(!String(L.lz.strategy||"").trim())L.lz.strategy=STRAT_DEF;if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(GM);
@@ -1852,7 +1911,9 @@ function bind(){
   const rk=t.dataset&&t.dataset.rk;if(rk&&cur){setPath(cur,rk,t.textContent.replace(/\s/g,"")?RTM+rtClean(t.innerHTML):"");later();return}
   const k=t.dataset&&t.dataset.k;if(!k||!cur||t.type==="checkbox"||t.tagName==="SELECT")return;setPath(cur,k,t.value);if(t.tagName==="TEXTAREA")grow(t);
   if(k==="t1"||k==="t2")cur.teachers=tch(cur);if(k==="dateFrom"){cur.sem=semOf(t.value);const s=root.querySelector('[data-k="sem"]');if(s)s.value=cur.sem}if(k==="dateFrom"||k==="dateTo"){cur.weeks=calcWeeks(cur.dateFrom,cur.dateTo);const wk=root.querySelector('[data-k="weeks"]');if(wk)wk.value=cur.weeks}later()});
- root.addEventListener("change",async e=>{const t=e.target;if(t.id==="wksf"){stF=t.value;render();return}if(t.dataset&&t.dataset.up){const f=Array.from(t.files||[]);t.value="";if(f.length)await addPhotos(t.dataset.up,f);return}if(t.dataset&&t.dataset.upws!==undefined){const f1=(t.files||[])[0];t.value="";if(f1)await addWs(+t.dataset.upws,f1);return}
+ root.addEventListener("change",async e=>{const t=e.target;if(t.id==="wksf"){stF=t.value;render();return}
+  if(t.id==="wkseedfile"){const fs=[...t.files];t.value="";if(fs.length)await seedUpload(fs);return}
+  if(t.dataset&&t.dataset.sopt!==undefined&&t.hasAttribute("data-sopt")){const box=t.closest(".sddp");if(box&&cur){const sel=SOPTS.filter(o=>{const e=box.querySelector('[data-sopt="'+o+'"]');return e&&e.checked});cur.lz.sopts=sel;const sm=t.closest("details").querySelector("summary");if(sm)sm.textContent=sel.length?sel.join("、"):"請選擇▾";later()}return}if(t.dataset&&t.dataset.up){const f=Array.from(t.files||[]);t.value="";if(f.length)await addPhotos(t.dataset.up,f);return}if(t.dataset&&t.dataset.upws!==undefined){const f1=(t.files||[])[0];t.value="";if(f1)await addWs(+t.dataset.upws,f1);return}
   const k=t.dataset&&t.dataset.k;if(!k||!cur)return;
   if(k==="cls"&&t.type==="text"&&!String(cur.t1||"").trim()&&!String(cur.t2||"").trim()&&fillTeach(cur)){render();later();return}
   if(t.type==="checkbox"){setPath(cur,k,t.checked);later();if(k.startsWith("inc."))render();return}
@@ -1860,7 +1921,7 @@ function bind(){
    if(k==="walk.src"){if(!WALK[v][String(cur.walk.month)])cur.walk.month=+Object.keys(WALK[v])[0];fillWalk(cur);render()}
    else if(k==="walk.month"){fillWalk(cur);render()}else if(k==="gm.month"){fillGm(cur);render()}
    later()}});
- root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-return],[data-updf],[data-lbind],[data-xws]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
+ root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-sex],[data-impseed],[data-return],[data-updf],[data-lbind],[data-xws]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
   if(ds.new){cur=newLog();photos=photos;await saveCur();render();return}
   if(ds.open){cur=JSON.parse(JSON.stringify(logs.find(l=>l.id===ds.open)));try{await loadPhotos(cur)}catch(x){}render();return}
   if(ds.print){const L=logs.find(l=>l.id===ds.print);if(L)printLog(L);return}
@@ -1876,6 +1937,8 @@ function bind(){
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
    if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n${cur.cls}（${tch(cur)||cur.ownerName||""}）\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert("已送出！管理員會收到通知。");render();return}
+  if(ds.sex!==undefined&&b.hasAttribute("data-sex")){const ex=STRAT_EX[+ds.sex];if(ex&&cur){cur.lz.sopts=(ex.o||[]).filter(o=>SOPTS.includes(o));cur.lz.strategy=ex.x;await saveCur();render()}return}
+  if(ds.impseed){const c=(root.querySelector("#wkimpcls")||{}).value;if(c)await seedImport(c);return}
   if(ds.mode){mode=ds.mode;clsSel=null;cur=null;render();return}
   if(ds.cls!==undefined&&b.hasAttribute("data-cls")){clsSel=ds.cls;render();return}
   if(ds.return){const o=logs.find(l=>l.id===ds.return);if(!o)return;const reason=prompt(`退回「${o.cls||""} ${roc(o.dateFrom)}」的週誌，請輸入退件原因（老師會收到通知）：`,"");if(reason===null)return;if(!reason.trim()){alert("請輸入退件原因");return}
@@ -1883,7 +1946,7 @@ function bind(){
     if(o.ownerEmail&&d.notifyLineTo)d.notifyLineTo(o.ownerEmail,`↩️ 週誌被退回，請修改\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n原因：${reason.trim()}\n請至系統「📝 週誌」修改後重新送出`).then(r=>{if(r&&r.noBinding)alert("已退回。這位老師尚未綁定 LINE，所以沒有 LINE 通知（她開啟系統時會看到退件原因）。")}).catch(()=>{});
     alert("已退回，老師會看到退件原因")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.updf){const L=ds.updf==="cur"?cur:logs.find(l=>l.id===ds.updf);if(ds.updf==="cur"){clearTimeout(saveT);await saveCur()}if(L)uploadPdf(L);return}
-  if(ds.lbind){let r;try{r=await d.lineBindInit()}catch(x){r=null}if(r&&r.code)alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`);else alert("取得綁定碼失敗："+((r&&r.error)||"請確認 LINE 綁定功能已部署"));return}
+  if(ds.lbind){let r;try{r=await d.lineBindInit()}catch(x){r=null}if(r&&r.code)alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`);else alert("取得綁定碼失敗："+((r&&r.error)||"請確認 Netlify 的 LINE 函式已部署"));return}
   if(ds.fillteach){if(fillTeach(cur)){render();later()}else alert("管理員尚未在「老師／班級組合」設定這個班級的老師，請直接輸入或從下拉選單選擇姓名。");return}
   if(ds.saveprefs){try{await d.db.collection("weeklyPrefs").doc((d.currentUser||{}).uid).set(prefsOf(cur));status("已存為預設 ✓（之後新增的週誌會自動帶入）")}catch(x){alert("儲存預設失敗（"+(x.code||x.message)+"）。請確認 Firestore 規則已加入 weeklyPrefs。")}return}
   if(ds.useprefs){const P=prefs;if(!P){alert("還沒有儲存過預設，請先填好內容後按「存為預設」");return}if(!confirm("要用預設資料取代目前的班級、年齡層、老師、背景說明與簽名嗎？"))return;cur.cls=P.cls||"";cur.ages=Object.assign({},cur.ages,P.ages||{});cur.t1=P.t1||"";cur.t2=P.t2||"";cur.teachers=tch(cur);cur.bg=P.bg||"";cur.lz.recorder=P.recorder||"";cur.lz.leader=P.leader||"";cur.lz.director=P.director||"";render();later();return}
@@ -1895,7 +1958,7 @@ function sync(data){d=data;root=document.getElementById("weeklyRoot");if(!root)r
   firstSnap=true;sub=qy.onSnapshot(s=>{if(!firstSnap)s.docChanges().forEach(c=>{const x0=c.doc.data();if(!d.isAdmin&&c.type==="modified"&&x0.status==="returned"&&x0.returnedAt>Date.now()-120000&&!c.doc.metadata.hasPendingWrites&&!notified.has("r"+c.doc.id+x0.returnedAt)){notified.add("r"+c.doc.id+x0.returnedAt);try{d.notifyAdmin("週誌被退回",`${x0.cls||""}：${x0.returnReason||""}`)}catch(e){}}if(!d.isAdmin)return;const x=c.doc.data();if(c.type!=="removed"&&!c.doc.metadata.hasPendingWrites&&x.status==="submitted"&&x.uid!==uid&&x.submittedAt>Date.now()-120000&&!notified.has(c.doc.id+x.submittedAt)){notified.add(c.doc.id+x.submittedAt);try{d.notifyAdmin("週誌已送出",`${x.cls||""}（${tch(x)||x.ownerName||""}）`)}catch(e){}}});firstSnap=false;logs=s.docs.map(x=>({...x.data(),id:x.id}));if(!cur)render()},e=>{root.dataset.err=e.code||e.message;if(!cur)render()})}
  if(!root.dataset.init){root.dataset.init=1;bind();render();if(!d.isAdmin&&d.lineBindStatus)d.lineBindStatus().then(r=>{lineBound=!!(r&&r.bound);if(!cur)render()}).catch(()=>{})}}
 function setMode(m){mode=m;clsSel=null;cur=null;if(d&&root&&root.dataset.init)render()}
-return{sync,setMode,_ph:x=>Object.assign(photos,x),_list:()=>listHtml(),_setlogs:x=>{logs=x},_edit:()=>{cur=logs[0];return editorHtml()},_doc:docHtml,_new:newLog,_css:PRINT_CSS,_setd:x=>{d=x}}})();
+return{sync,setMode,_seedUpload:seedUpload,_seedImport:seedImport,_seedToLog:s=>seedToLog(s,"wtest",[],[]),_strat:()=>({n:STRAT_EX.length,o:SOPTS}),_ph:x=>Object.assign(photos,x),_list:()=>listHtml(),_setlogs:x=>{logs=x},_edit:()=>{cur=logs[0];return editorHtml()},_doc:docHtml,_new:newLog,_css:PRINT_CSS,_setd:x=>{d=x}}})();
 </script>
 <script>
 function kgApp() {
@@ -2957,8 +3020,7 @@ function kgApp() {
     async fnPost(name, body) {
       const user = firebase.auth().currentUser; if (!user) throw new Error('未登入');
       const idToken = await user.getIdToken();
-      const path = name.startsWith('/') ? name : '/' + name;
-      const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify(body) });
+      const r = await fetch('/.netlify/functions/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken }, body: JSON.stringify(body) });
       const t = await r.text(); try { return JSON.parse(t); } catch (e) { return { ok: false, error: `伺服器回應異常（${r.status}）` }; }
     },
     notifyLineTo(email, text) { return this.fnPost('line-notify', { toEmail: email, text }); },
@@ -2970,7 +3032,7 @@ function kgApp() {
         const user = firebase.auth().currentUser;
         if (!user) { console.warn('LINE 通知：尚未登入'); say('LINE 通知未送出：尚未登入'); return; }
         const idToken = await user.getIdToken();
-        const r = await fetch('/line-notify', {
+        const r = await fetch('/.netlify/functions/line-notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken },
           body: JSON.stringify({ text }),
@@ -2993,4 +3055,3 @@ function kgApp() {
 </script>
 </body>
 </html>
- 
