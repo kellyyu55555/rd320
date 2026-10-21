@@ -159,9 +159,10 @@
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
             :class="(view==='weekly' && weeklyMode==='all') ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗂️ 週誌總覽
+            <span x-show="isAdmin && weeklyPendingCount>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="weeklyPendingCount"></span>
           </button>
           <button x-show="isAdmin" @click="view='admin'"
-            x-effect="if (!titleTimer) document.title = (isAdmin && adminPendingCount>0 ? `(${adminPendingCount}) ` : '') + baseTitle"
+            x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount)>0 ? `(${adminPendingCount+weeklyPendingCount}) ` : '') + baseTitle"
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='admin' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📋 管理者後台
@@ -1702,6 +1703,7 @@ const weekText=L=>L.weeks||calcWeeks(L.dateFrom,L.dateTo)||"未填週次";
 function semOf(s){if(!s)return"";const y=+s.slice(0,4),m=+s.slice(5,7);return `${m>=8?y-1911:y-1912} 學年度第${m>=2&&m<=7?"二":"一"}學期`}
 const iso=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
 const tch=L=>[L.t1,L.t2].map(x=>String(x||"").trim()).filter(Boolean).join("、")||String(L.teachers||"");
+const who=l=>{const n=l.submittedByName||l.ownerName||"",e=l.submittedByEmail||l.ownerEmail||"";return n||e||tch(l)||"（未知帳號）"};
 const RTM="<!--rt-->";
 const STRAT_DEF=RTM+"<div>● 說明：</div><div><br></div><div>● 發展(疑似)調整策略：</div>";
 const SOPTS=["幼兒喜好應用","口語提示","同儕支持","成人支持","幼兒喜好運用","活動簡化","素材調整","環境支持","隱性支持"];
@@ -1828,7 +1830,7 @@ async function uploadPdf(L){
 async function printLog(L){const w=window.open("","_blank");if(!w){alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次");return}w.document.write("<p style='font-family:sans-serif'>準備列印中…</p>");try{await loadPhotos(L)}catch(e){}
  w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(L.sem+L.cls+"_週誌_"+weekText(L))}</title><style>${PRINT_CSS}</style></head><body>${docHtml(L,"print")}<script>${FIT_JS}<\/script></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},700)}
 const STAT={draft:['草稿','#9a917a'],submitted:['已送出・待管理員查看','#c0392b'],reviewed:['管理員已閱','#5b7a4a'],returned:['被退回・請修改','#d35400']};
-const reasonLine=l=>l.status==='returned'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">退回原因：${esc(l.returnReason)}</div>`:'';
+const reasonLine=l=>l.status==='returned'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">↩ 已退回給：${esc(l.returnedToName||who(l))}${l.returnedBy?`　｜　退回者：${esc(l.returnedBy)}`:""}${l.returnedAt?`　｜　${tm(l.returnedAt)}`:""}<br>退回原因：${esc(l.returnReason)}</div>`:'';
 const badge=l=>{const s=STAT[l.status||'draft']||STAT.draft;return `<span style="font-size:12px;font-weight:700;color:${s[1]};border:1px solid ${s[1]};border-radius:999px;padding:0 8px;margin-left:6px">${s[0]}</span>`};
 const FD=()=>window.__driveFolders||{};
 const folderLink=c=>FD()[c]?`<a class="wkb" href="${esc(FD()[c])}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">📂 開啟「${esc(c)}」雲端硬碟</a>`:"";
@@ -1876,15 +1878,15 @@ const impCard=()=>{const def=SEEDCLS.includes((prefs||{}).cls)?prefs.cls:(myClas
 const seedCard=()=>`<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a"><div><b>📦 匯入歷史週誌資料（管理員・一次性）</b><span style="font-size:12px;color:#7a6f57">　選擇「週誌匯入_○○班.json」檔案（可一次選多個），資料會放進系統，各班老師就能自己匯入並修改。</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" id="wkseedfile" accept=".json,application/json" multiple><span id="wkseedst" style="font-size:12px;font-weight:700;color:#375623"></span></div></div>`;
 function listHtml(){return(mode==="all"&&d.isAdmin)?allHtml():mineHtml()}
 function allHtml(){const kw=q.trim(),by={};logs.forEach(l=>{const c=l.cls||"（未填班級）";(by[c]=by[c]||[]).push(l)});const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,"zh-Hant"));
- const okS=l=>stF==="all"||(stF==="submitted"?l.status==="submitted":l.status!=="submitted"),okQ=l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw));
+ const okS=l=>stF==="all"||(stF==="submitted"?l.status==="submitted":l.status!=="submitted"),okQ=l=>!kw||[l.cls,l.teachers,l.ownerName,l.ownerEmail,l.submittedByName,l.dateFrom].some(v=>String(v||"").includes(kw));
  const sc=a=>a.filter(l=>l.status==="submitted").length,chip=(k,label,a)=>`<button class="wkb ${clsSel===k?"on":""}" data-cls="${esc(k)}">${esc(label)}（${a.length}｜已送出 ${sc(a)}）</button>`;
  let rows=(clsSel==null?logs.filter(l=>l.status==="submitted"):clsSel==="*"?logs:(by[clsSel]||[])).filter(l=>okS(l)&&okQ(l)).sort((a,b)=>String(clsSel==null?b.submittedAt:b.dateFrom).localeCompare(String(clsSel==null?a.submittedAt:a.dateFrom)));
  if(clsSel==null)rows=rows.slice(0,10);
- return `<div class="wk" style="font-family:inherit">${tabs()}<div class="wkbar"><b style="font-size:18px">🗂️ 全部老師週誌</b><select id="wksf" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 8px;font-size:13px"><option value="all" ${stF==="all"?"selected":""}>全部狀態</option><option value="submitted" ${stF==="submitted"?"selected":""}>只看已送出</option><option value="draft" ${stF==="draft"?"selected":""}>只看草稿</option></select><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
+ return `<div class="wk" style="font-family:inherit">${tabs()}<div class="wkbar"><b style="font-size:18px">🗂️ 全部老師週誌</b><select id="wksf" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 8px;font-size:13px"><option value="all" ${stF==="all"?"selected":""}>全部狀態</option><option value="submitted" ${stF==="submitted"?"selected":""}>只看已送出</option><option value="draft" ${stF==="draft"?"selected":""}>只看草稿</option></select><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋老師、帳號、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
  ${seedCard()}${folderBar(Object.keys(FD()))}<p style="font-size:13px;font-weight:700;margin:4px 0">點選班級，查看該班的全部週誌：</p><div class="wkbar">${chip("*","全部班級",logs)}${names.map(n=>chip(n,n,by[n])).join("")}</div>
  <p style="font-size:14px;font-weight:700;margin:10px 0 6px">${clsSel==null?"📥 最新送出的週誌（最多 10 份）":clsSel==="*"?"📁 全部班級的週誌":`📁 ${esc(clsSel)} 的全部週誌`}（${rows.length}）</p>
- ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${badge(l)}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　老師：${esc(tch(l)||l.ownerName||l.ownerEmail||"")}${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button><button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">沒有符合條件的週誌</p>`}</div>`}
+ ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${badge(l)}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　送出者：<b style="color:#2f5597">${esc(who(l))}</b>${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button><button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">沒有符合條件的週誌</p>`}</div>`}
 function mineHtml(){const adm=false,kw=q.trim();const rows=logs.filter(l=>l.uid===(d.currentUser||{}).uid).filter(l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw))).sort((a,b)=>String(b.dateFrom).localeCompare(String(a.dateFrom)));
  return `<div class="wk" style="font-family:inherit">${tabs()}${d.isAdmin?"":`<div class="wkcard" style="background:#f2f8ee"><div style="font-size:13px"><b>🔔 綁定 LINE 通知</b>　${lineBound===true?'<span style="color:#375623;font-weight:700">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>':'<span style="color:#7a6f57">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>'}</div><button class="wkb" data-lbind="1">${lineBound===true?"重新綁定":"取得綁定碼"}</button></div>`}${impCard()}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
@@ -1892,7 +1894,7 @@ function mineHtml(){const adm=false,kw=q.trim();const rows=logs.filter(l=>l.uid=
 function editorHtml(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(GM);
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
- ${cur.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ 管理員退回修改：${esc(cur.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:""}
+ ${cur.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(cur.returnedBy||"管理員")} 退回修改（退回給：${esc(cur.returnedToName||who(cur))}）：${esc(cur.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:""}
  <div class="wkset"><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
   <div><label>班級</label><input type="text" list="wkcls" data-k="cls" value="${esc(L.cls)}" placeholder="例如：梔子花班" style="width:150px"><datalist id="wkcls">${(d.classes||[]).map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
   <div><label>學年度學期</label><input type="text" data-k="sem" value="${esc(L.sem)}" style="width:170px"></div><div><label>週次（用於檔名）</label><input type="text" data-k="weeks" value="${esc(L.weeks||calcWeeks(L.dateFrom,L.dateTo))}" style="width:120px"></div>
@@ -1941,11 +1943,11 @@ function bind(){
   if(ds.printcur){clearTimeout(saveT);await saveCur();printLog(cur);return}
   if(ds.fillwalk){if(!lines(cur.walk.goals).length||confirm("要用這個月的學習目標取代目前內容嗎？")){fillWalk(cur);render();later()}return}
   if(ds.fillgm){if(!lines(cur.gm.text).length||confirm("要用這個月的計畫內容取代目前的活動內容、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
-  if(ds.reviewed){try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true})}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
+  if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});const toE=o.submittedByEmail||o.ownerEmail;if(toE&&d.notifyLineTo)d.notifyLineTo(toE,`✅ 週誌管理員已閱\n${who(o)} 老師您好\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n管理員已查看您送出的週誌`).then(r=>{if(r&&r.noBinding)alert("已標記已閱。「"+who(o)+"」尚未綁定 LINE，所以沒有 LINE 通知。")}).catch(()=>{})}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
-   clearTimeout(saveT);const old=[cur.status,cur.submittedAt];cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
+   clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail];cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=cur.ownerName||su.displayName||"";cur.submittedByEmail=cur.ownerEmail||su.email||"";if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
-   if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n${cur.cls}（${tch(cur)||cur.ownerName||""}）\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
+   if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n送出者：${who(cur)}\n班級：${cur.cls}${tch(cur)?`（${tch(cur)}）`:""}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert("已送出！管理員會收到通知。");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
    if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
@@ -1957,10 +1959,10 @@ function bind(){
   if(ds.impseed){const c=(root.querySelector("#wkimpcls")||{}).value;if(c)await seedImport(c);return}
   if(ds.mode){mode=ds.mode;clsSel=null;cur=null;render();return}
   if(ds.cls!==undefined&&b.hasAttribute("data-cls")){clsSel=ds.cls;render();return}
-  if(ds.return){const o=logs.find(l=>l.id===ds.return);if(!o)return;const reason=prompt(`退回「${o.cls||""} ${roc(o.dateFrom)}」的週誌，請輸入退件原因（老師會收到通知）：`,"");if(reason===null)return;if(!reason.trim()){alert("請輸入退件原因");return}
-   try{await col().doc(o.id).set({status:"returned",returnReason:reason.trim(),returnedAt:Date.now(),returnedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});
-    if(o.ownerEmail&&d.notifyLineTo)d.notifyLineTo(o.ownerEmail,`↩️ 週誌被退回，請修改\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n原因：${reason.trim()}\n請至系統「📝 週誌」修改後重新送出`).then(r=>{if(r&&r.noBinding)alert("已退回。這位老師尚未綁定 LINE，所以沒有 LINE 通知（她開啟系統時會看到退件原因）。")}).catch(()=>{});
-    alert("已退回，老師會看到退件原因")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
+  if(ds.return){const o=logs.find(l=>l.id===ds.return);if(!o)return;const reason=prompt(`退回「${o.cls||""} ${roc(o.dateFrom)}」的週誌\n退回給：${who(o)}\n\n請輸入退件原因（老師會收到通知）：`,"");if(reason===null)return;if(!reason.trim()){alert("請輸入退件原因");return}
+   try{await col().doc(o.id).set({status:"returned",returnReason:reason.trim(),returnedAt:Date.now(),returnedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||"",returnedToName:who(o),returnedToEmail:o.submittedByEmail||o.ownerEmail||"",returnedToUid:o.uid||""},{merge:true});
+    const toE=o.submittedByEmail||o.ownerEmail;if(toE&&d.notifyLineTo)d.notifyLineTo(toE,`↩️ 週誌被退回，請修改\n退回給：${who(o)}\n退回者：${(d.currentUser||{}).displayName||(d.currentUser||{}).email||"管理員"}\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n原因：${reason.trim()}\n請至系統「📝 週誌」修改後重新送出`).then(r=>{if(r&&r.noBinding)alert("已退回給「"+who(o)+"」。這位老師尚未綁定 LINE，所以沒有 LINE 通知（她開啟系統時會看到退件原因）。")}).catch(()=>{});
+    alert("已退回給「"+who(o)+"」，老師開啟系統時會看到退件原因")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.updf){const L=ds.updf==="cur"?cur:logs.find(l=>l.id===ds.updf);if(ds.updf==="cur"){clearTimeout(saveT);await saveCur()}if(L)uploadPdf(L);return}
   if(ds.lbind){let r;try{r=await d.lineBindInit()}catch(x){r=null}if(r&&r.code)alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`);else alert("取得綁定碼失敗："+((r&&r.error)||"請確認 Netlify 的 LINE 函式已部署"));return}
   if(ds.fillteach){if(fillTeach(cur)){render();later()}else alert("管理員尚未在「老師／班級組合」設定這個班級的老師，請直接輸入或從下拉選單選擇姓名。");return}
@@ -1971,7 +1973,7 @@ function bind(){
  })}
 function sync(data){d=data;root=document.getElementById("weeklyRoot");if(!root)return;if(d.restrictedPW)return;const uid=d.currentUser&&d.currentUser.uid,key=uid+"|"+!!d.isAdmin;
  if(d.db&&uid&&key!==subKey){if(sub)sub();if(subP)subP();subKey=key;prefs=null;subP=d.db.collection("weeklyPrefs").doc(uid).onSnapshot(x=>{prefs=x.exists?x.data():null},()=>{});cur=null;logs=[];delete root.dataset.err;const c=col(),qy=d.isAdmin?c:c.where("uid","==",uid);
-  firstSnap=true;sub=qy.onSnapshot(s=>{if(!firstSnap)s.docChanges().forEach(c=>{const x0=c.doc.data();if(!d.isAdmin&&c.type==="modified"&&x0.status==="returned"&&x0.returnedAt>Date.now()-120000&&!c.doc.metadata.hasPendingWrites&&!notified.has("r"+c.doc.id+x0.returnedAt)){notified.add("r"+c.doc.id+x0.returnedAt);try{d.notifyAdmin("週誌被退回",`${x0.cls||""}：${x0.returnReason||""}`)}catch(e){}}if(!d.isAdmin)return;const x=c.doc.data();if(c.type!=="removed"&&!c.doc.metadata.hasPendingWrites&&x.status==="submitted"&&x.uid!==uid&&x.submittedAt>Date.now()-120000&&!notified.has(c.doc.id+x.submittedAt)){notified.add(c.doc.id+x.submittedAt);try{d.notifyAdmin("週誌已送出",`${x.cls||""}（${tch(x)||x.ownerName||""}）`)}catch(e){}}});firstSnap=false;logs=s.docs.map(x=>({...x.data(),id:x.id}));if(!cur)render()},e=>{root.dataset.err=e.code||e.message;if(!cur)render()})}
+  firstSnap=true;sub=qy.onSnapshot(s=>{if(!firstSnap)s.docChanges().forEach(c=>{const x0=c.doc.data();if(!d.isAdmin&&c.type==="modified"&&x0.status==="returned"&&x0.returnedAt>Date.now()-120000&&!c.doc.metadata.hasPendingWrites&&!notified.has("r"+c.doc.id+x0.returnedAt)){notified.add("r"+c.doc.id+x0.returnedAt);try{d.notifyAdmin("週誌被退回",`${x0.returnedBy||"管理員"}退回「${x0.cls||""}」給 ${x0.returnedToName||who(x0)}：${x0.returnReason||""}`)}catch(e){}}if(!d.isAdmin)return;const x=c.doc.data();if(c.type!=="removed"&&!c.doc.metadata.hasPendingWrites&&x.status==="submitted"&&x.uid!==uid&&x.submittedAt>Date.now()-120000&&!notified.has(c.doc.id+x.submittedAt)){notified.add(c.doc.id+x.submittedAt);try{d.notifyAdmin("週誌已送出",`送出者：${who(x)}｜${x.cls||""}`)}catch(e){}}});firstSnap=false;logs=s.docs.map(x=>({...x.data(),id:x.id}));if(!cur)render()},e=>{root.dataset.err=e.code||e.message;if(!cur)render()})}
  if(!root.dataset.init){root.dataset.init=1;bind();render();if(!d.isAdmin&&d.lineBindStatus)d.lineBindStatus().then(r=>{lineBound=!!(r&&r.bound);if(!cur)render()}).catch(()=>{})}}
 function setMode(m){mode=m;clsSel=null;cur=null;if(d&&root&&root.dataset.init)render()}
 return{sync,setMode,_seedUpload:seedUpload,_seedImport:seedImport,_seedToLog:s=>seedToLog(s,"wtest",[],[]),_strat:()=>({n:STRAT_EX.length,o:SOPTS}),_ph:x=>Object.assign(photos,x),_list:()=>listHtml(),_setlogs:x=>{logs=x},_edit:()=>{cur=logs[0];return editorHtml()},_doc:docHtml,_new:newLog,_css:PRINT_CSS,_setd:x=>{d=x}}})();
@@ -2228,7 +2230,7 @@ function kgApp() {
         let memFirst = true;
         let wkFirst = true;
         this.unsubs.push(this.db.collection('weeklyLogs').where('status', '==', 'submitted').onSnapshot(s => {
-          if (!wkFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('週誌已送出', `${x.cls || ''}（${x.teachers || x.ownerName || ''}）送出了一份週誌`); } });
+          if (!wkFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('週誌已送出', `送出者：${x.submittedByName || x.ownerName || x.ownerEmail || x.teachers || '（未知帳號）'}｜${x.cls || ''} 送出了一份週誌`); } });
           this.submittedWeekly = s.docs.map(d => d.id); wkFirst = false;
         }, this.snapErr('讀取週誌狀態發生問題')));
         this.unsubs.push(this.db.collection('members').onSnapshot(s => {
@@ -2991,7 +2993,8 @@ function kgApp() {
     snapErr(label) { return (err) => { console.error(label, err); this.showToast(`${label}（${(err && (err.code || err.message)) || '未知錯誤'}）`, 6000); }; },
     showToast(msg, ms = 2600) { this.toast = msg; clearTimeout(this._toastTimer); this._toastTimer = setTimeout(() => { this.toast=''; }, ms); },
 
-    get adminPendingCount() { return this.pendingReturnRequests.length + this.pendingLaminateRequests.length + this.pendingMembers.length + this.submittedWeekly.length; },
+    get adminPendingCount() { return this.pendingReturnRequests.length + this.pendingLaminateRequests.length + this.pendingMembers.length; },
+    get weeklyPendingCount() { return this.submittedWeekly.length; },
     playBeep() {
       try {
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
