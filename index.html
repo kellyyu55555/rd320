@@ -145,7 +145,7 @@
             :class="view==='laminate' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🧷 護貝膜申請
           </button>
-          <button x-show="!restrictedPW" @click="view='plan'"
+          <button x-show="(isAdmin || planOpen) && !restrictedPW" @click="view='plan'"
             class="px-5 py-2 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='plan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📚 教學計畫
@@ -496,7 +496,7 @@
         </section>
 
         <!-- ============ 教學計畫 ============ -->
-        <section x-show="view==='plan' && currentUser && !restrictedPW" x-effect="if(view==='plan'&&currentUser&&window.PlanUI) PlanUI.sync($data)" class="space-y-4">
+        <section x-show="view==='plan' && currentUser && !restrictedPW && (isAdmin || planOpen)" x-effect="if(view==='plan'&&currentUser&&(isAdmin||planOpen)&&window.PlanUI) PlanUI.sync($data)" class="space-y-4">
           <div id="planRoot" class="paper-card rounded-3xl p-6 shadow-card"></div>
         </section>
 
@@ -1704,9 +1704,18 @@ const iso=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+Stri
 const tch=L=>[L.t1,L.t2].map(x=>String(x||"").trim()).filter(Boolean).join("、")||String(L.teachers||"");
 const RTM="<!--rt-->";
 const STRAT_DEF=RTM+"<div>● 說明：</div><div><br></div><div>● 發展(疑似)調整策略：</div>";
-const SOPTS=["幼兒喜好應用","口語提示","同儕支持","成人支持","幼兒喜好運用","活動簡化","環境支持","隱性支持"];
-const STRAT_EX=[{"from": "仙草花班・第5週", "o": ["幼兒喜好應用", "環境支持"], "x": "這週老師有提前貼好語文區幼兒的位置圖，帶幼兒辨認課程進行的位置並事先告知用餐完後，到語文區看書等待老師上課，也有運用手指歌讓幼兒熟悉收拾轉銜的音樂，運用唱跳手指謠的方式吸引幼兒參與活動，培養幼兒喜歡吟唱歌謠的情境，幼兒喜歡熟悉的音樂手指謠，會跟隨老師一起唱跳手指謠後，進入課程，課程參與度高。"}, {"from": "仙草花班・第6-7週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "面對孩子的情緒，老師先給予安撫與陪伴，再透過鼓勵、示範及口語引導的方式，將動作拆解成簡單的小步驟，讓孩子慢慢嘗試，增加孩子們的信心及成就感。並在時間允許的情況下，給孩子們多點練習的機會，讓孩子們能夠更加熟練。"}, {"from": "仙草花班・第8-9週", "o": ["成人支持"], "x": "老師帶著幼兒觀察、數一數圖卡上的積木，確認顏色與數量；再將胡蘿蔔想像成三層樓，從下往上一層一層完成。透過實際操作，引導幼兒一起檢查積木的顏色與方向，發現不正確時再一起調整。1. 找到兩片橘色大加加積木注意橘色積木的方向(視情況調整旋轉)2. 排好不會拼，可以排列好顏色形狀後，對準卡榫用手由上往下壓幼兒實際操作後，大部分幼兒已理解操作方式，但有發現少部分班上較年幼幼兒較少操作大加加積木，有以下問題需要老師在旁指導與示範:1. 手指力氣不夠2. 顏色辨識力較差3. 比較不會旋轉大加加積木"}, {"from": "仙草花班・第10-11週", "o": [], "x": "除了課程時間外，也利用各項轉銜時間，例如：收拾後，排隊等待出發大肌肉活動時；以及用餐完畢，等待午睡時；都可以帶著孩子們進行練唱，增加孩子們的歌詞記憶，此外，在語文區也都將手指謠及兒歌區換成新的歌曲，搭配按鈕，讓孩子們能夠有多次的練習機會。"}, {"from": "山茶花班・第5週", "o": ["成人支持", "活動簡化"], "x": "在團討引導時,我可以將顏色與生活常見物品連結（如：「跟香蕉一樣的黃色」、「跟葡萄一樣的紫色」），幫助孩子建立記憶點。對於容易混淆的孩子，我可以先將教具簡化為「紅、黃、藍」三原色，待熟練後再逐步加入綠、紫、橘等顏色。"}, {"from": "山茶花班・第6-7週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "串珠區我要先以循序漸進的方式進行，先從兩種形狀交替的簡單序列開始，降低幼兒學習難度，幫助他們建立基本的序列概念。活動中透過老師示範、口語提示及實際操作，引導幼兒一邊觀察、一邊說出排列規律，再自己完成串珠。對於容易混淆或需要協助的幼兒，給予適時提醒與鼓勵，引導孩子自己找出下一個形狀，而非直接提供答案。"}, {"from": "山茶花班・第8-9週", "o": ["同儕支持", "成人支持", "活動簡化"], "x": "提供分解步驟圖卡（圖像鷹架）：將複雜的積木完成圖，拆解為「步驟 1、步驟 2、步驟 3」的視覺化步驟圖，降級操作難度，幫助幼兒對照理解。採「師生/同儕共建」學習模式：安排搭建經驗較豐富的幼兒擔任「小幫手」，或採小組合作搭建，透過同儕示範（觀察學習）減少對教師單一引導的依賴。"}, {"from": "山茶花班・第10-11週", "o": ["同儕支持", "成人支持", "活動簡化"], "x": "老師發現孩子們在操作拼圖時，有些孩子還是會遇到一些困難，例如:不知道拼圖該放在哪裡、找不到適合的拼圖片，或是拼了很久還是無法完成。當孩子拼圖卡關時，老師會先觀察一下，鼓勵孩子再試試看。也會在團討的時候,請班上已經完成拼圖的孩子分享經驗,引導他們觀察圖案的顏色、形狀與線條，找找看相同的線索；也可以陪孩子先挑出四周邊角，從簡單的地方開始拼。"}, {"from": "幸運草班・第6-7週", "o": ["幼兒喜好應用", "同儕支持", "成人支持", "活動簡化", "環境支持"], "x": "持續維持固定的作息與轉銜音樂，幫助孩子建立對活動流程的熟悉感與安全感。在學習區活動中，依照孩子目前的能力與興趣調整教具難易度，先提供簡單、容易操作的教具，讓孩子從成功經驗中建立信心，再逐步增加挑戰。對於較需要協助的孩子，老師會給予適度的陪伴與示範，並減少過多的指令，讓孩子有更多自主探索的機會。同時透過輪流、分享及合作遊戲，引導孩子學習與同儕互動，培養等待、分享與一起遊戲的能力，讓孩子在穩定且愉快的環境中逐步提升適應力與自主性。"}, {"from": "幸運草班・第8-9週", "o": [], "x": "先開放全區讓孩子都能習慣進區名牌在學習區的功用，讓孩子建立良好的規則感，無論能力學習進度，先穩定建立好學習區的規則"}, {"from": "幸運草班・第10-11週", "o": ["口語提示", "成人支持", "活動簡化"], "x": "先採取分步引導，將進區流程拆解為「找名牌、拿名牌、放任務板、進入學習區」，一次聚焦一個步驟，幫助幼兒逐步理解操作順序。再運用圖像提示：在任務板上加入學習區照片或圖示，讓幼兒透過視覺線索找到對應位置，降低對口語指令的依賴。依幼兒的理解與操作能力，進行個別的協助，運用示範、手勢、口語提醒或陪同操作等方式，引導幼兒完成任務。"}, {"from": "梔子花班・第4週", "o": ["口語提示", "成人支持"], "x": "我會在旁邊觀察並聆聽孩子遇到問題時的反應，了解他們為什麼會選擇放棄，並在當下和孩子一起討論問題，透過提問或給予選擇的方式，引導孩子說出自己的想法。讓孩子在嘗試的過程中慢慢找到答案，即使遇到失敗，也能從中學習，並培養自己思考與解決問題的能力。"}, {"from": "梔子花班・第5週", "o": ["活動簡化"], "x": "提供簡單的「轉轉實驗紀錄表」，讓孩子透過畫圖記下「加寬盤面」或「減輕重量」後，陀螺旋轉時間的變化。在 LAQ / 加加積木區設置「進區牌」，想進區的孩子需先取牌，無牌即代表額滿，藉此培養自主秩序，減少衝突。"}, {"from": "梔子花班・第6-7週", "o": ["幼兒喜好應用", "成人支持"], "x": "透過製作精美的操作範本吸引孩子主動參與，並搭配「學習區挑戰賽」的任務機制，引導孩子完成指定區域的挑戰後，再自由選擇自己喜愛的學習區。這樣的方式不僅提升孩子自主探索的動機，也讓教師能在個別指導與兼顧全班需求之間取得更好的平衡。當孩子不知道自己想去哪一區時，我便順勢詢問：「你喜歡做什麼呢？」得知孩子喜歡畫畫後，我引導她到語文區嘗試製作小書，並告訴她：「小書除了可以畫畫，也可以寫上文字，做一本屬於自己的故事書。」操作過程中，孩子主動詢問：「可以教我寫字嗎？」我便把握孩子主動引導，不僅回應了孩子的學習需求，也幫助她逐漸找到自己想探索的方向與目標。"}, {"from": "梔子花班・第8-9週", "o": ["成人支持", "活動簡化"], "x": "透過團體討論及個別教學，讓幼兒先觀察 LAQ 立體的基本組合示範圖，認識會使用到的零件以及如何連接組裝，將示範圖調整為步驟分解圖，讓幼兒可以對照分解圖開始拼，學習區活動結束前五分鐘先預告幼兒，在播放收拾音樂，讓幼兒有心理準備先收拾尚未用到的零件，讓幼兒可以在收拾音樂結束前，確實將 LAQ收完"}, {"from": "風鈴草班・第5週", "o": ["成人支持"], "x": "增加1-10數字卡及操作圖卡，引導幼兒利用寶石搭配數字卡，進行 1-10的點數、排序級數與量的配對，來增加難度。"}, {"from": "風鈴草班・第6-7週", "o": ["成人支持", "活動簡化"], "x": "將前滾翻動作分解，引導幼兒練習「蹲下、掌心貼在前方地墊上、低頭、抱膝、向前滾」，並由老師協助調整姿勢。後續持續增加滾動及身體控制的練習經驗，依幼兒能力給予不同程度的協助，讓幼兒逐步建立動作能力與信心。"}, {"from": "風鈴草班・第8-9週", "o": ["口語提示", "成人支持"], "x": "老師增加「剪刀、石頭、布的輸贏規則圖示卡」來引導幼兒，並告知幼兒自己的部分完成後，要跟對方說: 『換你了』。希望幼兒在進行桌遊遊戲時，能透過視覺提示以及反覆的練習，慢慢理解遊戲進行方式以及輸贏建立在以正確方式進行遊戲的概念。"}];
+const SOPTS=["幼兒喜好應用","口語提示","同儕支持","成人支持","幼兒喜好運用","活動簡化","素材調整","環境支持","隱性支持"];
+const STRAT_EX=[{"from": "範例1", "o": ["口語提示", "幼兒喜好運用"], "x": "幼兒喜好支持：(林○○、陳○○)、口語提示(陳○○)、幼兒喜好運用(林○○)"}, {"from": "範例2", "o": ["幼兒喜好應用"], "x": "幼兒喜好應用:繪本故事引起幼兒興趣。(黃○○、陳○○)"}, {"from": "範例3", "o": ["同儕支持"], "x": "同儕支持:普幼兒與特幼兒一組共同參與遊戲(黃○○、陳○○)"}, {"from": "範例4", "o": ["成人支持", "口語提示"], "x": "成人支持、口語提示:老師利用圖片或繪本進行回顧(陳○○)"}, {"from": "範例5", "o": ["素材調整", "幼兒喜好運用"], "x": "提供點讀筆及操作流程圖給蔡○○使用(素材調整)\n提供小黃點繪本給黃○○使用(幼兒喜好的運用)"}, {"from": "範例6", "o": ["隱性支持", "活動簡化"], "x": "提供鑲嵌式的拼圖、一比一的拼圖對照表給黃○○操作(隱性支持、活動策略簡化)"}, {"from": "範例7", "o": ["幼兒喜好運用"], "x": "提供海洋生物拼圖給蔡○○進行拼圖活動(幼兒喜好運用)"}, {"from": "範例8", "o": ["素材調整"], "x": "學習區提供洞較大的珠子和毛根給王○○進行串珠活動。(素材調整)"}, {"from": "範例9", "o": ["成人支持"], "x": "活動過程當呂○○專注力降低，將請王老師陪伴完成(成人支持)"}, {"from": "範例10", "o": ["活動簡化"], "x": "提供樂高組裝的分解步驟圖給呂○○使用(簡化使用)"}];
 const SEEDCLS=["幸運草班","梔子花班","仙草花班","風鈴草班","山茶花班"];
+let genPrev=null;
+const SGEN=[["口語提示",/口語|口頭|口令|言語提醒|語言提醒|提醒|叮嚀/],["同儕支持",/同儕|同伴|同學|夥伴|小幫手|小老師|分組|小組合作|互相協助/],["成人支持",/成人支持|陪伴|在旁|示範|安撫|鼓勵|個別協助|個別指導|老師協助|教師協助|老師引導|教師引導|協助幼兒|引導幼兒/],["活動簡化",/簡化|拆解|分解|分步|小步驟|步驟圖|循序漸進|降低.{0,4}難度|由易到難/],["素材調整",/素材|點讀筆|加大|放大|換成|替換|改用|更換|較大的|較小的/],["環境支持",/環境|位置圖|標示|標誌|動線|座位|佈置|布置|場地|空間/],["隱性支持",/隱性|鑲嵌|嵌式|對照表|自我校正|自我檢核/]];
+const plainOf=s=>{s=String(s||"");if(s.indexOf("<!--rt-->")===0)s=s.slice(9).replace(/<br\s*\/?>|<\/(div|p|li)>/gi,"\n").replace(/<[^>]*>/g,"").replace(/&nbsp;/g," ").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");return s};
+function tagsOf(s){const out=[];SOPTS.forEach(o=>{if(s.includes(o))out.push(o)});
+ if(/喜好的?運用/.test(s)){if(!out.includes("幼兒喜好運用"))out.push("幼兒喜好運用")}else if(/喜好的?應用/.test(s)){if(!out.includes("幼兒喜好應用"))out.push("幼兒喜好應用")}else if(/喜好|喜歡|喜愛|興趣|愛好/.test(s)&&!out.includes("幼兒喜好應用")&&!out.includes("幼兒喜好運用"))out.push("幼兒喜好應用");
+ SGEN.forEach(([o,re])=>{if(re.test(s)&&!out.includes(o))out.push(o)});return SOPTS.filter(o=>out.includes(o))}
+function genStrat(raw){const s=plainOf(raw),sents=s.split(/[。！？!?；;\n]+/).map(x=>x.trim()).filter(Boolean),all=[];
+ const lines=sents.map(t=>{const tg=tagsOf(t);tg.forEach(o=>{if(!all.includes(o))all.push(o)});if(!tg.length||SOPTS.some(o=>t.includes(o)))return t+"。";return tg.join("、")+":"+t+"。"});
+ return{opts:SOPTS.filter(o=>all.includes(o)),text:s,full:lines.map((l,k)=>(lines.length>1?(k+1)+".":"")+l).join("\n")}}
 const RT_FONTS=["標楷體","微軟正黑體","新細明體","Noto Sans TC","Arial","Times New Roman"],RT_SIZES=[10,11,12,14,16,18,20,24,28,32];
 const TXT_COL=[["#d32f2f","紅"],["#e65100","橘"],["#f9a825","黃"],["#2e7d32","綠"],["#1565c0","藍"],["#6a1b9a","紫"],["#6d4c41","咖啡"],["#616161","灰"],["#000000","黑"]];
 const HL_COL=[["#d9d9d9","灰底"],["#fff59d","黃底"],["#c8e6c9","綠底"],["#f8bbd0","粉底"],["#bbdefb","藍底"],["#ffffff","無底色"]];
@@ -1752,7 +1761,7 @@ function rtToolbarHtml(){const o=(a,f)=>a.map(x=>`<option value="${x}">${f?f(x):
  return `<div class="wkrtb"><b style="font-size:12px">文字格式</b><button type="button" data-c="bold" title="粗體"><b>B</b></button><button type="button" data-c="italic" title="斜體"><i>I</i></button><button type="button" data-c="underline" title="底線"><u>U</u></button><select data-c="font" title="字型"><option value="">字型</option>${o(RT_FONTS)}</select><select data-c="size" title="字體大小"><option value="">大小</option>${o(RT_SIZES,x=>x+"pt")}</select><span class="g">字色</span>${sw(TXT_COL,"fc")}<input type="color" data-c="fcc" value="#d32f2f" title="調色盤：自選字色"><span class="g">底色</span>${sw(HL_COL,"hl")}<input type="color" data-c="hlc" value="#fff59d" title="調色盤：自選底色"><button type="button" data-c="clr" title="清除格式">✕ 清除</button><span style="font-size:11px;color:#9a917a">先點下方要修改的欄位、選取文字，再按按鈕</span></div>`}
 const bullets=(s,m)=>lines(s).map(l=>`<div class="bl">${m} ${esc(l)}</div>`).join("");
 function fillWalk(L){const W=(WALK[L.walk.src]||{})[String(L.walk.month)];if(W)L.walk.goals=W.goals.join("\n");return !!W}
-function fillGm(L){const g=GM[L.gm.month];if(!g)return false;L.gm.text=[g.name].concat(g.gates.map(x=>[x.title,"器材："+(x.equip||""),"玩法："+(x.play||""),"培養能力："+(x.abil||"")].join("\n"))).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
+function fillGm(L){const g=GM[L.gm.month];if(!g)return false;L.gm.text=[g.name].concat(g.gates.map(x=>[x.title,"器材："+(x.equip||""),"玩法："+(x.play||"")].join("\n"))).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
 function newLog(){const t=new Date();t.setDate(t.getDate()-((t.getDay()+6)%7));const b=new Date(t);b.setDate(b.getDate()+4);const u=d.currentUser||{},f=iso(t),m=+f.slice(5,7),P=prefs||{};
  const L={id:"w"+Date.now(),status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:u.displayName||"",createdAt:Date.now(),status:"draft",cls:P.cls||"",sem:semOf(f),dateFrom:f,dateTo:iso(b),ages:Object.assign({"大班":false,"中班":false,"小班":false,"幼幼班":false,"大中混齡":false,"中小混齡":false,"兩歲專班":false},P.ages||{}),t1:P.t1!=null?P.t1:(u.displayName||""),t2:P.t2||"",bg:P.bg||"",inc:{walk:true,gm:true,lz:true,ws:true},weeks:calcWeeks(f,iso(b)),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
  walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:"",sopts:[],dev:"",effect:"",recorder:P.recorder!=null?P.recorder:(u.displayName||""),leader:P.leader||"",director:P.director||""}};
@@ -1766,7 +1775,7 @@ function docHtml(L,mode){
  const T=(p,r)=>E?`<textarea data-k="${p}" rows="${r||1}">${esc(G(L,p))}</textarea>`:nl(G(L,p));
  const RT_=(p,rows,fmt)=>E?`<div class="rte" contenteditable="true" data-rk="${p}" style="min-height:${(rows||1)*1.5}em">${rtHtml(G(L,p),fmt)}</div>`:rtHtml(G(L,p),fmt);
  const I=(p,ph)=>E?`<input type="text" data-k="${p}" value="${esc(G(L,p))}" placeholder="${ph||""}">`:esc(G(L,p));
- const head=(kind,title,color)=>{const ages=AGES.map((a,i)=>(i===4?"<br>":"")+(E?`<label style="white-space:nowrap"><input type="checkbox" data-k="ages.${a}" ${L.ages[a]?"checked":""}>${a}</label>`:(L.ages[a]?"■":"□")+a)).join(E?" ":"");
+ const head=(kind,title,color)=>{const ages=AGES.slice(0,4).map((a)=>(E?`<label style="white-space:nowrap"><input type="checkbox" data-k="ages.${a}" ${L.ages[a]?"checked":""}>${a}</label>`:(L.ages[a]?"■":"□")+a)).join(E?" ":"");
   const dates=E?`<input type="date" data-k="dateFrom" value="${esc(L.dateFrom)}" style="width:46%"> - <input type="date" data-k="dateTo" value="${esc(L.dateTo)}" style="width:46%">`:`${rocC(L.dateFrom)}-${rocC(L.dateTo)}`;
   return `<h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:${color};text-decoration:underline">${esc(L.cls)}${title}</span>教學活動與幼兒學習觀察紀錄</h2><table class="${kind}">${C()}<tr class="hd"><th colspan="5">日期</th><th colspan="4">幼兒年齡層</th><th colspan="3">教學與協同教師</th></tr><tr><td colspan="5" class="c" style="white-space:nowrap">${dates}</td><td colspan="4" class="c">${ages}</td><td colspan="3" class="c">${E?`<input type="text" list="wkt" data-k="t1" value="${esc(L.t1)}" placeholder="老師 1" style="margin-bottom:3px"><input type="text" list="wkt" data-k="t2" value="${esc(L.t2)}" placeholder="老師 2（協同）">`:esc(tch(L))}</td></tr><tr class="band"><th colspan="12">班級幼生背景說明</th></tr><tr><td colspan="12">${RT_("bg",2)}</td></tr>`};
  const photoRows=(sec,caps)=>{const arr=L[sec].photos||[],o=[];for(let i=0;i<arr.length;i+=2){const pr=[arr[i],arr[i+1]];
@@ -1776,9 +1785,9 @@ function docHtml(L,mode){
 const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.ws.slots;return `<div class="fw"><section class="sheet sh fit"><h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:#2f5597;text-decoration:underline">${esc(L.cls)}在地文化社區踏查</span>教學活動學習單</h2><table class="blue">${C()}${[0,1].map(i=>{const s=S[i]||{id:"",cap:""};const img=s.id&&photos[s.id]?`<img src="${photos[s.id]}" alt="">`:"";return `<tr><td colspan="12" class="wsbox">${img||(E?'<span class="wsph">學習單掃描</span>':"")}${E?`<br><label class="wkb" style="display:inline-block">${s.id?"更換掃描檔":"＋ 上傳學習單掃描檔"}<input type="file" accept="image/*" data-upws="${i}" style="display:none"></label>${s.id?`<button type="button" class="xb" data-xws="${i}">刪除</button>`:""}`:""}</td></tr><tr><td colspan="12" class="wscap">${E?`<textarea data-k="ws.slots.${i}.cap" rows="1" placeholder="學習單說明">${esc(s.cap)}</textarea>`:nl(s.cap)}</td></tr>`}).join("")}</table></section></div>`};
  const stratCell=()=>{const sel=(L.lz.sopts||[]).filter(o=>SOPTS.includes(o));
   const optsEl=E?`<details class="sdd"><summary>${sel.length?esc(sel.join("、")):"請選擇▾"}</summary><div class="sddp">${SOPTS.map(o=>`<label><input type="checkbox" data-sopt="${o}" ${sel.includes(o)?"checked":""}>${o}</label>`).join("")}</div></details>`:esc(sel.join("、"));
-  let x=`<div>課程調整策略：(${optsEl})</div><div>說明：</div>${RT_("lz.strategy",4)}`;
-  const devFilled=String(L.lz.dev||"").replace(RTM,"").replace(/<[^>]*>|&nbsp;/g,"").trim();
-  if(E)x+=`<div class="sdev">發展(疑似)調整策略（選填，有需要再填）：</div>${RT_("lz.dev",2)}`;else if(devFilled)x+=`<div>發展(疑似)調整策略：</div>${RT_("lz.dev",1)}`;
+  let x=`<div>說明：</div>${RT_("lz.strategy",4)}<div>課程調整策略：(${optsEl})</div>`;
+  if(E)x+=`<div style="margin:3px 0"><button type="button" class="wkb" data-sgen="1">✨ 依「說明」生成課程調整策略（勾選項目＋完整文字）</button> <span id="sgenst" style="font-size:12px;font-weight:700;color:#375623"></span></div>`;
+  if(E&&genPrev&&genPrev.id===L.id)x+=`<div style="border:1px solid #b6d3b0;background:#f2f8ee;border-radius:8px;padding:6px 10px;margin:4px 0"><div style="font-size:12px;font-weight:700;color:#375623">整理後的完整文字（確認後按「套用」，會取代上方的說明內容）</div>${genPrev.full.split("\n").map(l=>`<div>${esc(l)}</div>`).join("")}<div style="margin-top:4px"><button type="button" class="wkb on" data-sgenok="1">套用到說明欄</button> <button type="button" class="wkb" data-sgenno="1">關閉</button></div></div>`;
   if(E)x+=`<details class="sex"><summary>📋 範例（來自各班已完成的週誌，按「套用」後再修改成自己的）</summary><div class="sexl">${STRAT_EX.map((e,i)=>`<div class="sexi"><div class="sexh">${esc(e.from)}　${(e.o||[]).map(o=>`<span class="sextag">${o}</span>`).join("")}</div><div class="sext">${esc(e.x.slice(0,100))}${e.x.length>100?"…":""}</div><button type="button" class="wkb" data-sex="${i}">套用這個範例</button></div>`).join("")}</div></details>`;
   return x};
  let h="";
@@ -1921,7 +1930,7 @@ function bind(){
    if(k==="walk.src"){if(!WALK[v][String(cur.walk.month)])cur.walk.month=+Object.keys(WALK[v])[0];fillWalk(cur);render()}
    else if(k==="walk.month"){fillWalk(cur);render()}else if(k==="gm.month"){fillGm(cur);render()}
    later()}});
- root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-sex],[data-impseed],[data-return],[data-updf],[data-lbind],[data-xws]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
+ root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-sex],[data-impseed],[data-return],[data-updf],[data-lbind],[data-xws],[data-sgen],[data-sgenok],[data-sgenno]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
   if(ds.new){cur=newLog();photos=photos;await saveCur();render();return}
   if(ds.open){cur=JSON.parse(JSON.stringify(logs.find(l=>l.id===ds.open)));try{await loadPhotos(cur)}catch(x){}render();return}
   if(ds.print){const L=logs.find(l=>l.id===ds.print);if(L)printLog(L);return}
@@ -1937,6 +1946,12 @@ function bind(){
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
    if(d.notifyLine)d.notifyLine(`📝 週誌已送出\n${cur.cls}（${tch(cur)||cur.ownerName||""}）\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert("已送出！管理員會收到通知。");render();return}
+  if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
+   if(!String(r.text).trim()){say("請先在上方「說明」欄輸入內容，再按這個按鈕。");return}
+   if(!r.opts.length){say("說明裡沒有找到明確的策略關鍵字，請補充做法（例如：口語提醒、老師陪伴、簡化步驟），或自行勾選。");return}
+   cur.lz.sopts=r.opts;genPrev={id:cur.id,full:r.full,opts:r.opts};await saveCur();render();say("已依說明勾選："+r.opts.join("、")+"，並整理出完整文字（請確認）");return}
+  if(ds.sgenok!==undefined&&b.hasAttribute("data-sgenok")){if(cur&&genPrev&&genPrev.id===cur.id){cur.lz.strategy=genPrev.full;cur.lz.sopts=genPrev.opts;genPrev=null;await saveCur();render()}return}
+  if(ds.sgenno!==undefined&&b.hasAttribute("data-sgenno")){genPrev=null;render();return}
   if(ds.sex!==undefined&&b.hasAttribute("data-sex")){const ex=STRAT_EX[+ds.sex];if(ex&&cur){cur.lz.sopts=(ex.o||[]).filter(o=>SOPTS.includes(o));cur.lz.strategy=ex.x;await saveCur();render()}return}
   if(ds.impseed){const c=(root.querySelector("#wkimpcls")||{}).value;if(c)await seedImport(c);return}
   if(ds.mode){mode=ds.mode;clsSel=null;cur=null;render();return}
@@ -1977,7 +1992,7 @@ function kgApp() {
     laminateStock: null, laminateRequests: [], laminateInit: false, laminateStockInput: '', laminateError: '',     laminateForm: { borrower:'', className:'', qty:1, purpose:'', requestDate:'', fileNote:'', uploaded:false },
     openGroups: {}, itemSearchText: '', started: false, todayLabel: '', loginLogsError: '',
     toast: '', submitting: false, uploadingPhoto: false,
-    currentUser: null, isAdmin: false, authError: '',
+    currentUser: null, isAdmin: false, planOpen: false, authError: '',
     auth: null, db: null, storage: null, unsubs: [],
     idleTimer: null, idleTimeoutMs: 10 * 60 * 1000,
     importing: false, importSummary: '',
