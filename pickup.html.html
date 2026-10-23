@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>課後延托接送登記系統</title>
+<style>
+:root{--bg:#f7f5ef;--card:#fff;--tx:#2b2b2b;--mu:#777;--pr:#2f7d5b;--bd:#ddd;--red:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1d1c;--card:#272827;--tx:#eee;--mu:#aaa;--pr:#4fb98a;--bd:#444;--red:#ff7b6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:18px/1.5 "Noto Sans TC",sans-serif}
+header{padding:14px 18px;font-size:22px;font-weight:700}
+nav{display:flex;gap:8px;padding:0 18px 10px;flex-wrap:wrap}
+nav button,.btn{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer}
+nav button.on,.btn.pr{background:var(--pr);color:#fff;border-color:var(--pr)}
+main{padding:0 18px 40px;max-width:980px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+input,select,textarea{font-size:18px;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);max-width:100%}
+label{display:block;margin:8px 0 3px;color:var(--mu);font-size:15px}
+.chip{display:inline-block;margin:4px 6px 0 0;padding:6px 14px;border:1px solid var(--pr);border-radius:20px;cursor:pointer;color:var(--pr)}
+table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:left}
+.late{color:var(--red);font-weight:700}.wrap{overflow-x:auto}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.hide{display:none}.mu{color:var(--mu);font-size:15px}
+</style></head><body>
+<div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
+<div id="app" class="hide">
+<header>🚸 課後延托接送登記</header>
+<nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
+<main>
+<section id="reg">
+ <div class="card">
+  <button class="btn pr" id="mic" style="font-size:22px;padding:14px 22px" onclick="toggleVoice()">🎤 語音登記</button>
+  <label style="display:inline-block;margin-left:12px"><input type="checkbox" id="cont" style="width:20px;height:20px"> 持續聆聽（連續登記）</label>
+  <div class="mu">說法範例：「王小明 媽媽接」「幸運草班 小明 外婆」</div>
+  <div id="vt" class="mu"></div><div id="vres" style="font-size:20px;margin-top:6px"></div>
+ </div>
+ <div class="card">
+  <label>選擇幼兒（可輸入姓名篩選）</label>
+  <input id="q" placeholder="輸入姓名…" oninput="fillKids()"> <select id="kid" onchange="pickKid()"></select>
+  <div id="kinfo" class="mu"></div>
+  <div class="row"><div><label>接回時間</label><input type="time" id="tm"></div>
+  <div><label>日期</label><input type="date" id="dt"></div>
+  <div><label>值班老師</label><input id="by" placeholder="老師姓名"></div></div>
+  <label>接回人（點選授權接送人或自行輸入）</label>
+  <div id="chips"></div><input id="who" placeholder="例如：媽媽、外婆">
+  <p id="warn" class="late"></p>
+  <button class="btn pr" onclick="saveRec()">登記接回</button> <span id="msg" class="mu"></span>
+ </div>
+</section>
+<section id="today" class="hide"><div class="card"><div class="row"><div><label>日期</label><input type="date" id="td" onchange="subRecs(this.value)"></div></div>
+ <div class="wrap"><table id="tt"></table></div><p class="mu" id="tleft"></p></div></section>
+<section id="admin" class="hide">
+  <div id="adm">
+  <div class="card"><b>月總表</b>
+   <div class="row"><div><label>月份</label><input type="month" id="mon" onchange="renderReport()"></div>
+   <button class="btn pr" onclick="exportCSV()">匯出 CSV（Excel 可開）</button></div>
+   <div class="wrap"><table id="rep"></table></div>
+   <p class="mu">單次＝出席天數 × 單次費用；包月＝固定月費。超時＝接回時間晚於 18:30。</p></div>
+  <div class="card"><b>費用設定</b>
+   <div class="row"><div><label>包月 17:00~18:00</label><input type="number" id="f_m1800"></div><div><label>包月 17:00~18:30</label><input type="number" id="f_m1830"></div>
+   <div><label>單次 17:00~18:00（每天）</label><input type="number" id="f_s1800"></div><div><label>單次 17:00~18:30（每天）</label><input type="number" id="f_s1830"></div>
+   <div><label>最晚接回時間</label><input type="time" id="f_cut"></div></div>
+   <br><button class="btn pr" onclick="saveFees()">儲存設定</button></div>
+  <div class="card"><b>幼兒名單</b>
+   <div class="row"><div><label>姓名</label><input id="k_name"></div><div><label>班級</label><input id="k_cls"></div>
+   <div><label>計費</label><select id="k_mode"><option value="m">包月</option><option value="s">單次</option></select></div>
+   <div><label>時段</label><select id="k_slot"><option value="1800">17:00~18:00</option><option value="1830">17:00~18:30</option></select></div>
+   <div><label>授權接送人（以逗號分隔）</label><input id="k_who" placeholder="爸爸,媽媽,外婆"></div></div>
+   <br><button class="btn pr" onclick="addKid()">新增／更新幼兒</button>
+   <hr><label>批次匯入（一行一位，可寫「姓名,班級」；已存在或重複的姓名會略過）</label><textarea id="bulk" rows="6" style="width:100%"></textarea>
+   <div class="row"><div><label>預設計費</label><select id="b_mode"><option value="m">包月</option><option value="s">單次</option></select></div>
+   <div><label>預設時段</label><select id="b_slot"><option value="1800">17:00~18:00</option><option value="1830">17:00~18:30</option></select></div>
+   <button class="btn pr" onclick="bulkAdd()">匯入</button></div><p id="bmsg" class="mu"></p>
+   <div class="wrap"><table id="kt"></table></div></div>
+ </div>
+</section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-firestore.js"></script>
+<script>
+// 與借還系統共用同一個 Firebase 專案、同一套登入（管理者名單 config/admins、帳號核准 members）
+window.FIREBASE_CONFIG = {apiKey:"AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU",authDomain:"rd320-3681667.firebaseapp.com",projectId:"rd320-3681667",storageBucket:"rd320-3681667.firebasestorage.app",messagingSenderId:"583294453382",appId:"1:583294453382:web:3de444b019026831a27307"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+firebase.initializeApp(FIREBASE_CONFIG);
+const db=firebase.firestore(),auth=firebase.auth();
+let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30'},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[];
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const nowT=()=>new Date().toTimeString().slice(0,5);
+const saveCfg=()=>db.doc('pickup/cfg').set(cfg);
+const saveR=r=>db.collection('pickup_records').doc(r.id).set(r);
+const delR=id=>db.collection('pickup_records').doc(id).delete();
+function subRecs(d){unR&&unR();unR=db.collection('pickup_records').where('date','==',d).onSnapshot(x=>{recs=x.docs.map(y=>y.data());renderToday();},e=>console.error(e));}
+const signIn=()=>auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>$('#gmsg').textContent='登入失敗：'+e.message);
+function showGate(m){$('#gmsg').textContent=m;$('#gate').classList.remove('hide');$('#app').classList.add('hide');}
+async function checkAccess(u){const id=(u.email||'').trim().toLowerCase();if(!id)return{st:'blocked'};
+ const ref=db.collection('members').doc(id),d=await ref.get();
+ if(d.exists){const x=d.data();return{st:x.status==='approved'?'ok':x.status==='blocked'?'blocked':'pending',name:String(x.name||u.displayName||'').trim()}}
+ await ref.set({email:id,name:u.displayName||'',status:'pending',requestedAt:Date.now()});return{st:'pending'};}
+async function enter(u){
+ clearInterval(poll);const email=(u.email||'').trim().toLowerCase();
+ try{const a=await db.collection('config').doc('admins').get();isAdmin=!!email&&((a.exists&&a.data().emails)||[]).some(m=>String(m).trim().toLowerCase()===email)}catch(e){isAdmin=false}
+ let r={st:'ok',name:u.displayName||email};
+ if(!isAdmin){try{r=await checkAccess(u)}catch(e){return showGate('無法確認帳號權限（'+(e.code||e.message)+'），請檢查 Firestore 規則')}}
+ if(r.st==='pending'){showGate('您的帳號（'+email+'）正在等待管理者核准，核准後會自動進入');poll=setInterval(()=>enter(u),30000);return}
+ if(r.st!=='ok')return showGate(email+' 沒有使用權限');
+ me={email,name:r.name||u.displayName||email};
+ $('#gate').classList.add('hide');$('#app').classList.remove('hide');
+ $('#by').value=me.name;$('#who_').textContent=me.name+(isAdmin?'（管理者）':'');
+ document.querySelector('[data-t=admin]').classList.toggle('hide',!isAdmin);
+ $('#dt').value=today();$('#tm').value=nowT();
+ if(!unR)subRecs(today());
+ if(!unC)unC=db.doc('pickup/cfg').onSnapshot(d=>{if(d.exists)cfg={...cfg,...d.data()};fillKids();if(isAdmin)renderKids();});
+}
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{}).then(()=>auth.onAuthStateChanged(u=>{
+ if(u)return enter(u);
+ clearInterval(poll);unR&&unR();unC&&unC();unR=unC=null;
+ showGate('請使用學校 Google 帳號登入（請用 Safari / Chrome 開啟，勿在 LINE 內建瀏覽器）');}));
+const planName=k=>(k.mode=='m'?'包月 ':'單次 ')+(k.slot=='1800'?'17:00~18:00':'17:00~18:30');
+const kidOf=id=>cfg.kids.find(k=>k.id==id)||{name:'(已刪除)'};
+
+document.querySelectorAll('#nav button[data-t]').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('#nav button[data-t]').forEach(x=>x.classList.toggle('on',x==b));
+ ['reg','today','admin'].forEach(t=>$('#'+t).classList.toggle('hide',t!=b.dataset.t));
+ if(b.dataset.t=='today')renderToday();if(b.dataset.t=='admin')initAdmin();});
+
+function fillKids(){const q=$('#q').value.trim();
+ $('#kid').innerHTML=cfg.kids.filter(k=>k.name.includes(q)).map(k=>`<option value="${k.id}">${esc(k.name)}（${esc(k.cls||'')}）</option>`).join('');pickKid();}
+function pickKid(){const k=cfg.kids.find(x=>x.id==$('#kid').value);
+ $('#kinfo').textContent=k?planName(k):'請先在管理後台新增幼兒';
+ $('#chips').innerHTML=k?(k.who||[]).map(w=>`<span class="chip" onclick="$('#who').value='${esc(w)}'">${esc(w)}</span>`).join(''):'';chk();}
+function chk(){$('#warn').textContent=$('#tm').value>cfg.cut?`⚠ 已超過最晚接回時間 ${cfg.cut}，將計入超時次數`:'';}
+$('#tm').oninput=chk;
+async function saveRec(){
+ const kid=$('#kid').value,t=$('#tm').value,who=$('#who').value.trim(),dt=$('#dt').value;
+ if(!kid||!t||!who||!dt){$('#msg').textContent='請填寫幼兒、時間、接回人';return}
+ const r={id:dt+'_'+kid,date:dt,kid,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
+ await saveR(r);
+ $('#msg').textContent=`✔ 已登記 ${kidOf(kid).name} ${t} 由${who}接回`+(r.late?'（超時）':'');
+ $('#who').value='';$('#tm').value=nowT();chk();}
+function renderToday(){const d=$('#td').value||($('#td').value=today());
+ const rs=recs.filter(r=>r.date==d).sort((a,b)=>a.time<b.time?-1:1);
+ $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>值班</th><th></th></tr>'+rs.map(r=>
+  `<tr><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(kidOf(r.kid).name)}</td><td>${esc(r.who)}</td><td>${esc(r.by)}</td><td>${isAdmin?`<button class="btn" onclick="del('${r.id}')">刪除</button>`:''}</td></tr>`).join('');
+ const done=new Set(rs.map(r=>r.kid));
+ $('#tleft').textContent='尚未接回：'+(cfg.kids.filter(k=>!done.has(k.id)).map(k=>k.name).join('、')||'無');}
+async function del(id){recs=recs.filter(r=>r.id!=id);await delR(id);renderToday();}
+
+function initAdmin(){['m1800','m1830','s1800','s1830'].forEach(k=>$('#f_'+k).value=cfg.fees[k]);$('#f_cut').value=cfg.cut;
+ if(!$('#mon').value)$('#mon').value=today().slice(0,7);renderKids();renderReport();}
+async function saveFees(){['m1800','m1830','s1800','s1830'].forEach(k=>cfg.fees[k]=+$('#f_'+k).value||0);
+ cfg.cut=$('#f_cut').value||'18:30';await saveCfg();renderReport();alert('已儲存');}
+async function addKid(){const n=$('#k_name').value.trim();if(!n)return;
+ let k=cfg.kids.find(x=>x.name==n);if(!k){k={id:'k'+Date.now()};cfg.kids.push(k);}
+ Object.assign(k,{name:n,cls:$('#k_cls').value.trim(),mode:$('#k_mode').value,slot:$('#k_slot').value,who:$('#k_who').value.split(/[,，、]/).map(s=>s.trim()).filter(Boolean)});
+ await saveCfg();renderKids();fillKids();renderReport();['k_name','k_cls','k_who'].forEach(i=>$('#'+i).value='');}
+async function setPlan(id,f,v){const k=cfg.kids.find(x=>x.id==id);if(!k)return;k[f]=v;await saveCfg();renderReport();}
+async function bulkAdd(){const have=new Set(cfg.kids.map(k=>k.name));let add=0,skip=0;
+ $('#bulk').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{const[n,c]=l.split(/[,，\t]/).map(x=>x.trim());
+  if(!n||have.has(n)){skip++;return}have.add(n);cfg.kids.push({id:'k'+Date.now()+add,name:n,cls:c||'',mode:$('#b_mode').value,slot:$('#b_slot').value,who:[]});add++;});
+ await saveCfg();$('#bulk').value='';renderKids();fillKids();renderReport();$('#bmsg').textContent=`已新增 ${add} 位，略過重複 ${skip} 位；請在下方表格逐一確認每位幼兒的計費方式`;}
+async function delKid(id){if(!confirm('刪除此幼兒？（既有紀錄保留）'))return;cfg.kids=cfg.kids.filter(k=>k.id!=id);await saveCfg();renderKids();fillKids();renderReport();}
+function renderKids(){$('#kt').innerHTML='<tr><th>姓名</th><th>班級</th><th>方案</th><th>授權接送人</th><th></th></tr>'+cfg.kids.map(k=>
+ `<tr><td>${esc(k.name)}</td><td>${esc(k.cls)}</td><td><select onchange="setPlan('${k.id}','mode',this.value)"><option value="m"${k.mode=='m'?' selected':''}>包月</option><option value="s"${k.mode=='s'?' selected':''}>單次</option></select> <select onchange="setPlan('${k.id}','slot',this.value)"><option value="1800"${k.slot=='1800'?' selected':''}>~18:00</option><option value="1830"${k.slot=='1830'?' selected':''}>~18:30</option></select></td><td>${esc((k.who||[]).join('、'))}</td><td><button class="btn" onclick="delKid('${k.id}')">刪除</button></td></tr>`).join('');}
+async function loadMonth(){const m=$('#mon').value,[y,mo]=m.split('-').map(Number),nx=mo==12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,'0')}`;
+ const[a,b]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get()]);
+ monthRecs=a.docs.map(x=>x.data());lateAll=b.docs.map(x=>x.data());}
+function calc(){const m=$('#mon').value;let tot=0;
+ const rows=cfg.kids.map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),days=mine.length;
+  const fee=k.mode=='m'?cfg.fees['m'+k.slot]:days*cfg.fees['s'+k.slot];tot+=fee;
+  return{k,days,fee,lm:mine.filter(r=>r.late).length,la:lateAll.filter(r=>r.kid==k.id).length};});
+ return{rows,tot,m};}
+async function renderReport(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();
+ $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>費用</th><th>當月超時</th><th>累計超時</th></tr>'+rows.map(r=>
+  `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${r.days}</td><td>${r.fee}</td><td class="${r.lm?'late':''}">${r.lm}</td><td>${r.la}</td></tr>`).join('')+`<tr><th colspan="4">總計</th><th>${tot}</th><th></th><th></th></tr>`;}
+async function exportCSV(){await loadMonth();const{rows,tot,m}=calc();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ let L=[['幼兒','班級','方案','出席天數','費用','當月超時次數','累計超時次數']];
+ rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.fee,r.lm,r.la]));
+ L.push(['總計','','','',tot,'','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','值班老師','是否超時']);
+ monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'']));
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv'}));
+ a.download=`課後延托月總表_${m}.csv`;a.click();}
+
+// ===== 語音登記 =====
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false,lastVoice=null,pendWho='';
+const setMic=()=>$('#mic').textContent=listening?'⏹ 停止聆聽':'🎤 語音登記';
+function toggleVoice(){
+ if(!SR){$('#vt').textContent='此瀏覽器不支援語音辨識，請改用 Chrome、Edge 或 Safari';return}
+ if(listening){listening=false;rec&&rec.stop();setMic();return}
+ rec=new SR();rec.lang='zh-TW';rec.interimResults=true;rec.continuous=false;
+ rec.onresult=e=>{const r=e.results[e.results.length-1],t=r[0].transcript;$('#vt').textContent='🎧 '+t;if(r.isFinal)handleVoice(t.replace(/\s+/g,''));};
+ rec.onend=()=>{if(listening&&$('#cont').checked){try{rec.start()}catch(e){}}else{listening=false;setMic()}};
+ rec.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed'){listening=false;$('#vt').textContent='請允許麥克風權限（需 https 網址）';setMic()}};
+ listening=true;rec.start();setMic();}
+function handleVoice(t){
+ const noB=s=>s.replace(/班$/,'');
+ const byCls=cfg.kids.filter(k=>k.cls&&(t.includes(k.cls)||t.includes(noB(k.cls))));
+ const pool=byCls.length?byCls:cfg.kids;
+ let c=pool.map(k=>({k,s:t.includes(k.name)?2:(k.name.length>2&&t.includes(k.name.slice(1))?1:0)})).filter(x=>x.s);
+ if(!c.length){$('#vres').innerHTML=`<span class="late">找不到幼兒</span>：${esc(t)}`;return}
+ const best=Math.max(...c.map(x=>x.s));c=c.filter(x=>x.s==best).map(x=>x.k);
+ const k0=c[0];let who=(k0.who||[]).find(w=>t.includes(w))||'';
+ if(!who){let rest=t;c.forEach(k=>{[k.name,k.name.slice(1),k.cls,noB(k.cls||'')].forEach(s=>{if(s)rest=rest.split(s).join('')})});
+  who=rest.replace(/來接|被接走|接走|接回|去接|接|被|了|的|是|由|來|小朋友|幼兒|同學/g,'');}
+ pendWho=who;
+ if(c.length>1){$('#vres').innerHTML='有同名幼兒，請點選：'+c.map(k=>`<span class="chip" onclick="chooseV('${k.id}')">${esc(k.name)}（${esc(k.cls||'')}）</span>`).join('');return}
+ chooseV(k0.id);}
+function chooseV(id){
+ if(pendWho)return voiceSave(id,pendWho);
+ const k=kidOf(id);$('#vres').innerHTML=`${esc(k.name)}：請點選接回人 `+(k.who||[]).map((w,i)=>`<span class="chip" onclick="voiceSave('${id}',${JSON.stringify(w).replace(/"/g,'&quot;')})">${esc(w)}</span>`).join('');}
+async function voiceSave(id,who){
+ const dt=today(),t=nowT(),r={id:dt+'_'+id,date:dt,kid:id,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
+ const pd=await db.collection('pickup_records').doc(r.id).get(),prev=pd.exists?pd.data():null;await saveR(r);lastVoice={r,prev};
+ $('#vres').innerHTML=`✔ <b>${esc(kidOf(id).name)}</b> ${t} 由 ${esc(who)} 接回${r.late?' <span class="late">（超時）</span>':''} <button class="btn" onclick="undoV()">撤銷</button>`;}
+async function undoV(){if(!lastVoice)return;const{r,prev}=lastVoice;
+ if(prev){recs.push(prev);await saveR(prev)}else await delR(r.id);lastVoice=null;$('#vres').textContent='已撤銷';}
+
+
+</script></body></html>
