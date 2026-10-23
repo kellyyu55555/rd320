@@ -76,6 +76,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
 <script>
 // 與借還系統共用同一個 Firebase 專案、同一套登入（管理者名單 config/admins、帳號核准 members）
 window.FIREBASE_CONFIG = {apiKey:"AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU",authDomain:"rd320-3681667.firebaseapp.com",projectId:"rd320-3681667",storageBucket:"rd320-3681667.firebasestorage.app",messagingSenderId:"583294453382",appId:"1:583294453382:web:3de444b019026831a27307"};
@@ -186,24 +187,40 @@ const setMic=()=>$('#mic').textContent=listening?'⏹ 停止聆聽':'🎤 語音
 function toggleVoice(){
  if(!SR){$('#vt').textContent='此瀏覽器不支援語音辨識，請改用 Chrome、Edge 或 Safari';return}
  if(listening){listening=false;rec&&rec.stop();setMic();return}
- rec=new SR();rec.lang='zh-TW';rec.interimResults=true;rec.continuous=false;
- rec.onresult=e=>{const r=e.results[e.results.length-1],t=r[0].transcript;$('#vt').textContent='🎧 '+t;if(r.isFinal)handleVoice(t.replace(/\s+/g,''));};
+ rec=new SR();rec.lang='zh-TW';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=3;
+ rec.onresult=e=>{const r=e.results[e.results.length-1],t=r[0].transcript;$('#vt').textContent='🎧 '+t;if(r.isFinal)handleVoice(Array.from(r,a=>a.transcript.replace(/\s+/g,'')));};
  rec.onend=()=>{if(listening&&$('#cont').checked){try{rec.start()}catch(e){}}else{listening=false;setMic()}};
  rec.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed'){listening=false;$('#vt').textContent='請允許麥克風權限（需 https 網址）';setMic()}};
  listening=true;rec.start();setMic();}
-function handleVoice(t){
- const noB=s=>s.replace(/班$/,'');
- const byCls=cfg.kids.filter(k=>k.cls&&(t.includes(k.cls)||t.includes(noB(k.cls))));
- const pool=byCls.length?byCls:cfg.kids;
- let c=pool.map(k=>({k,s:t.includes(k.name)?2:(k.name.length>2&&t.includes(k.name.slice(1))?1:0)})).filter(x=>x.s);
- if(!c.length){$('#vres').innerHTML=`<span class="late">找不到幼兒</span>：${esc(t)}`;return}
- const best=Math.max(...c.map(x=>x.s));c=c.filter(x=>x.s==best).map(x=>x.k);
- const k0=c[0];let who=(k0.who||[]).find(w=>t.includes(w))||'';
- if(!who){let rest=t;c.forEach(k=>{[k.name,k.name.slice(1),k.cls,noB(k.cls||'')].forEach(s=>{if(s)rest=rest.split(s).join('')})});
-  who=rest.replace(/來接|被接走|接走|接回|去接|接|被|了|的|是|由|來|小朋友|幼兒|同學/g,'');}
- pendWho=who;
- if(c.length>1){$('#vres').innerHTML='有同名幼兒，請點選：'+c.map(k=>`<span class="chip" onclick="chooseV('${k.id}')">${esc(k.name)}（${esc(k.cls||'')}）</span>`).join('');return}
- chooseV(k0.id);}
+const noB=s=>String(s||'').replace(/班$/,'');
+// 發音比對：忽略聲調，並容許台灣口音常見混淆（zh/z、ch/c、sh/s、n/l、r/l、ing/in、eng/en）
+const syl=p=>p.replace(/^zh/,'z').replace(/^ch/,'c').replace(/^sh/,'s').replace(/^[nr]/,'l').replace(/ing$/,'in').replace(/eng$/,'en');
+const PY=t=>(typeof pinyinPro!=='undefined'&&t)?pinyinPro.pinyin(t,{toneType:'none',type:'array'}).map(syl):null;
+function findKids(tz,pool){const ty=PY(tz),out=[];
+ pool.forEach(k=>{const nm=k.name;let best=null;
+  if(tz.includes(nm))best={s:2,i:tz.indexOf(nm),n:nm.length};
+  else if(nm.length>=3&&tz.includes(nm.slice(1)))best={s:1.9,i:tz.indexOf(nm.slice(1)),n:nm.length-1};
+  else if(ty){const ny=PY(nm),tries=[[nm,ny,1]];if(nm.length>=3)tries.push([nm.slice(1),ny.slice(1),.95]);
+   tries.forEach(([txt,sy,w])=>{const L=sy.length;
+    for(let i=0;i+L<=ty.length;i++){let m=0,c=0;for(let j=0;j<L;j++){if(ty[i+j]==sy[j])m++;if(tz[i+j]==txt[j])c++}
+     if(m/L>=(L<=2?1:.66)){const sc=(m/L)*w+c*.01;if(!best||sc>best.s)best={s:sc,i,n:L};}}});}
+  if(best)out.push({k,s:best.s,rest:tz.slice(0,best.i)+tz.slice(best.i+best.n)});});
+ return out;}
+let pendList=[];
+function handleVoice(alts){
+ const all={};
+ alts.forEach(t=>{const tz=t.replace(/[^\u4e00-\u9fff]/g,'');
+  const byCls=cfg.kids.filter(k=>k.cls&&(t.includes(k.cls)||t.includes(noB(k.cls))));
+  let c=findKids(tz,byCls.length?byCls:cfg.kids);if(!c.length&&byCls.length)c=findKids(tz,cfg.kids);
+  c.forEach(x=>{if(!all[x.k.id]||x.s>all[x.k.id].s){
+   let who=(x.k.who||[]).find(w=>t.includes(w))||'';
+   if(!who){let r=x.rest;[x.k.cls,noB(x.k.cls)].forEach(z=>{if(z)r=r.split(z).join('')});who=r.replace(/來接|被接走|接走|接回|去接|接|被|了|的|是|由|來|小朋友|幼兒|同學/g,'');}
+   all[x.k.id]={...x,who};}});});
+ pendList=Object.values(all).sort((a,b)=>b.s-a.s).slice(0,6);
+ if(!pendList.length){$('#vres').innerHTML=`<span class="late">找不到相近的幼兒</span>：${esc(alts[0])}`;return}
+ if(pendList[0].s>=1.9&&!pendList.slice(1).some(x=>x.s>=1))return pickV(0);
+ $('#vres').innerHTML='聽到「'+esc(alts[0])+'」，請點選是哪位幼兒：'+pendList.map((x,i)=>`<span class="chip" onclick="pickV(${i})">${esc(x.k.name)}${x.k.cls?'（'+esc(x.k.cls)+'）':''}</span>`).join('');}
+function pickV(i){const it=pendList[i];pendWho=it.who;chooseV(it.k.id);}
 function chooseV(id){
  if(pendWho)return voiceSave(id,pendWho);
  const k=kidOf(id);$('#vres').innerHTML=`${esc(k.name)}：請點選接回人 `+(k.who||[]).map((w,i)=>`<span class="chip" onclick="voiceSave('${id}',${JSON.stringify(w).replace(/"/g,'&quot;')})">${esc(w)}</span>`).join('');}
