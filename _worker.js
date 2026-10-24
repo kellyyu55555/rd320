@@ -8,6 +8,14 @@
 const DEFAULT_API_KEY = 'AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU';
 const DEFAULT_PROJECT = 'rd320-3681667';
 
+// 清理貼上的憑證：去掉前後空白／換行、頭尾引號，以及中間不小心帶進來的空白
+const clean = v => String(v == null ? '' : v).trim().replace(/^["'`]+|["'`]+$/g, '').replace(/\s+/g, '');
+const lineToken = env => clean(env.LINE_CHANNEL_ACCESS_TOKEN);
+const lineSecret = env => clean(env.LINE_CHANNEL_SECRET);
+const lineToList = env => String(env.LINE_TO || '').split(',').map(clean).filter(Boolean);
+// 把 LINE 回的 HTML 錯誤網頁壓成一行文字，避免整段 HTML 跳在畫面上
+const plain = t => String(t || '').replace(/<[^>]*>/g, ' ').replace(/&#58;/g, ':').replace(/&#47;/g, '/').replace(/&#46;/g, '.').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+
 const json = (status, obj) => new Response(JSON.stringify(obj), {
   status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
 });
@@ -50,11 +58,13 @@ async function isAdmin(me, env) {
 async function linePush(env, to, text) {
   const r = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}` },
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'rd320-line-notify/1.0', Authorization: `Bearer ${lineToken(env)}` },
     body: JSON.stringify({ to, messages: [{ type: 'text', text }] }),
   });
   if (r.ok) return { ok: true };
-  let detail = ''; try { detail = (await r.text()).slice(0, 300); } catch (e) {}
+  let detail = ''; try { detail = (await r.text()).slice(0, 600); } catch (e) {}
+  if (/^\s*</.test(detail)) detail = plain(detail) + '（LINE 防火牆拒絕，請重新貼上 LINE_CHANNEL_ACCESS_TOKEN，確認沒有空白、引號或被截斷）';
+  else detail = detail.slice(0, 300);
   return { ok: false, status: r.status, detail };
 }
 
@@ -70,9 +80,10 @@ async function notify(request, env) {
   if (request.method === 'GET') {
     return json(200, {
       ok: true,
-      lineTokenSet: !!env.LINE_CHANNEL_ACCESS_TOKEN,
-      lineToCount: String(env.LINE_TO || '').split(',').map(s => s.trim()).filter(Boolean).length,
-      webhookSecretSet: !!env.LINE_CHANNEL_SECRET,
+      lineTokenSet: !!lineToken(env),
+      lineTokenLength: lineToken(env).length,   // LINE 長期權杖通常約 170 個字元；差太多就是貼錯
+      lineToCount: lineToList(env).length,
+      webhookSecretSet: !!lineSecret(env),
       kvSet: !!env.LINE_KV,
     });
   }
@@ -82,11 +93,11 @@ async function notify(request, env) {
   const body = await readBody(request);
   const text = String(body.text || '').trim().slice(0, 900);
   if (!text) return json(400, { error: 'empty text' });
-  if (!env.LINE_CHANNEL_ACCESS_TOKEN) return json(500, { error: 'LINE 尚未設定（缺少 LINE_CHANNEL_ACCESS_TOKEN）' });
+  if (!lineToken(env)) return json(500, { error: 'LINE 尚未設定（缺少 LINE_CHANNEL_ACCESS_TOKEN）' });
 
   // 傳給指定老師（僅管理員）
   if (body.toEmail) {
-    if (!(await isAdmin(me, env))) return json(403, { error: '只有管理員可以傳給指定老師', detail: me.adminErr || '', build: 'v3' });
+    if (!(await isAdmin(me, env))) return json(403, { error: '只有管理員可以傳給指定老師', detail: me.adminErr || '', build: 'v4' });
     let bound = null;
     try { bound = await kv(env).get('email:' + String(body.toEmail).toLowerCase(), 'json'); }
     catch (e) { return json(500, { error: '讀取綁定資料失敗：' + e.message }); }
@@ -96,7 +107,7 @@ async function notify(request, env) {
   }
 
   // 傳給管理員
-  const to = String(env.LINE_TO || '').split(',').map(s => s.trim()).filter(Boolean);
+  const to = lineToList(env);
   if (!to.length) return json(500, { error: 'LINE 尚未設定（缺少 LINE_TO）' });
   const results = await Promise.all(to.map(id => linePush(env, id, text)));
   const failed = results.filter(x => !x.ok);
@@ -133,18 +144,18 @@ async function hmacBase64(secret, text) {
 async function lineReply(env, replyToken, text) {
   await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}` },
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'rd320-line-notify/1.0', Authorization: `Bearer ${lineToken(env)}` },
     body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
   }).catch(() => {});
 }
 async function webhook(request, env) {
   if (request.method === 'GET') {
-    const sec = String(env.LINE_CHANNEL_SECRET || '').trim();
-    return json(200, { ok: true, secretSet: !!sec, secretLength: sec.length, tokenSet: !!env.LINE_CHANNEL_ACCESS_TOKEN, kvSet: !!env.LINE_KV });
+    const sec = lineSecret(env);
+    return json(200, { ok: true, secretSet: !!sec, secretLength: sec.length, tokenSet: !!lineToken(env), kvSet: !!env.LINE_KV });
   }
   if (request.method !== 'POST') return json(200, { ok: true });
   const raw = await request.text();
-  const secret = String(env.LINE_CHANNEL_SECRET || '').trim();
+  const secret = lineSecret(env);
   if (!secret) return json(500, { error: '缺少 LINE_CHANNEL_SECRET' });
   const sig = request.headers.get('x-line-signature') || '';
   if (sig !== await hmacBase64(secret, raw)) return json(401, { error: 'bad signature' });
