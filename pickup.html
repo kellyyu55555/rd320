@@ -21,7 +21,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 </style></head><body>
 <div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
 <div id="app" class="hide">
-<header>🚸 課後延托接送登記</header>
+<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-F（含臨時延托、請假）</span></header>
 <nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
 <main>
 <section id="reg">
@@ -33,12 +33,15 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
   <label style="margin-top:8px">目前值班班級（選了之後，語音與下拉選單只比對該班幼兒）</label><div id="clsbar"></div>
   <div id="vt" class="mu"></div><div id="vres" style="font-size:20px;margin-top:6px"></div>
  </div>
- <div class="card"><button class="btn" onclick="$('#tmp').classList.toggle('hide')">➕ 臨時延托登記</button> <span class="mu">今天臨時要延托的幼兒（名單內或名單外都可以）</span>
+ <div class="card"><button class="btn pr" style="font-size:20px;padding:12px 20px" onclick="$('#tmp').classList.toggle('hide')">➕ 臨時延托登記</button> <span class="mu">從全園名單選班級和幼兒，找不到的可手動輸入</span>
   <div id="tmp" class="hide" style="margin-top:8px">
-   <div class="row"><div><label>幼兒</label><select id="t_kid" onchange="$('#t_new').classList.toggle('hide',this.value!='__new')"></select></div>
+   <div class="row"><div><label>班級</label><select id="t_c" onchange="renderTmpKids()"></select></div>
+   <div><label>幼兒（座號 姓名）</label><select id="t_k"></select></div>
    <div><label>延托時段</label><select id="t_slot"><option value="1800">17:00~18:00</option><option value="1830">17:00~18:30</option></select></div></div>
-   <div id="t_new" class="row hide"><div><label>幼兒姓名</label><input id="t_name"></div><div><label>班級</label><select id="t_cls"></select></div></div>
-   <br><button class="btn pr" onclick="addTemp()">登記今日臨時延托</button> <span id="tmsg" class="mu"></span>
+   <br><button class="btn pr" onclick="addTempList()">登記今日臨時延托</button> <span id="tmsg" class="mu"></span>
+   <details style="margin-top:10px"><summary class="mu">名單裡找不到？手動輸入</summary>
+    <div class="row"><div><label>幼兒姓名</label><input id="t_name" placeholder="輸入姓名" style="width:180px"></div><div><label>班級（選填）</label><select id="t_cls"></select></div></div>
+    <br><button class="btn" onclick="addTemp()">手動登記</button></details>
    <div id="tlist" style="margin-top:8px"></div></div></div>
  <div class="card">
   <label>選擇幼兒（可輸入姓名篩選）</label>
@@ -73,6 +76,10 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
    <div><label>單次 17:00~18:00（每天）</label><input type="number" id="f_s1800"></div><div><label>單次 17:00~18:30（每天）</label><input type="number" id="f_s1830"></div>
    <div><label>最晚接回時間</label><input type="time" id="f_cut"></div></div>
    <br><button class="btn pr" onclick="saveFees()">儲存設定</button></div>
+  <div class="card"><b>全園幼兒名單（臨托用）</b>
+   <p class="mu">供老師登記臨時延托時選擇，和下方「幼兒名單」（延托）分開存放。CSV 欄位：班級,座號,姓名（可直接用我給的「全園幼兒名單_臨托用.csv」）。</p>
+   <input type="file" id="ak_file" accept=".csv,.txt"> <button class="btn pr" onclick="importAll()">匯入／覆蓋全園名單</button>
+   <div id="ak_info" class="mu" style="margin-top:6px"></div></div>
   <div class="card"><b>班級管理</b>
    <div class="row"><div><label>班級名稱</label><input id="c_name" placeholder="例如：幸運草班"></div>
    <div><label>語音別名（逗號分隔，選填）</label><input id="c_alias" placeholder="例如：幸運草,小班"></div>
@@ -108,7 +115,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 firebase.initializeApp(FIREBASE_CONFIG);
 const db=firebase.firestore(),auth=firebase.auth();
-let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[],monthTemps=[],monthAbs=[],absAll=[],todayRecs=[],todayTemps=[],unT=[],subDay='';
+let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[],monthTemps=[],allKids=[],unK=null,monthAbs=[],absAll=[],todayRecs=[],todayTemps=[],unT=[],subDay='';
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const nowT=()=>new Date().toTimeString().slice(0,5);
 const saveCfg=()=>db.doc('pickup/cfg').set(cfg);
@@ -133,12 +140,12 @@ async function enter(u){
  $('#by').value=me.name;$('#who_').textContent=me.name+(isAdmin?'（管理者）':'');
  document.querySelector('[data-t=admin]').classList.toggle('hide',!isAdmin);
  $('#dt').value=today();$('#tm').value=nowT();
- if(!unR)subRecs(today());if(!unT.length)subToday();
+ if(!unR)subRecs(today());if(!unT.length)subToday();if(!unK)unK=db.doc('pickup/allkids').onSnapshot(d=>{allKids=d.exists?(d.data().kids||[]):[];fillKids();renderAllInfo();},e=>console.error(e));
  if(!unC)unC=db.doc('pickup/cfg').onSnapshot(d=>{if(d.exists)cfg={...cfg,...d.data()};fillKids();if(isAdmin)renderKids();});
 }
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{}).then(()=>auth.onAuthStateChanged(u=>{
  if(u)return enter(u);
- clearInterval(poll);unR&&unR();unC&&unC();unR=unC=null;unT.forEach(f=>f());unT=[];
+ clearInterval(poll);unR&&unR();unC&&unC();unR=unC=null;unT.forEach(f=>f());unT=[];unK&&unK();unK=null;
  showGate('請使用學校 Google 帳號登入（請用 Safari / Chrome 開啟，勿在 LINE 內建瀏覽器）');}));
 const planName=k=>(k.temp?'臨時 ':k.mode=='m'?'包月 ':'單次 ')+(k.slot=='1800'?'17:00~18:00':'17:00~18:30');
 const DEFWHO=['爸爸','媽媽','阿嬤','奶奶','阿姨','爺爺','阿公'];
@@ -196,27 +203,48 @@ function renderToday(){const d=$('#td').value||($('#td').value=today());
 
 function leftList(){const done=new Set(todayRecs.filter(r=>!r.void).map(r=>r.kid)),ab=new Set(absAll.filter(a=>a.date==subDay).map(a=>a.kid)),m=new Map();
  cfg.kids.filter(k=>k.mode=='m').forEach(k=>m.set(k.id,{id:k.id,name:k.name,cls:k.cls,temp:false}));
- todayTemps.filter(t=>!t.void).forEach(t=>m.set(t.kid,{id:t.kid,name:t.name,cls:t.cls,temp:true}));
+ todayTemps.filter(t=>!t.void).forEach(t=>m.set(t.kid,{id:t.kid,name:t.name,cls:t.cls,no:t.no,temp:true}));
  return[...m.values()].filter(x=>!done.has(x.id)&&!ab.has(x.id)).sort((a,b)=>(a.cls||'~').localeCompare(b.cls||'~','zh-Hant')||a.name.localeCompare(b.name,'zh-Hant'));}
 function renderLeft(){renderAbs();const L=leftList();$('#lcount').textContent=L.length+' 位';
- $('#lleft').innerHTML=L.length?L.map(x=>`<span class="chip" onclick="tapLeft('${x.id}')">${esc(x.name)}${x.cls?'（'+esc(x.cls)+'）':''}${x.temp?' 〔臨時〕':''} <a href="#" class="mu" onclick="event.stopPropagation();quickAbs('${x.id}');return false">未到</a></span>`).join(''):'<span class="mu">今天全部都已接回 🎉</span>';}
+ $('#lleft').innerHTML=L.length?L.map(x=>`<span class="chip" onclick="tapLeft('${x.id}')">${esc(x.name)}${x.cls?'（'+esc(x.cls)+(x.no?' '+x.no+'號':'')+'）':''}${x.temp?' 〔臨時〕':''} <a href="#" class="mu" onclick="event.stopPropagation();quickAbs('${x.id}');return false">未到</a></span>`).join(''):'<span class="mu">今天全部都已接回 🎉</span>';}
 function tapLeft(id){pendWho='';chooseV(id);$('#vres').scrollIntoView({behavior:'smooth',block:'center'});}
 function subToday(){unT.forEach(f=>f());const d=subDay=today();
  unT=[db.collection('pickup_records').where('date','==',d).onSnapshot(x=>{todayRecs=x.docs.map(y=>y.data());renderLeft();renderToday();},e=>console.error(e)),
   db.collection('pickup_temp').where('date','==',d).onSnapshot(x=>{todayTemps=x.docs.map(y=>y.data());fillKids();renderTmpList();renderToday();},e=>console.error(e)),
   db.collection('pickup_absent').where('date','>=',d).onSnapshot(x=>{absAll=x.docs.map(y=>y.data()).filter(a=>!a.void);renderLeft();renderToday();},e=>console.error(e))];}
 setInterval(()=>{if(me&&subDay&&subDay!==today()){subToday();subRecs($('#td').value&&$('#td').value<subDay?$('#td').value:today());$('#dt').value=today();}},60000);
-function renderTmpOpts(){const v=$('#t_kid').value,ks=cfg.kids.slice().sort((a,b)=>(a.cls||'~').localeCompare(b.cls||'~','zh-Hant')||a.name.localeCompare(b.name,'zh-Hant'));
- $('#t_kid').innerHTML=ks.map(k=>`<option value="${k.id}">${esc(k.name)}${k.cls?'（'+esc(k.cls)+'）':''}</option>`).join('')+'<option value="__new">其他（名單外的幼兒）</option>';
- if(v)$('#t_kid').value=v;const c=$('#t_cls'),cv=c.value;c.innerHTML=clsOpts(cv,'未分班');c.value=cv;}
+function renderTmpOpts(){const cs=[...new Set(allKids.map(a=>a.cls))],sel=$('#t_c'),v=sel.value;
+ sel.innerHTML=cs.length?cs.map(c=>`<option>${esc(c)}</option>`).join(''):'<option value="">（尚未匯入全園名單）</option>';if(v&&cs.includes(v))sel.value=v;
+ renderTmpKids();const c=$('#t_cls'),cv=c.value;c.innerHTML=clsOpts(cv,'未分班');c.value=cv;}
+function renderTmpKids(){const c=$('#t_c').value,v=$('#t_k').value,k=$('#t_k');
+ const L=allKids.map((a,i)=>({a,i})).filter(x=>x.a.cls==c).sort((p,q)=>p.a.no-q.a.no),done=new Set(todayTemps.filter(t=>!t.void).map(t=>t.name));
+ k.innerHTML=L.map(x=>`<option value="${x.i}">${x.a.no} ${esc(x.a.name)}${done.has(x.a.name)?'　✓今日已登記':''}${cfg.kids.some(y=>y.name==x.a.name)?'　（延托名單）':''}</option>`).join('');
+ if(v&&L.some(x=>x.i==v))k.value=v;}
+async function addTempList(){const a=allKids[+$('#t_k').value];if(!a){$('#tmsg').textContent='請先選擇幼兒';return}
+ const slot=$('#t_slot').value,dt=today(),r0=cfg.kids.find(x=>x.name==a.name),kid=r0?r0.id:'a_'+a.cls+'_'+a.no;
+ if(todayTemps.some(x=>x.kid==kid&&!x.void)){$('#tmsg').textContent=a.name+' 今天已登記過臨時延托';return}
+ await db.collection('pickup_temp').doc(dt+'_'+kid).set({id:dt+'_'+kid,date:dt,kid,name:a.name,cls:a.cls,no:a.no,slot,by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});
+ $('#tmsg').textContent=`✔ 已登記 ${a.cls} ${a.no}號 ${a.name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;
+ const k=$('#t_k');if(k.selectedIndex<k.options.length-1)k.selectedIndex++;}
+function renderAllInfo(){const e=$('#ak_info');if(!e)return;const m={};allKids.forEach(a=>m[a.cls]=(m[a.cls]||0)+1);
+ e.textContent=allKids.length?`目前共 ${allKids.length} 位：`+Object.entries(m).map(([c,n])=>c+' '+n+' 位').join('、'):'尚未匯入全園名單';}
+function importAll(){const f=$('#ak_file').files[0];if(!f){alert('請先選擇 CSV 檔案');return}
+ const rd=new FileReader();rd.onload=async()=>{const kids=[];
+  String(rd.result).replace(/^\ufeff/,'').split(/\r?\n/).forEach(l=>{const p=l.split(/[,\t]/).map(x=>x.trim());const no=parseInt(p[1],10);if(p[0]&&p[2]&&!isNaN(no))kids.push({cls:p[0],no,name:p[2]});});
+  if(!kids.length){alert('讀不到資料，請確認格式：班級,座號,姓名');return}
+  if(!confirm(`將以 ${kids.length} 位幼兒覆蓋目前的全園名單，確定嗎？`))return;
+  await db.doc('pickup/allkids').set({kids,updatedAt:Date.now(),updatedBy:me.email});$('#ak_file').value='';};
+ rd.readAsText(f,'utf-8');}
 function renderTmpList(){const L=todayTemps.filter(t=>!t.void);
- $('#tlist').innerHTML=L.length?'<span class="mu">今天已登記臨時延托：</span>'+L.map(t=>`<span class="chip" style="cursor:default">${esc(t.name)} ${t.slot=='1800'?'~18:00':'~18:30'} <a href="#" onclick="voidTemp('${t.id}');return false">取消</a></span>`).join(''):'';}
-async function addTemp(){const v=$('#t_kid').value,slot=$('#t_slot').value,dt=today();let kid=v,name,cls;
- if(v=='__new'){name=$('#t_name').value.trim();cls=$('#t_cls').value;if(!name){$('#tmsg').textContent='請輸入幼兒姓名';return}kid='t'+Date.now().toString(36);}
- else{const k=cfg.kids.find(x=>x.id==v);if(!k)return;name=k.name;cls=k.cls||'';}
+ $('#tlist').innerHTML=L.length?'<span class="mu">今天已登記臨時延托：</span>'+L.map(t=>`<span class="chip" style="cursor:default">${esc(t.name)}${t.cls||t.no?'（'+esc(t.cls||'')+(t.no?' '+t.no+'號':'')+'）':''} ${t.slot=='1800'?'~18:00':'~18:30'} <a href="#" onclick="voidTemp('${t.id}');return false">取消</a></span>`).join(''):'';}
+async function addTemp(){const slot=$('#t_slot').value,dt=today(),name=$('#t_name').value.trim();
+ if(!name){$('#tmsg').textContent='請輸入幼兒姓名';return}
+ let kid,cls,out=true;const k0=cfg.kids.find(x=>x.name==name);
+ if(k0){kid=k0.id;cls=k0.cls||'';out=false}
+ else{cls=$('#t_cls').value;const ex=todayTemps.find(x=>x.name==name&&!x.void);kid=ex?ex.kid:'t'+Date.now().toString(36)}
  if(todayTemps.some(x=>x.kid==kid&&!x.void)){$('#tmsg').textContent=name+' 今天已登記過臨時延托';return}
  await db.collection('pickup_temp').doc(dt+'_'+kid).set({id:dt+'_'+kid,date:dt,kid,name,cls,slot,by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});
- $('#tmsg').textContent=`✔ 已登記 ${name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;$('#t_name').value='';}
+ $('#tmsg').textContent=`✔ 已登記 ${name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;$('#t_name').value='';$('#t_name').focus();}
 async function voidTemp(id){if(confirm('取消這筆臨時延托登記？'))await db.collection('pickup_temp').doc(id).update({void:true,voidBy:me.name});}
 function renderAbs(){const t=absAll.filter(a=>a.date==subDay),fu=absAll.filter(a=>a.date!=subDay).sort((a,b)=>a.date<b.date?-1:1);
  $('#labs').innerHTML=t.length?'今日請假／未到：'+t.map(a=>`${esc(a.name)}${a.reason?'（'+esc(a.reason)+'）':''} <a href="#" onclick="voidAbs('${a.id}');return false">取消</a>`).join('、'):'';
@@ -244,7 +272,7 @@ async function saveEdit(id){const r=recs.find(x=>x.id==id),t=$('#e_t').value,w=$
 async function del(id){if(!confirm('永久刪除這筆紀錄？（一般誤植請用「撤銷」）'))return;await delR(id);}
 
 function initAdmin(){['m1800','m1830','s1800','s1830'].forEach(k=>$('#f_'+k).value=cfg.fees[k]);$('#f_cut').value=cfg.cut;
- if(!$('#mon').value)$('#mon').value=today().slice(0,7);renderKids();renderReport();}
+ if(!$('#mon').value)$('#mon').value=today().slice(0,7);renderKids();renderReport();renderAllInfo();}
 async function saveFees(){['m1800','m1830','s1800','s1830'].forEach(k=>cfg.fees[k]=+$('#f_'+k).value||0);
  cfg.cut=$('#f_cut').value||'18:30';await saveCfg();renderReport();alert('已儲存');}
 async function addKid(){const n=$('#k_name').value.trim();if(!n)return;
