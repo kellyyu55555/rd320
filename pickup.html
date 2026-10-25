@@ -17,7 +17,7 @@ label{display:block;margin:8px 0 3px;color:var(--mu);font-size:15px}
 .chip{display:inline-block;margin:4px 6px 0 0;padding:6px 14px;border:1px solid var(--pr);border-radius:20px;cursor:pointer;color:var(--pr)}
 table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:left}
 .late{color:var(--red);font-weight:700}.wrap{overflow-x:auto}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-.chip.on{background:var(--pr);color:#fff}.hide{display:none}.mu{color:var(--mu);font-size:15px}
+.chip.on{background:var(--pr);color:#fff}.void td:not(:last-child){opacity:.5;text-decoration:line-through}.hide{display:none}.mu{color:var(--mu);font-size:15px}
 </style></head><body>
 <div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
 <div id="app" class="hide">
@@ -25,6 +25,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 <nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
 <main>
 <section id="reg">
+ <div id="dup" class="card hide" style="border:2px solid var(--red)"></div>
  <div class="card">
   <button class="btn pr" id="mic" style="font-size:22px;padding:14px 22px" onclick="toggleVoice()">🎤 語音登記</button>
   <label style="display:inline-block;margin-left:12px"><input type="checkbox" id="cont" style="width:20px;height:20px"> 持續聆聽（連續登記）</label>
@@ -45,7 +46,8 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
   <button class="btn pr" onclick="saveRec()">登記接回</button> <span id="msg" class="mu"></span>
  </div>
 </section>
-<section id="today" class="hide"><div class="card"><div class="row"><div><label>日期</label><input type="date" id="td" onchange="subRecs(this.value)"></div></div>
+<section id="today" class="hide"><div id="ed" class="card hide"></div>
+ <div class="card"><div class="row"><div><label>日期</label><input type="date" id="td" onchange="subRecs(this.value)"></div></div>
  <div class="wrap"><table id="tt"></table></div><p class="mu" id="tleft"></p></div></section>
 <section id="admin" class="hide">
   <div id="adm">
@@ -142,17 +144,49 @@ $('#tm').oninput=chk;
 async function saveRec(){
  const kid=$('#kid').value,t=$('#tm').value,who=$('#who').value.trim(),dt=$('#dt').value;
  if(!kid||!t||!who||!dt){$('#msg').textContent='請填寫幼兒、時間、接回人';return}
- const r={id:dt+'_'+kid,date:dt,kid,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
- await saveR(r);
- $('#msg').textContent=`✔ 已登記 ${kidOf(kid).name} ${t} 由${who}接回`+(r.late?'（超時）':'');
+ const prev=await getRec(dt+'_'+kid);
+ if(prev&&!prev.void)return showDup(prev,{id:kid,who,t,dt});
+ const r=await commit(kid,dt,t,who,prev);okMsg(r);
  $('#who').value='';$('#tm').value=nowT();chk();}
+const getRec=async id=>{const d=await db.collection('pickup_records').doc(id).get();return d.exists?d.data():null};
+async function commit(id,dt,t,who,prev){
+ const r={id:dt+'_'+id,date:dt,kid:id,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
+ if(prev&&!prev.void){r.prevWho=prev.who;r.prevTime=prev.time}
+ await saveR(r);return r;}
+const okMsg=(r,tail)=>{const h=`✔ <b>${esc(kidOf(r.kid).name)}</b> ${r.time} 由 ${esc(r.who)} 接回${r.late?' <span class="late">（超時）</span>':''}${tail||''}`;$('#vres').innerHTML=h;$('#msg').innerHTML=h;};
+async function voidRec(id){await db.collection('pickup_records').doc(id).update({void:true,voidBy:me.name,voidEmail:me.email,voidAt:Date.now()});}
+async function restoreRec(id){await db.collection('pickup_records').doc(id).update({void:false});}
+let pendDup=null;
+function showDup(prev,n){pendDup={...n,prev};const k=kidOf(n.id);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+ $('#dup').classList.remove('hide');
+ $('#dup').innerHTML=`<b style="color:var(--red)">⚠ ${esc(k.name)} 今天已經接回了</b><div>${prev.time} 由 ${esc(prev.who)} 接回（登記：${esc(prev.by||'')}）</div>`
+ +(n.who?`<div style="margin-top:8px">是要更正為「${esc(n.who)}」（${n.t}）嗎？</div><button class="btn pr" onclick="dupGo(0)">更正為 ${esc(n.who)}</button> `
+  :`<div style="margin-top:8px">要更正接回人嗎？</div>`+(k.who||[]).map((w,i)=>`<span class="chip" onclick="dupGo(${i+1})">${esc(w)}</span>`).join(''))
+ +` <button class="btn" onclick="dupHide()">保留原紀錄</button> <button class="btn" onclick="dupVoid()">撤銷這筆（誤植）</button>`;
+ $('#dup').scrollIntoView({behavior:'smooth',block:'nearest'});}
+const dupHide=()=>{$('#dup').classList.add('hide');pendDup=null};
+async function dupGo(i){const p=pendDup;if(!p)return;const who=i?kidOf(p.id).who[i-1]:p.who;
+ const r=await commit(p.id,p.dt,p.t,who,p.prev);dupHide();lastVoice={r,prev:p.prev};okMsg(r,' <span class="mu">（已更正）</span> <button class="btn" onclick="undoV()">撤銷更正</button>');$('#who').value='';}
+async function dupVoid(){const p=pendDup;if(!p)return;await voidRec(p.prev.id);dupHide();$('#vres').textContent='已撤銷 '+kidOf(p.id).name+' 的接回紀錄（誤植）';}
 function renderToday(){const d=$('#td').value||($('#td').value=today());
- const rs=recs.filter(r=>r.date==d).sort((a,b)=>a.time<b.time?-1:1);
- $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>值班</th><th></th></tr>'+rs.map(r=>
-  `<tr><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(kidOf(r.kid).name)}</td><td>${esc(r.who)}</td><td>${esc(r.by)}</td><td>${isAdmin?`<button class="btn" onclick="del('${r.id}')">刪除</button>`:''}</td></tr>`).join('');
- const done=new Set(rs.map(r=>r.kid));
+ const rs=recs.slice().sort((a,b)=>a.time<b.time?-1:1);
+ $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>登記</th><th></th></tr>'+rs.map(r=>
+  `<tr class="${r.void?'void':''}"><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(kidOf(r.kid).name)}</td><td>${esc(r.who)}${r.prevWho?` <span class="mu">（原：${esc(r.prevWho)}）</span>`:''}</td><td>${esc(r.editedBy||r.by)}</td><td>`
+  +(r.void?`<span class="mu">已撤銷（${esc(r.voidBy||'')}）</span> <button class="btn" onclick="restoreRec('${r.id}')">復原</button>`:`<button class="btn" onclick="editRec('${r.id}')">更正</button> <button class="btn" onclick="voidBtn('${r.id}')">撤銷</button>`)
+  +(isAdmin?` <button class="btn" onclick="del('${r.id}')">刪除</button>`:'')+'</td></tr>').join('');
+ const done=new Set(rs.filter(r=>!r.void).map(r=>r.kid));
  $('#tleft').textContent='尚未接回：'+(cfg.kids.filter(k=>!done.has(k.id)).map(k=>k.name).join('、')||'無');}
-async function del(id){recs=recs.filter(r=>r.id!=id);await delR(id);renderToday();}
+async function voidBtn(id){if(confirm('撤銷這筆接回紀錄？（誤植時使用，之後仍可復原）'))await voidRec(id);}
+function editRec(id){const r=recs.find(x=>x.id==id);if(!r)return;const k=kidOf(r.kid);
+ $('#ed').classList.remove('hide');
+ $('#ed').innerHTML=`<b>更正：${esc(k.name)}</b><div class="row"><div><label>接回時間</label><input type="time" id="e_t" value="${r.time}"></div><div><label>接回人</label><input id="e_w" value="${esc(r.who)}"></div></div>`
+ +(k.who||[]).map((w,i)=>`<span class="chip" onclick="$('#e_w').value=cfg.kids.find(x=>x.id=='${k.id}').who[${i}]">${esc(w)}</span>`).join('')
+ +`<br><br><button class="btn pr" onclick="saveEdit('${id}')">儲存更正</button> <button class="btn" onclick="$('#ed').classList.add('hide')">取消</button>`;
+ $('#ed').scrollIntoView({behavior:'smooth',block:'nearest'});}
+async function saveEdit(id){const r=recs.find(x=>x.id==id),t=$('#e_t').value,w=$('#e_w').value.trim();if(!r||!t||!w)return;
+ await db.collection('pickup_records').doc(id).update({time:t,who:w,late:t>cfg.cut,prevWho:r.who,prevTime:r.time,editedBy:me.name,editedEmail:me.email,editedAt:Date.now()});
+ $('#ed').classList.add('hide');}
+async function del(id){if(!confirm('永久刪除這筆紀錄？（一般誤植請用「撤銷」）'))return;await delR(id);}
 
 function initAdmin(){['m1800','m1830','s1800','s1830'].forEach(k=>$('#f_'+k).value=cfg.fees[k]);$('#f_cut').value=cfg.cut;
  if(!$('#mon').value)$('#mon').value=today().slice(0,7);renderKids();renderReport();}
@@ -186,7 +220,7 @@ async function assignCls(){const n=$('#a_cls').value,ids=[...document.querySelec
 function toggleAll(){const b=[...document.querySelectorAll('.kc')],on=b.some(x=>!x.checked);b.forEach(x=>x.checked=on);}
 async function loadMonth(){const m=$('#mon').value,[y,mo]=m.split('-').map(Number),nx=mo==12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,'0')}`;
  const[a,b]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get()]);
- monthRecs=a.docs.map(x=>x.data());lateAll=b.docs.map(x=>x.data());}
+ monthRecs=a.docs.map(x=>x.data()).filter(r=>!r.void);lateAll=b.docs.map(x=>x.data()).filter(r=>!r.void);}
 function calc(){const m=$('#mon').value;let tot=0;
  const rows=cfg.kids.map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),days=mine.length;
   const fee=k.mode=='m'?cfg.fees['m'+k.slot]:days*cfg.fees['s'+k.slot];tot+=fee;
@@ -249,15 +283,17 @@ function handleVoice(alts){
  if(pendList[0].s>=(pendList[0].res?1:1.9)&&!pendList.slice(1).some(x=>x.s>=1))return pickV(0);
  $('#vres').innerHTML='聽到「'+esc(alts[0])+'」，請點選是哪位幼兒：'+pendList.map((x,i)=>`<span class="chip" onclick="pickV(${i})">${esc(x.k.name)}${x.k.cls?'（'+esc(x.k.cls)+'）':''}</span>`).join('');}
 function pickV(i){const it=pendList[i];pendWho=it.who;chooseV(it.k.id);}
-function chooseV(id){
+async function chooseV(id){
+ const prev=await getRec(today()+'_'+id);if(prev&&!prev.void){$('#vres').textContent='';return showDup(prev,{id,who:pendWho,t:nowT(),dt:today()});}
  if(pendWho)return voiceSave(id,pendWho);
  const k=kidOf(id);$('#vres').innerHTML=`${esc(k.name)}：請點選接回人 `+(k.who||[]).map((w,i)=>`<span class="chip" onclick="voiceSave('${id}',${JSON.stringify(w).replace(/"/g,'&quot;')})">${esc(w)}</span>`).join('');}
 async function voiceSave(id,who){
- const dt=today(),t=nowT(),r={id:dt+'_'+id,date:dt,kid:id,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
- const pd=await db.collection('pickup_records').doc(r.id).get(),prev=pd.exists?pd.data():null;await saveR(r);lastVoice={r,prev};
- $('#vres').innerHTML=`✔ <b>${esc(kidOf(id).name)}</b> ${t} 由 ${esc(who)} 接回${r.late?' <span class="late">（超時）</span>':''} <button class="btn" onclick="undoV()">撤銷</button>`;}
+ const dt=today(),prev=await getRec(dt+'_'+id);
+ if(prev&&!prev.void)return showDup(prev,{id,who,t:nowT(),dt});
+ const r=await commit(id,dt,nowT(),who,prev);lastVoice={r,prev};
+ okMsg(r,' <button class="btn" onclick="undoV()">撤銷</button>');}
 async function undoV(){if(!lastVoice)return;const{r,prev}=lastVoice;
- if(prev){recs.push(prev);await saveR(prev)}else await delR(r.id);lastVoice=null;$('#vres').textContent='已撤銷';}
+ if(prev)await saveR(prev);else await voidRec(r.id);lastVoice=null;$('#vres').textContent='已撤銷';$('#msg').textContent='';}
 
 
 </script></body></html>
