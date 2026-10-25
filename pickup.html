@@ -33,6 +33,13 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
   <label style="margin-top:8px">目前值班班級（選了之後，語音與下拉選單只比對該班幼兒）</label><div id="clsbar"></div>
   <div id="vt" class="mu"></div><div id="vres" style="font-size:20px;margin-top:6px"></div>
  </div>
+ <div class="card"><button class="btn" onclick="$('#tmp').classList.toggle('hide')">➕ 臨時延托登記</button> <span class="mu">今天臨時要延托的幼兒（名單內或名單外都可以）</span>
+  <div id="tmp" class="hide" style="margin-top:8px">
+   <div class="row"><div><label>幼兒</label><select id="t_kid" onchange="$('#t_new').classList.toggle('hide',this.value!='__new')"></select></div>
+   <div><label>延托時段</label><select id="t_slot"><option value="1800">17:00~18:00</option><option value="1830">17:00~18:30</option></select></div></div>
+   <div id="t_new" class="row hide"><div><label>幼兒姓名</label><input id="t_name"></div><div><label>班級</label><select id="t_cls"></select></div></div>
+   <br><button class="btn pr" onclick="addTemp()">登記今日臨時延托</button> <span id="tmsg" class="mu"></span>
+   <div id="tlist" style="margin-top:8px"></div></div></div>
  <div class="card">
   <label>選擇幼兒（可輸入姓名篩選）</label>
   <input id="q" placeholder="輸入姓名…" oninput="fillKids()"> <select id="kid" onchange="pickKid()"></select>
@@ -45,6 +52,11 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
   <p id="warn" class="late"></p>
   <button class="btn pr" onclick="saveRec()">登記接回</button> <span id="msg" class="mu"></span>
  </div>
+ <div class="card"><b>今日尚未接回</b> <span id="lcount" class="mu"></span> <button class="btn" style="padding:6px 12px;font-size:16px" onclick="$('#abp').classList.toggle('hide')">📝 請假／未到登記</button>
+  <div id="lleft" style="margin-top:6px"></div><div id="labs" class="mu" style="margin-top:6px"></div>
+  <div id="abp" class="hide" style="margin-top:8px"><div class="row"><div><label>幼兒</label><select id="a_kid"></select></div><div><label>日期（今天或之後）</label><input type="date" id="a_dt"></div><div><label>原因（選填）</label><input id="a_rs" placeholder="例如：家中有事"></div></div>
+   <br><button class="btn pr" onclick="addAbs()">登記請假</button> <span id="amsg" class="mu"></span><div id="alist" style="margin-top:8px"></div></div>
+  <p class="mu">名單 = 包月幼兒＋今天臨時延托登記的幼兒，扣掉請假／未到的。點幼兒姓名登記接回，點「未到」可標記今天沒來。</p></div>
 </section>
 <section id="today" class="hide"><div id="ed" class="card hide"></div>
  <div class="card"><div class="row"><div><label>日期</label><input type="date" id="td" onchange="subRecs(this.value)"></div></div>
@@ -96,7 +108,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 firebase.initializeApp(FIREBASE_CONFIG);
 const db=firebase.firestore(),auth=firebase.auth();
-let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[];
+let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[],monthTemps=[],monthAbs=[],absAll=[],todayRecs=[],todayTemps=[],unT=[],subDay='';
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const nowT=()=>new Date().toTimeString().slice(0,5);
 const saveCfg=()=>db.doc('pickup/cfg').set(cfg);
@@ -121,23 +133,27 @@ async function enter(u){
  $('#by').value=me.name;$('#who_').textContent=me.name+(isAdmin?'（管理者）':'');
  document.querySelector('[data-t=admin]').classList.toggle('hide',!isAdmin);
  $('#dt').value=today();$('#tm').value=nowT();
- if(!unR)subRecs(today());
+ if(!unR)subRecs(today());if(!unT.length)subToday();
  if(!unC)unC=db.doc('pickup/cfg').onSnapshot(d=>{if(d.exists)cfg={...cfg,...d.data()};fillKids();if(isAdmin)renderKids();});
 }
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{}).then(()=>auth.onAuthStateChanged(u=>{
  if(u)return enter(u);
- clearInterval(poll);unR&&unR();unC&&unC();unR=unC=null;
+ clearInterval(poll);unR&&unR();unC&&unC();unR=unC=null;unT.forEach(f=>f());unT=[];
  showGate('請使用學校 Google 帳號登入（請用 Safari / Chrome 開啟，勿在 LINE 內建瀏覽器）');}));
-const planName=k=>(k.mode=='m'?'包月 ':'單次 ')+(k.slot=='1800'?'17:00~18:00':'17:00~18:30');
-const kidOf=id=>cfg.kids.find(k=>k.id==id)||{name:'(已刪除)'};
+const planName=k=>(k.temp?'臨時 ':k.mode=='m'?'包月 ':'單次 ')+(k.slot=='1800'?'17:00~18:00':'17:00~18:30');
+const DEFWHO=['爸爸','媽媽','阿嬤','奶奶','阿姨','爺爺','阿公'];
+const tempKids=()=>{const m={};todayTemps.filter(t=>!t.void).forEach(t=>{m[t.kid]={id:t.kid,name:t.name,cls:t.cls,mode:'s',slot:t.slot,who:cfg.defaultWho||DEFWHO,temp:true}});return m};
+const tempOnly=()=>Object.values(tempKids()).filter(t=>!cfg.kids.some(k=>k.id==t.id));
+const pool0=()=>[...cfg.kids,...tempOnly()];
+const kidOf=id=>cfg.kids.find(k=>k.id==id)||tempKids()[id]||{name:'(已刪除)',who:[]};
 
 document.querySelectorAll('#nav button[data-t]').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('#nav button[data-t]').forEach(x=>x.classList.toggle('on',x==b));
  ['reg','today','admin'].forEach(t=>$('#'+t).classList.toggle('hide',t!=b.dataset.t));
  if(b.dataset.t=='today')renderToday();if(b.dataset.t=='admin')initAdmin();});
 
-function fillKids(){renderClsBar();const q=$('#q').value.trim();
- $('#kid').innerHTML=cfg.kids.filter(k=>k.name.includes(q)&&(!curCls||k.cls==curCls)).map(k=>`<option value="${k.id}">${esc(k.name)}（${esc(k.cls||'')}）</option>`).join('');pickKid();}
+function fillKids(){renderClsBar();renderLeft();renderTmpOpts();const q=$('#q').value.trim();
+ $('#kid').innerHTML=pool0().filter(k=>k.name.includes(q)&&(!curCls||k.cls==curCls)).map(k=>`<option value="${k.id}">${esc(k.name)}（${esc(k.cls||'')}）</option>`).join('');pickKid();}
 function pickKid(){const k=cfg.kids.find(x=>x.id==$('#kid').value);
  $('#kinfo').textContent=k?planName(k):'請先在管理後台新增幼兒';
  $('#chips').innerHTML=k?(k.who||[]).map(w=>`<span class="chip" onclick="$('#who').value='${esc(w)}'">${esc(w)}</span>`).join(''):'';chk();}
@@ -152,7 +168,7 @@ async function saveRec(){
  $('#who').value='';$('#tm').value=nowT();chk();}
 const getRec=async id=>{const d=await db.collection('pickup_records').doc(id).get();return d.exists?d.data():null};
 async function commit(id,dt,t,who,prev){
- const r={id:dt+'_'+id,date:dt,kid:id,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
+ const r={id:dt+'_'+id,date:dt,kid:id,kname:kidOf(id).name,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
  if(prev&&!prev.void){r.prevWho=prev.who;r.prevTime=prev.time}
  await saveR(r);return r;}
 const okMsg=(r,tail)=>{const h=`✔ <b>${esc(kidOf(r.kid).name)}</b> ${r.time} 由 ${esc(r.who)} 接回${r.late?' <span class="late">（超時）</span>':''}${tail||''}`;$('#vres').innerHTML=h;$('#msg').innerHTML=h;};
@@ -173,11 +189,48 @@ async function dupVoid(){const p=pendDup;if(!p)return;await voidRec(p.prev.id);d
 function renderToday(){const d=$('#td').value||($('#td').value=today());
  const rs=recs.slice().sort((a,b)=>a.time<b.time?-1:1);
  $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>登記</th><th></th></tr>'+rs.map(r=>
-  `<tr class="${r.void?'void':''}"><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(kidOf(r.kid).name)}</td><td>${esc(r.who)}${r.prevWho?` <span class="mu">（原：${esc(r.prevWho)}）</span>`:''}</td><td>${esc(r.editedBy||r.by)}</td><td>`
+  `<tr class="${r.void?'void':''}"><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(r.kname||kidOf(r.kid).name)}</td><td>${esc(r.who)}${r.prevWho?` <span class="mu">（原：${esc(r.prevWho)}）</span>`:''}</td><td>${esc(r.editedBy||r.by)}</td><td>`
   +(r.void?`<span class="mu">已撤銷（${esc(r.voidBy||'')}）</span> <button class="btn" onclick="restoreRec('${r.id}')">復原</button>`:`<button class="btn" onclick="editRec('${r.id}')">更正</button> <button class="btn" onclick="voidBtn('${r.id}')">撤銷</button>`)
   +(isAdmin?` <button class="btn" onclick="del('${r.id}')">刪除</button>`:'')+'</td></tr>').join('');
- const done=new Set(rs.filter(r=>!r.void).map(r=>r.kid));
- $('#tleft').textContent='尚未接回：'+(cfg.kids.filter(k=>!done.has(k.id)).map(k=>k.name).join('、')||'無');}
+ $('#tleft').textContent=d==today()?'尚未接回：'+(leftList().map(x=>x.name).join('、')||'無'):'';}
+
+function leftList(){const done=new Set(todayRecs.filter(r=>!r.void).map(r=>r.kid)),ab=new Set(absAll.filter(a=>a.date==subDay).map(a=>a.kid)),m=new Map();
+ cfg.kids.filter(k=>k.mode=='m').forEach(k=>m.set(k.id,{id:k.id,name:k.name,cls:k.cls,temp:false}));
+ todayTemps.filter(t=>!t.void).forEach(t=>m.set(t.kid,{id:t.kid,name:t.name,cls:t.cls,temp:true}));
+ return[...m.values()].filter(x=>!done.has(x.id)&&!ab.has(x.id)).sort((a,b)=>(a.cls||'~').localeCompare(b.cls||'~','zh-Hant')||a.name.localeCompare(b.name,'zh-Hant'));}
+function renderLeft(){renderAbs();const L=leftList();$('#lcount').textContent=L.length+' 位';
+ $('#lleft').innerHTML=L.length?L.map(x=>`<span class="chip" onclick="tapLeft('${x.id}')">${esc(x.name)}${x.cls?'（'+esc(x.cls)+'）':''}${x.temp?' 〔臨時〕':''} <a href="#" class="mu" onclick="event.stopPropagation();quickAbs('${x.id}');return false">未到</a></span>`).join(''):'<span class="mu">今天全部都已接回 🎉</span>';}
+function tapLeft(id){pendWho='';chooseV(id);$('#vres').scrollIntoView({behavior:'smooth',block:'center'});}
+function subToday(){unT.forEach(f=>f());const d=subDay=today();
+ unT=[db.collection('pickup_records').where('date','==',d).onSnapshot(x=>{todayRecs=x.docs.map(y=>y.data());renderLeft();renderToday();},e=>console.error(e)),
+  db.collection('pickup_temp').where('date','==',d).onSnapshot(x=>{todayTemps=x.docs.map(y=>y.data());fillKids();renderTmpList();renderToday();},e=>console.error(e)),
+  db.collection('pickup_absent').where('date','>=',d).onSnapshot(x=>{absAll=x.docs.map(y=>y.data()).filter(a=>!a.void);renderLeft();renderToday();},e=>console.error(e))];}
+setInterval(()=>{if(me&&subDay&&subDay!==today()){subToday();subRecs($('#td').value&&$('#td').value<subDay?$('#td').value:today());$('#dt').value=today();}},60000);
+function renderTmpOpts(){const v=$('#t_kid').value,ks=cfg.kids.slice().sort((a,b)=>(a.cls||'~').localeCompare(b.cls||'~','zh-Hant')||a.name.localeCompare(b.name,'zh-Hant'));
+ $('#t_kid').innerHTML=ks.map(k=>`<option value="${k.id}">${esc(k.name)}${k.cls?'（'+esc(k.cls)+'）':''}</option>`).join('')+'<option value="__new">其他（名單外的幼兒）</option>';
+ if(v)$('#t_kid').value=v;const c=$('#t_cls'),cv=c.value;c.innerHTML=clsOpts(cv,'未分班');c.value=cv;}
+function renderTmpList(){const L=todayTemps.filter(t=>!t.void);
+ $('#tlist').innerHTML=L.length?'<span class="mu">今天已登記臨時延托：</span>'+L.map(t=>`<span class="chip" style="cursor:default">${esc(t.name)} ${t.slot=='1800'?'~18:00':'~18:30'} <a href="#" onclick="voidTemp('${t.id}');return false">取消</a></span>`).join(''):'';}
+async function addTemp(){const v=$('#t_kid').value,slot=$('#t_slot').value,dt=today();let kid=v,name,cls;
+ if(v=='__new'){name=$('#t_name').value.trim();cls=$('#t_cls').value;if(!name){$('#tmsg').textContent='請輸入幼兒姓名';return}kid='t'+Date.now().toString(36);}
+ else{const k=cfg.kids.find(x=>x.id==v);if(!k)return;name=k.name;cls=k.cls||'';}
+ if(todayTemps.some(x=>x.kid==kid&&!x.void)){$('#tmsg').textContent=name+' 今天已登記過臨時延托';return}
+ await db.collection('pickup_temp').doc(dt+'_'+kid).set({id:dt+'_'+kid,date:dt,kid,name,cls,slot,by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});
+ $('#tmsg').textContent=`✔ 已登記 ${name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;$('#t_name').value='';}
+async function voidTemp(id){if(confirm('取消這筆臨時延托登記？'))await db.collection('pickup_temp').doc(id).update({void:true,voidBy:me.name});}
+function renderAbs(){const t=absAll.filter(a=>a.date==subDay),fu=absAll.filter(a=>a.date!=subDay).sort((a,b)=>a.date<b.date?-1:1);
+ $('#labs').innerHTML=t.length?'今日請假／未到：'+t.map(a=>`${esc(a.name)}${a.reason?'（'+esc(a.reason)+'）':''} <a href="#" onclick="voidAbs('${a.id}');return false">取消</a>`).join('、'):'';
+ $('#alist').innerHTML=fu.length?'<span class="mu">之後的請假：</span>'+fu.map(a=>`<span class="chip" style="cursor:default">${a.date.slice(5)} ${esc(a.name)}${a.reason?'（'+esc(a.reason)+'）':''} <a href="#" onclick="voidAbs('${a.id}');return false">取消</a></span>`).join(''):'';
+ const sel=$('#a_kid');if(sel){const v=sel.value;sel.innerHTML=cfg.kids.slice().sort((a,b)=>(a.cls||'~').localeCompare(b.cls||'~','zh-Hant')||a.name.localeCompare(b.name,'zh-Hant')).map(k=>`<option value="${k.id}">${esc(k.name)}${k.cls?'（'+esc(k.cls)+'）':''}</option>`).join('');if(v)sel.value=v;}
+ if($('#a_dt')&&!$('#a_dt').value)$('#a_dt').value=subDay||today();}
+async function setAbs(kid,dt,reason){const k=kidOf(kid),id=dt+'_'+kid;
+ if(absAll.some(a=>a.id==id)){return k.name+' 該日已登記請假'}
+ await db.collection('pickup_absent').doc(id).set({id,date:dt,kid,name:k.name,cls:k.cls||'',reason:reason||'',by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});return '';}
+async function quickAbs(id){const m=await setAbs(id,today(),'');if(m)alert(m);}
+async function addAbs(){const kid=$('#a_kid').value,dt=$('#a_dt').value;if(!kid||!dt)return;
+ if(dt<today()){$('#amsg').textContent='只能登記今天或之後的日期';return}
+ const m=await setAbs(kid,dt,$('#a_rs').value.trim());$('#amsg').textContent=m||`✔ 已登記 ${kidOf(kid).name} ${dt} 請假`;if(!m)$('#a_rs').value='';}
+async function voidAbs(id){await db.collection('pickup_absent').doc(id).update({void:true,voidBy:me.name});}
 async function voidBtn(id){if(confirm('撤銷這筆接回紀錄？（誤植時使用，之後仍可復原）'))await voidRec(id);}
 function editRec(id){const r=recs.find(x=>x.id==id);if(!r)return;const k=kidOf(r.kid);
  $('#ed').classList.remove('hide');
@@ -226,21 +279,23 @@ async function applyWho(sel){const L=$('#w_list').value.split(/[,，、]/).map(x
  if(!sel)cfg.defaultWho=L;await saveCfg();renderKids();$('#wmsg').textContent=`已將授權接送人加到 ${n} 位幼兒`+(sel?'':'，之後批次匯入的新幼兒也會自動帶入');}
 function toggleAll(){const b=[...document.querySelectorAll('.kc')],on=b.some(x=>!x.checked);b.forEach(x=>x.checked=on);}
 async function loadMonth(){const m=$('#mon').value,[y,mo]=m.split('-').map(Number),nx=mo==12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,'0')}`;
- const[a,b]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get()]);
+ const[a,b,c,e]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get(),db.collection('pickup_temp').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_absent').where('date','>=',m+'-01').where('date','<',nx+'-01').get()]);monthAbs=e.docs.map(x=>x.data()).filter(a=>!a.void);monthTemps=c.docs.map(x=>x.data()).filter(t=>!t.void);
  monthRecs=a.docs.map(x=>x.data()).filter(r=>!r.void);lateAll=b.docs.map(x=>x.data()).filter(r=>!r.void);}
 function calc(){const m=$('#mon').value;let tot=0;
- const rows=cfg.kids.map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),days=mine.length;
-  const fee=k.mode=='m'?cfg.fees['m'+k.slot]:days*cfg.fees['s'+k.slot];tot+=fee;
-  return{k,days,fee,lm:mine.filter(r=>r.late).length,la:lateAll.filter(r=>r.kid==k.id).length};});
+ const tk={};monthTemps.forEach(t=>{if(!cfg.kids.some(k=>k.id==t.kid))tk[t.kid]={id:t.kid,name:t.name,cls:t.cls,mode:'s',slot:t.slot,temp:true}});
+ const slotOf=(k,d)=>{const t=monthTemps.find(x=>x.kid==k.id&&x.date==d);return t?t.slot:k.slot};
+ const rows=[...cfg.kids,...Object.values(tk)].map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),days=mine.length;
+  const fee=k.mode=='m'?cfg.fees['m'+k.slot]:mine.reduce((a,r)=>a+(cfg.fees['s'+slotOf(k,r.date)]||0),0);tot+=fee;
+  return{k,days,ab:monthAbs.filter(a=>a.kid==k.id).length,fee,lm:mine.filter(r=>r.late).length,la:lateAll.filter(r=>r.kid==k.id).length};}).filter(r=>!r.k.temp||r.days>0);
  return{rows,tot,m};}
 async function renderReport(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();
- $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>費用</th><th>當月超時</th><th>累計超時</th></tr>'+rows.map(r=>
-  `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${r.days}</td><td>${r.fee}</td><td class="${r.lm?'late':''}">${r.lm}</td><td>${r.la}</td></tr>`).join('')+`<tr><th colspan="4">總計</th><th>${tot}</th><th></th><th></th></tr>`;}
+ $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>請假天數</th><th>費用</th><th>當月超時</th><th>累計超時</th></tr>'+rows.map(r=>
+  `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${r.days}</td><td>${r.ab}</td><td>${r.fee}</td><td class="${r.lm?'late':''}">${r.lm}</td><td>${r.la}</td></tr>`).join('')+`<tr><th colspan="5">總計</th><th>${tot}</th><th></th><th></th></tr>`;}
 async function exportCSV(){await loadMonth();const{rows,tot,m}=calc();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
- let L=[['幼兒','班級','方案','出席天數','費用','當月超時次數','累計超時次數']];
- rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.fee,r.lm,r.la]));
- L.push(['總計','','','',tot,'','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','值班老師','是否超時']);
- monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'']));
+ let L=[['幼兒','班級','方案','出席天數','請假天數','費用','當月超時次數','累計超時次數']];
+ rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.ab,r.fee,r.lm,r.la]));
+ L.push(['總計','','','','',tot,'','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','值班老師','是否超時']);
+ monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,r.kname||kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'']));
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv'}));
  a.download=`課後延托月總表_${m}.csv`;a.click();}
 
@@ -279,8 +334,8 @@ let pendList=[],curCls='';try{curCls=sessionStorage.getItem('pk_cls')||''}catch(
 function handleVoice(alts){
  const all={};
  alts.forEach(t=>{const tz=t.replace(/[^\u4e00-\u9fff]/g,'');
-  const hit=clsHit(t);let byCls=cfg.kids.filter(k=>hit.includes(k.cls));if(!byCls.length&&curCls)byCls=cfg.kids.filter(k=>k.cls==curCls);
-  let c=[],res=false;if(byCls.length){c=findKids(tz,byCls,true);res=c.length>0}if(!c.length)c=findKids(tz,cfg.kids);
+  const hit=clsHit(t);let byCls=pool0().filter(k=>hit.includes(k.cls));if(!byCls.length&&curCls)byCls=pool0().filter(k=>k.cls==curCls);
+  let c=[],res=false;if(byCls.length){c=findKids(tz,byCls,true);res=c.length>0}if(!c.length)c=findKids(tz,pool0());
   c.forEach(x=>{if(!all[x.k.id]||x.s>all[x.k.id].s){
    let who=(x.k.who||[]).find(w=>t.includes(w))||'';
    if(!who){let r=x.rest;const co=cfg.classes.find(c=>c.name==x.k.cls);[x.k.cls,noB(x.k.cls),...((co&&co.alias)||[])].forEach(z=>{if(z)r=r.split(z).join('')});who=r.replace(/來接|被接走|接走|接回|去接|接|被|了|的|是|由|來|小朋友|幼兒|同學/g,'');}
