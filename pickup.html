@@ -78,6 +78,8 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
    <div><label>預設班級</label><select id="b_cls"></select></div>
    <button class="btn pr" onclick="bulkAdd()">匯入</button></div><p id="bmsg" class="mu"></p>
    <div class="row" style="margin-top:10px"><div><label>批次分班</label><select id="a_cls"></select></div><button class="btn pr" onclick="assignCls()">將勾選的幼兒分到此班</button><button class="btn" onclick="toggleAll()">全選／取消</button></div>
+   <div class="row" style="margin-top:10px"><div style="flex:1;min-width:260px"><label>授權接送人（逗號分隔；加入時不會刪掉原有的）</label><input id="w_list" value="爸爸,媽媽,阿嬤,奶奶,阿姨,爺爺,阿公" style="width:100%"></div>
+   <button class="btn pr" onclick="applyWho(false)">加到全部幼兒</button><button class="btn" onclick="applyWho(true)">加到勾選的幼兒</button></div><p id="wmsg" class="mu"></p>
    <div class="wrap"><table id="kt"></table></div></div>
  </div>
 </section>
@@ -199,7 +201,7 @@ async function addKid(){const n=$('#k_name').value.trim();if(!n)return;
 async function setPlan(id,f,v){const k=cfg.kids.find(x=>x.id==id);if(!k)return;k[f]=v;await saveCfg();renderReport();}
 async function bulkAdd(){const have=new Set(cfg.kids.map(k=>k.name));let add=0,skip=0;
  $('#bulk').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{const[n,c]=l.split(/[,，\t]/).map(x=>x.trim());
-  if(!n||have.has(n)){skip++;return}have.add(n);const cl=c||$('#b_cls').value;if(cl&&!allCls().includes(cl))cfg.classes.push({name:cl,alias:[]});cfg.kids.push({id:'k'+Date.now()+add,name:n,cls:cl,mode:$('#b_mode').value,slot:$('#b_slot').value,who:[]});add++;});
+  if(!n||have.has(n)){skip++;return}have.add(n);const cl=c||$('#b_cls').value;if(cl&&!allCls().includes(cl))cfg.classes.push({name:cl,alias:[]});cfg.kids.push({id:'k'+Date.now()+add,name:n,cls:cl,mode:$('#b_mode').value,slot:$('#b_slot').value,who:[...(cfg.defaultWho||[])]});add++;});
  await saveCfg();$('#bulk').value='';renderKids();fillKids();renderReport();$('#bmsg').textContent=`已新增 ${add} 位，略過重複 ${skip} 位；請在下方表格逐一確認每位幼兒的計費方式`;}
 async function delKid(id){if(!confirm('刪除此幼兒？（既有紀錄保留）'))return;cfg.kids=cfg.kids.filter(k=>k.id!=id);await saveCfg();renderKids();fillKids();renderReport();}
 const clsOpts=(sel,blank)=>`<option value="">${blank}</option>`+[...new Set([...allCls(),...(sel?[sel]:[])])].map(n=>`<option${n==sel?' selected':''}>${esc(n)}</option>`).join('');
@@ -217,6 +219,11 @@ async function delClass(i){const n=allCls()[i];if(!confirm('刪除班級「'+n+'
 async function assignCls(){const n=$('#a_cls').value,ids=[...document.querySelectorAll('.kc:checked')].map(x=>x.value);
  if(!n||!ids.length){alert('請先勾選幼兒並選擇班級');return}
  cfg.kids.forEach(k=>{if(ids.includes(k.id))k.cls=n});if(!cfg.classes.some(c=>c.name==n))cfg.classes.push({name:n,alias:[]});await saveCfg();renderKids();fillKids();}
+async function applyWho(sel){const L=$('#w_list').value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);if(!L.length)return;
+ const ids=new Set([...document.querySelectorAll('.kc:checked')].map(x=>x.value));
+ if(sel&&!ids.size){alert('請先勾選幼兒');return}
+ let n=0;cfg.kids.forEach(k=>{if(sel&&!ids.has(k.id))return;k.who=[...new Set([...(k.who||[]),...L])];n++});
+ if(!sel)cfg.defaultWho=L;await saveCfg();renderKids();$('#wmsg').textContent=`已將授權接送人加到 ${n} 位幼兒`+(sel?'':'，之後批次匯入的新幼兒也會自動帶入');}
 function toggleAll(){const b=[...document.querySelectorAll('.kc')],on=b.some(x=>!x.checked);b.forEach(x=>x.checked=on);}
 async function loadMonth(){const m=$('#mon').value,[y,mo]=m.split('-').map(Number),nx=mo==12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,'0')}`;
  const[a,b]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get()]);
