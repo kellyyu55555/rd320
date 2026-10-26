@@ -1020,10 +1020,13 @@
             </div>
           </div>
 
+          <div x-show="lineUsage && lineUsage.ok && lineUsageLevel!=='ok'" class="rounded-2xl p-3 border text-sm font-bold" :class="lineUsageLevel==='warn' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-red-50 border-red-300 text-coral'" x-text="'📨 ' + lineUsageText + '　（可到 LINE Official Account Manager 升級方案）'"></div>
           <div x-show="adminTab==='acct'" class="flex flex-wrap items-center gap-3 bg-cream rounded-2xl p-3 border border-wood-light/30">
             <span class="text-sm font-bold text-wood-dark/80">📨 LINE 通知</span>
             <button type="button" @click="testLine()" class="px-4 py-2 rounded-xl bg-brand text-paper text-xs font-bold hover:bg-brand-dark">傳送測試訊息</button>
-            <span class="text-xs text-wood-dark/50">按下後，管理員的 LINE 會立刻收到一則測試訊息</span>
+            <span class="text-xs text-wood-dark/50">按下後，管理員的 LINE 會立刻收到一則測試訊息（測試也會用掉 1 則額度）</span>
+            <span class="text-xs font-bold" x-show="lineUsage" :class="lineUsageLevel==='ok' ? 'text-sage-dark' : (lineUsageLevel==='warn' ? 'text-amber-600' : 'text-coral')" x-text="lineUsageText"></span>
+            <button type="button" @click="loadLineUsage()" class="text-xs underline text-wood-dark/60">重新查詢用量</button>
           </div>
 
           <div class="paper-card rounded-3xl p-6 shadow-card" x-show="adminTab==='acct'">
@@ -1715,7 +1718,8 @@ function semOf(s){if(!s)return"";const y=+s.slice(0,4),m=+s.slice(5,7);return `$
 const iso=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
 const tch=L=>[L.t1,L.t2].map(x=>String(x||"").trim()).filter(Boolean).join("、")||String(L.teachers||"");
 const who=l=>{const n=l.submittedByName||l.ownerName||"",e=l.submittedByEmail||l.ownerEmail||"";const fx=t=>{const k=String(t||"").trim().replace(/老師$/,"");return(d&&d.NAME_FIX&&d.NAME_FIX[k])||t};return fx(n||e||tch(l)||"（未知帳號）")};
-const lineMsg=r=>{if(!r)return"LINE 通知失敗（沒有回應）";if(r.noBinding)return"這位老師尚未綁定 LINE，所以沒有傳 LINE（請她在「📝 週誌」按「取得綁定碼」完成綁定）。";if(r.error)return"LINE 通知沒有送出："+r.error+(r.detail?"（"+r.detail+"）":"");if(r.sent>0)return"已傳 LINE 通知給老師 ✅";return"LINE 通知沒有送出："+JSON.stringify(r.errors||r).slice(0,160)};
+const LINE_COOLDOWN=60*60*1000;
+const lineMsg=r=>{if(!r)return"LINE 通知失敗（沒有回應）";if(r.noBinding)return"這位老師尚未綁定 LINE，所以沒有傳 LINE（請她在「📝 週誌」按「取得綁定碼」完成綁定）。";if((r.errors||[]).some(x=>x&&x.status===429)||String(r.detail||"").indexOf("monthly limit")>=0||String(r.error||"").indexOf("monthly limit")>=0)return"本月 LINE 訊息額度已用完（免費方案每月 200 則），要等下個月 1 號重置，或升級官方帳號方案。系統內的狀態和說明已經存好，老師開啟系統就看得到。";if(r.error)return"LINE 通知沒有送出："+r.error+(r.detail?"（"+r.detail+"）":"");if(r.sent>0)return"已傳 LINE 通知給老師 ✅";return"LINE 通知沒有送出："+JSON.stringify(r.errors||r).slice(0,160)};
 const myEmail=()=>String(((d&&d.currentUser)||{}).email||"").toLowerCase();
 const myNm=()=>String((d&&d.myName)||((d&&d.currentUser)||{}).displayName||((d&&d.currentUser)||{}).email||"").replace(/[\\\/:*?"<>|]/g,"").trim();
 function mergeLogs(){const ids=new Set(logsOwn.map(x=>x.id)),hid=new Set((prefs&&prefs.hiddenShared)||[]);logs=logsOwn.concat(logsShr.filter(x=>!ids.has(x.id)&&!hid.has(x.id)))}
@@ -1959,7 +1963,7 @@ async function rvAct(kind){const o=cur;if(!o||!d.isAdmin)return;const note=Strin
  try{let upd;if(kind==="ok")upd={status:"reviewed",reviewedAt:Date.now(),reviewedBy:me,reviewNote:note};else upd={status:"returned",returnReason:note,returnedAt:Date.now(),returnedBy:me,returnedToName:who(o),returnedToEmail:toE||"",returnedToUid:o.uid||""};
   await col().doc(o.id).set(upd,{merge:true});Object.assign(o,upd)}catch(x){alert("操作失敗（"+(x.code||x.message)+"）");return}
  const msg=kind==="ok"?`✅ 週誌管理員已閱\n${who(o)} 老師您好\n${head}\n管理員已查看您送出的週誌${note?"\n\n管理員說明：\n"+note:""}`:`↩️ 週誌被退回，請修改\n退回給：${who(o)}\n退回者：${me}\n${head}\n原因：${note}\n請至系統「📝 週誌」修改後重新送出`;
- let tip="找不到老師的 Email，沒有傳 LINE。";if(toE&&d.notifyLineTo){try{tip=lineMsg(await d.notifyLineTo(toE,msg))}catch(x){tip="LINE 通知失敗："+(x.message||x)}}
+ const wantLine=kind==="ret"||!!(root.querySelector("#wkrvline")||{}).checked;let tip=kind==="ok"?"（已閱預設不傳 LINE，老師開啟系統就會看到你的說明。）":"找不到老師的 Email，沒有傳 LINE。";if(wantLine&&toE&&d.notifyLineTo){try{tip=lineMsg(await d.notifyLineTo(toE,msg))}catch(x){tip="LINE 通知失敗："+(x.message||x)}}
  rvNote="";alert((kind==="ok"?"已標記已閱":"已退件")+"\n"+tip);render()}
 function dedupLogs(){const sent=l=>["submitted","reviewed","returned"].includes(l.status),key=l=>[l.kind||"",l.cls,l.dateFrom,l.dateTo].join("|"),best={};
  logs.filter(sent).forEach(l=>{const t=l.submittedAt||l.reviewedAt||l.returnedAt||l.createdAt||0;if(!best[key(l)]||t>best[key(l)].t)best[key(l)]={id:l.id,t}});
@@ -1982,14 +1986,14 @@ function viewerHtml(){const L=cur;if(L.kind==="ext")return extViewerHtml();
  if(d.isAdmin){const sent=["submitted","reviewed","returned"].includes(L.status);
   return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button></div>
   <div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a"><div><b>🗂️ 管理員審閱</b>${badge(L)}<span style="font-size:12px;color:#7a6f57">　送出者：${esc(who(L))}${L.submittedAt?"　｜　送出："+tm(L.submittedAt):""}</span></div>${reasonLine2(L)}
-  ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「已閱」或「退件」時，系統會用 LINE 把這段說明一起傳給老師。退件一定要寫說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱。</div>`}</div>
+  ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱。</div>`}</div>
   ${docHtml(L,"print")}`}
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button></div>
  <div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(L.ownerName||L.ownerEmail||"")} 分享給您的，僅供檢視，不能修改。</div>
  ${docHtml(L,"print")}`}
 function rvCardEd(){const L=cur;if(!d.isAdmin||L.uid===(d.currentUser||{}).uid)return"";const sent=["submitted","reviewed","returned"].includes(L.status);
  return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a;margin-bottom:10px"><div><b>🗂️ 管理員審閱（您正在編輯 ${esc(who(L))} 的週誌，修改會直接存回同一份）</b>${badge(L)}<span style="font-size:12px;color:#7a6f57">　${L.submittedAt?"送出："+tm(L.submittedAt):""}</span></div>${reasonLine2(L)}
- ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「已閱」或「退件」時，系統會用 LINE 把這段說明一起傳給老師。退件一定要寫說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱（您仍可直接修改內容）。</div>`}</div>`}
+ ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱（您仍可直接修改內容）。</div>`}</div>`}
 function editorHtml(){if(viewOnly)return viewerHtml();if(cur.kind==="ext")return extEditorHtml()+undoBar();return editorHtml0()+undoBar()}
 function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(gmOf(L));
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
@@ -2053,12 +2057,12 @@ function bind(){
   if(ds.printcur){clearTimeout(saveT);await flushCur();printLog(cur);return}
   if(ds.fillwalk){if(!lines(cur.walk.goals).length||confirm("要用這個月的學習目標取代目前內容嗎？")){fillWalk(cur);render();later()}return}
   if(ds.fillgm){if(!lines(cur.gm.text).length||confirm("要用這個月的計畫內容取代目前的活動內容、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
-  if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});const toE=o.submittedByEmail||o.ownerEmail;let lm="找不到這位老師的帳號 Email，無法傳 LINE。";if(toE&&d.notifyLineTo){try{lm=lineMsg(await d.notifyLineTo(toE,`✅ 週誌管理員已閱\n${who(o)} 老師您好\n${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}\n管理員已查看您送出的週誌`))}catch(e){lm="LINE 通知失敗："+(e.message||e)}}if(lm.indexOf("✅")<0)alert("已標記已閱。\n"+lm);else status("已標記已閱，並傳 LINE 通知給老師 ✓")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
+  if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});status("已標記已閱 ✓（已閱預設不傳 LINE，老師開啟系統就會看到）")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
-   clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
+   clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
-   if(d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
-   alert("已送出！管理員會收到通知。");render();return}
+   if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
+   alert(lineNow?"已送出！管理員會收到通知。":"已送出！（1 小時內您已經通知過管理員，這次不再重複傳 LINE，管理員在系統裡會看到最新的版本。）");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
    if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
    if(!r.opts.length){say("文字裡沒有找到明確的策略關鍵字，請補充做法（例如：口語提醒、老師陪伴、簡化步驟），或自行勾選。");return}
@@ -2107,7 +2111,7 @@ function kgApp() {
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
-    weeklyMode: 'mine', myName: '', driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
+    weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
     teacherPick: '', pairs: [], newPairTeacher: '', newPairClass: '', pairPick: '',
     genres: ['遊戲書','韻文','故事','散文','知識概念','文化類'], cultureSubs: ['新年','母親節','端午節','中秋節','聖誕節'],
     exportGenres: [], exportSubs: [], classifyAll: false, classifyMore: false,
@@ -2178,6 +2182,7 @@ function kgApp() {
           }
           this.view = 'teacher';
           this.accessState = 'ok'; clearInterval(this.pollTimer);
+          if (this.isAdmin) setTimeout(() => this.loadLineUsage(true), 1500);
           if (!this.isAdmin) {
             try { this.accessState = await this.checkAccess(user); }
             catch (e) { console.warn('帳號核准檢查失敗，暫以放行處理（請確認 Firestore 規則已加入 members）', e); this.accessState = 'ok'; }
@@ -3196,12 +3201,33 @@ function kgApp() {
         if (!r.ok) { console.warn('LINE 通知未送出', r.status, body); say(`LINE 通知未送出（${r.status}）${body.slice(0, 120)}`); }
         else {
           let j = {}; try { j = JSON.parse(body); } catch (e) {}
-          if (!(j.sent > 0)) { console.warn('LINE 拒絕了訊息', body); say(`LINE 拒絕了訊息：${JSON.stringify(j.errors || body).slice(0, 220)}`); }
+          if (!(j.sent > 0)) { console.warn('LINE 拒絕了訊息', body); const lim = (j.errors || []).some(x => x && x.status === 429); say(lim ? '⚠️ 本月 LINE 訊息額度已用完（免費方案每月 200 則），下個月 1 號重置，或升級官方帳號方案。' : `LINE 拒絕了訊息：${JSON.stringify(j.errors || body).slice(0, 220)}`); this.loadLineUsage(); }
           else if (verbose) this.showToast('✅ LINE 測試訊息已送出，請查看 LINE', 6000);
         }
       } catch (e) { console.warn('LINE 通知失敗', e); say(`LINE 通知失敗：${e.message || e}`); }
     },
-    testLine() { return this.notifyLine('✅ LINE 通知測試：教具借還系統已連線成功', true); },
+    testLine() { return this.notifyLine('✅ LINE 通知測試：教具借還系統已連線成功', true).then(() => this.loadLineUsage()); },
+    async loadLineUsage(silent) {
+      try {
+        const r = await this.fnPost('line-notify', { action: 'usage' });
+        if (r && r.ok) {
+          this.lineUsage = r;
+          if (silent && this.lineUsageLevel !== 'ok') this.showToast(`⚠️ 本月 LINE 訊息${r.remaining <= 0 ? '已用完' : '只剩 ' + r.remaining + ' 則'}（已用 ${r.used} / ${r.limit}），請節省使用或升級方案`, 9000);
+        } else this.lineUsage = { err: (r && r.error === 'empty text') ? '尚未更新 Cloudflare 的 _worker.js，暫時無法顯示用量' : ((r && r.error) || '無法取得用量') };
+      } catch (e) { this.lineUsage = { err: e.message || String(e) }; }
+    },
+    get lineUsageLevel() {
+      const u = this.lineUsage; if (!u || !u.ok || !u.limit) return 'ok';
+      if (u.remaining <= 0) return 'out';
+      const p = u.used / u.limit; return (p >= 0.95 || u.remaining <= 10) ? 'danger' : (p >= 0.8 ? 'warn' : 'ok');
+    },
+    get lineUsageText() {
+      const u = this.lineUsage; if (!u) return '';
+      if (u.err) return 'LINE 用量：' + u.err;
+      if (!u.limit) return `本月 LINE 已用 ${u.used} 則（方案沒有上限）`;
+      const lv = this.lineUsageLevel;
+      return `本月 LINE 已用 ${u.used} / ${u.limit} 則（剩 ${u.remaining} 則）` + (lv === 'out' ? '　⛔ 已用完，下個月 1 號重置' : lv === 'danger' ? '　⚠️ 快用完了，請節省使用' : lv === 'warn' ? '　⚠️ 已用超過八成' : '');
+    },
     notifyNewReturnRequest(req) {
       this.notifyAdmin('新的歸還申請', `${req.borrower||''}（${req.className||''}）申請歸還 ${req.itemName||''} × ${req.qty||''}`);
     },
