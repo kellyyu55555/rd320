@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I2</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I3</footer>
     </div>
   </template>
 
@@ -1250,14 +1250,14 @@ const MON_DEF={up:["9–10月","11–12月","1月"],down:["2–3月","4–5月",
 function monOf(p){const m=(p&&p.months)||[];const d=/上/.test((p&&p.sem)||"")?MON_DEF.up:MON_DEF.down;return [0,1,2].map(i=>m[i]!=null?m[i]:d[i])}
 function phL(i,p){const m=monOf(p||plan)[i];return PHN[i]+(m?"（"+m+"）":"")}
 function monOptions(cur){const o=[["","（不顯示月份）"]];MON_SEQ.forEach((m,k)=>{o.push([m+"月",m+"月"])});MON_SEQ.forEach((m,k)=>{const n=MON_SEQ[(k+1)%12];o.push([m+"–"+n+"月",m+"–"+n+"月"])});if(cur&&!o.some(x=>x[0]===cur))o.push([cur,cur]);return o.map(x=>`<option value="${x[0]}" ${x[0]===cur?"selected":""}>${x[1]}</option>`).join("")}
-const openMap={};let uploading=0;
+const openMap={};let uploading=0,introOpen=false,areaSel="";
 const g3=(x,i)=>(x==null?[]:(x[i]||[]));
 function normRow(r){r.codes=r.codes||[];r.p=[0,1,2].map(i=>g3(r.p,i));
   if(Array.isArray(r.tools)&&r.tools.length&&!Array.isArray(r.tools[0]))r.tools=[0,1,2].map(()=>r.tools.slice());
   r.tools=[0,1,2].map(i=>g3(r.tools,i));r.links=[0,1,2].map(i=>g3(r.links,i));r.photos=[0,1,2].map(i=>g3(r.photos,i).map(x=>typeof x==="string"?{t:"",u:x}:x));r.tpics=Array.isArray(r.tpics)?r.tpics:[];r.rphotos=(Array.isArray(r.rphotos)?r.rphotos:[]).map(x=>typeof x==="string"?{t:"",u:x}:x);return r}
 function normPlan(p){(p.areas||[]).forEach(a=>{a.tiers=(a.tiers||[]).map(t=>Array.isArray(t)?t:[t.n||"",t.i||"",t.a||""]);a.diff=a.diff||[];a.rows=(a.rows||[]).map(normRow)});return p}
 const mark=()=>{snap=JSON.stringify(plan)},dirty=()=>JSON.stringify(plan)!==snap;
-function loadPlan(p){plan=p;mark()}
+function loadPlan(p){plan=p;areaSel="";mark()}
 const byNew=()=>plans.slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
 const saved=()=>plans.some(x=>x.id===plan.id);
 function selOpts(){return (saved()?"":`<option value="__new" selected>＋新計畫（尚未儲存）</option>`)+byNew().map(x=>`<option value="${x.id}" ${x.id===plan.id?"selected":""}>${esc(x.name||"（未命名）")}｜${esc(x.cls)}｜${esc(x.sem)}</option>`).join("")}
@@ -1277,7 +1277,7 @@ function openImport(){let ci=Math.max(0,D.tpl.findIndex(t=>t.cls===plan.cls)),ai
   q("#ia2").onchange=e=>{ai=+e.target.value;draw()};
   drawAreas2();draw();q("#icl").onclick=()=>md.remove();q("#irf").onclick=()=>openRef(kwOf(D.tpl[ci].areas[ai].name),D.tpl[ci].cls);
   q("#iok").onclick=()=>{const a=D.tpl[ci].areas[ai];const rows=[...qa(".icr")].filter(x=>x.checked).map(x=>a.rows[+x.dataset.r]);if(!rows.length){alert("請至少勾選一項活動");return}
-    const withT=q(".ict").checked;let tg=plan.areas.findIndex(x=>x.name===a.name),added=0,skipped=0;
+    areaSel="";const withT=q(".ict").checked;let tg=plan.areas.findIndex(x=>x.name===a.name),added=0,skipped=0;
     if(tg<0){plan.areas.push({name:a.name,tiers:withT?JSON.parse(JSON.stringify(a.tiers||[])):[],diff:withT?JSON.parse(JSON.stringify(a.diff||[])):[],rows:[]});tg=plan.areas.length-1}
     else if(withT&&!plan.areas[tg].tiers.length&&!plan.areas[tg].diff.length){plan.areas[tg].tiers=JSON.parse(JSON.stringify(a.tiers||[]));plan.areas[tg].diff=JSON.parse(JSON.stringify(a.diff||[]))}
     rows.forEach(r=>{if(plan.areas[tg].rows.some(x=>(x.act||"")===(r.act||"")&&(x.age||"")===(r.age||""))){skipped++;return}plan.areas[tg].rows.push(normRow(JSON.parse(JSON.stringify(r))));added++});
@@ -1287,10 +1287,11 @@ function draftBanner(){const dr=getDraft();if(!dr||!dr.plan||plan.name||(plan.ar
 function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);const mm=String(plan.sem||"").match(/(\d{3})學年度(上|下)學期/),py=mm?mm[1]:"115",pt=mm?mm[2]+"學期":"下學期",yrs=[...new Set(["115","116","117",py])].sort();
   body(`${draftBanner()}<div class="pu-card"><div class="pu-row"><b>選擇計畫</b><select id="ps" style="min-width:260px;max-width:100%">${selOpts()}</select><button id="nw">＋新增計畫</button><button id="sa">另存為新計畫</button><button id="dp" style="color:#c0392b;border-color:#c0392b">刪除此計畫</button></div><div class="pu-row"><b>學年度</b><select id="py">${yrs.map(y=>`<option value="${y}" ${y===py?"selected":""}>${y} 學年度</option>`).join("")}</select><b>學期</b><select id="pt">${["上學期","下學期"].map(t=>`<option ${t===pt?"selected":""}>${t}</option>`).join("")}</select><b>年齡層</b><select id="pc">${CLS.map(c=>`<option value="${esc(c)}" ${c===plan.cls?"selected":""}>${ageLabel(c)}</option>`).join("")}</select><span style="padding:6px 14px;border:1px solid #cdbf9e;border-radius:999px;background:#f3ecd9;font-weight:700">📋 教學計畫表</span></div><div class="pu-m" id="pnm">計畫名稱：${esc(plan.name)}</div>
   <div class="pu-row"><select id="ar">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select><button id="add">＋新增學習區</button><button id="imp">從範本匯入學習區</button><button class="pu-p" id="sv">儲存</button><button id="ex">匯出列印版（A4橫式）</button><button id="exd">☁️ 上傳 PDF 到雲端硬碟</button><button id="oa">全部展開</button><button id="ca">全部收合</button></div>
-  <p class="pu-m">教具來自借還系統即時資料：◎＝系統有（顯示剩餘）、△＝自製／新購。每個期別（期初／期中／期末）的教具、參考連結與照片連結分開記錄。範本教具若在多個期別都出現，表示全學期使用，請老師依實際調整。</p></div>${introHtml("edit",plan.intro)}<div id="as"></div>`);
+  <p class="pu-m">教具來自借還系統即時資料：◎＝系統有（顯示剩餘）、△＝自製／新購。每個期別（期初／期中／期末）的教具、參考連結與照片連結分開記錄。範本教具若在多個期別都出現，表示全學期使用，請老師依實際調整。</p></div><details class="pu-card" id="introDet" ${introOpen?"open":""}><summary><b>📘 通用設計融入教學計畫</b>　<span class="pu-m">（點此展開／收合，預設收合）</span></summary>${introHtml("edit",plan.intro)}</details><div class="pu-row" id="af"></div><div id="as"></div>`);
   const pfx=()=>{plan.cls=$("#pc").value;plan.sem=$("#py").value+"學年度"+$("#pt").value;plan.name=planName(plan.sem,plan.cls);const pn=$("#pnm");if(pn)pn.textContent="計畫名稱："+plan.name;const pse=$("#ps");if(pse)pse.innerHTML=selOpts()};$("#py").onchange=$("#pt").onchange=$("#pc").onchange=pfx;
   introWire();
-  $("#add").onclick=()=>{plan.areas.push({name:$("#ar").value,tiers:[],diff:[],rows:[]});drawAreas()};
+  $("#introDet").addEventListener("toggle",()=>{introOpen=$("#introDet").open});
+  $("#add").onclick=()=>{const nm=$("#ar").value;plan.areas.push({name:nm,tiers:[],diff:[],rows:[]});openMap["a"+(plan.areas.length-1)]=true;if(areaSel)areaSel=nm;drawAreas()};
   $("#imp").onclick=openImport;
   $("#sv").onclick=()=>save();$("#dp").onclick=deletePlan;if($("#drr")){$("#drr").onclick=()=>{const dr=getDraft();if(dr&&dr.plan){loadPlan(normPlan(dr.plan));snap="";rPlan()}};$("#drd").onclick=()=>{try{localStorage.removeItem(draftKey())}catch(e){}rPlan()}};$("#ex").onclick=()=>exportDoc();$("#exd").onclick=uploadPlanPdf;$("#nw").onclick=()=>{if(dirty()&&!confirm("目前計畫有未儲存的修改，確定要離開？"))return;loadPlan(newPlan());rPlan()};
   $("#sa").onclick=()=>{const p=normPlan(JSON.parse(JSON.stringify(plan)));p.id="p"+Date.now();p.name=(p.name||"")+"（副本）";delete p.by;delete p.at;loadPlan(p);snap="";rPlan()};
@@ -1417,7 +1418,9 @@ function areaHtml(a,ai){const col=colorOf(a.name);
   <div class="pu-row"><button data-a="${ai}" data-r="${ri}" class="pi">選課綱指標</button>${(r.codes||[]).map(c=>`<span class="pu-tag" title="${esc(D.ind[c]||"")}">${c} ${esc(D.ind[c]||"")}</span>`).join("")}</div>
   <div class="pu-g3">${[0,1,2].map(pi=>phaseHtml(r,ai,ri,pi)).join("")}</div>${rpHtml(r,ai,ri)}</details>`).join("")+`<div class="pu-row"><button data-a="${ai}" class="addr">＋新增一列（活動）</button></div></div></details>`}
 function drawAreas(){
-  $("#as").innerHTML=plan.areas.map(areaHtml).join("");
+  if(areaSel&&!plan.areas.some(a=>a.name===areaSel))areaSel="";
+  const af=$("#af");if(af){af.innerHTML=plan.areas.length?`<b>顯示：</b><button class="pu-b ${areaSel?"":"on"}" data-af="">全部學習區（${plan.areas.length}）</button>`+plan.areas.map(a=>`<button class="pu-b ${areaSel===a.name?"on":""}" data-af="${esc(a.name)}" style="border-color:${colorOf(a.name)}">${esc(a.name)}</button>`).join(""):"";af.querySelectorAll("[data-af]").forEach(b=>b.onclick=()=>{areaSel=b.dataset.af;if(areaSel)plan.areas.forEach((a,i)=>{if(a.name===areaSel)openMap["a"+i]=true});drawAreas()})}
+  $("#as").innerHTML=plan.areas.map((a,i)=>(!areaSel||a.name===areaSel)?areaHtml(a,i):"").join("");
   $$("details[data-k]").forEach(e=>e.addEventListener("toggle",()=>{openMap[e.dataset.k]=e.open}));
   const R=e=>plan.areas[e.dataset.a].rows[e.dataset.r];const P=e=>+e.dataset.p;
   $$(".addr").forEach(b=>b.onclick=()=>{plan.areas[b.dataset.a].rows.push(normRow({act:"",age:"",codes:[],p:[[],[],[]]}));openMap["a"+b.dataset.a]=true;drawAreas()});
@@ -3236,6 +3239,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I2</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I3</div>
 </body>
 </html>
