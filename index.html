@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I2</footer>
     </div>
   </template>
 
@@ -1206,7 +1206,9 @@ window.PLAN_DATA={"ind":{"身-幼-1-1-1":"認識身體部位或身體基本動�
 window.PlanUI=(function(){
 const D=window.PLAN_DATA,AREAS=["語文區","數學區","積木區","組合建構區","美勞區","生活自理區","鬆散素材區","扮演區"],CLS=["兩歲專班","小中混齡班","中大混齡班"];
 const admin=()=>!!(d&&d.isAdmin);let fCls="",fSem="",snap="",viewing=null,logs=[],subLog=null,subLogUid=null,logFilter="";let d=null,root=null,inv=[],tab="plan",plan=newPlan(),plans=[],sub=null,subUid=null;
-function newPlan(){return{id:"p"+Date.now(),name:"",cls:CLS[0],sem:"115學年度下學期",areas:[]}}
+function ageLabel(c){return{"兩歲專班":"兩歲專班","小中混齡班":"中小混齡","中大混齡班":"中大混齡"}[c]||c}
+function planName(sem,cls){return sem+" "+ageLabel(cls)+" 教學計畫表"}
+function newPlan(){const t=new Date(),m=t.getMonth()+1,ry=(m>=8?t.getFullYear():t.getFullYear()-1)-1911,sem=ry+"學年度"+((m>=2&&m<=7)?"下":"上")+"學期";return{id:"p"+Date.now(),name:planName(sem,CLS[0]),cls:CLS[0],sem,areas:[]}}
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=s=>root.querySelector(s),$$=s=>root.querySelectorAll(s);
 const norm=n=>n.replace(/[\s（）()\-－]/g,"");
@@ -1282,11 +1284,11 @@ function openImport(){let ci=Math.max(0,D.tpl.findIndex(t=>t.cls===plan.cls)),ai
     md.remove();openMap["a"+tg]=true;drawAreas();
     alert(added?("已匯入 "+added+" 項活動"+(skipped?"，略過 "+skipped+" 項已存在的活動":"")+"。"):"選取的活動都已存在，沒有新增內容。")}}
 function draftBanner(){const dr=getDraft();if(!dr||!dr.plan||plan.name||(plan.areas||[]).length)return "";return `<div class="pu-card" style="background:#fff3cd"><b>發現上次沒有存到資料庫的草稿</b>（${esc((dr.at||"").slice(0,16).replace("T"," "))}，計畫「${esc(dr.plan.name||"未命名")}」）<div class="pu-row"><button id="drr" class="pu-p">還原草稿</button><button id="drd">捨棄草稿</button></div></div>`}
-function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);
-  body(`${draftBanner()}<div class="pu-card"><div class="pu-row"><b>選擇計畫</b><select id="ps" style="min-width:260px;max-width:100%">${selOpts()}</select><button id="nw">＋新增計畫</button><button id="sa">另存為新計畫</button><button id="dp" style="color:#c0392b;border-color:#c0392b">刪除此計畫</button></div><div class="pu-row"><input id="nm" placeholder="計畫名稱（例：115下學期 兩歲專班）" value="${esc(plan.name)}" style="flex:1;min-width:220px"></div>
+function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);const mm=String(plan.sem||"").match(/(\d{3})學年度(上|下)學期/),py=mm?mm[1]:"115",pt=mm?mm[2]+"學期":"下學期",yrs=[...new Set(["115","116","117",py])].sort();
+  body(`${draftBanner()}<div class="pu-card"><div class="pu-row"><b>選擇計畫</b><select id="ps" style="min-width:260px;max-width:100%">${selOpts()}</select><button id="nw">＋新增計畫</button><button id="sa">另存為新計畫</button><button id="dp" style="color:#c0392b;border-color:#c0392b">刪除此計畫</button></div><div class="pu-row"><b>學年度</b><select id="py">${yrs.map(y=>`<option value="${y}" ${y===py?"selected":""}>${y} 學年度</option>`).join("")}</select><b>學期</b><select id="pt">${["上學期","下學期"].map(t=>`<option ${t===pt?"selected":""}>${t}</option>`).join("")}</select><b>年齡層</b><select id="pc">${CLS.map(c=>`<option value="${esc(c)}" ${c===plan.cls?"selected":""}>${ageLabel(c)}</option>`).join("")}</select><span style="padding:6px 14px;border:1px solid #cdbf9e;border-radius:999px;background:#f3ecd9;font-weight:700">📋 教學計畫表</span></div><div class="pu-m" id="pnm">計畫名稱：${esc(plan.name)}</div>
   <div class="pu-row"><select id="ar">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select><button id="add">＋新增學習區</button><button id="imp">從範本匯入學習區</button><button class="pu-p" id="sv">儲存</button><button id="ex">匯出列印版（A4橫式）</button><button id="exd">☁️ 上傳 PDF 到雲端硬碟</button><button id="oa">全部展開</button><button id="ca">全部收合</button></div>
   <p class="pu-m">教具來自借還系統即時資料：◎＝系統有（顯示剩餘）、△＝自製／新購。每個期別（期初／期中／期末）的教具、參考連結與照片連結分開記錄。範本教具若在多個期別都出現，表示全學期使用，請老師依實際調整。</p></div>${introHtml("edit",plan.intro)}<div id="as"></div>`);
-  $("#nm").oninput=e=>{plan.name=e.target.value;const nm=plan.name;const hit=CLS.find(c=>nm.includes(c)||nm.includes(c.slice(0,2)));if(hit)plan.cls=hit;const m=nm.match(/(\d{3})\D{0,4}(上|下)/);if(m)plan.sem=m[1]+"學年度"+m[2]+"學期"};
+  const pfx=()=>{plan.cls=$("#pc").value;plan.sem=$("#py").value+"學年度"+$("#pt").value;plan.name=planName(plan.sem,plan.cls);const pn=$("#pnm");if(pn)pn.textContent="計畫名稱："+plan.name;const pse=$("#ps");if(pse)pse.innerHTML=selOpts()};$("#py").onchange=$("#pt").onchange=$("#pc").onchange=pfx;
   introWire();
   $("#add").onclick=()=>{plan.areas.push({name:$("#ar").value,tiers:[],diff:[],rows:[]});drawAreas()};
   $("#imp").onclick=openImport;
@@ -3234,6 +3236,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I2</div>
 </body>
 </html>
