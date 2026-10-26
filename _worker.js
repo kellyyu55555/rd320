@@ -91,6 +91,22 @@ async function notify(request, env) {
   const me = await whoami(request, env);
   if (!me) return json(401, { error: 'invalid token' });
   const body = await readBody(request);
+
+  // 查詢本月 LINE 訊息用量（僅管理員）
+  if (body.action === 'usage') {
+    if (!(await isAdmin(me, env))) return json(403, { error: '只有管理員可以查詢用量', detail: me.adminErr || '' });
+    if (!lineToken(env)) return json(200, { ok: false, error: 'LINE 尚未設定（缺少 LINE_CHANNEL_ACCESS_TOKEN）' });
+    const H = { Authorization: 'Bearer ' + lineToken(env), 'User-Agent': 'rd320-line-notify/1.0' };
+    const [q, c] = await Promise.all([
+      fetch('https://api.line.me/v2/bot/message/quota', { headers: H }),
+      fetch('https://api.line.me/v2/bot/message/quota/consumption', { headers: H }),
+    ]);
+    if (!q.ok || !c.ok) return json(200, { ok: false, error: 'LINE 回應錯誤（' + q.status + '/' + c.status + '）' });
+    const qj = await q.json(), cj = await c.json();
+    const limit = qj.type === 'limited' ? Number(qj.value || 0) : 0, used = Number(cj.totalUsage || 0);
+    return json(200, { ok: true, type: qj.type, limit, used, remaining: limit ? Math.max(0, limit - used) : null });
+  }
+
   const text = String(body.text || '').trim().slice(0, 900);
   if (!text) return json(400, { error: 'empty text' });
   if (!lineToken(env)) return json(500, { error: 'LINE 尚未設定（缺少 LINE_CHANNEL_ACCESS_TOKEN）' });
