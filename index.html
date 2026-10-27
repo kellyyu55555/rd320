@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I3</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I5</footer>
     </div>
   </template>
 
@@ -1173,18 +1173,7 @@
 #planRoot button,#planRoot select,#planRoot input:not([type=checkbox]),#planRoot textarea,.pu-modal button,.pu-modal input,.pu-modal select{font:inherit;border:1px solid #cfc6b4;border-radius:10px;padding:5px 10px;background:#fffdf7;color:inherit}
 #planRoot button,.pu-modal button{cursor:pointer}#planRoot .pu-b.on,#planRoot .pu-p,.pu-modal .pu-p{background:#4C7A3E;color:#fff;border-color:#4C7A3E}
 #planRoot .pu-card{border:1px solid #e0d8c6;border-radius:14px;padding:10px;margin:10px 0}#planRoot .pu-sub{background:#fbf3e6}
-#planRoot .pu-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
-#planRoot .pu-r1,#planRoot .pu-r2,#planRoot .pu-r3,#planRoot .pu-r4{padding:8px 12px;border-radius:12px;border-left:8px solid;margin:10px 0}
-#planRoot .pu-r1{background:#e8f1fb;border-color:#2f6db5}#planRoot .pu-r2{background:#ebf5e6;border-color:#4C7A3E}#planRoot .pu-r3{background:#fff4cf;border-color:#d4a017;color:#5a4300;font-weight:700}#planRoot .pu-r4{background:#fdeedd;border-color:#d9822b}
-#planRoot .pu-r1>b,#planRoot .pu-r2>b,#planRoot .pu-r3>b,#planRoot .pu-r4>b{color:#fff;border-radius:999px;padding:2px 14px;font-size:16px}
-#planRoot .pu-r1>b{background:#2f6db5}#planRoot .pu-r2>b{background:#4C7A3E}#planRoot .pu-r3>b{background:#b98a0c}#planRoot .pu-r4>b{background:#d9822b}
-#planRoot #ps{border:2px solid #2f6db5;background:#fff}#planRoot #nw,#planRoot #sa{border:2px solid #2f6db5;color:#1f4f87;background:#fff;font-weight:700}
-#planRoot #py,#planRoot #pt,#planRoot #pc{border:2px solid #4C7A3E;background:#fff;font-weight:700}
-#planRoot #nm{border:2px solid #d4a017;background:#fffdf0;font-weight:700}
-#planRoot #ar{border:2px solid #d9822b;background:#fff;font-weight:700}#planRoot #add,#planRoot #imp{border:2px solid #d9822b;color:#9a5410;background:#fff;font-weight:700}
-#planRoot #sv{font-weight:700;padding:6px 20px;box-shadow:0 3px 0 #35572b}
-#planRoot #ex,#planRoot #exd{border:2px solid #1f7a8c;color:#14606f;background:#fff;font-weight:700}
-#planRoot #oa,#planRoot #ca{background:#eee9dc;border-color:#cfc6b4;color:#6b6350;font-size:.9em}#planRoot .pu-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}@media(max-width:700px){#planRoot .pu-g3{grid-template-columns:1fr}}
+#planRoot .pu-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}#planRoot .pu-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}@media(max-width:700px){#planRoot .pu-g3{grid-template-columns:1fr}}
 #planRoot textarea{width:100%;min-height:60px}#planRoot .pu-tag{display:inline-block;background:#e9e1cf;border-radius:12px;padding:1px 9px;margin:2px;font-size:17px}
 #planRoot .pu-m,.pu-modal .pu-m{color:#7a6f5a;font-size:17px}#planRoot .pu-w,.pu-modal .pu-w{color:#c0392b}#planRoot .pu-env{background:#eef3e6}#planRoot summary{cursor:pointer}
 #planRoot .pu-tbl{overflow-x:auto}#planRoot table{border-collapse:collapse;width:100%}#planRoot td,#planRoot th{border:1px solid #e0d8c6;padding:5px;font-size:18px;text-align:left}#planRoot th{background:#e9e1cf}
@@ -1231,6 +1220,7 @@ function sync(data){
   const uid=d.currentUser&&d.currentUser.uid;
   if(d.db&&uid&&subUid!==uid){if(sub)sub();subUid=uid;sub=d.db.collection("teachingPlans").onSnapshot(s=>{plans=s.docs.map(x=>({...x.data(),id:x.id}));if(tab==="list"||tab==="view")render();else if(tab==="plan"&&root.querySelector("#ps"))root.querySelector("#ps").innerHTML=selOpts();else if(tab==="plan"&&admin()&&root.querySelector("#ps")&&!document.activeElement.matches("#ps")){const el=$("#ps");if(el)el.innerHTML=selOpts()}},e=>{plans=[];root.dataset.err=e.code||e.message;if(!root._ea){root._ea=1;alert("無法讀取已存的教學計畫（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合給登入者讀取。")}if(tab==="list")render()})}
   const lu=(d.isAdmin&&uid)?uid:null;if(lu!==subLogUid){if(subLog){subLog();subLog=null}subLogUid=lu;logs=[];delete root.dataset.logErr;if(lu&&d.db)subLog=d.db.collection("teachingPlanLogs").orderBy("createdAt","desc").limit(300).onSnapshot(s=>{logs=s.docs.map(x=>({...x.data(),id:x.id}));if(tab==="logs")render()},e=>{root.dataset.logErr=e.code||e.message;if(tab==="logs")render()})}
+  if(!root._lv){root._lv=1;["input","change","keydown"].forEach(ev=>root.addEventListener(ev,()=>{lastEdit=Date.now()},true));setInterval(liveTick,2000);document.addEventListener("visibilitychange",()=>{if(document.hidden&&admin()&&dirty()&&!liveBusy)liveSave()});window.addEventListener("pagehide",()=>{if(admin()&&dirty()&&!liveBusy)liveSave()})}
   if(!root._tm){root._tm=1;["input","click","keydown","change","mousemove"].forEach(ev=>root.addEventListener(ev,touch,true))}
   if(!root._rf){root._rf=1;root.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rfb");if(b)openRef(b.dataset.k,b.dataset.c)})}
   if(!root.dataset.init||root.dataset.adm!==adm){root.dataset.init=1;root.dataset.adm=adm;viewing=null;render()}else if(tab==="tools")render();
@@ -1296,10 +1286,11 @@ function openImport(){let ci=Math.max(0,D.tpl.findIndex(t=>t.cls===plan.cls)),ai
     alert(added?("已匯入 "+added+" 項活動"+(skipped?"，略過 "+skipped+" 項已存在的活動":"")+"。"):"選取的活動都已存在，沒有新增內容。")}}
 function draftBanner(){const dr=getDraft();if(!dr||!dr.plan||plan.name||(plan.areas||[]).length)return "";return `<div class="pu-card" style="background:#fff3cd"><b>發現上次沒有存到資料庫的草稿</b>（${esc((dr.at||"").slice(0,16).replace("T"," "))}，計畫「${esc(dr.plan.name||"未命名")}」）<div class="pu-row"><button id="drr" class="pu-p">還原草稿</button><button id="drd">捨棄草稿</button></div></div>`}
 function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);const mm=String(plan.sem||"").match(/(\d{3})學年度(上|下)學期/),py=mm?mm[1]:"115",pt=mm?mm[2]+"學期":"下學期",yrs=[...new Set(["115","116","117",py])].sort();
-  body(`${draftBanner()}<div class="pu-card"><div class="pu-row pu-r1"><b>選擇計畫</b><select id="ps" style="min-width:260px;max-width:100%">${selOpts()}</select><button id="nw">＋新增計畫</button><button id="sa">另存為新計畫</button><button id="dp" style="color:#c0392b;border-color:#c0392b">刪除此計畫</button></div><div class="pu-row pu-r2"><b>學年度</b><select id="py">${yrs.map(y=>`<option value="${y}" ${y===py?"selected":""}>${y} 學年度</option>`).join("")}</select><b>學期</b><select id="pt">${["上學期","下學期"].map(t=>`<option ${t===pt?"selected":""}>${t}</option>`).join("")}</select><b>年齡層</b><select id="pc">${CLS.map(c=>`<option value="${esc(c)}" ${c===plan.cls?"selected":""}>${ageLabel(c)}</option>`).join("")}</select><span style="padding:3px 12px;border:1px dashed #4C7A3E;border-radius:999px;background:transparent;color:#35572b;font-weight:700">📋 教學計畫表</span></div><div class="pu-m pu-r3" id="pnm">計畫名稱：${esc(plan.name)}</div>
-  <div class="pu-row pu-r4"><b>學習區</b><select id="ar">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select><button id="add">＋新增學習區</button><button id="imp">從範本匯入學習區</button><button class="pu-p" id="sv">儲存</button><button id="ex">匯出列印版（A4橫式）</button><button id="exd">☁️ 上傳 PDF 到雲端硬碟</button><button id="oa">全部展開</button><button id="ca">全部收合</button></div>
+  body(`${draftBanner()}<div class="pu-card"><div class="pu-row"><b>選擇計畫</b><select id="ps" style="min-width:260px;max-width:100%">${selOpts()}</select><button id="nw">＋新增計畫</button><button id="sa">另存為新計畫</button><button id="dp" style="color:#c0392b;border-color:#c0392b">刪除此計畫</button></div><div class="pu-row"><b>學年度</b><select id="py">${yrs.map(y=>`<option value="${y}" ${y===py?"selected":""}>${y} 學年度</option>`).join("")}</select><b>學期</b><select id="pt">${["上學期","下學期"].map(t=>`<option ${t===pt?"selected":""}>${t}</option>`).join("")}</select><b>年齡層</b><select id="pc">${CLS.map(c=>`<option value="${esc(c)}" ${c===plan.cls?"selected":""}>${ageLabel(c)}</option>`).join("")}</select><span style="padding:6px 14px;border:1px solid #cdbf9e;border-radius:999px;background:#f3ecd9;font-weight:700">📋 教學計畫表</span><b>環境規劃建議</b><select id="envSel"><option value="">選擇要參考的學習區…</option>${AREAS.map(a=>`<option ${envSel===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="pu-m" id="pnm">計畫名稱：${esc(plan.name)}</div><div id="envBox"></div>
+  <div class="pu-row"><select id="ar">${AREAS.map(a=>`<option>${a}</option>`).join("")}</select><button id="add">＋新增學習區</button><button id="imp">從範本匯入學習區</button><button class="pu-p" id="sv">儲存</button><span class="pu-m" id="lvst" title="編輯後約 2 秒會自動存進資料庫">${esc(liveSt||"即時儲存已開啟")}</span><button id="ex">匯出列印版（A4橫式）</button><button id="exd">☁️ 上傳 PDF 到雲端硬碟</button><button id="oa">全部展開</button><button id="ca">全部收合</button></div>
   <p class="pu-m">教具來自借還系統即時資料：◎＝系統有（顯示剩餘）、△＝自製／新購。每個期別（期初／期中／期末）的教具、參考連結與照片連結分開記錄。範本教具若在多個期別都出現，表示全學期使用，請老師依實際調整。</p></div><details class="pu-card" id="introDet" ${introOpen?"open":""}><summary><b>📘 通用設計融入教學計畫</b>　<span class="pu-m">（點此展開／收合，預設收合）</span></summary>${introHtml("edit",plan.intro)}</details><div class="pu-row" id="af"></div><div id="as"></div>`);
-  const pfx=()=>{plan.cls=$("#pc").value;plan.sem=$("#py").value+"學年度"+$("#pt").value;plan.name=planName(plan.sem,plan.cls);const pn=$("#pnm");if(pn)pn.textContent="計畫名稱："+plan.name;const pse=$("#ps");if(pse)pse.innerHTML=selOpts()};$("#py").onchange=$("#pt").onchange=$("#pc").onchange=pfx;
+  const drawEnv=()=>{const b=$("#envBox");if(b)b.innerHTML=envSel?envHtml(envSel,true):""};$("#envSel").onchange=e=>{envSel=e.target.value;drawEnv()};drawEnv();
+  const pfx=()=>{drawEnv();plan.cls=$("#pc").value;plan.sem=$("#py").value+"學年度"+$("#pt").value;plan.name=planName(plan.sem,plan.cls);const pn=$("#pnm");if(pn)pn.textContent="計畫名稱："+plan.name;const pse=$("#ps");if(pse)pse.innerHTML=selOpts()};$("#py").onchange=$("#pt").onchange=$("#pc").onchange=pfx;
   introWire();
   $("#introDet").addEventListener("toggle",()=>{introOpen=$("#introDet").open});
   $("#add").onclick=()=>{const nm=$("#ar").value;plan.areas.push({name:nm,tiers:[],diff:[],rows:[]});openMap["a"+(plan.areas.length-1)]=true;if(areaSel)areaSel=nm;drawAreas()};
@@ -1423,7 +1414,7 @@ const photoCard=(l,k,ed,A)=>{const src=photoSrc(l.u,"w300");return `<div style="
 function rpHtml(r,ai,ri){const A=`data-a="${ai}" data-r="${ri}"`;return `<div class="pu-card" style="background:#fffdf7"><div class="pu-lb">活動照片連結（整個活動共用，不分期別）</div><div class="pu-ph-imgs">${r.rphotos.map((l,k)=>photoCard(l,k,true,A)).join("")}</div><div class="pu-row"><input class="rpt" ${A} placeholder="照片說明" style="width:110px"><input class="rpu" ${A} placeholder="貼上照片連結 https://…" style="flex:1;min-width:120px"><button class="arp" ${A}>加入照片連結</button></div></div>`}
 function areaHtml(a,ai){const col=colorOf(a.name);
   return `<details class="pu-area" data-k="a${ai}" ${openMap["a"+ai]?"open":""} style="border-color:${col}"><summary style="background:${col}"><span>${esc(a.name)}</span><span class="pu-cnt">${a.rows.length} 項活動</span></summary><div style="padding:8px">
-  <div class="pu-row"><button data-a="${ai}" class="addr">＋活動</button><button data-a="${ai}" class="dela">刪除此區</button></div>${envHtml(a.name,false)}
+  <div class="pu-row"><button data-a="${ai}" class="addr">＋活動</button><button data-a="${ai}" class="dela">刪除此區</button></div>
   <details class="pu-card" data-k="i${ai}" ${openMap["i"+ai]?"open":""}><summary><b>教師意圖、幼兒能力與混齡差異化</b></summary>${a.tiers.map((t,ti)=>`<div class="pu-row"><input data-tf="0" data-a="${ai}" data-t="${ti}" value="${esc(t[0])}" style="width:80px"><textarea data-tf="3" data-a="${ai}" data-t="${ti}" placeholder="學習目標" style="flex:2;min-width:200px;min-height:50px">${esc(t[3]||"")}</textarea><textarea data-tf="1" data-a="${ai}" data-t="${ti}" placeholder="教師意圖" style="flex:2;min-width:200px;min-height:50px">${esc(t[1]||"")}</textarea><textarea data-tf="2" data-a="${ai}" data-t="${ti}" placeholder="幼兒能力" style="flex:2;min-width:200px;min-height:50px">${esc(t[2]||"")}</textarea><button class="dt" data-a="${ai}" data-t="${ti}">刪</button></div>`).join("")}<button class="at" data-a="${ai}">＋年段</button><div class="pu-lb">混齡差異化 <button type="button" class="gdf" data-a="${ai}">✨ 依活動內容產生草稿</button></div><textarea data-df="1" data-a="${ai}">${esc((a.diff||[]).join("\n"))}</textarea></details>`+
   a.rows.map((r,ri)=>`<details class="pu-card pu-sub" data-k="r${ai}_${ri}" ${openMap["r"+ai+"_"+ri]!==false?"open":""}><summary><b>${esc(r.act||"（新活動）")}</b> <span class="pu-m">${esc(r.age||"")}</span></summary><div class="pu-row"><input data-f="act" data-a="${ai}" data-r="${ri}" value="${esc(r.act)}" placeholder="學習區活動" style="flex:1"><input data-f="age" data-a="${ai}" data-r="${ri}" value="${esc(r.age||"")}" placeholder="年段" style="width:120px"><button data-a="${ai}" data-r="${ri}" class="delr">刪除活動</button><button data-a="${ai}" data-r="${ri}" class="insr">＋在下方新增一列</button><button data-a="${ai}" data-r="${ri}" class="cpr">複製此列</button></div>
   <div class="pu-row"><button data-a="${ai}" data-r="${ri}" class="pi">選課綱指標</button>${(r.codes||[]).map(c=>`<span class="pu-tag" title="${esc(D.ind[c]||"")}">${c} ${esc(D.ind[c]||"")}</span>`).join("")}</div>
@@ -1471,18 +1462,28 @@ function toDb(p){const o=JSON.parse(JSON.stringify(p));delete o.id;(o.areas||[])
 const draftKey=()=>"planDraft_"+((d&&d.currentUser&&d.currentUser.uid)||"");
 const getDraft=()=>{try{const x=localStorage.getItem(draftKey());return x?JSON.parse(x):null}catch(e){return null}};
 const dupOf=()=>{const n=(plan.name||"").trim();return n?plans.find(x=>x.id!==plan.id&&(x.name||"").trim()===n):null};
-async function save(auto){const say=m=>auto?(d.showToast&&d.showToast(m,6000)):alert(m);
+async function save(auto){saveOk=false;const live=auto==="live",say=m=>live?setLiveSt("❌ "+m):auto?(d.showToast&&d.showToast(m,6000)):alert(m);
   if(!admin()){say("只有管理員可以編輯教學計畫");return}if(!(plan.name||"").trim()){say("請輸入計畫名稱");return}
   const dup=dupOf();if(dup&&!auto&&!confirm("已經有同名稱的計畫：「"+dup.name+"」（"+dup.cls+"｜"+dup.sem+"）。\n\n仍要儲存成另一份同名計畫嗎？\n按「取消」可回去修改名稱。"))return;
-  try{plan.by=(d.currentUser&&d.currentUser.email)||"";plan.at=new Date().toISOString();const id=plan.id;const o=toDb(plan);const prev=plans.find(x=>x.id===id);const ch=diffPlan(prev,o);if(auto&&prev&&ch.length)ch.unshift("（自動儲存）");await d.db.collection("teachingPlans").doc(id).set(o);const rec={...o,id};const pk=plans.findIndex(x=>x.id===id);if(pk>=0)plans[pk]=rec;else plans.push(rec);const pse=root.querySelector("#ps");if(pse)pse.innerHTML=selOpts();d.showToast&&d.showToast(auto?"已自動儲存目前的進度":"教學計畫已儲存");mark();try{const dr=getDraft();if(dr&&dr.plan&&dr.plan.id===id)localStorage.removeItem(draftKey())}catch(e0){}
-    try{const chk=await d.db.collection("teachingPlans").doc(id).get();if(!chk.exists)say("已送出儲存，但重新讀取時找不到這份計畫，請檢查 Firestore 規則與網路後再試一次。")}catch(e2){say("計畫已寫入，但無法讀回（"+(e2.code||e2.message)+"）。請確認 Firestore 規則允許登入者讀取 teachingPlans，否則「已存計畫」會是空的。")}
-    if(!prev||ch.length)await writeLog(prev?"update":"create",id,o,ch)}catch(e){say("儲存失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合。")}}
+  try{plan.by=(d.currentUser&&d.currentUser.email)||"";plan.at=new Date().toISOString();const id=plan.id;const o=toDb(plan);const prev=plans.find(x=>x.id===id);const sn0=JSON.stringify(plan);if(live&&!(id in logBase))logBase[id]=prev?JSON.parse(JSON.stringify(prev)):null;const baseP=(id in logBase)?logBase[id]:prev;const ch=diffPlan(baseP,o);if(auto&&!live&&prev&&ch.length)ch.unshift("（自動儲存）");await d.db.collection("teachingPlans").doc(id).set(o);const rec={...o,id};const pk=plans.findIndex(x=>x.id===id);if(pk>=0)plans[pk]=rec;else plans.push(rec);const pse=root.querySelector("#ps");if(pse)pse.innerHTML=selOpts();if(!live)d.showToast&&d.showToast(auto?"已自動儲存目前的進度":"教學計畫已儲存");snap=sn0;saveOk=true;try{const dr=getDraft();if(dr&&dr.plan&&dr.plan.id===id)localStorage.removeItem(draftKey())}catch(e0){}
+    if(!live)try{const chk=await d.db.collection("teachingPlans").doc(id).get();if(!chk.exists)say("已送出儲存，但重新讀取時找不到這份計畫，請檢查 Firestore 規則與網路後再試一次。")}catch(e2){say("計畫已寫入，但無法讀回（"+(e2.code||e2.message)+"）。請確認 Firestore 規則允許登入者讀取 teachingPlans，否則「已存計畫」會是空的。")}
+    if(live){clearTimeout(logT[id]);if(Date.now()-(lastLog[id]||0)>LOG_GAP){const bs=baseP;delete logBase[id];lastLog[id]=Date.now();if(ch.length)await writeLog(bs?"update":"create",id,o,ch)}else logT[id]=setTimeout(()=>flushLog(id),LOG_GAP)}
+    else{clearTimeout(logT[id]);const bs=baseP;delete logBase[id];lastLog[id]=Date.now();if(!bs||ch.length)await writeLog(bs?"update":"create",id,o,ch)}}catch(e){say("儲存失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合。")}}
 /* 離開（閒置）10 分鐘後自動儲存 */
 let idleT=null;const IDLE=10*60*1000;
+let liveBusy=false,lastEdit=0,liveFailAt=0,liveSt="",saveOk=true,envSel="";const logBase={},lastLog={},logT={};const LOG_GAP=3*60*1000;
+const setLiveSt=m=>{liveSt=m;const e=root&&root.querySelector("#lvst");if(e)e.textContent=m};
 const touch=()=>{if(!admin())return;clearTimeout(idleT);idleT=setTimeout(autoSave,IDLE)};
 async function autoSave(){if(!admin()||!dirty())return;const nm=(plan.name||"").trim();
   if(nm&&!dupOf()){await save(true);return}
   try{localStorage.setItem(draftKey(),JSON.stringify({at:new Date().toISOString(),plan}));d.showToast&&d.showToast("已把目前進度暫存在這台電腦：計畫名稱空白或與其他計畫同名，無法自動存到資料庫。",7000)}catch(e){}}
+async function flushLog(id){const rec=plans.find(x=>x.id===id);if(!rec||!(id in logBase))return;const bs=logBase[id],o=toDb(rec),ch=diffPlan(bs,o);delete logBase[id];lastLog[id]=Date.now();if(ch.length)await writeLog(bs?"update":"create",id,o,ch)}
+/* 即時儲存：編輯後停手約 1.5 秒就自動存進資料庫（不用再按「儲存」） */
+async function liveSave(){if(!admin()||liveBusy||!dirty())return;const nm=(plan.name||"").trim();
+  if(!nm||dupOf()){try{localStorage.setItem(draftKey(),JSON.stringify({at:new Date().toISOString(),plan}))}catch(e){}setLiveSt(nm?"⚠ 與其他計畫同名，已暫存在這台電腦，請改學年度／學期／年齡層":"⚠ 請輸入計畫名稱，已暫存在這台電腦");return}
+  liveBusy=true;setLiveSt("儲存中…");try{await save("live")}catch(e){saveOk=false}finally{liveBusy=false}
+  if(saveOk)setLiveSt("✓ 已即時儲存 "+new Date().toLocaleTimeString("zh-TW",{hour12:false}));else liveFailAt=Date.now()}
+const liveTick=()=>{if(!admin()||liveBusy||!dirty())return;if(Date.now()-liveFailAt<30000)return;if(Date.now()-lastEdit<1500){setLiveSt("尚未儲存…");return}liveSave()};
 async function deletePlan(){if(!admin())return;
   if(!plans.some(x=>x.id===plan.id)){if(confirm("這份計畫還沒有儲存過，要清空目前的內容嗎？")){loadPlan(newPlan());rPlan()}return}
   if(!confirm("確定要刪除計畫「"+(plan.name||"（未命名）")+"」嗎？\n刪除後無法復原（修改紀錄會保留刪除的紀錄）。"))return;
@@ -3250,6 +3251,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I3</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I5</div>
 </body>
 </html>
