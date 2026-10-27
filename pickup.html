@@ -21,7 +21,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 </style></head><body>
 <div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
 <div id="app" class="hide">
-<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-F（含臨時延托、請假）</span></header>
+<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-G（含臨時延托、請假）</span></header>
 <nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
 <main>
 <section id="reg">
@@ -137,7 +137,7 @@ async function enter(u){
  if(r.st!=='ok')return showGate(email+' 沒有使用權限');
  me={email,name:r.name||u.displayName||email};
  $('#gate').classList.add('hide');$('#app').classList.remove('hide');
- $('#by').value=me.name;$('#who_').textContent=me.name+(isAdmin?'（管理者）':'');
+ $('#by').value=me.name;{const ev=voiceEnv();if(ev.length)$('#vt').innerHTML='<span class="late">'+esc(ev.join(' '))+'</span>';}$('#who_').textContent=me.name+(isAdmin?'（管理者）':'');
  document.querySelector('[data-t=admin]').classList.toggle('hide',!isAdmin);
  $('#dt').value=today();$('#tm').value=nowT();
  if(!unR)subRecs(today());if(!unT.length)subToday();if(!unK)unK=db.doc('pickup/allkids').onSnapshot(d=>{allKids=d.exists?(d.data().kids||[]):[];fillKids();renderAllInfo();},e=>console.error(e));
@@ -330,14 +330,23 @@ async function exportCSV(){await loadMonth();const{rows,tot,m}=calc();const q=v=
 // ===== 語音登記 =====
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false,lastVoice=null,pendWho='';
 const setMic=()=>$('#mic').textContent=listening?'⏹ 停止聆聽':'🎤 語音登記';
+const ERRMSG={'not-allowed':'麥克風權限被封鎖：請到瀏覽器的網站設定，把這個網站的「麥克風」改為允許，再重新整理。','service-not-allowed':'這個瀏覽器不允許語音辨識（常見於 LINE 內建瀏覽器或主畫面版），請改用 Safari 或 Chrome 直接開啟網址。','no-speech':'沒有聽到聲音，請靠近麥克風再說一次。','audio-capture':'找不到可用的麥克風，可能被其他 App 佔用，或耳機麥克風沒接好。','network':'語音辨識需要連網：請確認網路；學校 Wi-Fi 可能擋住語音服務，可改用行動網路試試。','language-not-supported':'這支手機不支援中文語音辨識，請在系統設定安裝或開啟中文（台灣）語音／聽寫。'};
+function voiceEnv(){const ua=navigator.userAgent,m=[];
+ if(!SR)m.push('此瀏覽器不支援語音辨識，請改用 Safari（iPhone）或 Chrome（Android）直接開啟網址。');
+ if(/Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(ua))m.push('目前在 App 內建瀏覽器開啟，語音常無法使用，請改用 Safari 或 Chrome。');
+ if(navigator.standalone)m.push('iPhone 的「主畫面圖示」版本可能無法使用語音，請改從 Safari 開啟網址。');
+ return m;}
 function toggleVoice(){
- if(!SR){$('#vt').textContent='此瀏覽器不支援語音辨識，請改用 Chrome、Edge 或 Safari';return}
+ const env=voiceEnv();if(!SR){$('#vt').textContent=env.join(' ');return}
  if(listening){listening=false;rec&&rec.stop();setMic();return}
  rec=new SR();rec.lang='zh-TW';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=3;
+ rec.onstart=()=>{$('#vt').textContent='🎧 請說話…'};
  rec.onresult=e=>{const r=e.results[e.results.length-1],t=r[0].transcript;$('#vt').textContent='🎧 '+t;if(r.isFinal)handleVoice(Array.from(r,a=>a.transcript.replace(/\s+/g,'')));};
  rec.onend=()=>{if(listening&&$('#cont').checked){try{rec.start()}catch(e){}}else{listening=false;setMic()}};
- rec.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed'){listening=false;$('#vt').textContent='請允許麥克風權限（需 https 網址）';setMic()}};
- listening=true;rec.start();setMic();}
+ rec.onerror=e=>{if(e.error=='aborted')return;const fatal=['not-allowed','service-not-allowed','audio-capture','language-not-supported'].includes(e.error);
+  if(fatal)listening=false;$('#vt').innerHTML='<span class="late">'+esc(ERRMSG[e.error]||'語音發生錯誤（'+e.error+'）')+'</span>';setMic();};
+ try{listening=true;rec.start();setMic()}catch(e){listening=false;setMic();$('#vt').innerHTML='<span class="late">無法啟動語音：'+esc(e.message||e.name)+'，請重新整理頁面再試。</span>'}}
+
 const noB=s=>String(s||'').replace(/班$/,'');
 const allCls=()=>[...new Set([...cfg.classes.map(c=>c.name),...cfg.kids.map(k=>k.cls).filter(Boolean)])];
 const clsHit=t=>allCls().filter(n=>{const c=cfg.classes.find(x=>x.name==n);return[n,noB(n),...((c&&c.alias)||[])].some(z=>z&&t.includes(z))});
