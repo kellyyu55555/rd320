@@ -21,7 +21,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 </style></head><body>
 <div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
 <div id="app" class="hide">
-<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-H（含臨時延托、請假）</span></header>
+<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-I（含臨時延托、請假）</span></header>
 <nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
 <main>
 <section id="reg">
@@ -69,6 +69,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
   <div class="card"><b>月總表</b>
    <div class="row"><div><label>月份</label><input type="month" id="mon" onchange="renderReport()"></div>
    <button class="btn pr" onclick="exportCSV()">匯出 CSV（Excel 可開）</button></div>
+   <div id="adj" class="card hide" style="border:2px solid var(--pr)"></div>
    <div class="wrap"><table id="rep"></table></div>
    <p class="mu">單次＝出席天數 × 單次費用；包月＝固定月費。超時＝接回時間晚於 18:30。</p></div>
   <div class="card"><b>費用設定</b>
@@ -104,6 +105,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 </section>
 </main>
 </div>
+<datalist id="rsl"><option value="誤點幼兒"><option value="接回人登記錯誤"><option value="接回時間登記錯誤"><option value="家長臨時更換接送人"><option value="重複登記"></datalist>
 <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-auth.js"></script>
@@ -116,7 +118,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 firebase.initializeApp(FIREBASE_CONFIG);
 const db=firebase.firestore(),auth=firebase.auth();
-let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[],monthTemps=[],allKids=[],unK=null,monthAbs=[],absAll=[],todayRecs=[],todayTemps=[],unT=[],subDay='';
+let cfg={kids:[],fees:{m1800:0,m1830:0,s1800:0,s1830:0},cut:'18:30',classes:[]},recs=[],isAdmin=false,me=null,unR=null,unC=null,poll=null,monthRecs=[],lateAll=[],monthTemps=[],monthAdj={},allKids=[],unK=null,monthAbs=[],absAll=[],todayRecs=[],todayTemps=[],unT=[],subDay='';
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const nowT=()=>new Date().toTimeString().slice(0,5);
 const saveCfg=()=>db.doc('pickup/cfg').set(cfg);
@@ -171,7 +173,7 @@ async function saveRec(){
  const kid=$('#kid').value,t=$('#tm').value,who=$('#who').value.trim(),dt=$('#dt').value;
  if(!kid||!t||!who||!dt){$('#msg').textContent='請填寫幼兒、時間、接回人';return}
  const prev=await getRec(dt+'_'+kid);
- if(prev&&!prev.void)return showDup(prev,{id:kid,who,t,dt});
+ if(prev&&!prev.void)return showDup(prev,{id:kid,who,t,dt,manual:true});
  const r=await commit(kid,dt,t,who,prev);okMsg(r);
  $('#who').value='';$('#tm').value=nowT();chk();}
 const getRec=async id=>{const d=await db.collection('pickup_records').doc(id).get();return d.exists?d.data():null};
@@ -182,25 +184,35 @@ async function commit(id,dt,t,who,prev){
 let toastT;
 function toast(m,warn){const t=$('#toast');t.textContent=m;t.className='show'+(warn?' warn':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3500);try{navigator.vibrate&&navigator.vibrate(warn?[150,80,150]:80)}catch(e){}}
 const okMsg=(r,tail)=>{const h=`✔ <b>${esc(kidOf(r.kid).name)}</b> ${r.time} 由 ${esc(r.who)} 接回${r.late?' <span class="late">（超時）</span>':''}${tail||''}`;$('#vres').innerHTML=h;$('#msg').innerHTML=h;toast(`✔ 已登記接回：${kidOf(r.kid).name}　${r.time}　${r.who}${r.late?'（超時）':''}`,r.late);};
-async function voidRec(id){await db.collection('pickup_records').doc(id).update({void:true,voidBy:me.name,voidEmail:me.email,voidAt:Date.now()});}
+async function voidRec(id,reason){await db.collection('pickup_records').doc(id).update({void:true,voidBy:me.name,voidEmail:me.email,voidAt:Date.now(),voidReason:reason||''});}
 async function restoreRec(id){await db.collection('pickup_records').doc(id).update({void:false});}
 let pendDup=null;
 function showDup(prev,n){pendDup={...n,prev};const k=kidOf(n.id);toast('⚠ '+k.name+' 今天已經接回了',true);
  $('#dup').classList.remove('hide');
  $('#dup').innerHTML=`<b style="color:var(--red)">⚠ ${esc(k.name)} 今天已經接回了</b><div>${prev.time} 由 ${esc(prev.who)} 接回（登記：${esc(prev.by||'')}）</div>`
- +(n.who?`<div style="margin-top:8px">是要更正為「${esc(n.who)}」（${n.t}）嗎？</div><button class="btn pr" onclick="dupGo(0)">更正為 ${esc(n.who)}</button> `
+ +`<div style="margin-top:8px"><label>更正或撤銷的原因（必填）</label><input id="dup_rs" list="rsl" placeholder="選擇或輸入原因" style="width:260px"></div>`
+ +(n.who?`<div style="margin-top:8px">要更正接回人為「${esc(n.who)}」嗎？${n.manual?'（時間改為 '+n.t+'）':''}</div><button class="btn pr" onclick="dupGo(0)">更正為 ${esc(n.who)}</button> `
   :`<div style="margin-top:8px">要更正接回人嗎？</div>`+(k.who||[]).map((w,i)=>`<span class="chip" onclick="dupGo(${i+1})">${esc(w)}</span>`).join(''))
  +` <button class="btn" onclick="dupHide()">保留原紀錄</button> <button class="btn" onclick="dupVoid()">撤銷這筆（誤植）</button>`;
  $('#dup').scrollIntoView({behavior:'smooth',block:'nearest'});}
 const dupHide=()=>{$('#dup').classList.add('hide');pendDup=null};
-async function dupGo(i){const p=pendDup;if(!p)return;const who=i?kidOf(p.id).who[i-1]:p.who;
- const r=await commit(p.id,p.dt,p.t,who,p.prev);dupHide();lastVoice={r,prev:p.prev};okMsg(r,' <span class="mu">（已更正）</span> <button class="btn" onclick="undoV()">撤銷更正</button>');$('#who').value='';}
-async function dupVoid(){const p=pendDup;if(!p)return;await voidRec(p.prev.id);dupHide();$('#vres').textContent='已撤銷 '+kidOf(p.id).name+' 的接回紀錄（誤植）';toast('已撤銷 '+kidOf(p.id).name+' 的接回紀錄');}
+async function dupGo(i){const p=pendDup;if(!p)return;const rs=$('#dup_rs').value.trim();if(!rs){alert('請先填寫更正原因');$('#dup_rs').focus();return}
+ const who=i?kidOf(p.id).who[i-1]:p.who,t=p.manual?p.t:p.prev.time;
+ if(who==p.prev.who&&t==p.prev.time){dupHide();toast('內容相同，未更正');return}
+ await applyEdit(p.prev,t,who,rs);const r={...p.prev,time:t,who,late:t>cfg.cut};dupHide();lastVoice={r,prev:p.prev};
+ okMsg(r,' <span class="mu">（已更正）</span> <button class="btn" onclick="undoV()">撤銷更正</button>');$('#who').value='';}
+async function dupVoid(){const p=pendDup;if(!p)return;const rs=$('#dup_rs').value.trim();if(!rs){alert('請先填寫撤銷原因');$('#dup_rs').focus();return}
+ await voidRec(p.prev.id,rs);dupHide();$('#vres').textContent='已撤銷 '+kidOf(p.id).name+' 的接回紀錄（誤植）';toast('已撤銷 '+kidOf(p.id).name+' 的接回紀錄');}
+const diffP=(e,r)=>(e.email&&r.byEmail)?e.email!=r.byEmail:(e.by||'')!=(r.by||'');
+function regCell(r){const eds=r.edits||[];let h=`<div>${esc(r.by||'')}</div>`;
+ eds.forEach(e=>{const ch=[e.fromWho!=e.toWho?esc(e.fromWho)+'→'+esc(e.toWho):'',e.fromTime!=e.toTime?e.fromTime+'→'+e.toTime:''].filter(Boolean).join('，');
+  h+=`<div class="mu">更正：${esc(e.reason)}${ch?'（'+ch+'）':''}${diffP(e,r)?' 修改人：'+esc(e.by):''}</div>`});
+ if(!eds.length&&r.editedBy)h+=`<div class="mu">更正：${esc(r.editedBy)}（舊版紀錄，無原因）</div>`;return h;}
 function renderToday(){const d=$('#td').value||($('#td').value=today());
  const rs=recs.slice().sort((a,b)=>a.time<b.time?-1:1);
- $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>登記</th><th></th></tr>'+rs.map(r=>
-  `<tr class="${r.void?'void':''}"><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(r.kname||kidOf(r.kid).name)}</td><td>${esc(r.who)}${r.prevWho?` <span class="mu">（原：${esc(r.prevWho)}）</span>`:''}</td><td>${esc(r.editedBy||r.by)}</td><td>`
-  +(r.void?`<span class="mu">已撤銷（${esc(r.voidBy||'')}）</span> <button class="btn" onclick="restoreRec('${r.id}')">復原</button>`:`<button class="btn" onclick="editRec('${r.id}')">更正</button> <button class="btn" onclick="voidBtn('${r.id}')">撤銷</button>`)
+ $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>登記／更正</th><th></th></tr>'+rs.map(r=>
+  `<tr class="${r.void?'void':''}"><td class="${r.late?'late':''}">${r.time}${r.late?' 超時':''}</td><td>${esc(r.kname||kidOf(r.kid).name)}</td><td>${esc(r.who)}${(!(r.edits||[]).length&&r.prevWho)?` <span class="mu">（原：${esc(r.prevWho)}）</span>`:''}</td><td>${regCell(r)}</td><td>`
+  +(r.void?`<span class="mu">已撤銷（${esc(r.voidBy||'')}${r.voidReason?'：'+esc(r.voidReason):''}）</span> <button class="btn" onclick="restoreRec('${r.id}')">復原</button>`:`<button class="btn" onclick="editRec('${r.id}')">更正</button> <button class="btn" onclick="voidBtn('${r.id}')">撤銷</button>`)
   +(isAdmin?` <button class="btn" onclick="del('${r.id}')">刪除</button>`:'')+'</td></tr>').join('');
  $('#tleft').textContent=d==today()?'尚未接回：'+(leftList().map(x=>x.name).join('、')||'無'):'';}
 
@@ -262,16 +274,19 @@ async function addAbs(){const kid=$('#a_kid').value,dt=$('#a_dt').value;if(!kid|
  if(dt<today()){$('#amsg').textContent='只能登記今天或之後的日期';return}
  const m=await setAbs(kid,dt,$('#a_rs').value.trim());$('#amsg').textContent=m||`✔ 已登記 ${kidOf(kid).name} ${dt} 請假`;if(!m){$('#a_rs').value='';toast('✔ 已登記 '+kidOf(kid).name+' '+dt+' 請假')}}
 async function voidAbs(id){await db.collection('pickup_absent').doc(id).update({void:true,voidBy:me.name});}
-async function voidBtn(id){if(!confirm('撤銷這筆接回紀錄？（誤植時使用，之後仍可復原）'))return;await voidRec(id);toast('已撤銷');}
+async function voidBtn(id){const rs=prompt('請輸入撤銷原因（必填，例如：誤點幼兒）');if(!rs||!rs.trim())return;await voidRec(id,rs.trim());toast('已撤銷');}
 function editRec(id){const r=recs.find(x=>x.id==id);if(!r)return;const k=kidOf(r.kid);
  $('#ed').classList.remove('hide');
- $('#ed').innerHTML=`<b>更正：${esc(k.name)}</b><div class="row"><div><label>接回時間</label><input type="time" id="e_t" value="${r.time}"></div><div><label>接回人</label><input id="e_w" value="${esc(r.who)}"></div></div>`
- +(k.who||[]).map((w,i)=>`<span class="chip" onclick="$('#e_w').value=cfg.kids.find(x=>x.id=='${k.id}').who[${i}]">${esc(w)}</span>`).join('')
+ $('#ed').innerHTML=`<b>更正：${esc(k.name)}</b> <span class="mu">（原登記：${esc(r.by||'')}，更正後仍會保留）</span><div class="row"><div><label>接回時間</label><input type="time" id="e_t" value="${r.time}"></div><div><label>接回人</label><input id="e_w" value="${esc(r.who)}"></div><div><label>更正原因（必填）</label><input id="e_r" list="rsl" placeholder="選擇或輸入原因" style="width:260px"></div></div>`
+ +(k.who||[]).map((w,i)=>`<span class="chip" onclick="$('#e_w').value=kidOf('${k.id}').who[${i}]">${esc(w)}</span>`).join('')
  +`<br><br><button class="btn pr" onclick="saveEdit('${id}')">儲存更正</button> <button class="btn" onclick="$('#ed').classList.add('hide')">取消</button>`;
  $('#ed').scrollIntoView({behavior:'smooth',block:'nearest'});}
-async function saveEdit(id){const r=recs.find(x=>x.id==id),t=$('#e_t').value,w=$('#e_w').value.trim();if(!r||!t||!w)return;
- await db.collection('pickup_records').doc(id).update({time:t,who:w,late:t>cfg.cut,prevWho:r.who,prevTime:r.time,editedBy:me.name,editedEmail:me.email,editedAt:Date.now()});
- $('#ed').classList.add('hide');toast('✔ 已更正');}
+async function applyEdit(prev,t,w,reason){const e={by:me.name,email:me.email,reason,at:Date.now(),fromWho:prev.who,fromTime:prev.time,toWho:w,toTime:t};
+ await db.collection('pickup_records').doc(prev.id).update({time:t,who:w,late:t>cfg.cut,edits:firebase.firestore.FieldValue.arrayUnion(e)});}
+async function saveEdit(id){const r=recs.find(x=>x.id==id),t=$('#e_t').value,w=$('#e_w').value.trim(),rs=$('#e_r').value.trim();if(!r||!t||!w)return;
+ if(t==r.time&&w==r.who){alert('時間和接回人都沒有改變');return}
+ if(!rs){alert('請填寫更正原因');$('#e_r').focus();return}
+ await applyEdit(r,t,w,rs);$('#ed').classList.add('hide');toast('✔ 已更正');}
 async function del(id){if(!confirm('永久刪除這筆紀錄？（一般誤植請用「撤銷」）'))return;await delR(id);}
 
 function initAdmin(){['m1800','m1830','s1800','s1830'].forEach(k=>$('#f_'+k).value=cfg.fees[k]);$('#f_cut').value=cfg.cut;
@@ -310,23 +325,41 @@ async function applyWho(sel){const L=$('#w_list').value.split(/[,，、]/).map(x
  if(!sel)cfg.defaultWho=L;await saveCfg();renderKids();$('#wmsg').textContent=`已將授權接送人加到 ${n} 位幼兒`+(sel?'':'，之後批次匯入的新幼兒也會自動帶入');}
 function toggleAll(){const b=[...document.querySelectorAll('.kc')],on=b.some(x=>!x.checked);b.forEach(x=>x.checked=on);}
 async function loadMonth(){const m=$('#mon').value,[y,mo]=m.split('-').map(Number),nx=mo==12?`${y+1}-01`:`${y}-${String(mo+1).padStart(2,'0')}`;
- const[a,b,c,e]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get(),db.collection('pickup_temp').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_absent').where('date','>=',m+'-01').where('date','<',nx+'-01').get()]);monthAbs=e.docs.map(x=>x.data()).filter(a=>!a.void);monthTemps=c.docs.map(x=>x.data()).filter(t=>!t.void);
+ const[a,b,c,e,g]=await Promise.all([db.collection('pickup_records').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_records').where('late','==',true).get(),db.collection('pickup_temp').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_absent').where('date','>=',m+'-01').where('date','<',nx+'-01').get(),db.collection('pickup_adjust').where('month','==',m).get()]);monthAdj={};g.docs.forEach(x=>monthAdj[x.data().kid]=x.data());monthAbs=e.docs.map(x=>x.data()).filter(a=>!a.void);monthTemps=c.docs.map(x=>x.data()).filter(t=>!t.void);
  monthRecs=a.docs.map(x=>x.data()).filter(r=>!r.void);lateAll=b.docs.map(x=>x.data()).filter(r=>!r.void);}
 function calc(){const m=$('#mon').value;let tot=0;
  const tk={};monthTemps.forEach(t=>{if(!cfg.kids.some(k=>k.id==t.kid))tk[t.kid]={id:t.kid,name:t.name,cls:t.cls,mode:'s',slot:t.slot,temp:true}});
  const slotOf=(k,d)=>{const t=monthTemps.find(x=>x.kid==k.id&&x.date==d);return t?t.slot:k.slot};
- const rows=[...cfg.kids,...Object.values(tk)].map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),days=mine.length;
-  const fee=k.mode=='m'?cfg.fees['m'+k.slot]:mine.reduce((a,r)=>a+(cfg.fees['s'+slotOf(k,r.date)]||0),0);tot+=fee;
-  return{k,days,ab:monthAbs.filter(a=>a.kid==k.id).length,fee,lm:mine.filter(r=>r.late).length,la:lateAll.filter(r=>r.kid==k.id).length};}).filter(r=>!r.k.temp||r.days>0);
+ const rows=[...cfg.kids,...Object.values(tk)].map(k=>{const mine=monthRecs.filter(r=>r.kid==k.id),d0=mine.length,
+  f0=k.mode=='m'?cfg.fees['m'+k.slot]:mine.reduce((a,r)=>a+(cfg.fees['s'+slotOf(k,r.date)]||0),0),l0=mine.filter(r=>r.late).length,ov=monthAdj[k.id]||{};
+  const days=ov.days!=null?ov.days:d0,fee=ov.fee!=null?ov.fee:f0,lm=ov.lm!=null?ov.lm:l0;tot+=fee;
+  const adj=[ov.days!=null?`出席天數 ${d0}→${days}`:'',ov.fee!=null?`費用 ${f0}→${fee}`:'',ov.lm!=null?`超時 ${l0}→${lm}`:'',ov.note||''].filter(Boolean).join('；');
+  return{k,days,d0,fee,f0,lm,l0,ov,adj,ab:monthAbs.filter(a=>a.kid==k.id).length,la:lateAll.filter(r=>r.kid==k.id).length};}).filter(r=>!r.k.temp||r.d0>0||monthAdj[r.k.id]);
  return{rows,tot,m};}
-async function renderReport(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();
- $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>請假天數</th><th>費用</th><th>當月超時</th><th>累計超時</th></tr>'+rows.map(r=>
-  `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${r.days}</td><td>${r.ab}</td><td>${r.fee}</td><td class="${r.lm?'late':''}">${r.lm}</td><td>${r.la}</td></tr>`).join('')+`<tr><th colspan="5">總計</th><th>${tot}</th><th></th><th></th></tr>`;}
+async function renderReport(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();const mk=(v,x)=>v+(x!=null?' ✎':'');
+ $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>請假天數</th><th>費用</th><th>當月超時</th><th>累計超時</th><th>調整／備註</th><th></th></tr>'+rows.map(r=>
+  `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${mk(r.days,r.ov.days)}</td><td>${r.ab}</td><td>${mk(r.fee,r.ov.fee)}</td><td class="${r.lm?'late':''}">${mk(r.lm,r.ov.lm)}</td><td>${r.la}</td><td class="mu">${esc(r.adj)}</td><td><button class="btn" style="padding:4px 10px;font-size:15px" onclick="editAdj('${r.k.id}')">編輯</button></td></tr>`).join('')+`<tr><th colspan="5">總計</th><th>${tot}</th><th></th><th></th><th></th><th></th></tr>`;}
+function editAdj(kid){const r=calc().rows.find(x=>x.k.id==kid);if(!r)return;
+ $('#adj').classList.remove('hide');
+ $('#adj').innerHTML=`<b>調整 ${esc(r.k.name)}　${$('#mon').value} 月總表</b><div class="mu">系統計算：出席 ${r.d0} 天、費用 ${r.f0}、當月超時 ${r.l0} 次。只有你改過的欄位會被記為手動調整，其餘仍依系統計算。</div>
+ <div class="row"><div><label>出席天數</label><input type="number" id="j_d" value="${r.days}" style="width:100px"></div><div><label>費用</label><input type="number" id="j_f" value="${r.fee}" style="width:120px"></div><div><label>當月超時次數</label><input type="number" id="j_l" value="${r.lm}" style="width:100px"></div>
+ <div style="flex:1;min-width:220px"><label>備註</label><input id="j_n" value="${esc(r.ov.note||'')}" placeholder="例如：補收延托費、免收" style="width:100%"></div></div>
+ <br><button class="btn pr" onclick="saveAdj('${kid}')">儲存調整</button> <button class="btn" onclick="resetAdj('${kid}')">還原為系統計算</button> <button class="btn" onclick="$('#adj').classList.add('hide')">取消</button>`;
+ $('#adj').scrollIntoView({behavior:'smooth',block:'nearest'});}
+async function saveAdj(kid){const r=calc().rows.find(x=>x.k.id==kid);if(!r)return;const m=$('#mon').value,d=parseFloat($('#j_d').value),f=parseFloat($('#j_f').value),l=parseFloat($('#j_l').value),n=$('#j_n').value.trim();
+ if([d,f,l].some(isNaN)){alert('出席天數、費用、超時次數請填數字');return}
+ const o={id:m+'_'+kid,month:m,kid,name:r.k.name,note:n,by:me.name,at:Date.now()};
+ if(d!==r.d0)o.days=d;if(f!==r.f0)o.fee=f;if(l!==r.l0)o.lm=l;
+ const ref=db.collection('pickup_adjust').doc(m+'_'+kid);
+ if(o.days==null&&o.fee==null&&o.lm==null&&!n)await ref.delete();else await ref.set(o);
+ $('#adj').classList.add('hide');toast('✔ 已儲存調整');renderReport();}
+async function resetAdj(kid){if(!confirm('還原為系統計算？（會清除這位幼兒本月的手動調整與備註）'))return;
+ await db.collection('pickup_adjust').doc($('#mon').value+'_'+kid).delete();$('#adj').classList.add('hide');toast('已還原');renderReport();}
 async function exportCSV(){await loadMonth();const{rows,tot,m}=calc();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
- let L=[['幼兒','班級','方案','出席天數','請假天數','費用','當月超時次數','累計超時次數']];
- rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.ab,r.fee,r.lm,r.la]));
- L.push(['總計','','','','',tot,'','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','值班老師','是否超時']);
- monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,r.kname||kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'']));
+ let L=[['幼兒','班級','方案','出席天數','請假天數','費用','當月超時次數','累計超時次數','調整／備註']];
+ rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.ab,r.fee,r.lm,r.la,r.adj]));
+ L.push(['總計','','','','',tot,'','','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','登記老師','是否超時','更正說明']);
+ monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,r.kname||kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'',(r.edits||[]).map(e=>e.by+'：'+e.reason+'（'+e.fromWho+'→'+e.toWho+(e.fromTime!=e.toTime?'，'+e.fromTime+'→'+e.toTime:'')+'）').join('；')]));
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv'}));
  a.download=`課後延托月總表_${m}.csv`;a.click();}
 
@@ -395,7 +428,7 @@ async function voiceSave(id,who){
  const r=await commit(id,dt,nowT(),who,prev);lastVoice={r,prev};
  okMsg(r,' <button class="btn" onclick="undoV()">撤銷</button>');}
 async function undoV(){if(!lastVoice)return;const{r,prev}=lastVoice;
- if(prev)await saveR(prev);else await voidRec(r.id);lastVoice=null;$('#vres').textContent='已撤銷';$('#msg').textContent='';toast('已撤銷');}
+ if(prev)await saveR(prev);else await voidRec(r.id,'登記後立即撤銷');lastVoice=null;$('#vres').textContent='已撤銷';$('#msg').textContent='';toast('已撤銷');}
 
 
 </script></body></html>
