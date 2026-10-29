@@ -17,11 +17,11 @@ label{display:block;margin:8px 0 3px;color:var(--mu);font-size:15px}
 .chip{display:inline-block;margin:4px 6px 0 0;padding:6px 14px;border:1px solid var(--pr);border-radius:20px;cursor:pointer;color:var(--pr)}
 table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:left}
 .late{color:var(--red);font-weight:700}.wrap{overflow-x:auto}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-.chip.on{background:var(--pr);color:#fff}.void td:not(:last-child){opacity:.5;text-decoration:line-through}.hide{display:none}.mu{color:var(--mu);font-size:15px}
+.chip.on{background:var(--pr);color:#fff}.void td:not(:last-child){opacity:.5;text-decoration:line-through}#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:99;max-width:92%;padding:14px 22px;border-radius:14px;font-size:20px;font-weight:700;color:#fff;background:var(--pr);box-shadow:0 4px 16px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;text-align:center}#toast.show{opacity:1}#toast.warn{background:var(--red)}.hide{display:none}.mu{color:var(--mu);font-size:15px}
 </style></head><body>
 <div id="gate" class="card" style="margin:18px;max-width:520px"><p id="gmsg">載入中…</p><button class="btn pr" onclick="signIn()">使用 Google 登入</button> <button class="btn" onclick="auth.signOut()">登出</button></div>
 <div id="app" class="hide">
-<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-G（含臨時延托、請假）</span></header>
+<header>🚸 課後延托接送登記 <span class="mu" style="font-size:14px;font-weight:400">版本 1025-H（含臨時延托、請假）</span></header>
 <nav id="nav"><button data-t="reg" class="on">接回登記</button><button data-t="today">今日紀錄</button><button data-t="admin">管理後台</button><span class="mu" id="who_" style="align-self:center;margin-left:auto"></span><button class="btn" onclick="auth.signOut()">登出</button></nav>
 <main>
 <section id="reg">
@@ -104,6 +104,7 @@ table{border-collapse:collapse;width:100%;font-size:16px}th,td{border-bottom:1px
 </section>
 </main>
 </div>
+<div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-firestore.js"></script>
@@ -178,11 +179,13 @@ async function commit(id,dt,t,who,prev){
  const r={id:dt+'_'+id,date:dt,kid:id,kname:kidOf(id).name,time:t,who,by:$('#by').value.trim(),byEmail:me.email,late:t>cfg.cut};
  if(prev&&!prev.void){r.prevWho=prev.who;r.prevTime=prev.time}
  await saveR(r);return r;}
-const okMsg=(r,tail)=>{const h=`✔ <b>${esc(kidOf(r.kid).name)}</b> ${r.time} 由 ${esc(r.who)} 接回${r.late?' <span class="late">（超時）</span>':''}${tail||''}`;$('#vres').innerHTML=h;$('#msg').innerHTML=h;};
+let toastT;
+function toast(m,warn){const t=$('#toast');t.textContent=m;t.className='show'+(warn?' warn':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3500);try{navigator.vibrate&&navigator.vibrate(warn?[150,80,150]:80)}catch(e){}}
+const okMsg=(r,tail)=>{const h=`✔ <b>${esc(kidOf(r.kid).name)}</b> ${r.time} 由 ${esc(r.who)} 接回${r.late?' <span class="late">（超時）</span>':''}${tail||''}`;$('#vres').innerHTML=h;$('#msg').innerHTML=h;toast(`✔ 已登記接回：${kidOf(r.kid).name}　${r.time}　${r.who}${r.late?'（超時）':''}`,r.late);};
 async function voidRec(id){await db.collection('pickup_records').doc(id).update({void:true,voidBy:me.name,voidEmail:me.email,voidAt:Date.now()});}
 async function restoreRec(id){await db.collection('pickup_records').doc(id).update({void:false});}
 let pendDup=null;
-function showDup(prev,n){pendDup={...n,prev};const k=kidOf(n.id);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+function showDup(prev,n){pendDup={...n,prev};const k=kidOf(n.id);toast('⚠ '+k.name+' 今天已經接回了',true);
  $('#dup').classList.remove('hide');
  $('#dup').innerHTML=`<b style="color:var(--red)">⚠ ${esc(k.name)} 今天已經接回了</b><div>${prev.time} 由 ${esc(prev.who)} 接回（登記：${esc(prev.by||'')}）</div>`
  +(n.who?`<div style="margin-top:8px">是要更正為「${esc(n.who)}」（${n.t}）嗎？</div><button class="btn pr" onclick="dupGo(0)">更正為 ${esc(n.who)}</button> `
@@ -192,7 +195,7 @@ function showDup(prev,n){pendDup={...n,prev};const k=kidOf(n.id);try{navigator.v
 const dupHide=()=>{$('#dup').classList.add('hide');pendDup=null};
 async function dupGo(i){const p=pendDup;if(!p)return;const who=i?kidOf(p.id).who[i-1]:p.who;
  const r=await commit(p.id,p.dt,p.t,who,p.prev);dupHide();lastVoice={r,prev:p.prev};okMsg(r,' <span class="mu">（已更正）</span> <button class="btn" onclick="undoV()">撤銷更正</button>');$('#who').value='';}
-async function dupVoid(){const p=pendDup;if(!p)return;await voidRec(p.prev.id);dupHide();$('#vres').textContent='已撤銷 '+kidOf(p.id).name+' 的接回紀錄（誤植）';}
+async function dupVoid(){const p=pendDup;if(!p)return;await voidRec(p.prev.id);dupHide();$('#vres').textContent='已撤銷 '+kidOf(p.id).name+' 的接回紀錄（誤植）';toast('已撤銷 '+kidOf(p.id).name+' 的接回紀錄');}
 function renderToday(){const d=$('#td').value||($('#td').value=today());
  const rs=recs.slice().sort((a,b)=>a.time<b.time?-1:1);
  $('#tt').innerHTML='<tr><th>時間</th><th>幼兒</th><th>接回人</th><th>登記</th><th></th></tr>'+rs.map(r=>
@@ -225,7 +228,7 @@ async function addTempList(){const a=allKids[+$('#t_k').value];if(!a){$('#tmsg')
  if(todayTemps.some(x=>x.kid==kid&&!x.void)){$('#tmsg').textContent=a.name+' 今天已登記過臨時延托';return}
  await db.collection('pickup_temp').doc(dt+'_'+kid).set({id:dt+'_'+kid,date:dt,kid,name:a.name,cls:a.cls,no:a.no,slot,by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});
  $('#tmsg').textContent=`✔ 已登記 ${a.cls} ${a.no}號 ${a.name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;
- const k=$('#t_k');if(k.selectedIndex<k.options.length-1)k.selectedIndex++;}
+ toast('✔ 已登記臨時延托：'+a.name);const k=$('#t_k');if(k.selectedIndex<k.options.length-1)k.selectedIndex++;}
 function renderAllInfo(){const e=$('#ak_info');if(!e)return;const m={};allKids.forEach(a=>m[a.cls]=(m[a.cls]||0)+1);
  e.textContent=allKids.length?`目前共 ${allKids.length} 位：`+Object.entries(m).map(([c,n])=>c+' '+n+' 位').join('、'):'尚未匯入全園名單';}
 function importAll(){const f=$('#ak_file').files[0];if(!f){alert('請先選擇 CSV 檔案');return}
@@ -244,7 +247,7 @@ async function addTemp(){const slot=$('#t_slot').value,dt=today(),name=$('#t_nam
  else{cls=$('#t_cls').value;const ex=todayTemps.find(x=>x.name==name&&!x.void);kid=ex?ex.kid:'t'+Date.now().toString(36)}
  if(todayTemps.some(x=>x.kid==kid&&!x.void)){$('#tmsg').textContent=name+' 今天已登記過臨時延托';return}
  await db.collection('pickup_temp').doc(dt+'_'+kid).set({id:dt+'_'+kid,date:dt,kid,name,cls,slot,by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});
- $('#tmsg').textContent=`✔ 已登記 ${name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;$('#t_name').value='';$('#t_name').focus();}
+ $('#tmsg').textContent=`✔ 已登記 ${name} 臨時延托（${slot=='1800'?'17:00~18:00':'17:00~18:30'}）`;toast('✔ 已登記臨時延托：'+name);$('#t_name').value='';$('#t_name').focus();}
 async function voidTemp(id){if(confirm('取消這筆臨時延托登記？'))await db.collection('pickup_temp').doc(id).update({void:true,voidBy:me.name});}
 function renderAbs(){const t=absAll.filter(a=>a.date==subDay),fu=absAll.filter(a=>a.date!=subDay).sort((a,b)=>a.date<b.date?-1:1);
  $('#labs').innerHTML=t.length?'今日請假／未到：'+t.map(a=>`${esc(a.name)}${a.reason?'（'+esc(a.reason)+'）':''} <a href="#" onclick="voidAbs('${a.id}');return false">取消</a>`).join('、'):'';
@@ -254,12 +257,12 @@ function renderAbs(){const t=absAll.filter(a=>a.date==subDay),fu=absAll.filter(a
 async function setAbs(kid,dt,reason){const k=kidOf(kid),id=dt+'_'+kid;
  if(absAll.some(a=>a.id==id)){return k.name+' 該日已登記請假'}
  await db.collection('pickup_absent').doc(id).set({id,date:dt,kid,name:k.name,cls:k.cls||'',reason:reason||'',by:$('#by').value.trim(),byEmail:me.email,ts:Date.now()});return '';}
-async function quickAbs(id){const m=await setAbs(id,today(),'');if(m)alert(m);}
+async function quickAbs(id){const m=await setAbs(id,today(),'');if(m)alert(m);else toast('✔ 已標記 '+kidOf(id).name+' 今日未到');}
 async function addAbs(){const kid=$('#a_kid').value,dt=$('#a_dt').value;if(!kid||!dt)return;
  if(dt<today()){$('#amsg').textContent='只能登記今天或之後的日期';return}
- const m=await setAbs(kid,dt,$('#a_rs').value.trim());$('#amsg').textContent=m||`✔ 已登記 ${kidOf(kid).name} ${dt} 請假`;if(!m)$('#a_rs').value='';}
+ const m=await setAbs(kid,dt,$('#a_rs').value.trim());$('#amsg').textContent=m||`✔ 已登記 ${kidOf(kid).name} ${dt} 請假`;if(!m){$('#a_rs').value='';toast('✔ 已登記 '+kidOf(kid).name+' '+dt+' 請假')}}
 async function voidAbs(id){await db.collection('pickup_absent').doc(id).update({void:true,voidBy:me.name});}
-async function voidBtn(id){if(confirm('撤銷這筆接回紀錄？（誤植時使用，之後仍可復原）'))await voidRec(id);}
+async function voidBtn(id){if(!confirm('撤銷這筆接回紀錄？（誤植時使用，之後仍可復原）'))return;await voidRec(id);toast('已撤銷');}
 function editRec(id){const r=recs.find(x=>x.id==id);if(!r)return;const k=kidOf(r.kid);
  $('#ed').classList.remove('hide');
  $('#ed').innerHTML=`<b>更正：${esc(k.name)}</b><div class="row"><div><label>接回時間</label><input type="time" id="e_t" value="${r.time}"></div><div><label>接回人</label><input id="e_w" value="${esc(r.who)}"></div></div>`
@@ -268,7 +271,7 @@ function editRec(id){const r=recs.find(x=>x.id==id);if(!r)return;const k=kidOf(r
  $('#ed').scrollIntoView({behavior:'smooth',block:'nearest'});}
 async function saveEdit(id){const r=recs.find(x=>x.id==id),t=$('#e_t').value,w=$('#e_w').value.trim();if(!r||!t||!w)return;
  await db.collection('pickup_records').doc(id).update({time:t,who:w,late:t>cfg.cut,prevWho:r.who,prevTime:r.time,editedBy:me.name,editedEmail:me.email,editedAt:Date.now()});
- $('#ed').classList.add('hide');}
+ $('#ed').classList.add('hide');toast('✔ 已更正');}
 async function del(id){if(!confirm('永久刪除這筆紀錄？（一般誤植請用「撤銷」）'))return;await delR(id);}
 
 function initAdmin(){['m1800','m1830','s1800','s1830'].forEach(k=>$('#f_'+k).value=cfg.fees[k]);$('#f_cut').value=cfg.cut;
@@ -392,7 +395,7 @@ async function voiceSave(id,who){
  const r=await commit(id,dt,nowT(),who,prev);lastVoice={r,prev};
  okMsg(r,' <button class="btn" onclick="undoV()">撤銷</button>');}
 async function undoV(){if(!lastVoice)return;const{r,prev}=lastVoice;
- if(prev)await saveR(prev);else await voidRec(r.id);lastVoice=null;$('#vres').textContent='已撤銷';$('#msg').textContent='';}
+ if(prev)await saveR(prev);else await voidRec(r.id);lastVoice=null;$('#vres').textContent='已撤銷';$('#msg').textContent='';toast('已撤銷');}
 
 
 </script></body></html>
