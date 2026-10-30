@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I6</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I7</footer>
     </div>
   </template>
 
@@ -1656,7 +1656,8 @@ async function htmlToPdf(html,o){
   let first=true;
   for(const u of units){
    u.style.boxSizing="border-box";
-   const fitU=!!(o.fit&&u.matches(o.fit));let z=1;
+   let fitU=!!(o.fit&&u.matches(o.fit));let z=1;
+   if(fitU&&u.matches(".gmfit")){u.style.width=wpx+"px";const pgx=chmm*MM,ims=u.querySelectorAll("td.ph img"),pds=u.querySelectorAll("td.ph");let okx=u.offsetHeight<=pgx;if(!okx&&ims.length){for(let cm=5.4;cm>=1.2&&!okx;cm-=.3){ims.forEach(im=>{im.style.maxHeight=cm+"cm"});pds.forEach(td=>{td.style.paddingTop=td.style.paddingBottom=(cm>3.2?8:3)+"px"});okx=u.offsetHeight<=pgx}}if(!okx)fitU=false}
    if(fitU){const pg=chmm*MM,vis=zz=>{u.style.width=Math.round(wpx/zz)+"px";return u.offsetHeight*zz};if(vis(1)>pg){let lo=.4,hi=1;for(let k=0;k<9;k++){const mid=(lo+hi)/2;if(vis(mid)<=pg)lo=mid;else hi=mid}z=lo;vis(z)}}else{u.style.width=wpx+"px"}
    const cv=await window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:Math.round(wpx/z)});
    const W=u.offsetWidth,H=u.offsetHeight,sc=cv.width/W,pageHpx=chmm*MM,top=u.getBoundingClientRect().top;
@@ -1854,15 +1855,24 @@ const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.
  if(L.inc.walk)h+=`<div class="fw"><section class="sheet sh fit">${head("blue","在地文化社區踏查","#2f5597")}<tr><td colspan="12"><div class="lbl">${E?`<select data-k="walk.label">${LABELS.map(x=>`<option ${L.walk.label===x?"selected":""}>${x}</option>`).join("")}</select>`:esc(L.walk.label)}</div>${E?RT_("walk.goals",4):bulletsRich(L.walk.goals,"●")}</td></tr>${photoRows("walk",true)}</table></section></div>`;
  if(L.inc.walk&&L.inc.ws!==false)h+=wsSheet();
  if(L.inc.gm){const lb=(t,body)=>`<tr><td colspan="2" class="lb">${t}</td><td colspan="10">${body}</td></tr>`;
-  h+=`<div class="fw"><section class="sheet sh fit">${head("orange","出汗性大肌肉","#c55a11")}${lb("活動名稱與內容",RT_("gm.text",12,fmtGm))}${lb("學習指標",RT_("gm.inds",3))}${lb("具體培養幼兒能力",E?RT_("gm.abil",4):bulletsRich(L.gm.abil,"•"))}${lb("資源與器材",RT_("gm.res",2))}${photoRows("gm",false)}</table></section></div>`}
+  h+=`<div class="fw"><section class="sheet sh fit gmfit">${head("orange","出汗性大肌肉","#c55a11")}${lb("活動名稱與內容",RT_("gm.text",12,fmtGm))}${lb("學習指標",RT_("gm.inds",3))}${lb("具體培養幼兒能力",E?RT_("gm.abil",4):bulletsRich(L.gm.abil,"•"))}${lb("資源與器材",RT_("gm.res",2))}${photoRows("gm",false)}</table></section></div>`}
  if(L.inc.lz){const ev=(k)=>{const v=L.ev[k]||"達成";return ["達成","改進"].map(x=>`<td class="c${E?" evb":""}"${E?` data-ev="${k}" data-v="${x}"`:""}>${v===x?"V":""}</td>`).join("")};
   const band=t=>`<tr class="band"><th colspan="12">${t}</th></tr>`,sec=t=>`<tr><th colspan="12" style="text-align:left">${t}</th></tr>`;
   const hd2=`<tr><th colspan="4">項目</th><th>達成</th><th>改進</th><th colspan="4">項目</th><th>達成</th><th>改進</th></tr>`;
   const two=(a,p)=>[0,1,2].map(i=>`<tr><td colspan="4">${a[i][0]} ${a[i][1]}</td>${ev(p+a[i][0])}<td colspan="4">${a[i+3][0]} ${a[i+3][1]}</td>${ev(p+a[i+3][0])}</tr>`).join("");
-  h+=`<section class="sheet sh">${head("green","學習區","#548235")}${band("師生互動及正向態度")}<tr><td colspan="12">${RT_("lz.interact",5)}</td></tr>${band("教保服務人員-教學省思自評表")}${sec("教學前省思")}<tr><th colspan="4" style="text-align:left">1、課程規劃</th><th>達成</th><th>改進</th><th colspan="4" style="text-align:left">2、活動設計</th><th>達成</th><th>改進</th></tr>${[0,1,2].map(i=>`<tr><td colspan="4">${EV_PRE[0][i][0]} ${EV_PRE[0][i][1]}</td>${ev("p"+EV_PRE[0][i][0])}<td colspan="4">${EV_PRE[1][i][0]} ${EV_PRE[1][i][1]}</td>${ev("p"+EV_PRE[1][i][0])}</tr>`).join("")}${sec("教學中省思-師生互動")}${hd2}${two(EV_MID,"m")}${sec("教學後省思-課程統整、協同教學")}${hd2}${two(EV_POST,"a")}<tr><td colspan="12"><b>【教學省思】</b><br>${RT_("lz.reflect",5)}</td></tr><tr><td colspan="2" class="lb"><u>本次</u>引導重點</td><td colspan="10">${stratCell()}</td></tr>${band("上次執行成效")}<tr><td colspan="12">${RT_("lz.effect",4)}</td></tr><tr><td colspan="4">紀錄老師：${I("lz.recorder")}</td><td colspan="4">教保組長：${I("lz.leader")}</td><td colspan="4">園長：${I("lz.director")}</td></tr></table></section>`}
+  if(mode==="print"&&dupOn()&&(h.match(/class="fw"/g)||[]).length%2===1)h+=`<div class="fw"><section class="sheet sh fit" style="height:3mm;border:0">&nbsp;</section></div>`;
+  h+=`<section class="sheet sh lzdup">${head("green","學習區","#548235")}${band("師生互動及正向態度")}<tr><td colspan="12">${RT_("lz.interact",5)}</td></tr>${band("教保服務人員-教學省思自評表")}${sec("教學前省思")}<tr><th colspan="4" style="text-align:left">1、課程規劃</th><th>達成</th><th>改進</th><th colspan="4" style="text-align:left">2、活動設計</th><th>達成</th><th>改進</th></tr>${[0,1,2].map(i=>`<tr><td colspan="4">${EV_PRE[0][i][0]} ${EV_PRE[0][i][1]}</td>${ev("p"+EV_PRE[0][i][0])}<td colspan="4">${EV_PRE[1][i][0]} ${EV_PRE[1][i][1]}</td>${ev("p"+EV_PRE[1][i][0])}</tr>`).join("")}${sec("教學中省思-師生互動")}${hd2}${two(EV_MID,"m")}${sec("教學後省思-課程統整、協同教學")}${hd2}${two(EV_POST,"a")}<tr><td colspan="12"><b>【教學省思】</b><br>${RT_("lz.reflect",5)}</td></tr><tr><td colspan="2" class="lb"><u>本次</u>引導重點</td><td colspan="10">${stratCell()}</td></tr>${band("上次執行成效")}<tr><td colspan="12">${RT_("lz.effect",4)}</td></tr><tr><td colspan="4">紀錄老師：${I("lz.recorder")}</td><td colspan="4">教保組長：${I("lz.leader")}</td><td colspan="4">園長：${I("lz.director")}</td></tr></table></section>`}
  return `<div class="wk">${h}</div>`}
-const FIT_JS=`(function(){var maxH=Math.floor((297-20)*96/25.4)-6;function fit(){document.querySelectorAll('.sheet.fit').forEach(function(s){var w=s.parentNode;function vis(z){s.style.transformOrigin='top left';s.style.transform='scale('+z+')';s.style.width=(100/z)+'%';return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+'px';w.style.overflow='hidden'})}window.addEventListener('load',function(){setTimeout(fit,300)})})();`;
-const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
+const dupOn=()=>{try{return localStorage.getItem("wkDuplex")!=="0"}catch(e){return true}};
+const FIT_JS=`(function(){var maxH=Math.floor((297-20)*96/25.4)-6;
+function fitGm(s,w){s.style.transform="none";s.style.width="100%";var imgs=s.querySelectorAll("td.ph img"),pads=s.querySelectorAll("td.ph");
+function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
+var ok=s.offsetHeight<=maxH;
+if(!ok&&imgs.length){for(var cm=5.4;cm>=1.2&&!ok;cm-=.3){set(cm,cm>3.2?8:3);ok=s.offsetHeight<=maxH}}
+if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{w.style.height="auto";w.style.overflow="visible"}}
+function fit(){document.querySelectorAll(".sheet.fit").forEach(function(s){var w=s.parentNode;if(s.classList.contains("gmfit")){fitGm(s,w);return}function vis(z){s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+"px";w.style.overflow="hidden"})}
+window.addEventListener("load",function(){setTimeout(fit,300)})})();`;
+const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
 function compress(f,MX,QU){return new Promise((ok,bad)=>{const fr=new FileReader();fr.onerror=bad;fr.onload=()=>{const im=new Image();im.onerror=bad;im.onload=()=>{const M=MX||1000,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);ok(c.toDataURL("image/jpeg",QU||.75))};im.src=fr.result};fr.readAsDataURL(f)})}
 const col=()=>d.db.collection("weeklyLogs");
 async function addWs(i,f){status("處理學習單中…");await saveCur();try{const data=await compress(f,1500,.82),id="ws"+Date.now()+Math.random().toString(36).slice(2,6);await col().doc(cur.id).collection("photos").doc(id).set({data,createdAt:Date.now()});photos[id]=data;cur.ws=cur.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const old=cur.ws.slots[i]&&cur.ws.slots[i].id;cur.ws.slots[i]=Object.assign(cur.ws.slots[i]||{cap:""},{id});if(old)col().doc(cur.id).collection("photos").doc(old).delete().catch(()=>{});await saveCur();render()}catch(e){alert("學習單上傳失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已加入 weeklyLogs 的 photos 子集合。")}}
@@ -1932,7 +1942,7 @@ async function uploadPdf(L){
   msg("已上傳 ✓");if(confirm("已上傳到雲端硬碟 ✅\n要現在開啟檔案嗎？")&&r.url)window.open(r.url,"_blank")}
  catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
 async function printLog(L){if(L.kind==="ext"){openExt(L);return}const w=window.open("","_blank");if(!w){alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次");return}w.document.write("<p style='font-family:sans-serif'>準備列印中…</p>");try{await loadPhotos(L)}catch(e){}
- w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(L.sem+L.cls+"_週誌_"+weekText(L)+(myNm()?"_"+myNm():""))}</title><style>${PRINT_CSS}</style></head><body>${docHtml(L,"print")}<script>${FIT_JS}<\/script></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},700)}
+ w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(L.sem+L.cls+"_週誌_"+weekText(L)+(myNm()?"_"+myNm():""))}</title><style>${PRINT_CSS}</style></head><body>${L.inc.lz&&dupOn()?`<div class="bar">💡 學習區觀察紀錄是<b>雙面列印</b>版面：請在列印視窗按「更多設定」勾選「雙面列印」，翻頁方式選「長邊翻轉」。（網頁無法替您自動開啟印表機的雙面功能。若前面的頁數是單數，已自動補一張空白頁，讓學習區從正面開始；不需要時，可在週誌編輯畫面取消勾選「學習區雙面列印」。）</div>`:""}${docHtml(L,"print")}<script>${FIT_JS}<\/script></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},700)}
 const STAT={draft:['草稿','#9a917a'],submitted:['已送出・待管理員查看','#c0392b'],reviewed:['管理員已閱','#5b7a4a'],returned:['被退回・請修改','#d35400']};
 const reasonLine=l=>l.status==='returned'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">↩ 已退回給：${esc(l.returnedToName||who(l))}${l.returnedBy?`　｜　退回者：${esc(l.returnedBy)}`:""}${l.returnedAt?`　｜　${tm(l.returnedAt)}`:""}<br>退回原因：${esc(l.returnReason)}</div>`:'';
 const reasonLine0=reasonLine;
@@ -2033,7 +2043,7 @@ function rvCardEd(){const L=cur;if(!d.isAdmin||L.uid===(d.currentUser||{}).uid)r
 function editorHtml(){if(viewOnly)return viewerHtml();if(cur.kind==="ext")return extEditorHtml()+undoBar();return editorHtml0()+undoBar()}
 function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(gmOf(L));
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
- return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}${d.isAdmin&&L.uid!==(d.currentUser||{}).uid?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
+ return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><label class="wkb" style="display:inline-flex;gap:4px;align-items:center;cursor:pointer" title="學習區觀察紀錄用雙面列印版面：必要時補一頁空白頁，讓學習區從正面開始"><input type="checkbox" id="wkdup" ${dupOn()?"checked":""}>學習區雙面列印</label><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}${d.isAdmin&&L.uid!==(d.currentUser||{}).uid?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
  ${cur.status==="reviewed"&&cur.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(cur.reviewedBy||"管理員")} 已閱，說明：${esc(cur.reviewNote)}</div>`:""}${cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:6px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(cur.ownerName||cur.ownerEmail||"")} 分享給您的，修改會直接更新同一份內容。</div>`:""}${cur.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(cur.returnedBy||"管理員")} 退回修改（退回給：${esc(cur.returnedToName||who(cur))}）：${esc(cur.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:""}
  ${rvCardEd()}<div class="wkset"><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
   <div><label>班級</label><input type="text" list="wkcls" data-k="cls" value="${esc(L.cls)}" placeholder="例如：梔子花班" style="width:150px"><datalist id="wkcls">${(d.classes||[]).map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
@@ -2065,7 +2075,7 @@ function bind(){
   const rk=t.dataset&&t.dataset.rk;if(rk&&cur){setPath(cur,rk,t.textContent.replace(/\s/g,"")?RTM+rtClean(t.innerHTML):"");later();return}
   const k=t.dataset&&t.dataset.k;if(!k||!cur||t.type==="checkbox"||t.tagName==="SELECT")return;setPath(cur,k,t.value);if(t.tagName==="TEXTAREA")grow(t);
   if(k==="t1"||k==="t2")cur.teachers=tch(cur);if(k==="dateFrom"){cur.sem=semOf(t.value);const s=root.querySelector('[data-k="sem"]');if(s)s.value=cur.sem}if(k==="dateFrom"||k==="dateTo"){cur.weeks=calcWeeks(cur.dateFrom,cur.dateTo);const wk=root.querySelector('[data-k="weeks"]');if(wk)wk.value=cur.weeks}later()});
- root.addEventListener("change",async e=>{const t=e.target;if(t.id==="wksf"){stF=t.value;render();return}
+ root.addEventListener("change",async e=>{const t=e.target;if(t.id==="wkdup"){try{localStorage.setItem("wkDuplex",t.checked?"1":"0")}catch(e0){}return}if(t.id==="wksf"){stF=t.value;render();return}
   if(t.id==="wkshowold"){showOld=t.checked;render();return}
   if(t.dataset&&t.dataset.impck!==undefined&&t.hasAttribute("data-impck")){if(impState){if(t.checked)impState.sel.add(t.dataset.impck);else impState.sel.delete(t.dataset.impck)}return}
   if(t.dataset&&t.dataset.shck!==undefined&&t.hasAttribute("data-shck")){if(shareState){if(t.checked)shareState.sel.add(t.dataset.shck);else shareState.sel.delete(t.dataset.shck)}return}
@@ -3270,6 +3280,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I6</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I7</div>
 </body>
 </html>
