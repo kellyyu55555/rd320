@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I7</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I9</footer>
     </div>
   </template>
 
@@ -1821,7 +1821,7 @@ function rtToolbarHtml(){const o=(a,f)=>a.map(x=>`<option value="${x}">${f?f(x):
  return `<div class="wkrtb"><b style="font-size:12px">文字格式</b><button type="button" data-c="bold" title="粗體"><b>B</b></button><button type="button" data-c="italic" title="斜體"><i>I</i></button><button type="button" data-c="underline" title="底線"><u>U</u></button><select data-c="font" title="字型"><option value="">字型</option>${o(RT_FONTS)}</select><select data-c="size" title="字體大小"><option value="">大小</option>${o(RT_SIZES,x=>x+"pt")}</select><span class="g">字色</span>${sw(TXT_COL,"fc")}<input type="color" data-c="fcc" value="#d32f2f" title="調色盤：自選字色"><span class="g">底色</span>${sw(HL_COL,"hl")}<input type="color" data-c="hlc" value="#fff59d" title="調色盤：自選底色"><button type="button" data-c="clr" title="清除格式">✕ 清除</button><span style="font-size:11px;color:#9a917a">先點下方要修改的欄位、選取文字，再按按鈕</span></div>`}
 const bullets=(s,m)=>lines(s).map(l=>`<div class="bl">${m} ${esc(l)}</div>`).join("");
 function fillWalk(L){const W=(WALK[L.walk.src]||{})[String(L.walk.month)];if(W)L.walk.goals=W.goals.join("\n");return !!W}
-function fillGm(L){const g=gmOf(L)[L.gm.month];if(!g)return false;const gl=g.gates.map(x=>[x.title,"玩法："+(x.play||"")].join("\n"));L.gm.text=(g.warm?[g.name].concat(g.warm,["二、循環體能闖關（30分鐘）共四關"],gl,g.cool||[]):[g.name].concat(gl)).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
+function fillGm(L){const g=gmOf(L)[L.gm.month];if(!g)return false;const gl=g.gates.map(x=>[x.title,"玩法："+(x.play||"")].join("\n"));L.gm.text=[g.name].concat(g.warm?["二、循環體能闖關（30分鐘）共四關"]:[],gl).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
 function newLog(){const t=new Date();t.setDate(t.getDate()-((t.getDay()+6)%7));const b=new Date(t);b.setDate(b.getDate()+4);const u=d.currentUser||{},f=iso(t),m=+f.slice(5,7),P=prefs||{};
  const L={id:"w"+Date.now(),status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:u.displayName||"",createdAt:Date.now(),status:"draft",cls:P.cls||"",sem:semOf(f),dateFrom:f,dateTo:iso(b),ages:Object.assign({"大班":false,"中班":false,"小班":false,"幼幼班":false,"大中混齡":false,"中小混齡":false,"兩歲專班":false},P.ages||{}),t1:P.t1!=null?P.t1:(u.displayName||""),t2:P.t2||"",bg:P.bg||"",inc:{walk:true,gm:true,lz:true,ws:true},weeks:calcWeeks(f,iso(b)),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
  walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{src:"中小班",month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:"",guide:"",sopts:[],dev:"",effect:"",recorder:P.recorder!=null?P.recorder:(u.displayName||""),leader:P.leader||"",director:P.director||""}};
@@ -2056,7 +2056,7 @@ function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",c
   <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end"><b>出汗性大肌肉</b>
   <div><label>範本版本</label><select data-k="gm.src">${Object.keys(GMS).map(k=>`<option value="${k}" ${(L.gm.src||"中小班")===k?"selected":""}>${k}</option>`).join("")}</select></div>
   <div><label>月份</label><select data-k="gm.month">${opts(gm,L.gm.month,m=>`${m}月｜${gmOf(L)[m].name}`)}</select></div>
-  <button class="wkb" data-fillgm="1">帶入本月活動內容、學習指標、能力與器材</button></div>
+  <button class="wkb" data-fillgm="1">帶入本月循環體能闖關、學習指標、能力與器材</button></div>
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><button class="wkb" data-fillteach="1">👩‍🏫 依班級帶入老師</button><button class="wkb" data-saveprefs="1">💾 存為預設（班級、年齡層、老師、背景說明、簽名）</button><button class="wkb" data-useprefs="1">套用我的預設</button><datalist id="wkt">${(d.teacherSuggestions||[]).map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div>
   <div style="font-size:12px;color:#7a6f57">灰色虛線框內的文字都可以直接修改；帶入後也能再編輯。內容會自動儲存。「存為預設」後，之後新增的週誌會自動帶入班級、年齡層、老師、班級幼生背景說明與簽名欄，需要時仍可在表格內修改。出汗性大肌肉的資料來自「115 學年度第一學期出汗性大肌肉循環式活動計劃表」，可選「中小班」、「中大班」或「兩歲專班」版本。</div></div>
  ${rtToolbarHtml()}${docHtml(L,"edit")}`}
@@ -2102,7 +2102,7 @@ function bind(){
   if(ds.back){clearTimeout(saveT);await flushCur();viewOnly=false;cur=null;render();return}
   if(ds.printcur){clearTimeout(saveT);await flushCur();printLog(cur);return}
   if(ds.fillwalk){if(!lines(cur.walk.goals).length||confirm("要用這個月的學習目標取代目前內容嗎？")){fillWalk(cur);render();later()}return}
-  if(ds.fillgm){if(!lines(cur.gm.text).length||confirm("要用這個月的計畫內容取代目前的活動內容、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
+  if(ds.fillgm){if(!(lines(cur.gm.text).length||lines(cur.gm.inds).length||lines(cur.gm.abil).length||lines(cur.gm.res).length)||confirm("要用這個月的計畫內容取代目前的活動名稱與內容（循環體能闖關）、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
   if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});status("已標記已閱 ✓（已閱預設不傳 LINE，老師開啟系統就會看到）")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
    clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
@@ -3280,6 +3280,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I7</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I9</div>
 </body>
 </html>
