@@ -1161,7 +1161,7 @@
         </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I10</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I11</footer>
     </div>
   </template>
 
@@ -1895,8 +1895,8 @@ async function unshareMe(id){const o=logs.find(l=>l.id===id);if(!o)return;
 function safeUrl(u){u=String(u||"").trim();return/^https?:\/\//i.test(u)?u:""}
 function openExt(L){const e=L.ext||{},u=safeUrl(e.url)||safeUrl(e.pdfUrl);if(u)window.open(u,"_blank","noopener");else alert("這份班刊還沒有附上連結或 PDF")}
 function extBadge(l){return l.kind==="ext"?' <span style="background:#f3e8ff;color:#6b21a8;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">📰 PDF班刊</span>':""}
-function extBtns(l){const e=l.ext||{},a=safeUrl(e.url),b=safeUrl(e.pdfUrl),st="text-decoration:none;display:inline-block";
- return(a?`<a class="wkb" href="${esc(a)}" target="_blank" rel="noopener" style="${st}">🎨 開啟 Canva</a>`:"")+(b?`<a class="wkb" href="${esc(b)}" target="_blank" rel="noopener" style="${st}">📄 開啟 PDF</a>`:"")||`<span style="font-size:12px;color:#9a917a">（尚未附連結或 PDF）</span>`}
+function extBtns(l){const e=l.ext||{},a=safeUrl(e.url),b=safeUrl(e.pdfUrl),b2=safeUrl(e.pdf2Url),st="text-decoration:none;display:inline-block";
+ return(a?`<a class="wkb" href="${esc(a)}" target="_blank" rel="noopener" style="${st}">🎨 開啟 Canva</a>`:"")+(b?`<a class="wkb" href="${esc(b)}" target="_blank" rel="noopener" style="${st}">📄 開啟 PDF${b2?" 1":""}</a>`:"")+(b2?`<a class="wkb" href="${esc(b2)}" target="_blank" rel="noopener" style="${st}">📄 開啟 PDF 2</a>`:"")||`<span style="font-size:12px;color:#9a917a">（尚未附連結或 PDF）</span>`}
 function extInfoHtml(L){const e=L.ext||{};return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px"><div><b style="font-size:16px">📰 ${esc(L.sem||"")} ${esc(L.cls||"（未填班級）")}</b>${badge(L)}${extBadge(L)}</div><div style="font-size:13px;color:#7a6f57">${roc(L.dateFrom)}－${roc(L.dateTo)}　｜　送出者：${esc(who(L))}${L.submittedAt?"　｜　送出："+tm(L.submittedAt):""}</div>${reasonLine2(L)}<div style="display:flex;gap:8px;flex-wrap:wrap">${extBtns(L)}</div>${e.note?`<div style="font-size:13px;white-space:pre-wrap">備註：${esc(e.note)}</div>`:""}</div>`}
 function extViewerHtml(){const L=cur;const share=(L.uid!==(d.currentUser||{}).uid&&!d.isAdmin)?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(L.ownerName||L.ownerEmail||"")} 分享給您的，僅供檢視，不能修改。</div>`:"";
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button></div>${share}${extInfoHtml(L)}`}
@@ -1904,6 +1904,7 @@ function extEditorHtml(){const L=cur,E=L.ext=L.ext||{url:"",pdfUrl:"",pdfName:""
  const lab="display:block;font-size:12px;font-weight:700;margin:10px 0 2px;color:#5a4a2a",inp="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px";
  const banners=(L.status==="reviewed"&&L.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(L.reviewedBy||"管理員")} 已閱，說明：${esc(L.reviewNote)}</div>`:"")+(L.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(L.returnedBy||"管理員")} 退回修改（退回給：${esc(L.returnedToName||who(L))}）：${esc(L.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:"");
  const ok=!!safeUrl(E.url);
+ const pdfBox=(n,u,nm)=>`<div style="margin-top:8px;border:2px solid ${n===1?"#cdbf9e":"#bcd3b0"};border-radius:10px;padding:2px 10px 8px;background:${n===1?"#fffdf5":"#f6fbf2"}"><label style="${lab}">PDF 檔案 ${n}${n===1?"（Canva →「分享」→「下載」→ 選 PDF）":"（選填，可再附一份）"}</label><input type="file" accept="application/pdf,.pdf" data-extpdf="${n}">${u?`<div style="margin-top:4px;font-size:13px">📄 ${esc(nm||"已上傳的 PDF")}　<a class="wkb" href="${esc(safeUrl(u))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">開啟</a> <button class="wkb" data-extrm="${n}" style="color:#c0392b">移除</button></div>`:`<div style="font-size:12px;color:#7a6f57">PDF 會存到班級雲端硬碟的「班刊」資料夾（需要管理員已設定雲端硬碟上傳）。</div>`}</div>`;
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button>${adminOther?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}${extBadge(L)}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
  ${banners}${rvCardEd()}
  <div class="wkcard" style="flex-direction:column;align-items:stretch;gap:2px"><b style="font-size:16px">📰 PDF班刊</b>
@@ -1916,13 +1917,12 @@ function extEditorHtml(){const L=cur,E=L.ext=L.ext||{url:"",pdfUrl:"",pdfName:""
  <label style="${lab}">Canva 分享連結</label><input type="url" data-k="ext.url" value="${esc(E.url||"")}" placeholder="https://www.canva.com/design/…" style="${inp}">
  <div style="font-size:12px;color:#7a6f57">在 Canva 按右上角「分享」→ 把權限設為「任何知道連結的人都能查看」→「複製連結」，貼在這裡，管理員才打得開。${E.url&&!ok?'<b style="color:#c0392b">　連結要以 https:// 開頭</b>':""}</div>
  ${ok?`<div style="margin-top:4px"><a class="wkb" href="${esc(safeUrl(E.url))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">🔗 測試開啟連結</a></div>`:""}
- <label style="${lab}">或上傳 PDF（Canva →「分享」→「下載」→ 選 PDF）</label><input type="file" accept="application/pdf,.pdf" data-extpdf="1">
- ${E.pdfUrl?`<div style="margin-top:4px;font-size:13px">📄 ${esc(E.pdfName||"已上傳的 PDF")}　<a class="wkb" href="${esc(safeUrl(E.pdfUrl))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">開啟</a> <button class="wkb" data-extrm="1" style="color:#c0392b">移除</button></div>`:`<div style="font-size:12px;color:#7a6f57">PDF 會存到班級雲端硬碟的「班刊」資料夾（需要管理員已設定雲端硬碟上傳）。</div>`}
+ ${pdfBox(1,E.pdfUrl,E.pdfName)}${pdfBox(2,E.pdf2Url,E.pdf2Name)}
  <label style="${lab}">備註（選填）</label><textarea data-k="ext.note" rows="3" placeholder="想跟管理員說明的事" style="${inp}">${esc(E.note||"")}</textarea></div>`}
-async function extUpload(f){if(!cur)return;if(!/\.pdf$/i.test(f.name)&&f.type!=="application/pdf"){alert("請選擇 PDF 檔案");return}if(f.size>15*1024*1024){alert("PDF 檔案超過 15MB，請先在 Canva 選較低的品質或減少頁數後再下載");return}
+async function extUpload(f,slot){slot=slot===2?2:1;if(!cur)return;if(!/\.pdf$/i.test(f.name)&&f.type!=="application/pdf"){alert("請選擇 PDF 檔案");return}if(f.size>15*1024*1024){alert("PDF 檔案超過 15MB，請先在 Canva 選較低的品質或減少頁數後再下載");return}
  if(!window.PdfUtil||!window.__driveUrl){alert("管理員還沒有設定「雲端硬碟上傳」。\n您可以改貼 Canva 連結，或請管理員到「管理者後台 → 帳號與系統 → ☁️ 雲端硬碟上傳設定」設定。");return}
  const fid=PdfUtil.folderId(FD()[cur.cls]);if(!fid){alert("管理員還沒有設定「"+(cur.cls||"（未填班級）")+"」的雲端硬碟資料夾。\n請先確認班級名稱，或改貼 Canva 連結。");return}
- try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${myNm()?"_"+myNm():""}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:"班刊",folderId:fid});cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name;await saveCur();render();status("PDF 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
+ try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${myNm()?"_"+myNm():""}${slot===2?"_2":""}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
 async function flushCur(){if(d.isAdmin&&cur&&cur.uid!==(d.currentUser||{}).uid&&!edDirty)return true;return saveCur()}
 async function saveCur(){if(viewOnly)return true;if(!cur)return;try{status("儲存中…");const p=JSON.parse(JSON.stringify(cur));p.updatedAt=Date.now();await col().doc(cur.id).set(p);status("已儲存 ✓");edDirty=false;histPush();return true}catch(e){status("儲存失敗："+(e.code||e.message));return false}}
 function later(){edDirty=true;status("尚未儲存…");clearTimeout(saveT);saveT=setTimeout(saveCur,1200)}
@@ -2080,7 +2080,7 @@ function bind(){
   if(t.dataset&&t.dataset.impck!==undefined&&t.hasAttribute("data-impck")){if(impState){if(t.checked)impState.sel.add(t.dataset.impck);else impState.sel.delete(t.dataset.impck)}return}
   if(t.dataset&&t.dataset.shck!==undefined&&t.hasAttribute("data-shck")){if(shareState){if(t.checked)shareState.sel.add(t.dataset.shck);else shareState.sel.delete(t.dataset.shck)}return}
   
-  if(t.dataset&&t.dataset.sopt!==undefined&&t.hasAttribute("data-sopt")){const box=t.closest(".sddp");if(box&&cur){const sel=SOPTS.filter(o=>{const e=box.querySelector('[data-sopt="'+o+'"]');return e&&e.checked});cur.lz.sopts=sel;const sm=t.closest("details").querySelector("summary");if(sm)sm.textContent=sel.length?sel.join("、"):"請選擇▾";later()}return}if(t.dataset&&t.dataset.up){const f=Array.from(t.files||[]);t.value="";if(f.length)await addPhotos(t.dataset.up,f);return}if(t.dataset&&t.dataset.upws!==undefined){const f1=(t.files||[])[0];t.value="";if(f1)await addWs(+t.dataset.upws,f1);return}if(t.dataset&&t.dataset.extpdf!==undefined){const f2=(t.files||[])[0];t.value="";if(f2)await extUpload(f2);return}
+  if(t.dataset&&t.dataset.sopt!==undefined&&t.hasAttribute("data-sopt")){const box=t.closest(".sddp");if(box&&cur){const sel=SOPTS.filter(o=>{const e=box.querySelector('[data-sopt="'+o+'"]');return e&&e.checked});cur.lz.sopts=sel;const sm=t.closest("details").querySelector("summary");if(sm)sm.textContent=sel.length?sel.join("、"):"請選擇▾";later()}return}if(t.dataset&&t.dataset.up){const f=Array.from(t.files||[]);t.value="";if(f.length)await addPhotos(t.dataset.up,f);return}if(t.dataset&&t.dataset.upws!==undefined){const f1=(t.files||[])[0];t.value="";if(f1)await addWs(+t.dataset.upws,f1);return}if(t.dataset&&t.dataset.extpdf!==undefined){const f2=(t.files||[])[0];t.value="";if(f2)await extUpload(f2,+t.dataset.extpdf);return}
   const k=t.dataset&&t.dataset.k;if(!k||!cur)return;
   if(k==="cls"&&t.type==="text"&&!String(cur.t1||"").trim()&&!String(cur.t2||"").trim()&&fillTeach(cur)){render();later();return}
   if(t.type==="checkbox"){setPath(cur,k,t.checked);later();if(k.startsWith("inc."))render();return}
@@ -2091,7 +2091,7 @@ function bind(){
  root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-sex],[data-impseed],[data-return],[data-updf],[data-lbind],[data-xws],[data-sgen],[data-sgenok],[data-sgenno],[data-share],[data-shsave],[data-shcancel],[data-impall],[data-impnone],[data-impgo],[data-impcancel],[data-rvok],[data-rvret],[data-unshare],[data-undo],[data-redo],[data-newext],[data-extrm]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
   if(ds.new){cur=newLog();photos=photos;await saveCur();render();return}
   if(ds.newext!==undefined&&b.hasAttribute("data-newext")){viewOnly=false;cur=newLog();cur.kind="ext";cur.ext={url:"",pdfUrl:"",pdfName:"",note:""};await saveCur();render();return}
-  if(ds.extrm!==undefined&&b.hasAttribute("data-extrm")){if(cur&&cur.ext&&confirm("要移除已附上的 PDF 嗎？（雲端硬碟裡的檔案不會被刪除）")){cur.ext.pdfUrl="";cur.ext.pdfName="";await saveCur();render()}return}
+  if(ds.extrm!==undefined&&b.hasAttribute("data-extrm")){{const sl=+ds.extrm===2?2:1;if(cur&&cur.ext&&confirm("要移除已附上的 PDF "+sl+" 嗎？（雲端硬碟裡的檔案不會被刪除）")){if(sl===2){cur.ext.pdf2Url="";cur.ext.pdf2Name=""}else{cur.ext.pdfUrl="";cur.ext.pdfName=""}await saveCur();render()}}return}
   if(ds.unshare){await unshareMe(ds.unshare);return}
   if(ds.undo!==undefined&&b.hasAttribute("data-undo")){await histGo(-1);return}
   if(ds.redo!==undefined&&b.hasAttribute("data-redo")){await histGo(1);return}
@@ -2104,10 +2104,10 @@ function bind(){
   if(ds.fillwalk){if(!lines(cur.walk.goals).length||confirm("要用這個月的學習目標取代目前內容嗎？")){fillWalk(cur);render();later()}return}
   if(ds.fillgm){if(!(lines(cur.gm.text).length||lines(cur.gm.inds).length||lines(cur.gm.abil).length||lines(cur.gm.res).length)||confirm("要用這個月的計畫內容取代目前的活動名稱與內容（循環體能闖關）、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
   if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});status("已標記已閱 ✓（已閱預設不傳 LINE，老師開啟系統就會看到）")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
-  if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
+  if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)&&!safeUrl(cur.ext&&cur.ext.pdf2Url)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
    clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
-   if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
+   if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF"+(safeUrl(cur.ext.pdf2Url)?" 1":"")+"：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}${safeUrl(cur.ext.pdf2Url)?"PDF 2：\n"+safeUrl(cur.ext.pdf2Url)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert(lineNow?"已送出！管理員會收到通知。":"已送出！（1 小時內您已經通知過管理員，這次不再重複傳 LINE，管理員在系統裡會看到最新的版本。）");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
    if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
@@ -3280,6 +3280,6 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I10</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I11</div>
 </body>
 </html>
