@@ -77,10 +77,22 @@
 <style>html{font-size:18px}</style>
 <style id="learning-observation-styles">
 .observation-page { max-width: 1100px; margin: 0 auto; padding: 24px; color: #4b3626; }
+  .observation-title-block { position: relative; text-align: center; margin-bottom: 0; }
+  .observation-title-block h1, .observation-title-block h2 { margin: 0; font-weight: 800; line-height: 1.35; }
+  .observation-title-block h1 { font-size: 1.15rem; }
+  .observation-title-block h2 { font-size: 1.35rem; margin-bottom: 12px; }
   .page-header, .student-row, .select-grid, .signature-row { display: grid; gap: 16px; }
-  .page-header { grid-template-columns: 1fr auto; align-items: center; margin-bottom: 18px; }
   .header-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
   .student-row { grid-template-columns: repeat(3, 1fr); }
+  .observation-meta-row { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 0; border: 2px solid #222; background: #fff; }
+  .meta-field { display: flex; align-items: center; min-width: 0; padding: 7px 12px; border-right: 1px solid #222; font-weight: 800; }
+  .meta-field:last-child { border-right: 0; }
+  .meta-field > span { flex: 0 0 auto; white-space: nowrap; }
+  .meta-field select, .meta-field input[type="date"] { min-width: 0; border: 0; border-radius: 0; padding: 4px 6px; background: #fff; }
+  .name-field select, .name-field input { background: #ddd; }
+  .challenge-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 7px 14px; border: 2px solid #222; border-top: 0; background: #fff; font-size: 1.05rem; font-weight: 800; }
+  .challenge-row label { display: block; white-space: nowrap; }
+  .challenge-row input { flex: 1; min-width: 0; border: 0; border-radius: 0; border-bottom: 1px solid #999; padding: 5px 6px; font: inherit; font-weight: 400; }
   .select-grid { grid-template-columns: repeat(3, 1fr); }
   .wide-label { grid-column: span 1; }
   fieldset, .parent-message, .family-feedback { margin: 16px 0; padding: 18px; border: 1px solid #e5d8c6; border-radius: 16px; background: #fffdf8; }
@@ -109,7 +121,7 @@
   .secondary-button { color: #4b3626; background: #f1e4d2; }
   .status-message { min-height: 24px; font-weight: 700; }
   .hint { color: #765f49; font-size: .9rem; }
-  @media (max-width: 700px) { .student-row, .select-grid, .area-grid, .checkbox-grid { grid-template-columns: 1fr; } .page-header { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .student-row, .select-grid, .area-grid, .checkbox-grid, .observation-meta-row { grid-template-columns: 1fr; } .page-header { grid-template-columns: 1fr; } .meta-field { border-right: 0; border-bottom: 1px solid #222; } .meta-field:last-child { border-bottom: 0; } .challenge-row { align-items: flex-start; flex-direction: column; gap: 4px; } }
 
   /* A4 列印版面：瀏覽器列印對話框請選擇紙張 A4、縮放 100%。 */
   @page { size: A4 portrait; margin: 12mm; }
@@ -118,10 +130,15 @@
     .observation-page { max-width: none; width: auto; margin: 0; padding: 0; font-size: 10pt; }
     .no-print, .area-upload, .roster-actions, .field-hint, #observation-status { display: none !important; }
     fieldset, .parent-message, .family-feedback { margin: 7px 0; padding: 9px; border: 1px solid #333; border-radius: 0; background: #fff !important; break-inside: avoid; }
-    .page-header { display: block; text-align: center; margin-bottom: 8px; }
-    .page-header h1 { font-size: 18pt; margin: 0; }
-    .page-header .eyebrow { margin: 0 0 3px; font-size: 10pt; }
+    .observation-title-block { margin-bottom: 0; }
+    .observation-title-block h1 { font-size: 14pt; margin: 0; }
+    .observation-title-block h2 { font-size: 16pt; margin: 0 0 6px; }
+    .header-actions { display: none !important; }
     .student-row, .select-grid { gap: 8px; }
+    .observation-meta-row { grid-template-columns: 1fr 1.35fr 1fr; border-width: 1px; }
+    .meta-field { padding: 4px 7px; border-right-width: 1px; }
+    .challenge-row { min-height: 30px; padding: 4px 8px; border-width: 1px; border-top: 0; font-size: 11pt; }
+    .challenge-row input { padding: 2px 4px; }
     input[type="text"], input[type="date"], select, textarea { border: 0; border-bottom: 1px solid #555; border-radius: 0; padding: 3px 4px; background: #fff; }
     select { appearance: none; }
     .area-grid, .checkbox-grid { gap: 5px; }
@@ -1228,11 +1245,9 @@
         </section>
 <!-- 學習區觀察紀錄表分頁：可放入現有系統的主要內容區 -->
 <section id="learning-observation-page" x-show="view==='observation'" class="observation-page" aria-labelledby="observation-title">
-  <div class="page-header">
-    <div>
-      <p class="eyebrow">仁德非營利幼兒園</p>
-      <h1 id="observation-title">學習區觀察紀錄表</h1>
-    </div>
+  <div class="observation-title-block">
+    <h1 id="observation-school-title">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1>
+    <h2 id="observation-title">學習區觀察紀錄表</h2>
     <div class="header-actions">
       <button type="button" class="secondary-button" data-action="print-observation">列印 A4</button>
       <button type="button" class="secondary-button" data-action="reset-observation">清除本頁</button>
@@ -1240,16 +1255,16 @@
   </div>
 
   <form id="learning-observation-form" novalidate>
-    <div class="student-row">
-      <label>
-        班級
+    <div class="observation-meta-row">
+      <label class="meta-field class-field">
+        <span>班級：</span>
         <select id="observation-class" name="className" required>
           <option value="">請選擇班級</option>
         </select>
         <input id="observation-class-manual" class="manual-roster-input" name="classNameManual" type="text" placeholder="請輸入班級" hidden>
       </label>
-      <label>
-        幼兒姓名
+      <label class="meta-field name-field">
+        <span>姓名：</span>
         <select id="observation-child" name="childName" required>
           <option value="">請先選擇班級</option>
         </select>
@@ -1260,10 +1275,14 @@
         <button type="button" class="small-button" data-action="import-children">匯入幼兒名單</button>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
       </div>
-      <label>
-        日期
+      <label class="meta-field date-field">
+        <span>日期：</span>
         <input name="observationDate" type="date" required>
       </label>
+    </div>
+    <div class="challenge-row">
+      <label for="challenge-area">今天我挑戰的學習區是......</label>
+      <input id="challenge-area" name="challengeArea" type="text" placeholder="請填寫今天挑戰的學習區">
     </div>
 
     <fieldset class="area-fieldset">
@@ -1893,11 +1912,6 @@ const CSS=`.wk{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",seri
 .wk .green .hd th,.wk .green .band th{background:#e2efda}
 .wk td.c{text-align:center}.wk td.lb{font-weight:bold;text-align:center}
 .wk td.ph{text-align:center;padding:8px 4px}.wk td.ph img{max-width:82%;max-height:5.6cm;object-fit:contain}
-/* 出汗性大肌肉：標楷體 12 號、照片盡量填滿單面 A4 */
-.wk .gmfit,.wk .gmfit *{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt !important;line-height:1.25;box-sizing:border-box}
-.wk .gmfit h1,.wk .gmfit h2{font-size:12pt !important;line-height:1.25;margin:2px 0 5px}
-.wk .gmfit td,.wk .gmfit th{padding:2px 4px 4px}
-.wk .gmfit td.ph{padding:4px 2px}.wk .gmfit td.ph img{max-width:96%;max-height:6.5cm;object-fit:contain}
 .wk td.cap{text-align:left}
 .wk .bl{padding-left:1.5em;text-indent:-1.5em}.wk .lbl{margin-bottom:2px}
 .wk .sh{margin-bottom:14px}
@@ -2060,10 +2074,10 @@ function fitGm(s,w){s.style.transform="none";s.style.width="100%";var imgs=s.que
 function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
 var ok=s.offsetHeight<=maxH;
 if(!ok&&imgs.length){for(var cm=5.4;cm>=1.2&&!ok;cm-=.3){set(cm,cm>3.2?8:3);ok=s.offsetHeight<=maxH}}
-if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{var z=Math.max(0.55,Math.min(1,maxH/s.offsetHeight));s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";w.style.height=Math.ceil(s.offsetHeight*z)+"px";w.style.overflow="hidden"}}
+if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{w.style.height="auto";w.style.overflow="visible"}}
 function fit(){document.querySelectorAll(".sheet.fit").forEach(function(s){var w=s.parentNode;if(s.classList.contains("gmfit")){fitGm(s,w);return}function vis(z){s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+"px";w.style.overflow="hidden"})}
 window.addEventListener("load",function(){setTimeout(fit,300)})})();`;
-const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.gmfit{width:190mm;max-height:277mm;overflow:hidden}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
+const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
 function compress(f,MX,QU){return new Promise((ok,bad)=>{const fr=new FileReader();fr.onerror=bad;fr.onload=()=>{const im=new Image();im.onerror=bad;im.onload=()=>{const M=MX||1000,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);ok(c.toDataURL("image/jpeg",QU||.75))};im.src=fr.result};fr.readAsDataURL(f)})}
 const col=()=>d.db.collection("weeklyLogs");
 async function addWs(i,f){status("處理學習單中…");await saveCur();try{const data=await compress(f,1500,.82),id="ws"+Date.now()+Math.random().toString(36).slice(2,6);await col().doc(cur.id).collection("photos").doc(id).set({data,createdAt:Date.now()});photos[id]=data;cur.ws=cur.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const old=cur.ws.slots[i]&&cur.ws.slots[i].id;cur.ws.slots[i]=Object.assign(cur.ws.slots[i]||{cap:""},{id});if(old)col().doc(cur.id).collection("photos").doc(old).delete().catch(()=>{});await saveCur();render()}catch(e){alert("學習單上傳失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已加入 weeklyLogs 的 photos 子集合。")}}
