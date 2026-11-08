@@ -1254,12 +1254,12 @@
           <option value="">請先選擇班級</option>
         </select>
         <input id="observation-child-manual" class="manual-roster-input" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden>
-        <span class="roster-actions">
-          <button type="button" class="small-button" data-action="import-children">匯入幼兒名單</button>
-          <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
-        </span>
         <small class="field-hint">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</small>
       </label>
+      <div class="roster-actions">
+        <button type="button" class="small-button" data-action="import-children">匯入幼兒名單</button>
+        <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
+      </div>
       <label>
         日期
         <input name="observationDate" type="date" required>
@@ -1275,6 +1275,8 @@
         <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="積木區">積木區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區"></label><div class="area-photo-preview" data-area-preview="積木區"></div></div>
         <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="組合建構區">組合建構區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區"></label><div class="area-photo-preview" data-area-preview="組合建構區"></div></div>
         <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="扮演區">扮演區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區"></label><div class="area-photo-preview" data-area-preview="扮演區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="生活自理區">生活自理區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="生活自理區"></label><div class="area-photo-preview" data-area-preview="生活自理區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="烹飪區">烹飪區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="烹飪區"></label><div class="area-photo-preview" data-area-preview="烹飪區"></div></div>
       </div>
     </fieldset>
 
@@ -1891,6 +1893,11 @@ const CSS=`.wk{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",seri
 .wk .green .hd th,.wk .green .band th{background:#e2efda}
 .wk td.c{text-align:center}.wk td.lb{font-weight:bold;text-align:center}
 .wk td.ph{text-align:center;padding:8px 4px}.wk td.ph img{max-width:82%;max-height:5.6cm;object-fit:contain}
+/* 出汗性大肌肉：標楷體 12 號、照片盡量填滿單面 A4 */
+.wk .gmfit,.wk .gmfit *{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt !important;line-height:1.25;box-sizing:border-box}
+.wk .gmfit h1,.wk .gmfit h2{font-size:12pt !important;line-height:1.25;margin:2px 0 5px}
+.wk .gmfit td,.wk .gmfit th{padding:2px 4px 4px}
+.wk .gmfit td.ph{padding:4px 2px}.wk .gmfit td.ph img{max-width:96%;max-height:6.5cm;object-fit:contain}
 .wk td.cap{text-align:left}
 .wk .bl{padding-left:1.5em;text-indent:-1.5em}.wk .lbl{margin-bottom:2px}
 .wk .sh{margin-bottom:14px}
@@ -2053,10 +2060,10 @@ function fitGm(s,w){s.style.transform="none";s.style.width="100%";var imgs=s.que
 function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
 var ok=s.offsetHeight<=maxH;
 if(!ok&&imgs.length){for(var cm=5.4;cm>=1.2&&!ok;cm-=.3){set(cm,cm>3.2?8:3);ok=s.offsetHeight<=maxH}}
-if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{w.style.height="auto";w.style.overflow="visible"}}
+if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{var z=Math.max(0.55,Math.min(1,maxH/s.offsetHeight));s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";w.style.height=Math.ceil(s.offsetHeight*z)+"px";w.style.overflow="hidden"}}
 function fit(){document.querySelectorAll(".sheet.fit").forEach(function(s){var w=s.parentNode;if(s.classList.contains("gmfit")){fitGm(s,w);return}function vis(z){s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+"px";w.style.overflow="hidden"})}
 window.addEventListener("load",function(){setTimeout(fit,300)})})();`;
-const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
+const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.gmfit{width:190mm;max-height:277mm;overflow:hidden}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
 function compress(f,MX,QU){return new Promise((ok,bad)=>{const fr=new FileReader();fr.onerror=bad;fr.onload=()=>{const im=new Image();im.onerror=bad;im.onload=()=>{const M=MX||1000,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);ok(c.toDataURL("image/jpeg",QU||.75))};im.src=fr.result};fr.readAsDataURL(f)})}
 const col=()=>d.db.collection("weeklyLogs");
 async function addWs(i,f){status("處理學習單中…");await saveCur();try{const data=await compress(f,1500,.82),id="ws"+Date.now()+Math.random().toString(36).slice(2,6);await col().doc(cur.id).collection("photos").doc(id).set({data,createdAt:Date.now()});photos[id]=data;cur.ws=cur.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const old=cur.ws.slots[i]&&cur.ws.slots[i].id;cur.ws.slots[i]=Object.assign(cur.ws.slots[i]||{cap:""},{id});if(old)col().doc(cur.id).collection("photos").doc(old).delete().catch(()=>{});await saveCur();render()}catch(e){alert("學習單上傳失敗（"+(e.code||e.message)+"）。請確認 Firestore 規則已加入 weeklyLogs 的 photos 子集合。")}}
@@ -3473,8 +3480,8 @@ function kgApp() {
 (function () {
   'use strict';
 
-  // 可依園所正式資料替換；結構為「年齡層 → 分類 → 指標」。
-  const INDICATOR_DATA = {
+  // 預覽頁沒有原系統課綱資料時使用；正式合併版會優先讀取 window.PLAN_DATA.ind。
+  const FALLBACK_INDICATOR_DATA = {
     '2-3歲': {
       '語文區': ['能聆聽故事並回應問題', '能說出圖片中的人物或物品'],
       '數學區': ['能辨識基本形狀', '能依顏色或大小進行分類'],
@@ -3503,6 +3510,24 @@ function kgApp() {
       '扮演區': ['能依角色進行想像遊戲並與同伴合作']
     }
   };
+
+  function getIndicatorData() {
+    const curriculum = window.PLAN_DATA?.ind;
+    if (!curriculum || typeof curriculum !== 'object') return FALLBACK_INDICATOR_DATA;
+    const domains = { 身: '身體動作與健康', 認: '認知', 語: '語文', 社: '社會', 情: '情緒', 美: '美感' };
+    const ages = { 幼: '幼幼班（2–3歲）', 小: '小班（3–4歲）', 中: '中班（4–5歲）', 大: '大班（5–6歲）' };
+    const result = {};
+    Object.entries(curriculum).forEach(([code, text]) => {
+      const match = code.match(/^([身認語社情美])-([幼小中大])-/);
+      if (!match) return;
+      const age = ages[match[2]];
+      const category = domains[match[1]];
+      if (!result[age]) result[age] = {};
+      if (!result[age][category]) result[age][category] = [];
+      result[age][category].push(`${code} ${text}`);
+    });
+    return Object.keys(result).length ? result : FALLBACK_INDICATOR_DATA;
+  }
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -3541,10 +3566,11 @@ function kgApp() {
     const selectedBox = $('#selected-indicator');
     if (!ageSelect || !categorySelect || !itemSelect) return;
 
-    setOptions(ageSelect, Object.keys(INDICATOR_DATA), '請先選擇年齡層');
+    const indicatorData = getIndicatorData();
+    setOptions(ageSelect, Object.keys(indicatorData), '請先選擇年齡層');
 
     ageSelect.addEventListener('change', () => {
-      const categories = ageSelect.value ? Object.keys(INDICATOR_DATA[ageSelect.value]) : [];
+      const categories = ageSelect.value ? Object.keys(indicatorData[ageSelect.value]) : [];
       setOptions(categorySelect, categories, '請再選擇分類');
       categorySelect.disabled = categories.length === 0;
       setOptions(itemSelect, [], '請先選擇學習指標');
@@ -3554,7 +3580,7 @@ function kgApp() {
 
     categorySelect.addEventListener('change', () => {
       const items = ageSelect.value && categorySelect.value
-        ? INDICATOR_DATA[ageSelect.value][categorySelect.value]
+        ? indicatorData[ageSelect.value][categorySelect.value]
         : [];
       setOptions(itemSelect, items, '請再選擇學習指標');
       itemSelect.disabled = items.length === 0;
@@ -3608,7 +3634,13 @@ function kgApp() {
     childSelect.addEventListener('change', toggleManualRosterInput);
     const importButton = $('[data-action="import-children"]');
     const fileInput = $('#children-roster-file');
-    importButton?.addEventListener('click', () => fileInput?.click());
+    importButton?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!fileInput) return;
+      if (typeof fileInput.showPicker === 'function') fileInput.showPicker();
+      else fileInput.click();
+    });
     fileInput?.addEventListener('change', async () => {
       const file = fileInput.files?.[0];
       if (!file) return;
@@ -3659,6 +3691,13 @@ function kgApp() {
     }, () => {});
   }
 
+  function syncAreaVisibility(form = document) {
+    $$('.area-card', form).forEach((card) => {
+      const checkbox = $('input[name="learningAreas"]', card);
+      card.hidden = !checkbox?.checked;
+    });
+  }
+
   function initAreaPhotoPreview() {
     $$('[data-area-photo]').forEach((input) => input.addEventListener('change', () => {
       const area = input.dataset.areaPhoto;
@@ -3670,6 +3709,9 @@ function kgApp() {
         image.onload = () => URL.revokeObjectURL(image.src); preview.appendChild(image);
       });
     }));
+    const form = $('#learning-observation-form');
+    $$('input[name="learningAreas"]', form || document).forEach((checkbox) => checkbox.addEventListener('change', () => syncAreaVisibility(form || document)));
+    syncAreaVisibility(form || document);
   }
 
   function areaPhotoEntries(form) {
@@ -3710,6 +3752,7 @@ function kgApp() {
     if (selected) selected.hidden = true;
     $$('[data-area-photo]', form).forEach(input => { input.value = ''; });
     $$('[data-area-preview]', form).forEach(preview => { preview.innerHTML = ''; });
+    syncAreaVisibility(form);
     if ($('#observation-class-manual')) $('#observation-class-manual').value = '';
     if ($('#observation-child-manual')) $('#observation-child-manual').value = '';
     toggleManualRosterInput();
@@ -3735,7 +3778,7 @@ function kgApp() {
     const storage = firebase.storage();
     const docRef = db.collection('learningObservations').doc();
     const uploaded = [];
-    const maxPhotos = 6;
+    const maxPhotos = 24;
     const maxBytes = 10 * 1024 * 1024;
     const entries = Array.from(photoEntries || []).filter((entry) => entry.file?.type?.startsWith('image/')).slice(0, maxPhotos);
 
@@ -3840,7 +3883,7 @@ function kgApp() {
 
   // 讓現有主程式可讀取正式資料來源並替換預設指標。
   window.saveLearningObservation = saveLearningObservation;
-  window.learningObservation = { indicatorData: INDICATOR_DATA, collectFormData, saveLearningObservation };
+  window.learningObservation = { indicatorData: getIndicatorData(), collectFormData, saveLearningObservation };
 })();
 
 </script>
