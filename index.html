@@ -89,15 +89,17 @@
   label { display: grid; gap: 7px; font-weight: 700; }
   input[type="text"], input[type="date"], select, textarea { width: 100%; box-sizing: border-box; border: 1px solid #ccb99e; border-radius: 10px; padding: 10px 12px; background: #fff; font: inherit; }
   .area-grid, .checkbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .area-option, .checkbox-grid label { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 10px; background: #faf3e6; cursor: pointer; }
+  .area-card { padding: 10px; border-radius: 12px; background: #faf3e6; border: 1px solid #eadcc8; }
+  .area-option, .checkbox-grid label { display: flex; align-items: center; gap: 8px; padding: 4px; border-radius: 10px; cursor: pointer; }
+  .area-upload { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; padding: 5px 8px; border-radius: 8px; color: #2f6271; background: #fff; font-size: .82rem; cursor: pointer; }
+  .area-upload input { display: none; }
+  .area-photo-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 7px; }
+  .area-photo-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #eee; }
   input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2f6271; }
-  .upload-box { min-height: 130px; border: 2px dashed #c8a27a; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: #fffaf1; }
-  .upload-box input { display: none; }
-  .upload-icon { font-size: 34px; line-height: 1; }
-  .photo-preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
-  .photo-preview figure { margin: 0; position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 10px; background: #eee; }
-  .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-preview figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 6px; color: white; background: #0008; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .roster-actions { display: flex; align-items: center; gap: 8px; }
+  .small-button { padding: 7px 10px; border: 1px solid #c8a27a; border-radius: 8px; color: #4b3626; background: #f1e4d2; font-size: .82rem; }
+  .field-hint { color: #765f49; font-size: .78rem; font-weight: 400; line-height: 1.4; }
+  .manual-roster-input:not([hidden]) { display: block; margin-top: 7px; }
   .parent-message { background: #fff8e8; }
   .parent-message p { line-height: 1.8; margin-bottom: 0; }
   .selected-indicator { margin-top: 12px; padding: 12px; border-radius: 10px; color: #1f4750; background: #dce6d3; font-weight: 700; }
@@ -107,14 +109,14 @@
   .secondary-button { color: #4b3626; background: #f1e4d2; }
   .status-message { min-height: 24px; font-weight: 700; }
   .hint { color: #765f49; font-size: .9rem; }
-  @media (max-width: 700px) { .student-row, .select-grid, .area-grid, .checkbox-grid { grid-template-columns: 1fr; } .page-header { grid-template-columns: 1fr; } .photo-preview { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px) { .student-row, .select-grid, .area-grid, .checkbox-grid { grid-template-columns: 1fr; } .page-header { grid-template-columns: 1fr; } }
 
   /* A4 列印版面：瀏覽器列印對話框請選擇紙張 A4、縮放 100%。 */
   @page { size: A4 portrait; margin: 12mm; }
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .observation-page { max-width: none; width: auto; margin: 0; padding: 0; font-size: 10pt; }
-    .no-print, .upload-box, #observation-status { display: none !important; }
+    .no-print, .area-upload, .roster-actions, .field-hint, #observation-status { display: none !important; }
     fieldset, .parent-message, .family-feedback { margin: 7px 0; padding: 9px; border: 1px solid #333; border-radius: 0; background: #fff !important; break-inside: avoid; }
     .page-header { display: block; text-align: center; margin-bottom: 8px; }
     .page-header h1 { font-size: 18pt; margin: 0; }
@@ -123,12 +125,12 @@
     input[type="text"], input[type="date"], select, textarea { border: 0; border-bottom: 1px solid #555; border-radius: 0; padding: 3px 4px; background: #fff; }
     select { appearance: none; }
     .area-grid, .checkbox-grid { gap: 5px; }
+    .area-card { padding: 4px; background: #fff; border: 1px solid #333; break-inside: avoid; }
     .area-option, .checkbox-grid label { padding: 4px; background: #fff; }
     input[type="checkbox"] { appearance: none; width: 12px; height: 12px; border: 1px solid #111; border-radius: 0; }
     input[type="checkbox"]:checked::after { content: "✓"; display: block; font-size: 11px; line-height: 10px; text-align: center; }
-    .photo-preview { grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 0; }
-    .photo-preview figure { border: 1px solid #555; border-radius: 0; break-inside: avoid; }
-    .photo-preview figcaption { color: #000; background: #fff; border-top: 1px solid #555; }
+    .area-photo-preview { grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    .area-photo-preview img { border: 1px solid #555; border-radius: 0; }
     .parent-message p { line-height: 1.45; }
     .selected-indicator { padding: 5px; border: 1px solid #333; border-radius: 0; background: #fff; }
     .family-feedback textarea { min-height: 115px; border: 1px solid #555; }
@@ -1241,11 +1243,22 @@
     <div class="student-row">
       <label>
         班級
-        <input name="className" type="text" placeholder="請輸入班級">
+        <select id="observation-class" name="className" required>
+          <option value="">請選擇班級</option>
+        </select>
+        <input id="observation-class-manual" class="manual-roster-input" name="classNameManual" type="text" placeholder="請輸入班級" hidden>
       </label>
       <label>
         幼兒姓名
-        <input name="childName" type="text" placeholder="請輸入姓名" required>
+        <select id="observation-child" name="childName" required>
+          <option value="">請先選擇班級</option>
+        </select>
+        <input id="observation-child-manual" class="manual-roster-input" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden>
+        <span class="roster-actions">
+          <button type="button" class="small-button" data-action="import-children">匯入幼兒名單</button>
+          <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
+        </span>
+        <small class="field-hint">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</small>
       </label>
       <label>
         日期
@@ -1256,24 +1269,13 @@
     <fieldset class="area-fieldset">
       <legend>觀察學習區</legend>
       <div class="area-grid">
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="語文區">語文區</label>
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="數學區">數學區</label>
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="美勞區">美勞區</label>
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="積木區">積木區</label>
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="組合建構區">組合建構區</label>
-        <label class="area-option"><input type="checkbox" name="learningAreas" value="扮演區">扮演區</label>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="語文區">語文區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="語文區"></label><div class="area-photo-preview" data-area-preview="語文區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="數學區">數學區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="數學區"></label><div class="area-photo-preview" data-area-preview="數學區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="美勞區">美勞區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="美勞區"></label><div class="area-photo-preview" data-area-preview="美勞區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="積木區">積木區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區"></label><div class="area-photo-preview" data-area-preview="積木區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="組合建構區">組合建構區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區"></label><div class="area-photo-preview" data-area-preview="組合建構區"></div></div>
+        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="扮演區">扮演區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區"></label><div class="area-photo-preview" data-area-preview="扮演區"></div></div>
       </div>
-    </fieldset>
-
-    <!-- 依需求移除「在操作過程中……」下方的敘述文字，只保留照片欄位 -->
-    <fieldset class="photo-fieldset">
-      <legend>學習照片</legend>
-      <label class="upload-box" for="observation-photos">
-        <span class="upload-icon">＋</span>
-        <span>選擇照片（可複選）</span>
-        <input id="observation-photos" name="photos" type="file" accept="image/*" multiple>
-      </label>
-      <div id="photo-preview" class="photo-preview" aria-live="polite"></div>
     </fieldset>
 
     <section class="parent-message" aria-labelledby="parent-message-title">
@@ -3504,6 +3506,19 @@ function kgApp() {
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  let childrenByClass = {};
+  let rosterUnsubscribe = null;
+  let rosterPollTimer = null;
+
+  function appData() {
+    const root = document.querySelector('[x-data]');
+    return window.Alpine && root ? window.Alpine.$data(root) : null;
+  }
+
+  function mergedClasses() {
+    const app = appData();
+    return [...new Set([...(app?.classes || []), ...Object.keys(childrenByClass)].filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'zh-Hant'));
+  }
 
   function setOptions(select, items, placeholder) {
     select.innerHTML = '';
@@ -3556,30 +3571,117 @@ function kgApp() {
     });
   }
 
-  function initPhotoPreview() {
-    const input = $('#observation-photos');
-    const preview = $('#photo-preview');
-    if (!input || !preview) return;
+  function setRosterOptions() {
+    const classSelect = $('#observation-class');
+    const childSelect = $('#observation-child');
+    if (!classSelect || !childSelect) return;
+    const currentClass = classSelect.value;
+    const currentChild = childSelect.value;
+    setOptions(classSelect, mergedClasses(), '請選擇班級');
+    const manualClass = document.createElement('option');
+    manualClass.value = '__manual__'; manualClass.textContent = '✏️ 其他（手動輸入）'; classSelect.appendChild(manualClass);
+    if (mergedClasses().includes(currentClass) || currentClass === '__manual__') classSelect.value = currentClass;
+    const names = childrenByClass[classSelect.value] || [];
+    setOptions(childSelect, names, names.length ? '請選擇幼兒' : '請先匯入幼兒名單');
+    const manual = document.createElement('option');
+    manual.value = '__manual__'; manual.textContent = '✏️ 其他（手動輸入）'; childSelect.appendChild(manual);
+    if (names.includes(currentChild) || currentChild === '__manual__') childSelect.value = currentChild;
+    childSelect.disabled = !classSelect.value;
+  }
 
-    input.addEventListener('change', () => {
-      preview.innerHTML = '';
-      Array.from(input.files || []).forEach((file) => {
-        if (!file.type.startsWith('image/')) return;
-        const figure = document.createElement('figure');
-        const image = document.createElement('img');
-        const caption = document.createElement('figcaption');
-        image.src = URL.createObjectURL(file);
-        image.alt = file.name;
-        caption.textContent = file.name;
-        image.onload = () => URL.revokeObjectURL(image.src);
-        figure.append(image, caption);
-        preview.appendChild(figure);
-      });
+  function toggleManualRosterInput() {
+    const classSelect = $('#observation-class');
+    const childSelect = $('#observation-child');
+    const classManual = $('#observation-class-manual');
+    const childManual = $('#observation-child-manual');
+    if (classManual) classManual.hidden = classSelect?.value !== '__manual__';
+    if (childManual) childManual.hidden = childSelect?.value !== '__manual__';
+  }
+
+  function initRosterFields() {
+    const classSelect = $('#observation-class');
+    const childSelect = $('#observation-child');
+    if (!classSelect || !childSelect) return;
+    setRosterOptions();
+    classSelect.addEventListener('focus', setRosterOptions);
+    classSelect.addEventListener('change', () => { setRosterOptions(); toggleManualRosterInput(); });
+    childSelect.addEventListener('change', toggleManualRosterInput);
+    const importButton = $('[data-action="import-children"]');
+    const fileInput = $('#children-roster-file');
+    importButton?.addEventListener('click', () => fileInput?.click());
+    fileInput?.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      try { await importChildrenFile(file); } catch (error) { alert(`幼兒名單匯入失敗：${error.message || error}`); }
+      fileInput.value = '';
     });
+    rosterPollTimer = setInterval(() => { if (document.body.contains(classSelect)) setRosterOptions(); }, 1500);
+  }
+
+  function parseChildrenText(text, defaultClass) {
+    const result = {};
+    text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).forEach((line, index) => {
+      const cells = line.split(/[,，\t;]/).map(x => x.trim().replace(/^['"]|['"]$/g, ''));
+      if (index === 0 && /班級|幼兒|姓名|class|name/i.test(line)) return;
+      const cls = cells.length >= 2 ? cells[0] : defaultClass;
+      const name = cells.length >= 2 ? cells[1] : cells[0];
+      if (!cls || !name) return;
+      (result[cls] ||= []).push(name);
+    });
+    Object.keys(result).forEach(cls => { result[cls] = [...new Set(result[cls])]; });
+    return result;
+  }
+
+  async function importChildrenFile(file) {
+    const text = await file.text();
+    let imported = {};
+    if (file.name.toLowerCase().endsWith('.json')) {
+      const parsed = JSON.parse(text);
+      imported = Array.isArray(parsed) ? parseChildrenText(parsed.map(x => Array.isArray(x) ? x.join(',') : `${x.className || ''},${x.childName || x.name || x}`).join('\n'), $('#observation-class')?.value) : parsed;
+    } else imported = parseChildrenText(text, $('#observation-class')?.value);
+    Object.entries(imported).forEach(([cls, names]) => { childrenByClass[cls] = [...new Set([...(childrenByClass[cls] || []), ...names])]; });
+    localStorage.setItem('observationChildrenByClass', JSON.stringify(childrenByClass));
+    setRosterOptions();
+    await saveChildrenRosterToFirebase();
+    alert(`已匯入 ${Object.values(imported).reduce((n, names) => n + names.length, 0)} 位幼兒。`);
+  }
+
+  async function saveChildrenRosterToFirebase() {
+    if (!window.firebase || !firebase.apps?.length || !firebase.auth().currentUser) return;
+    await firebase.firestore().collection('roster').doc('children').set({ list: childrenByClass, updatedAt: Date.now(), updatedBy: firebase.auth().currentUser.uid }, { merge: true });
+  }
+
+  function subscribeChildrenRoster() {
+    if (!window.firebase || !firebase.apps?.length || !firebase.auth().currentUser || rosterUnsubscribe) return;
+    rosterUnsubscribe = firebase.firestore().collection('roster').doc('children').onSnapshot((snap) => {
+      if (snap.exists) childrenByClass = snap.data().list || {};
+      setRosterOptions();
+    }, () => {});
+  }
+
+  function initAreaPhotoPreview() {
+    $$('[data-area-photo]').forEach((input) => input.addEventListener('change', () => {
+      const area = input.dataset.areaPhoto;
+      const preview = $(`[data-area-preview="${CSS.escape(area)}"]`);
+      if (!preview) return;
+      preview.innerHTML = '';
+      Array.from(input.files || []).filter(file => file.type.startsWith('image/')).forEach((file) => {
+        const image = document.createElement('img'); image.src = URL.createObjectURL(file); image.alt = `${area}：${file.name}`;
+        image.onload = () => URL.revokeObjectURL(image.src); preview.appendChild(image);
+      });
+    }));
+  }
+
+  function areaPhotoEntries(form) {
+    return $$('[data-area-photo]', form).flatMap(input => Array.from(input.files || []).map(file => ({ area: input.dataset.areaPhoto, file })));
   }
 
   function collectFormData(form) {
     const data = Object.fromEntries(new FormData(form).entries());
+    if (data.className === '__manual__') data.className = data.classNameManual || '';
+    if (data.childName === '__manual__') data.childName = data.childNameManual || '';
+    delete data.classNameManual;
+    delete data.childNameManual;
     data.learningAreas = $$('input[name="learningAreas"]:checked', form).map((el) => el.value);
     data.performances = $$('input[name="performances"]:checked', form).map((el) => el.value);
     data.indicator = {
@@ -3590,13 +3692,11 @@ function kgApp() {
     delete data.indicatorAge;
     delete data.indicatorCategory;
     delete data.indicatorItem;
-    // File 物件不能直接序列化到 Firestore；實際上傳時請先送到 Firebase Storage。
-    data.photoFiles = Array.from(form.elements.photos?.files || []).map((file) => ({
-      name: file.name,
-      type: file.type,
-      size: file.size
-    }));
-    delete data.photos;
+    // File 物件不能直接序列化到 Firestore；上傳時依學習區送到 Firebase Storage。
+    data.areaPhotoFiles = areaPhotoEntries(form).reduce((groups, entry) => {
+      (groups[entry.area] ||= []).push({ name: entry.file.name, type: entry.file.type, size: entry.file.size });
+      return groups;
+    }, {});
     return data;
   }
 
@@ -3608,8 +3708,11 @@ function kgApp() {
     if (category) { category.disabled = true; setOptions(category, [], '請先選擇分類'); }
     if (item) { item.disabled = true; setOptions(item, [], '請先選擇學習指標'); }
     if (selected) selected.hidden = true;
-    const preview = $('#photo-preview');
-    if (preview) preview.innerHTML = '';
+    $$('[data-area-photo]', form).forEach(input => { input.value = ''; });
+    $$('[data-area-preview]', form).forEach(preview => { preview.innerHTML = ''; });
+    if ($('#observation-class-manual')) $('#observation-class-manual').value = '';
+    if ($('#observation-child-manual')) $('#observation-child-manual').value = '';
+    toggleManualRosterInput();
   }
 
   function localObservationFallback(payload) {
@@ -3621,7 +3724,7 @@ function kgApp() {
     return { id, mode: 'local' };
   }
 
-  async function saveLearningObservation(payload, files) {
+  async function saveLearningObservation(payload, photoEntries) {
     // 預覽頁沒有 Firebase 時，保留可操作的 localStorage 測試模式。
     if (!window.firebase || !firebase.apps || !firebase.apps.length || !firebase.auth().currentUser) {
       return localObservationFallback(payload);
@@ -3634,28 +3737,41 @@ function kgApp() {
     const uploaded = [];
     const maxPhotos = 6;
     const maxBytes = 10 * 1024 * 1024;
-    const selectedFiles = Array.from(files || []).filter((file) => file.type.startsWith('image/')).slice(0, maxPhotos);
+    const entries = Array.from(photoEntries || []).filter((entry) => entry.file?.type?.startsWith('image/')).slice(0, maxPhotos);
 
-    if (Array.from(files || []).length > maxPhotos) {
+    if (Array.from(photoEntries || []).length > maxPhotos) {
       throw new Error(`照片最多上傳 ${maxPhotos} 張`);
     }
-    if (selectedFiles.some((file) => file.size > maxBytes)) {
+    if (entries.some((entry) => entry.file.size > maxBytes)) {
       throw new Error('單張照片不可超過 10 MB');
     }
 
     try {
-      for (const file of selectedFiles) {
+      for (const entry of entries) {
+        const file = entry.file;
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const path = `learning-observation-photos/${user.uid}/${docRef.id}/${Date.now()}_${safeName}`;
+        const safeArea = String(entry.area || '未分類').replace(/[^\u4e00-\u9fffA-Za-z0-9_-]/g, '_');
+        const path = `learning-observation-photos/${user.uid}/${docRef.id}/${safeArea}/${Date.now()}_${safeName}`;
         const ref = storage.ref(path);
         await ref.put(file, { contentType: file.type, customMetadata: { uploadedBy: user.uid } });
-        uploaded.push({ url: await ref.getDownloadURL(), path, name: file.name, type: file.type, size: file.size });
+        uploaded.push({ area: entry.area, url: await ref.getDownloadURL(), path, name: file.name, type: file.type, size: file.size });
       }
+
+      const areaPhotoUrls = uploaded.reduce((groups, photo) => {
+        (groups[photo.area] ||= []).push(photo.url);
+        return groups;
+      }, {});
+      const areaPhotoStoragePaths = uploaded.reduce((groups, photo) => {
+        (groups[photo.area] ||= []).push(photo.path);
+        return groups;
+      }, {});
 
       await docRef.set({
         ...payload,
         photoUrls: uploaded.map((photo) => photo.url),
         photoStoragePaths: uploaded.map((photo) => photo.path),
+        areaPhotoUrls,
+        areaPhotoStoragePaths,
         photoMeta: uploaded.map(({ name, type, size }) => ({ name, type, size })),
         uid: user.uid,
         userEmail: user.email || '',
@@ -3683,7 +3799,7 @@ function kgApp() {
       const payload = collectFormData(form);
 
       try {
-        const result = await saveLearningObservation(payload, form.elements.photos.files);
+        const result = await saveLearningObservation(payload, areaPhotoEntries(form));
         if (status) status.textContent = result.mode === 'firebase'
           ? `觀察紀錄已儲存至 Firebase${result.photoCount ? `（照片 ${result.photoCount} 張）` : ''}。`
           : 'Firebase 尚未登入，觀察紀錄已暫存於本機。';
@@ -3705,8 +3821,18 @@ function kgApp() {
 
   function init() {
     initIndicatorSelects();
-    initPhotoPreview();
+    try { childrenByClass = JSON.parse(localStorage.getItem('observationChildrenByClass') || '{}'); } catch (error) { childrenByClass = {}; }
+    initRosterFields();
+    initAreaPhotoPreview();
     initForm();
+    const dateInput = $('input[name="observationDate"]');
+    if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+    const firebasePoll = setInterval(() => {
+      if (window.firebase?.apps?.length && firebase.auth().currentUser) {
+        subscribeChildrenRoster();
+        clearInterval(firebasePoll);
+      }
+    }, 1000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
