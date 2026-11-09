@@ -138,7 +138,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .text-sm,#learning-observation-page .text-xs{font-size:9pt!important}#learning-observation-page h3{font-size:10pt!important;margin:0 0 2px!important}
 #learning-observation-page .no-print{display:none!important}
 #learning-observation-page .obs-print-only{display:inline}
-#learning-observation-page .obs-frame{display:block;border:1px solid #222}
+#learning-observation-page .obs-frame{display:flex;flex-direction:column;height:255mm;border:1px solid #222}
+#learning-observation-page .obs-frame>.obs-block{flex:none}
 #learning-observation-page .obs-block{margin:0!important;padding:3px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
 #learning-observation-page .obs-frame>.obs-block:first-child{border-top:0!important}
 #learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 4px!important}
@@ -165,12 +166,14 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chip input:checked+span::before{background:#111}
 #learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
 #learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
-#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2);aspect-ratio:auto;height:36mm}
+#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2);aspect-ratio:auto;height:auto;align-self:stretch;object-fit:contain;background:#fff}
+#learning-observation-page .obs-ph{display:flex}#learning-observation-page .obs-photos-2 .obs-ph img{height:auto;object-fit:contain}
 #learning-observation-page .obs-ph{width:calc((100% - 6px)/3)}#learning-observation-page .obs-photos-2 .obs-ph{width:calc((100% - 3px)/2)}#learning-observation-page .obs-ph img{width:100%}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px}
 #learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
 #learning-observation-page .obs-act-label h3{margin:0}
-#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-content:center}
+#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-content:stretch}
+#learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:70px}
 #learning-observation-page .obs-sec{margin-top:.7em}
 #learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
 #learning-observation-page .mb-3,#learning-observation-page .mb-2{margin-bottom:2px!important}#learning-observation-page .mt-1{margin-top:0!important}
@@ -1317,11 +1320,14 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <div><label for="observation-child" class="text-sm font-bold text-wood-dark/80">姓名：</label><select id="observation-child" name="childName" required class="obs-input"><option value="">請先選擇班級</option></select><input id="observation-child-manual" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden class="obs-input"></div>
         <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期：</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
       </div>
-      <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
+      <div x-show="isAdmin" class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
         <button type="button" class="obs-btn" data-action="copy-pickup">🚌 從接送系統複製全園名單</button>
         <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單檔</button>
+        <button type="button" class="obs-btn" data-action="import-old">📂 匯入舊紀錄檔</button>
+        <button type="button" class="obs-btn" data-action="old-sample">⬇️ 舊紀錄範例檔</button>
+        <input id="old-records-file" type="file" accept=".csv,.json,text/csv,application/json" hidden>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
-        <p class="text-[11px] text-wood-dark/60 flex-1 min-w-[12rem]">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</p>
+        <p class="text-[11px] text-wood-dark/60 flex-1 min-w-[12rem]">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。舊紀錄檔（CSV／JSON）必填：班級、幼兒姓名、日期，其餘欄位可省略；照片不會匯入，匯入後歸在管理員帳號下，可再分享給老師。</p>
         <p id="observation-roster-status" class="text-xs font-bold w-full" role="status"></p>
       </div>
     </div>
@@ -1339,8 +1345,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
     <div class="obs-block obs-note rounded-3xl p-6 shadow-card">
       <h3 class="font-heading font-bold text-sm mb-2">親愛的家長您好：</h3>
-      <p class="text-sm leading-relaxed">學習區並不是讓孩子隨意玩耍的過渡時間，而是蘊含許多未來學習所需的基礎能力發展。例如：透過操作教具訓練小肌肉的穩定度，以培養日後握筆的能力；或是在擺放積木、拼圖時，學習空間概念，為未來喜歡數字打下良好基礎。</p>
-      <div class="obs-sec"><p class="text-sm font-bold text-wood-dark/80 mb-2">學習表現：老師評語：</p>
+      <p class="text-sm leading-relaxed">學習區不僅是孩童探索的空間，更深植著未來學習所需的各項關鍵能力。舉例來說：透過操作多元教具，能提升手指小肌肉的精細動作與控制力，為未來的握筆能力打下堅實基礎；而在堆疊積木、操作拼圖時所建立的空間概念，也能為日後的文字書寫與認知發展做好準備。</p>
+      <div class="obs-sec"><p class="text-sm font-bold text-wood-dark/80 mb-2">學習表現：</p>
         <div class="obs-chips" id="performance-options"><label class="obs-chip"><input type="checkbox" name="performances" value="專心學習"><span>專心學習</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="獨自完成範例圖"><span>獨自完成範例圖</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="展現創意點子"><span>展現創意點子</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="同儕合作無間"><span>同儕合作無間</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="無特殊事件紀錄"><span>無特殊事件紀錄</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="特殊事件紀錄"><span>特殊事件紀錄</span></label><input name="specialEventNote" type="text" placeholder="特殊事件說明" class="obs-input obs-inline" aria-label="特殊事件紀錄內容"></div></div>
       <div class="obs-sec">
         <div class="no-print">
@@ -3614,6 +3620,7 @@ function kgApp() {
     await firebase.firestore().collection('roster').doc('children').set({ list: roster, updatedAt: Date.now(), updatedBy: u.uid }, { merge: true });
   }
   async function importFile(file) {
+    if (!isAdm()) throw new Error('只有管理員可以匯入');
     const text = await readText(file), cs = $('#observation-class');
     const def = cs && cs.value !== '__manual__' ? cs.value : '';
     const imp = file.name.toLowerCase().endsWith('.json') ? fromJson(JSON.parse(text), def) : parseRoster(text, def);
@@ -3626,7 +3633,9 @@ function kgApp() {
     rosterMsg(msg);
   }
   /* ---- 從接送系統複製全園幼兒名單（讀 pickup/allkids，依座號排序）---- */
+  const isAdm = () => !!(app && app.isAdmin);
   async function copyFromPickup() {
+    if (!isAdm()) { rosterMsg('只有管理員可以使用。', true); return; }
     if (!fbUser()) { rosterMsg('請先登入後再複製。', true); return; }
     rosterMsg('讀取接送系統名單中…');
     const snap = await firebase.firestore().collection('pickup').doc('allkids').get();
@@ -3835,6 +3844,69 @@ function kgApp() {
     await addMark(payload.className, payload.childName, payload.observationDate, id);
   }
 
+  /* ---- 管理員：匯入舊紀錄檔（CSV／JSON，不含照片）---- */
+  const OLD = { className: ['班級', 'className', 'class'], childName: ['幼兒姓名', '姓名', 'childName', 'name'], observationDate: ['日期', 'observationDate', 'date'],
+    observationNote: ['在操作過程中', '觀察紀錄', '觀察內容', 'observationNote'], learningAreas: ['學習區', '觀察學習區', 'learningAreas'], performances: ['學習表現', 'performances'],
+    specialEventNote: ['特殊事件', 'specialEventNote'], indicatorItem: ['學習指標', '指標', 'indicatorItem'], indicatorLevel: ['指標評量', 'indicatorLevel'],
+    familyFeedback: ['家長回饋', 'familyFeedback'], parentSignature: ['家長簽名', 'parentSignature'] };
+  function parseCsv(text) {
+    const rows = []; let row = [], cell = '', q = false; text = text.replace(/^\uFEFF/, '');
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+      else if (c === '"') q = true;
+      else if (c === ',' || c === '\t') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(r2 => r2.some(x => String(x).trim()));
+  }
+  const normDate = v => { const m = String(v || '').match(/(\d{2,4})\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/); if (!m) return ''; let y = +m[1]; if (y < 1911) y += 1911; return y + '-' + String(+m[2]).padStart(2, '0') + '-' + String(+m[3]).padStart(2, '0'); };
+  const toArr = v => (Array.isArray(v) ? v : String(v || '').split(/[、,，;；]/)).map(x => String(x).trim()).filter(Boolean);
+  function oldRows(text, name) {
+    if (/\.json$/i.test(name)) { const j = JSON.parse(text); return Array.isArray(j) ? j : (Array.isArray(j.records) ? j.records : []); }
+    const t = parseCsv(text); if (t.length < 2) return [];
+    const head = t[0].map(x => String(x).trim());
+    return t.slice(1).map(cells => { const o2 = {}; head.forEach((h, i) => { o2[h] = cells[i]; }); return o2; });
+  }
+  async function importOld(file) {
+    if (!isAdm()) throw new Error('只有管理員可以匯入');
+    const u = fbUser(); if (!u) throw new Error('請先登入');
+    const rows = oldRows(await readText(file), file.name);
+    const get = (r2, k) => { for (const h of OLD[k]) { if (r2[h] != null && String(r2[h]).trim() !== '') return r2[h]; } return ''; };
+    const have = new Set(saved.map(x => [x.className, x.childName, x.observationDate].join('|')));
+    const good = []; let bad = 0, dup = 0;
+    rows.forEach(r2 => {
+      const ind = r2.indicator || {};
+      const rec = { className: String(get(r2, 'className')).trim(), childName: String(get(r2, 'childName')).trim(), observationDate: normDate(get(r2, 'observationDate')) };
+      if (!rec.className || !rec.childName || !rec.observationDate) { bad++; return; }
+      const key = [rec.className, rec.childName, rec.observationDate].join('|');
+      if (have.has(key)) { dup++; return; } have.add(key);
+      good.push({ ...rec, observationNote: String(get(r2, 'observationNote')), learningAreas: toArr(get(r2, 'learningAreas')), performances: toArr(get(r2, 'performances')),
+        specialEventNote: String(get(r2, 'specialEventNote')), familyFeedback: String(get(r2, 'familyFeedback')), parentSignature: String(get(r2, 'parentSignature')),
+        indicator: { age: ind.age || '', category: ind.category || '', item: String(ind.item || get(r2, 'indicatorItem')), level: String(ind.level || get(r2, 'indicatorLevel')) },
+        semester: semOf(rec.observationDate), sharedWith: [] });
+    });
+    if (!good.length) throw new Error('沒有可匯入的紀錄（略過重複 ' + dup + ' 筆、格式不完整 ' + bad + ' 筆）');
+    if (!confirm('將匯入 ' + good.length + ' 筆舊紀錄（略過重複 ' + dup + ' 筆、格式不完整 ' + bad + ' 筆），歸在你的帳號下，確定嗎？')) return rosterMsg('');
+    const db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp(), by = u.displayName || (u.email || '').split('@')[0];
+    for (let i = 0; i < good.length; i += 200) {
+      const b = db.batch();
+      good.slice(i, i + 200).forEach(rec => {
+        const ref = db.collection('learningObservations').doc();
+        b.set(ref, { ...rec, photoCount: 0, photoMeta: [], areaPhotoIds: {}, uid: u.uid, userEmail: u.email || '', userName: u.displayName || '', storageMode: 'imported', importedFrom: file.name, createdAt: TS, updatedAt: TS });
+        b.set(db.collection('observationMarks').doc(), { semester: rec.semester, className: rec.className, childName: rec.childName, date: rec.observationDate, obsId: ref.id, manual: false, byUid: u.uid, byName: by, byEmail: u.email || '', createdAt: TS });
+      });
+      await b.commit();
+    }
+    rosterMsg('已匯入 ' + good.length + ' 筆舊紀錄（略過重複 ' + dup + ' 筆、格式不完整 ' + bad + ' 筆）。可在「已儲存」分頁查看。');
+  }
+  function downloadOldSample() {
+    const csv = '\uFEFF班級,幼兒姓名,日期,在操作過程中,學習區,學習表現,特殊事件,學習指標,指標評量,家長回饋,家長簽名\n山茶花班,王小明,2026-11-09,"老師發現他在揉黏土時…",語文區、美勞區,專心學習、同儕合作無間,,美-小-2-1-1 享受玩索各種藝術媒介的樂趣,持續發展,,\n';
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '舊觀察紀錄範例.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
   function subscribe() {
     const u = fbUser(); if (!u || (unsub && unsubUid === u.uid)) return;
     if (unsub) unsub();
@@ -3851,6 +3923,14 @@ function kgApp() {
     cs.addEventListener('change', () => refreshRoster(true));
     ch.addEventListener('change', toggleManual);
     $('input[name="observationDate"]').addEventListener('change', syncMarks);
+    const of = $('#old-records-file');
+    $('[data-action="import-old"]').addEventListener('click', () => of.click());
+    $('[data-action="old-sample"]').addEventListener('click', downloadOldSample);
+    of.addEventListener('change', async () => {
+      const f = of.files && of.files[0]; if (!f) return;
+      try { await importOld(f); } catch (e) { rosterMsg('匯入失敗：' + (e.code || e.message || e), true); }
+      of.value = '';
+    });
     $('[data-action="copy-pickup"]').addEventListener('click', async (e) => {
       const b = e.currentTarget; b.disabled = true;
       try { await copyFromPickup(); } catch (err) { rosterMsg('複製失敗：' + (err.code || err.message || err), true); }
@@ -3881,6 +3961,8 @@ function kgApp() {
         const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name; im.dataset.new = '1'; pv.appendChild(im);
       });
     }));
+    const apv = $('[data-area-preview="學習區活動紀錄"]'), act = $('.obs-act'); // 有活動照片時，列印讓照片撐滿頁面剩餘空間
+    if (apv && act) new MutationObserver(() => act.classList.toggle('has-photos', apv.children.length > 0)).observe(apv, { childList: true });
     $$('input[name="learningAreas"]').forEach(c => c.addEventListener('change', syncAreas));
     syncAreas();
   }
