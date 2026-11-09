@@ -96,6 +96,9 @@
 #learning-observation-page .obs-srow.is-edit{border-color:#8FA37E;background:#F3F7EE}
 #learning-observation-page .obs-srow .s-t{flex:1;min-width:0}
 #learning-observation-page .obs-srow button{border:1px solid rgba(200,162,122,.5);border-radius:.5rem;background:#fff;padding:.2rem .6rem;font:inherit;cursor:pointer}
+#learning-observation-page .obs-tabs{display:flex;flex-wrap:wrap;gap:.5rem}
+#learning-observation-page .obs-tab{padding:.5rem 1rem;border:2px solid #EEE2CF;border-radius:999px;background:#FFFDF8;font-size:.85rem;font-weight:800;cursor:pointer}
+#learning-observation-page .obs-tab.on{background:#2F6271;border-color:#2F6271;color:#fff}
 #learning-observation-page .obs-shrow{display:block;padding:.25rem .1rem;font-size:.85rem;cursor:pointer}
 #learning-observation-page .obs-board{display:flex;flex-wrap:wrap;gap:.5rem}
 #learning-observation-page .obs-bchip{display:inline-flex;align-items:stretch;border:2px solid #EEE2CF;border-radius:.75rem;background:#FFFDF8;overflow:hidden;font-size:.8rem;font-weight:700}
@@ -1267,6 +1270,28 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
   <form id="learning-observation-form" novalidate class="space-y-4">
+    <div class="no-print obs-tabs" role="tablist"><button type="button" class="obs-tab on" data-obstab="fill">📝 填寫表單</button><button type="button" class="obs-tab" data-obstab="saved">🗂️ 已儲存／分享給我 <span id="obs-tab-n"></span></button><button type="button" class="obs-tab" data-obstab="share">👥 分享設定</button></div>
+    <div data-obspanel="saved" hidden>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-saved">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-heading font-bold text-sm">🗂️ 我已儲存的觀察紀錄 <span id="obs-saved-sub" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
+      </div>
+      <p class="text-[11px] text-wood-dark/60 mt-1">儲存後隨時可以點「開啟編輯」讀取、修改、補照片，再按「更新觀察紀錄」。</p>
+      <div id="obs-saved-list" class="mt-3 space-y-2"></div>
+      <h4 class="font-heading font-bold text-sm mt-5">👥 分享給我的紀錄 <span class="text-[11px] font-normal text-wood-dark/60">可開啟並共同編輯</span></h4>
+      <div id="obs-shared-list" class="mt-2 space-y-2"></div>
+    </div>
+    </div>
+    <div data-obspanel="share" hidden>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-share">
+      <h3 class="font-heading font-bold text-sm">👥 分享給老師（可一起編輯）</h3>
+      <p class="text-[11px] text-wood-dark/60 mt-1">勾選的老師會在「分享給我的紀錄」看到這筆，並可讀取、編輯、補照片；但不能刪除，也不能更改分享名單。新增紀錄時會沿用你上次的勾選。</p>
+      <input id="obs-share-q" type="text" placeholder="搜尋姓名或 Email" class="obs-input">
+      <div id="obs-share-list" class="mt-2" style="max-height:14rem;overflow:auto"></div>
+      <p id="obs-share-note" class="text-xs font-bold text-coral mt-1"></p>
+    </div>
+    </div>
+    <div data-obspanel="fill" class="space-y-4">
     <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-board">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h3 class="font-heading font-bold text-sm">📊 本學期觀察進度 <span id="obs-board-sem" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
@@ -1276,24 +1301,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <div id="obs-board-list" class="obs-board mt-3"></div>
       <p id="obs-board-msg" class="text-xs font-bold mt-2" role="status"></p>
     </div>
-    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-saved">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <h3 class="font-heading font-bold text-sm">🗂️ 我已儲存的觀察紀錄 <span id="obs-saved-sub" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
-        <button type="button" class="obs-btn" data-action="new-observation">＋ 新增一筆</button>
-      </div>
-      <p class="text-[11px] text-wood-dark/60 mt-1">儲存後隨時可以點「開啟編輯」讀取、修改、補照片，再按「更新觀察紀錄」。</p>
-      <div id="obs-saved-list" class="mt-3 space-y-2"></div>
-      <h4 class="font-heading font-bold text-sm mt-5">👥 分享給我的紀錄 <span class="text-[11px] font-normal text-wood-dark/60">可開啟並共同編輯</span></h4>
-      <div id="obs-shared-list" class="mt-2 space-y-2"></div>
-    </div>
     <div id="obs-edit-banner" class="no-print flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-sage-light text-sage-dark px-4 py-2 text-sm font-bold" hidden><span id="obs-edit-text"></span><button type="button" class="obs-btn" data-action="cancel-edit">取消編輯</button></div>
-    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-share">
-      <h3 class="font-heading font-bold text-sm">👥 分享給老師（可一起編輯）</h3>
-      <p class="text-[11px] text-wood-dark/60 mt-1">勾選的老師會在「分享給我的紀錄」看到這筆，並可讀取、編輯、補照片；但不能刪除，也不能更改分享名單。新增紀錄時會沿用你上次的勾選。</p>
-      <input id="obs-share-q" type="text" placeholder="搜尋姓名或 Email" class="obs-input">
-      <div id="obs-share-list" class="mt-2" style="max-height:14rem;overflow:auto"></div>
-      <p id="obs-share-note" class="text-xs font-bold text-coral mt-1"></p>
-    </div>
     <div class="obs-frame">
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <div class="obs-grid3 obs-meta">
@@ -1354,6 +1362,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <button type="submit" id="observation-save" class="px-6 py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50">儲存觀察紀錄</button>
       <p id="observation-status" class="text-sm font-bold" role="status" aria-live="polite"></p>
     </div>
+    </div>
   </form>
 </section>
       </main>
@@ -1366,7 +1375,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </div>
 
 <style>
-#planRoot .pu-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#planRoot .pu-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#planRoot .pu-split.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}#planRoot .pu-split.cmp #puCmp{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px}#planRoot .pu-cmpane{border:2px solid #cfc6b4;border-radius:14px;padding:8px;background:#fffdf7}#planRoot .pu-cmpb{max-height:calc((100vh - 190px)/var(--n,1));overflow:auto;margin-top:8px}@media(max-width:900px){#planRoot .pu-split.cmp{display:block}#planRoot .pu-split.cmp #puCmp{position:static;max-height:none;margin-top:12px}#planRoot .pu-cmpb{max-height:70vh}}
 #planRoot button,#planRoot select,#planRoot input:not([type=checkbox]),#planRoot textarea,.pu-modal button,.pu-modal input,.pu-modal select{font:inherit;border:1px solid #cfc6b4;border-radius:10px;padding:5px 10px;background:#fffdf7;color:inherit}
 #planRoot button,.pu-modal button{cursor:pointer}#planRoot .pu-b.on,#planRoot .pu-p,.pu-modal .pu-p{background:#4C7A3E;color:#fff;border-color:#4C7A3E}
 #planRoot .pu-card{border:1px solid #e0d8c6;border-radius:14px;padding:10px;margin:10px 0}#planRoot .pu-sub{background:#fbf3e6}
@@ -1441,10 +1450,23 @@ function sync(data){
   if(!root._rf){root._rf=1;root.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rfb");if(b)openRef(b.dataset.k,b.dataset.c)})}
   if(!root.dataset.init||root.dataset.adm!==adm){root.dataset.init=1;root.dataset.adm=adm;viewing=null;render()}else if(tab==="tools")render();
 }
-function render(){if(!admin()&&(tab==="plan"||tab==="logs"))tab="list";const TABS=admin()?[["plan","計畫編輯"],["tools","教具庫（即時）"],["ind","課綱指標庫"],["env","學習區環境規劃與參考書"],["list","已存計畫"],["logs","修改紀錄"]]:[["list","教學計畫"],["tools","教具庫（即時）"],["ind","課綱指標庫"],["env","學習區環境規劃與參考書"]];root.innerHTML=`<div class="pu-nav">${TABS.map(t=>`<button class="pu-b ${tab===t[0]?"on":""}" data-t="${t[0]}">${t[1]}</button>`+(t[0]==="env"?`<select id="envSel" class="pu-envsel ${tab==="env"?"on":""}" title="選擇要參考哪一個學習區的環境規劃建議"><option value="">環境規劃建議：選擇要參考的學習區…</option>${AREAS.map(a=>`<option ${envSel===a?"selected":""}>${a}</option>`).join("")}</select>`:"")).join("")}</div><div id="puBody"></div>`;
+let cmpOpen=false,cmp=[];
+  function cmpBody(id){const p=plans.find(x=>x.id===id);if(!p)return '<p class="pu-m">找不到這份計畫（可能已被刪除）。</p>';
+    const t=document.createElement("div");t.innerHTML=roHtml(p);const h=t.querySelector(".pu-ro>.pu-card");if(h&&h.querySelector("#bk"))h.remove();t.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+    return `<div class="pu-m" style="margin:2px 0 6px"><b>${esc(p.name)}</b>｜${esc(p.cls)}｜${esc(p.sem)}（唯讀）</div>`+t.innerHTML}
+  function drawCmp(){const box=$("#puCmp"),sp=$(".pu-split");if(!box||!sp)return;sp.classList.toggle("cmp",cmpOpen);const cb=$("#cmpBtn");if(cb)cb.classList.toggle("on",cmpOpen);
+    if(!cmpOpen){box.innerHTML="";return}
+    const opts=sel=>`<option value="">選擇要對照的計畫…</option>`+byNew().map(x=>`<option value="${x.id}" ${x.id===sel?"selected":""}>${esc(x.name||"（未命名）")}｜${esc(x.cls)}｜${esc(x.sem)}</option>`).join("");
+    box.style.setProperty("--n",cmp.length);
+    box.innerHTML=`<div class="pu-card"><b>🔀 並排對照</b> <span class="pu-m">另外開啟其他計畫（唯讀）和左邊對照；最多同時 3 份</span><div class="pu-row">${cmp.length<3?'<button id="cmpAdd">＋再開一份</button>':""}<button id="cmpX">關閉對照</button></div></div>`+cmp.map((id,i)=>`<div class="pu-cmpane"><div class="pu-row"><select data-cs="${i}" style="flex:1;min-width:0">${opts(id)}</select><button data-cx="${i}" title="關閉這一份">✕</button></div><div class="pu-cmpb">${id?cmpBody(id):'<p class="pu-m">請先選擇要對照的計畫。</p>'}</div></div>`).join("");
+    box.querySelectorAll("[data-cs]").forEach(x=>x.onchange=()=>{cmp[+x.dataset.cs]=x.value;drawCmp()});
+    box.querySelectorAll("[data-cx]").forEach(b=>b.onclick=()=>{cmp.splice(+b.dataset.cx,1);if(!cmp.length)cmpOpen=false;drawCmp()});
+    const ad=box.querySelector("#cmpAdd");if(ad)ad.onclick=()=>{cmp.push("");drawCmp()};
+    box.querySelector("#cmpX").onclick=()=>{cmpOpen=false;drawCmp()}}
+  function render(){if(!admin()&&(tab==="plan"||tab==="logs"))tab="list";const TABS=admin()?[["plan","計畫編輯"],["tools","教具庫（即時）"],["ind","課綱指標庫"],["env","學習區環境規劃與參考書"],["list","已存計畫"],["logs","修改紀錄"]]:[["list","教學計畫"],["tools","教具庫（即時）"],["ind","課綱指標庫"],["env","學習區環境規劃與參考書"]];root.innerHTML=`<div class="pu-nav">${TABS.map(t=>`<button class="pu-b ${tab===t[0]?"on":""}" data-t="${t[0]}">${t[1]}</button>`+(t[0]==="env"?`<select id="envSel" class="pu-envsel ${tab==="env"?"on":""}" title="選擇要參考哪一個學習區的環境規劃建議"><option value="">環境規劃建議：選擇要參考的學習區…</option>${AREAS.map(a=>`<option ${envSel===a?"selected":""}>${a}</option>`).join("")}</select>`:"")).join("")}<button class="pu-b ${cmpOpen?"on":""}" id="cmpBtn" title="同時開啟另一份計畫（唯讀）來對照">🔀 並排對照</button></div><div class="pu-split ${cmpOpen?"cmp":""}"><div id="puBody"></div><div id="puCmp"></div></div>`;
   $$(".pu-nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
   const es=$("#envSel");if(es)es.onchange=e=>{envSel=e.target.value;tab="env";render()};
-  ({plan:rPlan,tools:rTools,ind:rInd,env:rEnv,refs:rRefs,list:rList,logs:rLogs})[tab]();}
+  ({plan:rPlan,tools:rTools,ind:rInd,env:rEnv,refs:rRefs,list:rList,logs:rLogs})[tab]();$("#cmpBtn").onclick=()=>{cmpOpen=!cmpOpen;if(cmpOpen&&!cmp.length)cmp=[""];drawCmp()};drawCmp();}
 const body=h=>{$("#puBody").innerHTML=h};
 /* picker */
 function picker(title,items,sel,cb,defG2){const md=document.createElement("div");md.className="pu-modal";let q="",g="",g2=defG2||"";const S=new Set(sel);const AGE=["幼幼班（2–3歲）","小班（3–4歲）","中班（4–5歲）","大班（5–6歲）"];const grps2=AGE.filter(a=>items.some(i=>i.g2===a));const grps=[...new Set(items.map(i=>i.grp).filter(Boolean))];
@@ -3713,6 +3735,10 @@ function kgApp() {
   let editing = null, saved = [], sharedIn = [], unSaved = null, unShared = null, unSavedUid = '';
   const saveLabel = () => (editing ? '更新觀察紀錄' : '儲存觀察紀錄');
   const mkBtn = (txt, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.addEventListener('click', fn); return b; };
+  function setTab(k) { // 分頁：fill 填寫表單／saved 已儲存／share 分享設定
+    $$('[data-obspanel]').forEach(p => { p.hidden = p.dataset.obspanel !== k; });
+    $$('[data-obstab]').forEach(b => b.classList.toggle('on', b.dataset.obstab === k));
+  }
   function updateEditUI() {
     const bn = $('#obs-edit-banner'); if (bn) bn.hidden = !editing;
     const tx = $('#obs-edit-text'); if (tx) tx.textContent = editing ? '✏️ 編輯中：' + editing.title + (editing.owner ? '' : '（' + editing.ownerName + ' 分享給你，可共同編輯）') : '';
@@ -3747,6 +3773,7 @@ function kgApp() {
       if (!list.length) { box.textContent = empty; return; }
       list.forEach(x => box.appendChild(mkRow(x, shared)));
     };
+    const tn = $('#obs-tab-n'); if (tn) tn.textContent = '（' + saved.length + (sharedIn.length ? '｜分享給我 ' + sharedIn.length : '') + '）';
     fill('#obs-saved-list', saved, false, '還沒有已儲存的紀錄。');
     fill('#obs-shared-list', sharedIn, true, '目前沒有其他老師分享給你的紀錄。');
   }
@@ -3781,6 +3808,7 @@ function kgApp() {
     editing.existing.forEach(addExistingPhoto);
     growChallenge(); updateEditUI(); renderShare();
     const b = $('#observation-save'); b.disabled = false; b.textContent = saveLabel();
+    setTab('fill'); page.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function deleteRecord(id) {
     const x = saved.find(s => s.id === id);
@@ -3981,8 +4009,8 @@ function kgApp() {
     });
     $('#obs-share-q').addEventListener('input', (e) => { e.stopPropagation(); shareQ = e.target.value; renderShare(); });
     $('[data-action="cancel-edit"]').addEventListener('click', () => { if (confirm('放棄目前的修改並關閉編輯？')) { resetForm(); say(''); } });
-    $('[data-action="new-observation"]').addEventListener('click', () => { if (editing && !confirm('目前正在編輯一筆紀錄，要關閉並開始新的一筆嗎？')) return; resetForm(); say(''); });
-    $('[data-action="print-observation"]').addEventListener('click', () => { document.body.classList.add('obs-printing'); window.print(); });
+    $$('[data-obstab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.obstab)));
+    $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); document.body.classList.add('obs-printing'); window.print(); });
   }
 
   function mount(el) {
@@ -3999,7 +4027,7 @@ function kgApp() {
     if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
-  window.addEventListener('beforeprint', () => { growChallenge(); if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
+  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); growChallenge(); document.body.classList.add('obs-printing'); } });
   window.addEventListener('afterprint', () => document.body.classList.remove('obs-printing'));
 
   window.saveLearningObservation = saveLearningObservation;
