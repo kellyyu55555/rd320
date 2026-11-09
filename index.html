@@ -76,83 +76,55 @@
 </style>
 <style>html{font-size:18px}</style>
 <style id="learning-observation-styles">
-.observation-page { max-width: 1100px; margin: 0 auto; padding: 24px; color: #4b3626; }
-  .observation-title-block { position: relative; text-align: center; margin-bottom: 0; }
-  .observation-title-block h1, .observation-title-block h2 { margin: 0; font-weight: 800; line-height: 1.35; }
-  .observation-title-block h1 { font-size: 1.15rem; }
-  .observation-title-block h2 { font-size: 1.35rem; margin-bottom: 12px; }
-  .page-header, .student-row, .select-grid, .signature-row { display: grid; gap: 16px; }
-  .header-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-  .student-row { grid-template-columns: repeat(3, 1fr); }
-  .observation-meta-row { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 0; border: 2px solid #222; background: #fff; }
-  .meta-field { display: flex; align-items: center; min-width: 0; padding: 7px 12px; border-right: 1px solid #222; font-weight: 800; }
-  .meta-field:last-child { border-right: 0; }
-  .meta-field > span { flex: 0 0 auto; white-space: nowrap; }
-  .meta-field select, .meta-field input[type="date"] { min-width: 0; border: 0; border-radius: 0; padding: 4px 6px; background: #fff; }
-  .name-field select, .name-field input { background: #ddd; }
-  .challenge-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 7px 14px; border: 2px solid #222; border-top: 0; background: #fff; font-size: 1.05rem; font-weight: 800; }
-  .challenge-row label { display: block; white-space: nowrap; }
-  .challenge-row input { flex: 1; min-width: 0; border: 0; border-radius: 0; border-bottom: 1px solid #999; padding: 5px 6px; font: inherit; font-weight: 400; }
-  .select-grid { grid-template-columns: repeat(3, 1fr); }
-  .wide-label { grid-column: span 1; }
-  fieldset, .parent-message, .family-feedback { margin: 16px 0; padding: 18px; border: 1px solid #e5d8c6; border-radius: 16px; background: #fffdf8; }
-  legend, h2 { font-weight: 800; }
-  legend { padding: 0 8px; }
-  label { display: grid; gap: 7px; font-weight: 700; }
-  input[type="text"], input[type="date"], select, textarea { width: 100%; box-sizing: border-box; border: 1px solid #ccb99e; border-radius: 10px; padding: 10px 12px; background: #fff; font: inherit; }
-  .area-grid, .checkbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .area-card { padding: 10px; border-radius: 12px; background: #faf3e6; border: 1px solid #eadcc8; }
-  .area-option, .checkbox-grid label { display: flex; align-items: center; gap: 8px; padding: 4px; border-radius: 10px; cursor: pointer; }
-  .area-upload { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; padding: 5px 8px; border-radius: 8px; color: #2f6271; background: #fff; font-size: .82rem; cursor: pointer; }
-  .area-upload input { display: none; }
-  .area-photo-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 7px; }
-  .area-photo-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #eee; }
-  input[type="checkbox"] { width: 18px; height: 18px; accent-color: #2f6271; }
-  .roster-actions { display: flex; align-items: center; gap: 8px; }
-  .small-button { padding: 7px 10px; border: 1px solid #c8a27a; border-radius: 8px; color: #4b3626; background: #f1e4d2; font-size: .82rem; }
-  .field-hint { color: #765f49; font-size: .78rem; font-weight: 400; line-height: 1.4; }
-  .manual-roster-input:not([hidden]) { display: block; margin-top: 7px; }
-  .parent-message { background: #fff8e8; }
-  .parent-message p { line-height: 1.8; margin-bottom: 0; }
-  .selected-indicator { margin-top: 12px; padding: 12px; border-radius: 10px; color: #1f4750; background: #dce6d3; font-weight: 700; }
-  .form-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
-  button { border: 0; border-radius: 10px; padding: 11px 18px; font: inherit; font-weight: 800; cursor: pointer; }
-  .primary-button { color: white; background: #2f6271; }
-  .secondary-button { color: #4b3626; background: #f1e4d2; }
-  .status-message { min-height: 24px; font-weight: 700; }
-  .hint { color: #765f49; font-size: .9rem; }
-  @media (max-width: 700px) { .student-row, .select-grid, .area-grid, .checkbox-grid, .observation-meta-row { grid-template-columns: 1fr; } .page-header { grid-template-columns: 1fr; } .meta-field { border-right: 0; border-bottom: 1px solid #222; } .meta-field:last-child { border-bottom: 0; } .challenge-row { align-items: flex-start; flex-direction: column; gap: 4px; } }
-
-  /* A4 列印版面：瀏覽器列印對話框請選擇紙張 A4、縮放 100%。 */
-  @page { size: A4 portrait; margin: 12mm; }
-  @media print {
-    html, body { background: #fff !important; color: #000 !important; }
-    .observation-page { max-width: none; width: auto; margin: 0; padding: 0; font-size: 10pt; }
-    .no-print, .area-upload, .roster-actions, .field-hint, #observation-status { display: none !important; }
-    fieldset, .parent-message, .family-feedback { margin: 7px 0; padding: 9px; border: 1px solid #333; border-radius: 0; background: #fff !important; break-inside: avoid; }
-    .observation-title-block { margin-bottom: 0; }
-    .observation-title-block h1 { font-size: 14pt; margin: 0; }
-    .observation-title-block h2 { font-size: 16pt; margin: 0 0 6px; }
-    .header-actions { display: none !important; }
-    .student-row, .select-grid { gap: 8px; }
-    .observation-meta-row { grid-template-columns: 1fr 1.35fr 1fr; border-width: 1px; }
-    .meta-field { padding: 4px 7px; border-right-width: 1px; }
-    .challenge-row { min-height: 30px; padding: 4px 8px; border-width: 1px; border-top: 0; font-size: 11pt; }
-    .challenge-row input { padding: 2px 4px; }
-    input[type="text"], input[type="date"], select, textarea { border: 0; border-bottom: 1px solid #555; border-radius: 0; padding: 3px 4px; background: #fff; }
-    select { appearance: none; }
-    .area-grid, .checkbox-grid { gap: 5px; }
-    .area-card { padding: 4px; background: #fff; border: 1px solid #333; break-inside: avoid; }
-    .area-option, .checkbox-grid label { padding: 4px; background: #fff; }
-    input[type="checkbox"] { appearance: none; width: 12px; height: 12px; border: 1px solid #111; border-radius: 0; }
-    input[type="checkbox"]:checked::after { content: "✓"; display: block; font-size: 11px; line-height: 10px; text-align: center; }
-    .area-photo-preview { grid-template-columns: repeat(3, 1fr); gap: 3px; }
-    .area-photo-preview img { border: 1px solid #555; border-radius: 0; }
-    .parent-message p { line-height: 1.45; }
-    .selected-indicator { padding: 5px; border: 1px solid #333; border-radius: 0; background: #fff; }
-    .family-feedback textarea { min-height: 115px; border: 1px solid #555; }
-    .signature-row { grid-template-columns: 1fr; margin-top: 8px; }
-  }
+/* 學習區觀察表：全部限定在 #learning-observation-page，不影響其他分頁 */
+#learning-observation-page [hidden]{display:none!important}
+#learning-observation-page .obs-input{width:100%;box-sizing:border-box;margin-top:.25rem;padding:.5rem .75rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font:inherit;font-size:.875rem}
+#learning-observation-page .obs-input:disabled{opacity:.55;background:#FAF3E6;cursor:not-allowed}
+#learning-observation-page textarea.obs-input{resize:vertical;min-height:7rem}
+#learning-observation-page .obs-btn{padding:.5rem 1rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s}
+#learning-observation-page .obs-btn:hover{background:#FAF3E6}
+#learning-observation-page .obs-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+#learning-observation-page .obs-areas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+#learning-observation-page .obs-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+#learning-observation-page .obs-note{background:#FFF8E8;border:1px solid #EEE2CF}
+#learning-observation-page .obs-chip{position:relative;display:inline-flex;cursor:pointer}
+#learning-observation-page .obs-chip input{position:absolute;opacity:0;width:1px;height:1px}
+#learning-observation-page .obs-chip span{display:inline-flex;align-items:center;padding:.35rem .9rem;border:2px solid #EEE2CF;border-radius:999px;background:#FFFDF8;font-size:.8rem;font-weight:700;transition:all .15s}
+#learning-observation-page .obs-chip:hover span{background:#FAF3E6}
+#learning-observation-page .obs-chip input:checked+span{background:#DCE6D3;border-color:#8FA37E;color:#5F7350}
+#learning-observation-page .obs-chip input:focus-visible+span{box-shadow:0 0 0 3px rgba(143,163,126,.35)}
+#learning-observation-page .obs-area{padding:.6rem;border:2px solid #EEE2CF;border-radius:1rem;background:#FFFDF8;transition:all .15s}
+#learning-observation-page .obs-area.is-on{border-color:#8FA37E;background:#F3F7EE}
+#learning-observation-page .obs-area .obs-chip{display:flex}#learning-observation-page .obs-area .obs-chip span{flex:1;justify-content:center;border-radius:.75rem}
+#learning-observation-page .obs-upload{display:inline-flex;align-items:center;gap:.3rem;margin-top:.5rem;padding:.25rem .6rem;border-radius:.5rem;background:#FAF3E6;color:#2F6271;font-size:.75rem;font-weight:700;cursor:pointer}
+#learning-observation-page .obs-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-top:.5rem}
+#learning-observation-page .obs-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;background:#eee}
+@media(max-width:700px){#learning-observation-page .obs-grid3{grid-template-columns:1fr}#learning-observation-page .obs-areas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@page obs{size:A4 portrait;margin:12mm}
+@media print{
+body.obs-printing{background:#fff!important}
+body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
+body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
+#learning-observation-page{page:obs;max-width:none!important;font-size:10pt;color:#000}
+#learning-observation-page .no-print{display:none!important}
+#learning-observation-page .obs-block{margin:7px 0!important;padding:9px!important;border:1px solid #333!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
+#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0!important}
+#learning-observation-page #observation-school-title{font-size:14pt;color:#000;margin:0}
+#learning-observation-page .obs-head h2{justify-content:center;font-size:16pt;margin:0 0 6px}
+#learning-observation-page .obs-grid3{gap:0;grid-template-columns:1fr 1.35fr 1fr;border:1px solid #222}
+#learning-observation-page .obs-meta>div,#learning-observation-page .obs-challenge{display:flex;align-items:center;gap:4px;padding:4px 7px}
+#learning-observation-page .obs-meta>div{border-right:1px solid #222}#learning-observation-page .obs-meta>div:last-child{border-right:0}
+#learning-observation-page .obs-challenge{margin:0!important;border:1px solid #222;border-top:0;font-size:11pt}
+#learning-observation-page .obs-meta label,#learning-observation-page .obs-challenge label{white-space:nowrap;margin:0}
+#learning-observation-page .obs-input{flex:1;width:auto;min-width:0;margin:0;padding:2px 4px;border:0;border-bottom:1px solid #555;border-radius:0;background:#fff;appearance:none}
+#learning-observation-page textarea.obs-input{min-height:115px;border:1px solid #555}
+#learning-observation-page .obs-areas{grid-template-columns:repeat(4,1fr);gap:5px}
+#learning-observation-page .obs-area{padding:4px;border:1px solid #333!important;border-radius:0;background:#fff!important;break-inside:avoid}
+#learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:2px 4px;border:0;border-radius:0;background:#fff!important;color:#000;font-size:10pt}
+#learning-observation-page .obs-chip span::before{content:"";display:inline-block;width:11px;height:11px;border:1px solid #111;font-size:10px;line-height:11px;text-align:center}
+#learning-observation-page .obs-chip input:checked+span::before{content:"✓"}
+#learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{border:1px solid #555;border-radius:0}
+}
 </style>
 </head>
 <body class="bg-cream text-wood-dark min-h-screen">
@@ -1243,130 +1215,67 @@
             </div>
           </div>
         </section>
-<!-- 學習區觀察紀錄表分頁：可放入現有系統的主要內容區 -->
-<section id="learning-observation-page" x-show="view==='observation'" class="observation-page" aria-labelledby="observation-title">
-  <div class="observation-title-block">
-    <h1 id="observation-school-title">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1>
-    <h2 id="observation-title">學習區觀察紀錄表</h2>
-    <div class="header-actions">
-      <button type="button" class="secondary-button" data-action="print-observation">列印 A4</button>
-      <button type="button" class="secondary-button" data-action="reset-observation">清除本頁</button>
+<!-- ============ 學習區觀察表 ============ -->
+<section id="learning-observation-page" x-show="view==='observation' && !restrictedPW" x-effect="window.LearningObservation && LearningObservation.sync($el,$data,classes.join('|'),view==='observation')" class="space-y-4 max-w-4xl mx-auto" aria-labelledby="observation-title">
+  <div class="obs-block obs-head paper-card rounded-3xl p-6 shadow-card flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p id="observation-school-title" class="text-xs font-bold text-wood-dark/60">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</p>
+      <h2 id="observation-title" class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl no-print">📷</span> 學習區觀察紀錄表</h2>
     </div>
+    <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
-
-  <form id="learning-observation-form" novalidate>
-    <div class="observation-meta-row">
-      <label class="meta-field class-field">
-        <span>班級：</span>
-        <select id="observation-class" name="className" required>
-          <option value="">請選擇班級</option>
-        </select>
-        <input id="observation-class-manual" class="manual-roster-input" name="classNameManual" type="text" placeholder="請輸入班級" hidden>
-      </label>
-      <label class="meta-field name-field">
-        <span>姓名：</span>
-        <select id="observation-child" name="childName" required>
-          <option value="">請先選擇班級</option>
-        </select>
-        <input id="observation-child-manual" class="manual-roster-input" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden>
-        <small class="field-hint">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</small>
-      </label>
-      <div class="roster-actions">
-        <button type="button" class="small-button" data-action="import-children">匯入幼兒名單</button>
+  <form id="learning-observation-form" novalidate class="space-y-4">
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <div class="obs-grid3 obs-meta">
+        <div><label for="observation-class" class="text-sm font-bold text-wood-dark/80">班級</label><select id="observation-class" name="className" required class="obs-input"><option value="">請選擇班級</option></select><input id="observation-class-manual" name="classNameManual" type="text" placeholder="請輸入班級" hidden class="obs-input"></div>
+        <div><label for="observation-child" class="text-sm font-bold text-wood-dark/80">姓名</label><select id="observation-child" name="childName" required class="obs-input"><option value="">請先選擇班級</option></select><input id="observation-child-manual" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden class="obs-input"></div>
+        <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
+      </div>
+      <div class="obs-challenge mt-4"><label for="challenge-area" class="text-sm font-bold text-wood-dark/80">今天我挑戰的學習區是......</label><input id="challenge-area" name="challengeArea" type="text" placeholder="請填寫今天挑戰的學習區" class="obs-input"></div>
+      <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
+        <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單</button>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
+        <p class="text-[11px] text-wood-dark/60 flex-1 min-w-[12rem]">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</p>
+        <p id="observation-roster-status" class="text-xs font-bold w-full" role="status"></p>
       </div>
-      <label class="meta-field date-field">
-        <span>日期：</span>
-        <input name="observationDate" type="date" required>
-      </label>
     </div>
-    <div class="challenge-row">
-      <label for="challenge-area">今天我挑戰的學習區是......</label>
-      <input id="challenge-area" name="challengeArea" type="text" placeholder="請填寫今天挑戰的學習區">
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <h3 class="font-heading font-bold text-sm mb-3">觀察學習區 <span class="no-print text-[11px] font-normal text-wood-dark/50">勾選後可上傳該區照片</span></h3>
+      <div class="obs-areas"><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="語文區"><span>語文區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="語文區" hidden></label><div class="obs-photos" data-area-preview="語文區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="數學區"><span>數學區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="數學區" hidden></label><div class="obs-photos" data-area-preview="數學區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="積木區"><span>積木區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區" hidden></label><div class="obs-photos" data-area-preview="積木區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="組合建構區"><span>組合建構區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區" hidden></label><div class="obs-photos" data-area-preview="組合建構區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="美勞區"><span>美勞區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="美勞區" hidden></label><div class="obs-photos" data-area-preview="美勞區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="生活自理區"><span>生活自理區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="生活自理區" hidden></label><div class="obs-photos" data-area-preview="生活自理區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="鬆散素材區"><span>鬆散素材區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="鬆散素材區" hidden></label><div class="obs-photos" data-area-preview="鬆散素材區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="扮演區"><span>扮演區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區" hidden></label><div class="obs-photos" data-area-preview="扮演區" data-area-extra hidden></div></div></div>
     </div>
-
-    <fieldset class="area-fieldset">
-      <legend>觀察學習區</legend>
-      <div class="area-grid">
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="語文區">語文區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="語文區"></label><div class="area-photo-preview" data-area-preview="語文區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="數學區">數學區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="數學區"></label><div class="area-photo-preview" data-area-preview="數學區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="美勞區">美勞區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="美勞區"></label><div class="area-photo-preview" data-area-preview="美勞區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="積木區">積木區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區"></label><div class="area-photo-preview" data-area-preview="積木區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="組合建構區">組合建構區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區"></label><div class="area-photo-preview" data-area-preview="組合建構區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="扮演區">扮演區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區"></label><div class="area-photo-preview" data-area-preview="扮演區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="生活自理區">生活自理區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="生活自理區"></label><div class="area-photo-preview" data-area-preview="生活自理區"></div></div>
-        <div class="area-card"><label class="area-option"><input type="checkbox" name="learningAreas" value="烹飪區">烹飪區</label><label class="area-upload">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="烹飪區"></label><div class="area-photo-preview" data-area-preview="烹飪區"></div></div>
-      </div>
-    </fieldset>
-
-    <section class="parent-message" aria-labelledby="parent-message-title">
-      <h2 id="parent-message-title">親愛的家長您好：</h2>
-      <p>
-        學習區並不是讓孩子隨意玩耍的過渡時間，而是蘊含許多未來學習所需的基礎能力發展。
-        例如：透過操作教具訓練小肌肉的穩定度，以培養日後握筆的能力；或是在擺放積木、拼圖時，學習空間概念，為未來喜歡數字打下良好基礎。
-      </p>
-    </section>
-
-    <fieldset class="performance-fieldset">
-      <legend>學習表現（可複選）</legend>
-      <div class="checkbox-grid" id="performance-options">
-        <label><input type="checkbox" name="performances" value="專心學習">專心學習</label>
-        <label><input type="checkbox" name="performances" value="獨自完成範例">獨自完成範例</label>
-        <label><input type="checkbox" name="performances" value="展現創意點子">展現創意點子</label>
-        <label><input type="checkbox" name="performances" value="同儕合作">同儕合作</label>
-        <label><input type="checkbox" name="performances" value="能持續發展">能持續發展</label>
-        <label><input type="checkbox" name="performances" value="能力穩定">能力穩定</label>
-        <label><input type="checkbox" name="performances" value="特殊事件紀錄">特殊事件紀錄</label>
-      </div>
-    </fieldset>
-
-    <fieldset class="indicator-fieldset">
-      <legend>學習指標</legend>
-      <div class="select-grid">
-        <label>
-          年齡層
-          <select id="indicator-age" name="indicatorAge" required>
-            <option value="">請先選擇年齡層</option>
-          </select>
-        </label>
-        <label>
-          分類
-          <select id="indicator-category" name="indicatorCategory" required disabled>
-            <option value="">請先選擇分類</option>
-          </select>
-        </label>
-        <label class="wide-label">
-          指標
-          <select id="indicator-item" name="indicatorItem" required disabled>
-            <option value="">請先選擇學習指標</option>
-          </select>
-        </label>
-      </div>
-      <div id="selected-indicator" class="selected-indicator" hidden></div>
-    </fieldset>
-
-    <!-- 最後一欄維持原本用途：家長回饋與簽名 -->
-    <section class="family-feedback">
-      <h2>邀請家長一起參與幼兒在學習區的學習過程分享。</h2>
-      <p class="hint">（引導語例句：你在哪一區做的作品？這個作品叫什麼？為什麼想要做？遇到困難嗎？遇到困難你怎麼解決？）</p>
-      <label>
-        家長回饋：
-        <textarea name="familyFeedback" rows="7" placeholder="請填寫家長回饋"></textarea>
-      </label>
-      <div class="signature-row">
-        <label>家長簽名：<input name="parentSignature" type="text"></label>
-      </div>
-    </section>
-
-    <div class="form-actions no-print">
-      <button type="submit" class="primary-button">儲存觀察紀錄</button>
+    <div class="obs-block obs-note rounded-3xl p-6 shadow-card">
+      <h3 class="font-heading font-bold text-sm mb-2">親愛的家長您好：</h3>
+      <p class="text-sm leading-relaxed">學習區並不是讓孩子隨意玩耍的過渡時間，而是蘊含許多未來學習所需的基礎能力發展。例如：透過操作教具訓練小肌肉的穩定度，以培養日後握筆的能力；或是在擺放積木、拼圖時，學習空間概念，為未來喜歡數字打下良好基礎。</p>
     </div>
-    <p id="observation-status" class="status-message" role="status" aria-live="polite"></p>
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <h3 class="font-heading font-bold text-sm mb-3">學習表現 <span class="no-print text-[11px] font-normal text-wood-dark/50">可複選</span></h3>
+      <div class="obs-chips" id="performance-options"><label class="obs-chip"><input type="checkbox" name="performances" value="專心學習"><span>專心學習</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="獨自完成範例"><span>獨自完成範例</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="展現創意點子"><span>展現創意點子</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="同儕合作"><span>同儕合作</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="能持續發展"><span>能持續發展</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="能力穩定"><span>能力穩定</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="特殊事件紀錄"><span>特殊事件紀錄</span></label></div>
+    </div>
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <h3 class="font-heading font-bold text-sm mb-3">學習指標</h3>
+      <div class="obs-grid3">
+        <div><label for="indicator-age" class="text-sm font-bold text-wood-dark/80">年齡層</label><select id="indicator-age" name="indicatorAge" required class="obs-input"><option value="">請先選擇年齡層</option></select></div>
+        <div><label for="indicator-category" class="text-sm font-bold text-wood-dark/80">分類</label><select id="indicator-category" name="indicatorCategory" required disabled class="obs-input"><option value="">請先選擇分類</option></select></div>
+        <div><label for="indicator-item" class="text-sm font-bold text-wood-dark/80">指標</label><select id="indicator-item" name="indicatorItem" required disabled class="obs-input"><option value="">請先選擇學習指標</option></select></div>
+      </div>
+      <div id="selected-indicator" class="mt-3 p-3 rounded-xl bg-sage-light text-sage-dark text-sm font-bold" hidden></div>
+    </div>
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <h3 class="font-heading font-bold text-sm">邀請家長一起參與幼兒在學習區的學習過程分享。</h3>
+      <p class="text-xs text-wood-dark/60 mt-1 mb-3">（引導語例句：你在哪一區做的作品？這個作品叫什麼？為什麼想要做？遇到困難嗎？遇到困難你怎麼解決？）</p>
+      <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80">家長回饋</label>
+      <textarea id="observation-feedback" name="familyFeedback" rows="7" placeholder="請填寫家長回饋" class="obs-input"></textarea>
+      <div class="mt-3"><label for="observation-signature" class="text-sm font-bold text-wood-dark/80">家長簽名</label><input id="observation-signature" name="parentSignature" type="text" class="obs-input"></div>
+    </div>
+    <div class="no-print flex flex-wrap items-center gap-3">
+      <button type="submit" id="observation-save" class="px-6 py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50">儲存觀察紀錄</button>
+      <p id="observation-status" class="text-sm font-bold" role="status" aria-live="polite"></p>
+    </div>
   </form>
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I11</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I13</footer>
     </div>
   </template>
 
@@ -1862,7 +1771,7 @@ async function htmlToPdf(html,o){
   for(const u of units){
    u.style.boxSizing="border-box";
    let fitU=!!(o.fit&&u.matches(o.fit));let z=1;
-   if(fitU&&u.matches(".gmfit")){u.style.width=wpx+"px";const pgx=chmm*MM,ims=u.querySelectorAll("td.ph img"),pds=u.querySelectorAll("td.ph");let okx=u.offsetHeight<=pgx;if(!okx&&ims.length){for(let cm=5.4;cm>=1.2&&!okx;cm-=.3){ims.forEach(im=>{im.style.maxHeight=cm+"cm"});pds.forEach(td=>{td.style.paddingTop=td.style.paddingBottom=(cm>3.2?8:3)+"px"});okx=u.offsetHeight<=pgx}}if(!okx)fitU=false}
+   if(fitU&&u.matches(".gmfit")){u.style.width=wpx+"px";const pgx=chmm*MM,ims=u.querySelectorAll("td.ph img"),pds=u.querySelectorAll("td.ph"),setp=(cm,pad)=>{ims.forEach(im=>{im.style.maxHeight=cm+"cm";im.style.maxWidth="98%"});pds.forEach(td=>{td.style.paddingTop=td.style.paddingBottom=pad+"px"})};let lo=1.2,hi=12;setp(lo,3);const okx=u.offsetHeight<=pgx;if(okx&&ims.length){for(let k=0;k<14;k++){const mid=(lo+hi)/2;setp(mid,mid>3.2?8:3);if(u.offsetHeight<=pgx)lo=mid;else hi=mid}setp(lo,lo>3.2?8:3)}if(!okx){setp(5.6,8);fitU=false}}
    if(fitU){const pg=chmm*MM,vis=zz=>{u.style.width=Math.round(wpx/zz)+"px";return u.offsetHeight*zz};if(vis(1)>pg){let lo=.4,hi=1;for(let k=0;k<9;k++){const mid=(lo+hi)/2;if(vis(mid)<=pg)lo=mid;else hi=mid}z=lo;vis(z)}}else{u.style.width=wpx+"px"}
    const cv=await window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:Math.round(wpx/z)});
    const W=u.offsetWidth,H=u.offsetHeight,sc=cv.width/W,pageHpx=chmm*MM,top=u.getBoundingClientRect().top;
@@ -2071,10 +1980,10 @@ const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.
 const dupOn=()=>{try{return localStorage.getItem("wkDuplex")!=="0"}catch(e){return true}};
 const FIT_JS=`(function(){var maxH=Math.floor((297-20)*96/25.4)-6;
 function fitGm(s,w){s.style.transform="none";s.style.width="100%";var imgs=s.querySelectorAll("td.ph img"),pads=s.querySelectorAll("td.ph");
-function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
-var ok=s.offsetHeight<=maxH;
-if(!ok&&imgs.length){for(var cm=5.4;cm>=1.2&&!ok;cm-=.3){set(cm,cm>3.2?8:3);ok=s.offsetHeight<=maxH}}
-if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{w.style.height="auto";w.style.overflow="visible"}}
+function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm";imgs[i].style.maxWidth="98%"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
+var lo=1.2,hi=12;set(lo,3);var ok=s.offsetHeight<=maxH;
+if(ok&&imgs.length){for(var k=0;k<14;k++){var mid=(lo+hi)/2;set(mid,mid>3.2?8:3);if(s.offsetHeight<=maxH)lo=mid;else hi=mid}set(lo,lo>3.2?8:3)}
+if(ok){w.style.height=Math.ceil(s.offsetHeight)+"px";w.style.overflow="hidden"}else{set(5.6,8);w.style.height="auto";w.style.overflow="visible"}}
 function fit(){document.querySelectorAll(".sheet.fit").forEach(function(s){var w=s.parentNode;if(s.classList.contains("gmfit")){fitGm(s,w);return}function vis(z){s.style.transformOrigin="top left";s.style.transform="scale("+z+")";s.style.width=(100/z)+"%";return s.offsetHeight*z}var h=vis(1);if(h>maxH){var lo=.4,hi=1;for(var i=0;i<9;i++){var mid=(lo+hi)/2;if(vis(mid)<=maxH)lo=mid;else hi=mid}h=vis(lo)}w.style.height=Math.ceil(h)+"px";w.style.overflow="hidden"})}
 window.addEventListener("load",function(){setTimeout(fit,300)})})();`;
 const PRINT_CSS=CSS+`@page{size:A4 portrait;margin:10mm}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0 auto;width:190mm}.bar{font:14px/1.5 sans-serif;background:#fff8e1;border:1px solid #e0c98a;border-radius:8px;padding:8px 12px;margin:8px auto;width:190mm;box-sizing:border-box}@media print{.bar{display:none!important}}.wk>*+*{break-before:page;page-break-before:always}.wk tr,.wk td.ph{break-inside:avoid;page-break-inside:avoid}`;
@@ -2107,7 +2016,7 @@ function extViewerHtml(){const L=cur;const share=(L.uid!==(d.currentUser||{}).ui
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button></div>${share}${extInfoHtml(L)}`}
 function extEditorHtml(){const L=cur,E=L.ext=L.ext||{url:"",pdfUrl:"",pdfName:"",note:""},adminOther=d.isAdmin&&L.uid!==(d.currentUser||{}).uid;
  const lab="display:block;font-size:12px;font-weight:700;margin:10px 0 2px;color:#5a4a2a",inp="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px";
- const banners=(L.status==="reviewed"&&L.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(L.reviewedBy||"管理員")} 已閱，說明：${esc(L.reviewNote)}</div>`:"")+((L.status==="returned"||(L.status==="submitted"&&L.returnReason))?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(L.returnedBy||"管理員")} 退回修改（退回給：${esc(L.returnedToName||who(L))}）：${esc(L.returnReason||"")}${L.status==="submitted"?"（您已重新送出；管理員按下「已閱」後，這則退件說明才會消失）":"（修改完請再按「送出給管理員」）"}</div>`:"");
+ const banners=(L.status==="reviewed"&&L.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(L.reviewedBy||"管理員")} 已閱，說明：${esc(L.reviewNote)}</div>`:"")+(L.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(L.returnedBy||"管理員")} 退回修改（退回給：${esc(L.returnedToName||who(L))}）：${esc(L.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:"");
  const ok=!!safeUrl(E.url);
  const pdfBox=(n,u,nm)=>`<div style="margin-top:8px;border:2px solid ${n===1?"#cdbf9e":"#bcd3b0"};border-radius:10px;padding:2px 10px 8px;background:${n===1?"#fffdf5":"#f6fbf2"}"><label style="${lab}">PDF 檔案 ${n}${n===1?"（Canva →「分享」→「下載」→ 選 PDF）":"（選填，可再附一份）"}</label><input type="file" accept="application/pdf,.pdf" data-extpdf="${n}">${u?`<div style="margin-top:4px;font-size:13px">📄 ${esc(nm||"已上傳的 PDF")}　<a class="wkb" href="${esc(safeUrl(u))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">開啟</a> <button class="wkb" data-extrm="${n}" style="color:#c0392b">移除</button></div>`:`<div style="font-size:12px;color:#7a6f57">PDF 會存到班級雲端硬碟的「班刊」資料夾（需要管理員已設定雲端硬碟上傳）。</div>`}</div>`;
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button>${adminOther?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}${extBadge(L)}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
@@ -2151,13 +2060,10 @@ async function printLog(L){if(L.kind==="ext"){openExt(L);return}const w=window.o
 const STAT={draft:['草稿','#9a917a'],submitted:['已送出・待管理員查看','#c0392b'],reviewed:['管理員已閱','#5b7a4a'],returned:['被退回・請修改','#d35400']};
 const reasonLine=l=>l.status==='returned'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">↩ 已退回給：${esc(l.returnedToName||who(l))}${l.returnedBy?`　｜　退回者：${esc(l.returnedBy)}`:""}${l.returnedAt?`　｜　${tm(l.returnedAt)}`:""}<br>退回原因：${esc(l.returnReason)}</div>`:'';
 const reasonLine0=reasonLine;
-const reasonLineKeep=l=>l.status==='submitted'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">↩ 上次退件說明（老師已重新送出，管理員按「已閱」後才會消失）：${esc(l.returnReason)}${l.returnedBy?`　｜　退回者：${esc(l.returnedBy)}`:""}${l.returnedAt?`　｜　${tm(l.returnedAt)}`:""}</div>`:'';
-const reasonLine2=l=>reasonLine0(l)+reasonLineKeep(l)+(l.status==='reviewed'&&l.reviewNote?`<div style="color:#375623;font-size:12px;font-weight:700;margin-top:2px">✅ 管理員說明：${esc(l.reviewNote)}${l.reviewedBy?`　｜　${esc(l.reviewedBy)}`:""}${l.reviewedAt?`　｜　${tm(l.reviewedAt)}`:""}</div>`:'');
+const reasonLine2=l=>reasonLine0(l)+(l.status==='reviewed'&&l.reviewNote?`<div style="color:#375623;font-size:12px;font-weight:700;margin-top:2px">✅ 管理員說明：${esc(l.reviewNote)}${l.reviewedBy?`　｜　${esc(l.reviewedBy)}`:""}${l.reviewedAt?`　｜　${tm(l.reviewedAt)}`:""}</div>`:'');
 const badge=l=>{const s=STAT[l.status||'draft']||STAT.draft;return `<span style="font-size:12px;font-weight:700;color:${s[1]};border:1px solid ${s[1]};border-radius:999px;padding:0 8px;margin-left:6px">${s[0]}</span>`};
 const FD=()=>window.__driveFolders||{};
-const CLSCOL={"幸運草班":["#2e7d32","#e8f5e9"],"梔子花班":["#c77d00","#fff3d6"],"仙草花班":["#00796b","#e0f2f1"],"風鈴草班":["#6a4fb3","#efe9fb"],"山茶花班":["#c2185b","#fde7f0"]};
-const clsCol=c=>CLSCOL[c]||["#8a6d3b","#fff8e7"];
-const folderLink=c=>FD()[c]?`<a class="wkb" href="${esc(FD()[c])}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;border:2px solid ${clsCol(c)[0]};background:${clsCol(c)[1]};color:${clsCol(c)[0]};font-weight:700">📂 開啟「${esc(c)}」雲端硬碟</a>`:"";
+const folderLink=c=>FD()[c]?`<a class="wkb" href="${esc(FD()[c])}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">📂 開啟「${esc(c)}」雲端硬碟</a>`:"";
 const folderBar=cs=>{const a=cs.filter(c=>FD()[c]).map(folderLink).join("");return a?`<div class="wkbar"><span style="font-size:13px;font-weight:700">☁️ 班級雲端硬碟：</span>${a}</div>`:""};
 const myClasses=()=>[...new Set([...logs.filter(l=>l.uid===(d.currentUser||{}).uid).map(l=>l.cls),prefs&&prefs.cls].filter(Boolean))];
 const tm=ts=>ts?new Date(ts).toLocaleString("zh-TW",{hour12:false}):"";
@@ -2214,7 +2120,7 @@ async function rvAct(kind){const o=cur;if(!o||!d.isAdmin)return;const note=Strin
  const me=d.myName||(d.currentUser||{}).displayName||(d.currentUser||{}).email||"管理員";
  if(kind==="ret"&&!note){alert("退件請先在說明欄寫下退件原因（老師會收到 LINE 通知）");return}
  const toE=o.submittedByEmail||o.ownerEmail,head=`${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}`;
- try{let upd;if(kind==="ok")upd={status:"reviewed",reviewedAt:Date.now(),reviewedBy:me,reviewNote:note,returnReason:""};else upd={status:"returned",returnReason:note,returnedAt:Date.now(),returnedBy:me,returnedToName:who(o),returnedToEmail:toE||"",returnedToUid:o.uid||""};
+ try{let upd;if(kind==="ok")upd={status:"reviewed",reviewedAt:Date.now(),reviewedBy:me,reviewNote:note};else upd={status:"returned",returnReason:note,returnedAt:Date.now(),returnedBy:me,returnedToName:who(o),returnedToEmail:toE||"",returnedToUid:o.uid||""};
   await col().doc(o.id).set(upd,{merge:true});Object.assign(o,upd)}catch(x){alert("操作失敗（"+(x.code||x.message)+"）");return}
  const msg=kind==="ok"?`✅ 週誌管理員已閱\n${who(o)} 老師您好\n${head}\n管理員已查看您送出的週誌${note?"\n\n管理員說明：\n"+note:""}`:`↩️ 週誌被退回，請修改\n退回給：${who(o)}\n退回者：${me}\n${head}\n原因：${note}\n請至系統「📝 週誌」修改後重新送出`;
  const wantLine=kind==="ret"||!!(root.querySelector("#wkrvline")||{}).checked;let tip=kind==="ok"?"（已閱預設不傳 LINE，老師開啟系統就會看到你的說明。）":"找不到老師的 Email，沒有傳 LINE。";if(wantLine&&toE&&d.notifyLineTo){try{tip=lineMsg(await d.notifyLineTo(toE,msg))}catch(x){tip="LINE 通知失敗："+(x.message||x)}}
@@ -2252,7 +2158,7 @@ function editorHtml(){if(viewOnly)return viewerHtml();if(cur.kind==="ext")return
 function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(gmOf(L));
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><label class="wkb" style="display:inline-flex;gap:4px;align-items:center;cursor:pointer" title="學習區觀察紀錄用雙面列印版面：必要時補一頁空白頁，讓學習區從正面開始"><input type="checkbox" id="wkdup" ${dupOn()?"checked":""}>學習區雙面列印</label><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}${d.isAdmin&&L.uid!==(d.currentUser||{}).uid?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
- ${cur.status==="reviewed"&&cur.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(cur.reviewedBy||"管理員")} 已閱，說明：${esc(cur.reviewNote)}</div>`:""}${cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:6px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(cur.ownerName||cur.ownerEmail||"")} 分享給您的，修改會直接更新同一份內容。</div>`:""}${(cur.status==="returned"||(cur.status==="submitted"&&cur.returnReason))?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(cur.returnedBy||"管理員")} 退回修改（退回給：${esc(cur.returnedToName||who(cur))}）：${esc(cur.returnReason||"")}${cur.status==="submitted"?"（您已重新送出；管理員按下「已閱」後，這則退件說明才會消失）":"（修改完請再按「送出給管理員」）"}</div>`:""}
+ ${cur.status==="reviewed"&&cur.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(cur.reviewedBy||"管理員")} 已閱，說明：${esc(cur.reviewNote)}</div>`:""}${cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:6px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(cur.ownerName||cur.ownerEmail||"")} 分享給您的，修改會直接更新同一份內容。</div>`:""}${cur.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(cur.returnedBy||"管理員")} 退回修改（退回給：${esc(cur.returnedToName||who(cur))}）：${esc(cur.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:""}
  ${rvCardEd()}<div class="wkset"><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
   <div><label>班級</label><input type="text" list="wkcls" data-k="cls" value="${esc(L.cls)}" placeholder="例如：梔子花班" style="width:150px"><datalist id="wkcls">${(d.classes||[]).map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
   <div><label>學年度學期</label><input type="text" data-k="sem" value="${esc(L.sem)}" style="width:170px"></div><div><label>週次（用於檔名）</label><input type="text" data-k="weeks" value="${esc(L.weeks||calcWeeks(L.dateFrom,L.dateTo))}" style="width:120px"></div>
@@ -2311,9 +2217,9 @@ function bind(){
   if(ds.printcur){clearTimeout(saveT);await flushCur();printLog(cur);return}
   if(ds.fillwalk){if(!lines(cur.walk.goals).length||confirm("要用這個月的學習目標取代目前內容嗎？")){fillWalk(cur);render();later()}return}
   if(ds.fillgm){if(!(lines(cur.gm.text).length||lines(cur.gm.inds).length||lines(cur.gm.abil).length||lines(cur.gm.res).length)||confirm("要用這個月的計畫內容取代目前的活動名稱與內容（循環體能闖關）、學習指標、能力與器材嗎？")){fillGm(cur);render();later()}return}
-  if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||"",returnReason:""},{merge:true});status("已標記已閱 ✓（已閱預設不傳 LINE，老師開啟系統就會看到）")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
+  if(ds.reviewed){const o=logs.find(l=>l.id===ds.reviewed)||{};try{await col().doc(ds.reviewed).set({status:"reviewed",reviewedAt:Date.now(),reviewedBy:(d.currentUser||{}).displayName||(d.currentUser||{}).email||""},{merge:true});status("已標記已閱 ✓（已閱預設不傳 LINE，老師開啟系統就會看到）")}catch(x){alert("操作失敗（"+(x.code||x.message)+"）")}return}
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)&&!safeUrl(cur.ext&&cur.ext.pdf2Url)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
-   clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
+   clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
    if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF"+(safeUrl(cur.ext.pdf2Url)?" 1":"")+"：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}${safeUrl(cur.ext.pdf2Url)?"PDF 2：\n"+safeUrl(cur.ext.pdf2Url)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert(lineNow?"已送出！管理員會收到通知。":"已送出！（1 小時內您已經通知過管理員，這次不再重複傳 LINE，管理員在系統裡會看到最新的版本。）");render();return}
@@ -3488,416 +3394,300 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I11</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I13</div>
 <script id="learning-observation-script">
-/* 學習區觀察紀錄表前端行為 */
+/* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
+   因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
 (function () {
   'use strict';
-
-  // 預覽頁沒有原系統課綱資料時使用；正式合併版會優先讀取 window.PLAN_DATA.ind。
-  const FALLBACK_INDICATOR_DATA = {
-    '2-3歲': {
-      '語文區': ['能聆聽故事並回應問題', '能說出圖片中的人物或物品'],
-      '數學區': ['能辨識基本形狀', '能依顏色或大小進行分類'],
-      '美勞區': ['能嘗試使用蠟筆或彩筆創作'],
-      '積木區': ['能堆疊積木並嘗試保持平衡']
-    },
-    '3-4歲': {
-      '語文區': ['能描述圖片中的事件', '能使用完整句子表達需求'],
-      '數學區': ['能進行一對一點數', '能比較物品的多與少'],
-      '美勞區': ['能運用不同素材完成作品', '能說明自己的創作內容'],
-      '積木區': ['能依計畫進行簡單建構']
-    },
-    '4-5歲': {
-      '語文區': ['能依序敘述故事內容', '能主動與同伴進行對話'],
-      '數學區': ['能依規則進行分類與排序', '能解決生活中的簡單數量問題'],
-      '美勞區': ['能運用多種媒材表現創意', '能欣賞並分享自己與同伴的作品'],
-      '積木區': ['能依照圖示或想法完成建構', '能與同伴討論建構方式'],
-      '組合建構區': ['能嘗試組合零件完成作品']
-    },
-    '5-6歲': {
-      '語文區': ['能清楚表達想法並回應同伴', '能依情節創編故事'],
-      '數學區': ['能運用數量概念解決問題', '能辨識並延伸規律'],
-      '美勞區': ['能選擇適合的媒材表現想法', '能說明作品的創作歷程'],
-      '積木區': ['能規劃並完成較複雜的建構作品', '能合作解決建構過程中的問題'],
-      '組合建構區': ['能依功能設計並調整作品'],
-      '扮演區': ['能依角色進行想像遊戲並與同伴合作']
-    }
+  const LS = 'observationChildrenByClass';
+  const FALLBACK = {
+    '2-3歲': { '語文區': ['能聆聽故事並回應問題', '能說出圖片中的人物或物品'], '數學區': ['能辨識基本形狀', '能依顏色或大小進行分類'], '美勞區': ['能嘗試使用蠟筆或彩筆創作'], '積木區': ['能堆疊積木並嘗試保持平衡'] },
+    '3-4歲': { '語文區': ['能描述圖片中的事件', '能使用完整句子表達需求'], '數學區': ['能進行一對一點數', '能比較物品的多與少'], '美勞區': ['能運用不同素材完成作品', '能說明自己的創作內容'], '積木區': ['能依計畫進行簡單建構'] },
+    '4-5歲': { '語文區': ['能依序敘述故事內容', '能主動與同伴進行對話'], '數學區': ['能依規則進行分類與排序', '能解決生活中的簡單數量問題'], '美勞區': ['能運用多種媒材表現創意', '能欣賞並分享自己與同伴的作品'], '積木區': ['能依照圖示或想法完成建構', '能與同伴討論建構方式'], '組合建構區': ['能嘗試組合零件完成作品'] },
+    '5-6歲': { '語文區': ['能清楚表達想法並回應同伴', '能依情節創編故事'], '數學區': ['能運用數量概念解決問題', '能辨識並延伸規律'], '美勞區': ['能選擇適合的媒材表現想法', '能說明作品的創作歷程'], '積木區': ['能規劃並完成較複雜的建構作品', '能合作解決建構過程中的問題'], '組合建構區': ['能依功能設計並調整作品'], '扮演區': ['能依角色進行想像遊戲並與同伴合作'] }
   };
+  let page = null, form = null, app = null, roster = {}, unsub = null, unsubUid = '', rosterSig = '';
+  const photoUrls = [];
+  try { roster = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { roster = {}; }
+  const $ = (s, r = page) => (r ? r.querySelector(s) : null);
+  const $$ = (s, r = page) => (r ? Array.from(r.querySelectorAll(s)) : []);
+  const zh = (a, b) => String(a).localeCompare(String(b), 'zh-Hant');
+  const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }; // 用本地日期，避免台灣凌晨變成前一天
+  const fbUser = () => (window.firebase && firebase.apps && firebase.apps.length ? firebase.auth().currentUser : null);
 
   function getIndicatorData() {
-    const curriculum = window.PLAN_DATA?.ind;
-    if (!curriculum || typeof curriculum !== 'object') return FALLBACK_INDICATOR_DATA;
-    const domains = { 身: '身體動作與健康', 認: '認知', 語: '語文', 社: '社會', 情: '情緒', 美: '美感' };
+    const cur = window.PLAN_DATA && window.PLAN_DATA.ind;
+    if (!cur || typeof cur !== 'object') return FALLBACK;
+    const dom = { 身: '身體動作與健康', 認: '認知', 語: '語文', 社: '社會', 情: '情緒', 美: '美感' };
     const ages = { 幼: '幼幼班（2–3歲）', 小: '小班（3–4歲）', 中: '中班（4–5歲）', 大: '大班（5–6歲）' };
-    const result = {};
-    Object.entries(curriculum).forEach(([code, text]) => {
-      const match = code.match(/^([身認語社情美])-([幼小中大])-/);
-      if (!match) return;
-      const age = ages[match[2]];
-      const category = domains[match[1]];
-      if (!result[age]) result[age] = {};
-      if (!result[age][category]) result[age][category] = [];
-      result[age][category].push(`${code} ${text}`);
+    const out = {};
+    Object.entries(cur).forEach(([code, text]) => {
+      const m = code.match(/^([身認語社情美])-([幼小中大])-/);
+      if (!m) return;
+      const a = ages[m[2]], c = dom[m[1]];
+      ((out[a] = out[a] || {})[c] = out[a][c] || []).push(code + ' ' + text);
     });
-    return Object.keys(result).length ? result : FALLBACK_INDICATOR_DATA;
+    return Object.keys(out).length ? out : FALLBACK;
   }
-
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-  let childrenByClass = {};
-  let rosterUnsubscribe = null;
-  let rosterPollTimer = null;
-
-  function appData() {
-    const root = document.querySelector('[x-data]');
-    return window.Alpine && root ? window.Alpine.$data(root) : null;
-  }
-
-  function mergedClasses() {
-    const app = appData();
-    return [...new Set([...(app?.classes || []), ...Object.keys(childrenByClass)].filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'zh-Hant'));
-  }
-
-  function setOptions(select, items, placeholder) {
-    select.innerHTML = '';
-    const first = document.createElement('option');
-    first.value = '';
-    first.textContent = placeholder;
-    select.appendChild(first);
-    items.forEach((item) => {
-      const option = document.createElement('option');
-      option.value = item;
-      option.textContent = item;
-      select.appendChild(option);
+  function setOptions(sel, items, ph, manual) {
+    sel.innerHTML = '';
+    [['', ph]].concat(items.map(i => [i, i])).concat(manual ? [['__manual__', '✏️ 其他（手動輸入）']] : []).forEach(([v, t]) => {
+      const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o);
     });
   }
 
-  function initIndicatorSelects() {
-    const ageSelect = $('#indicator-age');
-    const categorySelect = $('#indicator-category');
-    const itemSelect = $('#indicator-item');
-    const selectedBox = $('#selected-indicator');
-    if (!ageSelect || !categorySelect || !itemSelect) return;
-
-    const indicatorData = getIndicatorData();
-    setOptions(ageSelect, Object.keys(indicatorData), '請先選擇年齡層');
-
-    ageSelect.addEventListener('change', () => {
-      const categories = ageSelect.value ? Object.keys(indicatorData[ageSelect.value]) : [];
-      setOptions(categorySelect, categories, '請再選擇分類');
-      categorySelect.disabled = categories.length === 0;
-      setOptions(itemSelect, [], '請先選擇學習指標');
-      itemSelect.disabled = true;
-      selectedBox.hidden = true;
+  function initIndicators() {
+    const age = $('#indicator-age'), cat = $('#indicator-category'), item = $('#indicator-item'), box = $('#selected-indicator');
+    const data = getIndicatorData();
+    setOptions(age, Object.keys(data), '請先選擇年齡層');
+    age.addEventListener('change', () => {
+      const c = age.value ? Object.keys(data[age.value]) : [];
+      setOptions(cat, c, '請再選擇分類'); cat.disabled = !c.length;
+      setOptions(item, [], '請先選擇學習指標'); item.disabled = true; box.hidden = true;
     });
-
-    categorySelect.addEventListener('change', () => {
-      const items = ageSelect.value && categorySelect.value
-        ? indicatorData[ageSelect.value][categorySelect.value]
-        : [];
-      setOptions(itemSelect, items, '請再選擇學習指標');
-      itemSelect.disabled = items.length === 0;
-      selectedBox.hidden = true;
+    cat.addEventListener('change', () => {
+      const i = age.value && cat.value ? data[age.value][cat.value] : [];
+      setOptions(item, i, '請再選擇學習指標'); item.disabled = !i.length; box.hidden = true;
     });
-
-    itemSelect.addEventListener('change', () => {
-      if (!itemSelect.value) {
-        selectedBox.hidden = true;
-        return;
-      }
-      selectedBox.textContent = `已選擇：${ageSelect.value}｜${categorySelect.value}｜${itemSelect.value}`;
-      selectedBox.hidden = false;
+    item.addEventListener('change', () => {
+      box.hidden = !item.value;
+      if (item.value) box.textContent = '已選擇：' + age.value + '｜' + cat.value + '｜' + item.value;
     });
   }
 
-  function setRosterOptions() {
-    const classSelect = $('#observation-class');
-    const childSelect = $('#observation-child');
-    if (!classSelect || !childSelect) return;
-    const currentClass = classSelect.value;
-    const currentChild = childSelect.value;
-    setOptions(classSelect, mergedClasses(), '請選擇班級');
-    const manualClass = document.createElement('option');
-    manualClass.value = '__manual__'; manualClass.textContent = '✏️ 其他（手動輸入）'; classSelect.appendChild(manualClass);
-    if (mergedClasses().includes(currentClass) || currentClass === '__manual__') classSelect.value = currentClass;
-    const names = childrenByClass[classSelect.value] || [];
-    setOptions(childSelect, names, names.length ? '請選擇幼兒' : '請先匯入幼兒名單');
-    const manual = document.createElement('option');
-    manual.value = '__manual__'; manual.textContent = '✏️ 其他（手動輸入）'; childSelect.appendChild(manual);
-    if (names.includes(currentChild) || currentChild === '__manual__') childSelect.value = currentChild;
-    childSelect.disabled = !classSelect.value;
-  }
-
-  function toggleManualRosterInput() {
-    const classSelect = $('#observation-class');
-    const childSelect = $('#observation-child');
-    const classManual = $('#observation-class-manual');
-    const childManual = $('#observation-child-manual');
-    if (classManual) classManual.hidden = classSelect?.value !== '__manual__';
-    if (childManual) childManual.hidden = childSelect?.value !== '__manual__';
-  }
-
-  function initRosterFields() {
-    const classSelect = $('#observation-class');
-    const childSelect = $('#observation-child');
-    if (!classSelect || !childSelect) return;
-    setRosterOptions();
-    classSelect.addEventListener('focus', setRosterOptions);
-    classSelect.addEventListener('change', () => { setRosterOptions(); toggleManualRosterInput(); });
-    childSelect.addEventListener('change', toggleManualRosterInput);
-    const importButton = $('[data-action="import-children"]');
-    const fileInput = $('#children-roster-file');
-    importButton?.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (!fileInput) return;
-      if (typeof fileInput.showPicker === 'function') fileInput.showPicker();
-      else fileInput.click();
+  /* ---- 幼兒名單 ---- */
+  const classList = () => [...new Set([...((app && app.classes) || []), ...Object.keys(roster)].filter(Boolean))].sort(zh);
+  function toggleManual() {
+    [['#observation-class', '#observation-class-manual'], ['#observation-child', '#observation-child-manual']].forEach(([s, m]) => {
+      const sel = $(s), inp = $(m); if (!sel || !inp) return;
+      const on = sel.value === '__manual__'; inp.hidden = !on; inp.required = on;
     });
-    fileInput?.addEventListener('change', async () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      try { await importChildrenFile(file); } catch (error) { alert(`幼兒名單匯入失敗：${error.message || error}`); }
-      fileInput.value = '';
+  }
+  // 只有資料真的變了才重建選單；舊版每 1.5 秒重建一次，下拉選單會被收起來。
+  function refreshRoster(force) {
+    const cs = $('#observation-class'), ch = $('#observation-child'); if (!cs || !ch) return;
+    const sig = classList().join('|') + '#' + cs.value + '#' + (roster[cs.value] || []).join('|');
+    if (!force && sig === rosterSig) return;
+    rosterSig = sig;
+    const cc = cs.value, cn = ch.value, list = classList();
+    setOptions(cs, list, '請選擇班級', true);
+    if (list.includes(cc) || cc === '__manual__') cs.value = cc;
+    const nm = roster[cs.value] || [];
+    setOptions(ch, nm, nm.length ? '請選擇幼兒' : '請先匯入幼兒名單', true);
+    if (nm.includes(cn) || cn === '__manual__') ch.value = cn;
+    ch.disabled = !cs.value; toggleManual();
+  }
+  function rosterMsg(t, bad) { const e = $('#observation-roster-status'); if (e) { e.textContent = t; e.className = 'text-xs font-bold w-full ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
+  function parseRoster(text, defCls) {
+    const r = {};
+    text.replace(/^\uFEFF/, '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach((line, i) => {
+      if (i === 0 && /班級|幼兒|姓名|class|name/i.test(line)) return;
+      const c = line.split(/[,，\t;]/).map(x => x.trim().replace(/^["']|["']$/g, ''));
+      const cls = c.length >= 2 ? c[0] : defCls, nm = c.length >= 2 ? c[1] : c[0];
+      if (cls && nm) (r[cls] = r[cls] || []).push(nm);
     });
-    rosterPollTimer = setInterval(() => { if (document.body.contains(classSelect)) setRosterOptions(); }, 1500);
+    return r;
   }
-
-  function parseChildrenText(text, defaultClass) {
-    const result = {};
-    text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).forEach((line, index) => {
-      const cells = line.split(/[,，\t;]/).map(x => x.trim().replace(/^['"]|['"]$/g, ''));
-      if (index === 0 && /班級|幼兒|姓名|class|name/i.test(line)) return;
-      const cls = cells.length >= 2 ? cells[0] : defaultClass;
-      const name = cells.length >= 2 ? cells[1] : cells[0];
-      if (!cls || !name) return;
-      (result[cls] ||= []).push(name);
-    });
-    Object.keys(result).forEach(cls => { result[cls] = [...new Set(result[cls])]; });
-    return result;
+  function fromJson(j, defCls) {
+    if (Array.isArray(j)) return parseRoster(j.map(x => Array.isArray(x) ? x.join(',') : typeof x === 'string' ? x : ((x.className ? x.className + ',' : '') + (x.childName || x.name || ''))).join('\n'), defCls);
+    const r = {};
+    Object.entries(j || {}).forEach(([k, v]) => { if (Array.isArray(v)) r[k] = v.map(s => String(s).trim()).filter(Boolean); });
+    return r;
   }
-
-  async function importChildrenFile(file) {
-    const text = await file.text();
-    let imported = {};
-    if (file.name.toLowerCase().endsWith('.json')) {
-      const parsed = JSON.parse(text);
-      imported = Array.isArray(parsed) ? parseChildrenText(parsed.map(x => Array.isArray(x) ? x.join(',') : `${x.className || ''},${x.childName || x.name || x}`).join('\n'), $('#observation-class')?.value) : parsed;
-    } else imported = parseChildrenText(text, $('#observation-class')?.value);
-    Object.entries(imported).forEach(([cls, names]) => { childrenByClass[cls] = [...new Set([...(childrenByClass[cls] || []), ...names])]; });
-    localStorage.setItem('observationChildrenByClass', JSON.stringify(childrenByClass));
-    setRosterOptions();
-    await saveChildrenRosterToFirebase();
-    alert(`已匯入 ${Object.values(imported).reduce((n, names) => n + names.length, 0)} 位幼兒。`);
+  async function readText(file) { // Excel 在台灣常存成 Big5 的 CSV，UTF-8 讀不通時改用 Big5
+    const buf = await file.arrayBuffer();
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { try { return new TextDecoder('big5').decode(buf); } catch (e2) { return new TextDecoder().decode(buf); } }
   }
-
-  async function saveChildrenRosterToFirebase() {
-    if (!window.firebase || !firebase.apps?.length || !firebase.auth().currentUser) return;
-    await firebase.firestore().collection('roster').doc('children').set({ list: childrenByClass, updatedAt: Date.now(), updatedBy: firebase.auth().currentUser.uid }, { merge: true });
+  async function saveRoster() {
+    const u = fbUser(); if (!u) return;
+    await firebase.firestore().collection('roster').doc('children').set({ list: roster, updatedAt: Date.now(), updatedBy: u.uid }, { merge: true });
   }
-
-  function subscribeChildrenRoster() {
-    if (!window.firebase || !firebase.apps?.length || !firebase.auth().currentUser || rosterUnsubscribe) return;
-    rosterUnsubscribe = firebase.firestore().collection('roster').doc('children').onSnapshot((snap) => {
-      if (snap.exists) childrenByClass = snap.data().list || {};
-      setRosterOptions();
+  async function importFile(file) {
+    const text = await readText(file), cs = $('#observation-class');
+    const def = cs && cs.value !== '__manual__' ? cs.value : '';
+    const imp = file.name.toLowerCase().endsWith('.json') ? fromJson(JSON.parse(text), def) : parseRoster(text, def);
+    let n = 0;
+    Object.entries(imp).forEach(([c, names]) => { roster[c] = [...new Set([...(roster[c] || []), ...names])]; n += names.length; });
+    if (!n) throw new Error('找不到可匯入的幼兒資料');
+    localStorage.setItem(LS, JSON.stringify(roster)); refreshRoster(true);
+    let msg = '已匯入 ' + n + ' 位幼兒。';
+    try { await saveRoster(); } catch (e) { msg += '（雲端同步失敗：' + (e.code || e.message) + '，目前只存在這台裝置）'; }
+    rosterMsg(msg);
+  }
+  function subscribe() {
+    const u = fbUser(); if (!u || (unsub && unsubUid === u.uid)) return;
+    if (unsub) unsub();
+    unsubUid = u.uid;
+    unsub = firebase.firestore().collection('roster').doc('children').onSnapshot(s => {
+      const l = s.exists && s.data().list;
+      if (l && typeof l === 'object') roster = fromJson(l);
+      refreshRoster(true);
     }, () => {});
   }
-
-  function syncAreaVisibility(form = document) {
-    $$('.area-card', form).forEach((card) => {
-      const checkbox = $('input[name="learningAreas"]', card);
-      card.hidden = !checkbox?.checked;
+  function initRoster() {
+    const cs = $('#observation-class'), ch = $('#observation-child'), fi = $('#children-roster-file');
+    refreshRoster(true);
+    cs.addEventListener('change', () => refreshRoster(true));
+    ch.addEventListener('change', toggleManual);
+    $('[data-action="import-children"]').addEventListener('click', () => fi.click());
+    fi.addEventListener('change', async () => {
+      const f = fi.files && fi.files[0]; if (!f) return;
+      try { await importFile(f); } catch (e) { rosterMsg('匯入失敗：' + (e.message || e), true); }
+      fi.value = '';
     });
   }
 
-  function initAreaPhotoPreview() {
-    $$('[data-area-photo]').forEach((input) => input.addEventListener('change', () => {
-      const area = input.dataset.areaPhoto;
-      const preview = $(`[data-area-preview="${CSS.escape(area)}"]`);
-      if (!preview) return;
-      preview.innerHTML = '';
-      Array.from(input.files || []).filter(file => file.type.startsWith('image/')).forEach((file) => {
-        const image = document.createElement('img'); image.src = URL.createObjectURL(file); image.alt = `${area}：${file.name}`;
-        image.onload = () => URL.revokeObjectURL(image.src); preview.appendChild(image);
+  /* ---- 學習區與照片 ---- */
+  function syncAreas() { // 卡片一直可見，勾選後才顯示上傳按鈕與預覽（舊版整張卡片被隱藏，勾不到）
+    $$('.obs-area').forEach(c => {
+      const on = $('input[name="learningAreas"]', c).checked;
+      c.classList.toggle('is-on', on);
+      $$('[data-area-extra]', c).forEach(n => { n.hidden = !on; });
+    });
+  }
+  function initAreas() {
+    $$('[data-area-photo]').forEach(inp => inp.addEventListener('change', () => {
+      const a = inp.dataset.areaPhoto, pv = $('[data-area-preview="' + CSS.escape(a) + '"]'); if (!pv) return;
+      pv.innerHTML = '';
+      Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
+        const u = URL.createObjectURL(f); photoUrls.push(u);
+        const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name; pv.appendChild(im);
       });
     }));
-    const form = $('#learning-observation-form');
-    $$('input[name="learningAreas"]', form || document).forEach((checkbox) => checkbox.addEventListener('change', () => syncAreaVisibility(form || document)));
-    syncAreaVisibility(form || document);
+    $$('input[name="learningAreas"]').forEach(c => c.addEventListener('change', syncAreas));
+    syncAreas();
+  }
+  // 只收「已勾選學習區」的照片，取消勾選的區不會偷偷上傳
+  const photoEntries = f => $$('[data-area-photo]', f).filter(i => { const c = $('input[name="learningAreas"][value="' + CSS.escape(i.dataset.areaPhoto) + '"]', f); return c && c.checked; })
+    .flatMap(i => Array.from(i.files || []).map(file => ({ area: i.dataset.areaPhoto, file })));
+
+  function collectFormData(f) {
+    const d = Object.fromEntries(new FormData(f).entries());
+    if (d.className === '__manual__') d.className = (d.classNameManual || '').trim();
+    if (d.childName === '__manual__') d.childName = (d.childNameManual || '').trim();
+    delete d.classNameManual; delete d.childNameManual;
+    d.learningAreas = $$('input[name="learningAreas"]:checked', f).map(e => e.value);
+    d.performances = $$('input[name="performances"]:checked', f).map(e => e.value);
+    d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '' };
+    delete d.indicatorAge; delete d.indicatorCategory; delete d.indicatorItem;
+    d.areaPhotoFiles = photoEntries(f).reduce((g, e) => { (g[e.area] = g[e.area] || []).push({ name: e.file.name, type: e.file.type, size: e.file.size }); return g; }, {});
+    return d;
   }
 
-  function areaPhotoEntries(form) {
-    return $$('[data-area-photo]', form).flatMap(input => Array.from(input.files || []).map(file => ({ area: input.dataset.areaPhoto, file })));
-  }
-
-  function collectFormData(form) {
-    const data = Object.fromEntries(new FormData(form).entries());
-    if (data.className === '__manual__') data.className = data.classNameManual || '';
-    if (data.childName === '__manual__') data.childName = data.childNameManual || '';
-    delete data.classNameManual;
-    delete data.childNameManual;
-    data.learningAreas = $$('input[name="learningAreas"]:checked', form).map((el) => el.value);
-    data.performances = $$('input[name="performances"]:checked', form).map((el) => el.value);
-    data.indicator = {
-      age: data.indicatorAge || '',
-      category: data.indicatorCategory || '',
-      item: data.indicatorItem || ''
-    };
-    delete data.indicatorAge;
-    delete data.indicatorCategory;
-    delete data.indicatorItem;
-    // File 物件不能直接序列化到 Firestore；上傳時依學習區送到 Firebase Storage。
-    data.areaPhotoFiles = areaPhotoEntries(form).reduce((groups, entry) => {
-      (groups[entry.area] ||= []).push({ name: entry.file.name, type: entry.file.type, size: entry.file.size });
-      return groups;
-    }, {});
-    return data;
-  }
-
-  function resetForm(form) {
-    form.reset();
-    const category = $('#indicator-category');
-    const item = $('#indicator-item');
-    const selected = $('#selected-indicator');
-    if (category) { category.disabled = true; setOptions(category, [], '請先選擇分類'); }
-    if (item) { item.disabled = true; setOptions(item, [], '請先選擇學習指標'); }
-    if (selected) selected.hidden = true;
-    $$('[data-area-photo]', form).forEach(input => { input.value = ''; });
-    $$('[data-area-preview]', form).forEach(preview => { preview.innerHTML = ''; });
-    syncAreaVisibility(form);
-    if ($('#observation-class-manual')) $('#observation-class-manual').value = '';
-    if ($('#observation-child-manual')) $('#observation-child-manual').value = '';
-    toggleManualRosterInput();
-  }
-
-  function localObservationFallback(payload) {
-    const key = 'learningObservations';
-    const saved = JSON.parse(localStorage.getItem(key) || '[]');
-    const id = (crypto.randomUUID ? crypto.randomUUID() : `local_${Date.now()}`);
-    saved.push({ ...payload, id, createdAt: new Date().toISOString(), storageMode: 'local' });
-    localStorage.setItem(key, JSON.stringify(saved));
-    return { id, mode: 'local' };
-  }
-
-  async function saveLearningObservation(payload, photoEntries) {
-    // 預覽頁沒有 Firebase 時，保留可操作的 localStorage 測試模式。
-    if (!window.firebase || !firebase.apps || !firebase.apps.length || !firebase.auth().currentUser) {
-      return localObservationFallback(payload);
+  async function saveLearningObservation(payload, photos) {
+    const all = Array.from(photos || []);
+    if (!fbUser()) { // 沒登入 Firebase 時只存文字到本機
+      const saved = JSON.parse(localStorage.getItem('learningObservations') || '[]');
+      const id = crypto.randomUUID ? crypto.randomUUID() : 'local_' + Date.now();
+      saved.push({ ...payload, id, createdAt: new Date().toISOString(), storageMode: 'local' });
+      localStorage.setItem('learningObservations', JSON.stringify(saved));
+      return { id, mode: 'local' };
     }
-
-    const user = firebase.auth().currentUser;
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const docRef = db.collection('learningObservations').doc();
-    const uploaded = [];
-    const maxPhotos = 24;
-    const maxBytes = 10 * 1024 * 1024;
-    const entries = Array.from(photoEntries || []).filter((entry) => entry.file?.type?.startsWith('image/')).slice(0, maxPhotos);
-
-    if (Array.from(photoEntries || []).length > maxPhotos) {
-      throw new Error(`照片最多上傳 ${maxPhotos} 張`);
-    }
-    if (entries.some((entry) => entry.file.size > maxBytes)) {
-      throw new Error('單張照片不可超過 10 MB');
-    }
-
+    const MAX = 24, MAXB = 10 * 1024 * 1024;
+    if (all.length > MAX) throw new Error('照片最多上傳 ' + MAX + ' 張');
+    const entries = all.filter(e => e.file && e.file.type && e.file.type.startsWith('image/'));
+    if (entries.some(e => e.file.size > MAXB)) throw new Error('單張照片不可超過 10 MB');
+    // 照片壓縮成 JPEG 後存在 learningObservations/{id}/photos 子集合（和週誌相同做法，不使用 Firebase Storage）
+    const user = firebase.auth().currentUser, db = firebase.firestore();
+    const docRef = db.collection('learningObservations').doc(), done = [];
+    const shrink = f => new Promise((ok, bad) => {
+      const fr = new FileReader(); fr.onerror = bad;
+      fr.onload = () => {
+        const im = new Image(); im.onerror = () => bad(new Error('無法讀取照片「' + f.name + '」，請改用 JPG／PNG'));
+        im.onload = () => {
+          const k = Math.min(1, 1000 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+          c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', 0.75));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(f);
+    });
     try {
-      for (const entry of entries) {
-        const file = entry.file;
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const safeArea = String(entry.area || '未分類').replace(/[^\u4e00-\u9fffA-Za-z0-9_-]/g, '_');
-        const path = `learning-observation-photos/${user.uid}/${docRef.id}/${safeArea}/${Date.now()}_${safeName}`;
-        const ref = storage.ref(path);
-        await ref.put(file, { contentType: file.type, customMetadata: { uploadedBy: user.uid } });
-        uploaded.push({ area: entry.area, url: await ref.getDownloadURL(), path, name: file.name, type: file.type, size: file.size });
+      const areaPhotoIds = {};
+      const prepared = [];
+      for (const e of entries) {
+        const id = 'ph' + Date.now() + Math.random().toString(36).slice(2, 6);
+        prepared.push({ id, area: e.area, name: e.file.name, data: await shrink(e.file) });
+        (areaPhotoIds[e.area] = areaPhotoIds[e.area] || []).push(id);
       }
-
-      const areaPhotoUrls = uploaded.reduce((groups, photo) => {
-        (groups[photo.area] ||= []).push(photo.url);
-        return groups;
-      }, {});
-      const areaPhotoStoragePaths = uploaded.reduce((groups, photo) => {
-        (groups[photo.area] ||= []).push(photo.path);
-        return groups;
-      }, {});
-
+      // 先寫主文件（子集合規則要靠它判斷本人），再寫照片
       await docRef.set({
-        ...payload,
-        photoUrls: uploaded.map((photo) => photo.url),
-        photoStoragePaths: uploaded.map((photo) => photo.path),
-        areaPhotoUrls,
-        areaPhotoStoragePaths,
-        photoMeta: uploaded.map(({ name, type, size }) => ({ name, type, size })),
-        uid: user.uid,
-        userEmail: user.email || '',
-        userName: user.displayName || '',
-        storageMode: 'firebase-storage',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        ...payload, areaPhotoIds, photoCount: prepared.length,
+        photoMeta: prepared.map(p => ({ id: p.id, area: p.area, name: p.name })),
+        uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      return { id: docRef.id, mode: 'firebase', photoCount: uploaded.length };
-    } catch (error) {
-      // Firestore 寫入失敗時，盡量清掉本次已上傳的孤兒檔案。
-      await Promise.all(uploaded.map((photo) => storage.ref(photo.path).delete().catch(() => {})));
-      throw error;
+      for (const p of prepared) {
+        await docRef.collection('photos').doc(p.id).set({ data: p.data, area: p.area, name: p.name, createdAt: Date.now() });
+        done.push(p.id);
+      }
+      return { id: docRef.id, mode: 'firebase', photoCount: prepared.length };
+    } catch (err) { // 失敗時先刪已寫入的照片，再刪主文件，避免留下殘缺紀錄
+      await Promise.all(done.map(id => docRef.collection('photos').doc(id).delete().catch(() => {})));
+      await docRef.delete().catch(() => {});
+      throw err;
     }
+  }
+
+  function resetForm() {
+    form.reset();
+    [['category', '請先選擇分類'], ['item', '請先選擇學習指標']].forEach(([k, t]) => { const s = $('#indicator-' + k); setOptions(s, [], t); s.disabled = true; });
+    $('#selected-indicator').hidden = true;
+    $$('[data-area-photo]', form).forEach(i => { i.value = ''; });
+    $$('[data-area-preview]', form).forEach(p => { p.innerHTML = ''; });
+    photoUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
+    syncAreas(); refreshRoster(true);
+    $('input[name="observationDate"]').value = today();
+    const b = $('#observation-save'); b.disabled = false; b.textContent = '儲存觀察紀錄';
   }
 
   function initForm() {
-    const form = $('#learning-observation-form');
-    const status = $('#observation-status');
-    if (!form) return;
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!form.reportValidity()) return;
-      const payload = collectFormData(form);
-
-      try {
-        const result = await saveLearningObservation(payload, areaPhotoEntries(form));
-        if (status) status.textContent = result.mode === 'firebase'
-          ? `觀察紀錄已儲存至 Firebase${result.photoCount ? `（照片 ${result.photoCount} 張）` : ''}。`
-          : 'Firebase 尚未登入，觀察紀錄已暫存於本機。';
-      } catch (error) {
-        console.error('儲存觀察紀錄失敗', error);
-        if (status) status.textContent = `儲存失敗：${error.code || error.message || '請稍後再試'}`;
-      }
+    const st = $('#observation-status'), btn = $('#observation-save'); let saving = false;
+    const say = (t, bad) => { st.textContent = t; st.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); };
+    const unlock = () => { if (!saving) { btn.disabled = false; btn.textContent = '儲存觀察紀錄'; } };
+    form.addEventListener('input', unlock); form.addEventListener('change', unlock);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (saving || !form.reportValidity()) return;
+      saving = true; btn.disabled = true; btn.textContent = '儲存中…'; say('');
+      try { // 儲存後按鈕維持「已儲存」，改動內容才恢復，避免連點產生重複紀錄
+        const r = await saveLearningObservation(collectFormData(form), photoEntries(form));
+        say(r.mode === 'firebase' ? '觀察紀錄已儲存' + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
+        btn.textContent = '✓ 已儲存';
+      } catch (err) {
+        console.error('儲存觀察紀錄失敗', err);
+        say('儲存失敗：' + (err.code || err.message || '請稍後再試'), true);
+        btn.disabled = false; btn.textContent = '儲存觀察紀錄';
+      } finally { saving = false; }
     });
-
-    $('[data-action="reset-observation"]')?.addEventListener('click', () => {
-      resetForm(form);
-      if (status) status.textContent = '本頁內容已清除。';
+    $('[data-action="reset-observation"]').addEventListener('click', () => {
+      if (!confirm('確定要清除本頁已填寫的內容與照片嗎？')) return;
+      resetForm(); say('本頁內容已清除。');
     });
-
-    $('[data-action="print-observation"]')?.addEventListener('click', () => {
-      window.print();
-    });
+    $('[data-action="print-observation"]').addEventListener('click', () => { document.body.classList.add('obs-printing'); window.print(); });
   }
 
-  function init() {
-    initIndicatorSelects();
-    try { childrenByClass = JSON.parse(localStorage.getItem('observationChildrenByClass') || '{}'); } catch (error) { childrenByClass = {}; }
-    initRosterFields();
-    initAreaPhotoPreview();
-    initForm();
-    const dateInput = $('input[name="observationDate"]');
-    if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
-    const firebasePoll = setInterval(() => {
-      if (window.firebase?.apps?.length && firebase.auth().currentUser) {
-        subscribeChildrenRoster();
-        clearInterval(firebasePoll);
-      }
-    }, 1000);
+  function mount(el) {
+    page = el; form = el.querySelector('#learning-observation-form');
+    if (!form || el.dataset.obsReady) return;
+    el.dataset.obsReady = '1';
+    initIndicators(); initRoster(); initAreas(); initForm();
+    $('input[name="observationDate"]').value = today();
   }
+  function sync(el, data, sig, active) {
+    app = data;
+    if (page !== el) mount(el);
+    if (active) { refreshRoster(); subscribe(); }
+  }
+  // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
+  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
+  window.addEventListener('afterprint', () => document.body.classList.remove('obs-printing'));
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-
-  // 讓現有主程式可讀取正式資料來源並替換預設指標。
   window.saveLearningObservation = saveLearningObservation;
-  window.learningObservation = { indicatorData: getIndicatorData(), collectFormData, saveLearningObservation };
+  window.learningObservation = { get indicatorData() { return getIndicatorData(); }, collectFormData, saveLearningObservation };
+  window.LearningObservation = { mount, sync };
 })();
 
 </script>
