@@ -90,6 +90,14 @@
 #learning-observation-page .obs-chips{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
 #learning-observation-page .obs-chips .obs-inline{flex:1;min-width:10rem;width:auto;margin:0}
 #learning-observation-page .obs-sec{margin-top:1rem}
+#learning-observation-page .obs-sign{display:flex;justify-content:flex-end;align-items:center;gap:.5rem;margin-top:.75rem}
+#learning-observation-page .obs-board{display:flex;flex-wrap:wrap;gap:.5rem}
+#learning-observation-page .obs-bchip{display:inline-flex;align-items:stretch;border:2px solid #EEE2CF;border-radius:.75rem;background:#FFFDF8;overflow:hidden;font-size:.8rem;font-weight:700}
+#learning-observation-page .obs-bchip button{border:0;background:transparent;padding:.3rem .55rem;font:inherit;cursor:pointer}
+#learning-observation-page .obs-bchip button:hover{background:rgba(0,0,0,.05)}
+#learning-observation-page .obs-bchip .b-act{padding:.3rem .45rem;border-left:1px solid rgba(0,0,0,.08);opacity:.75}
+#learning-observation-page .obs-bchip.n1{background:#FFF3CF;border-color:#E8C66A}
+#learning-observation-page .obs-bchip.n2{background:#DCE6D3;border-color:#8FA37E;color:#5F7350}
 #learning-observation-page .obs-note{background:#FFF8E8;border:1px solid #EEE2CF}
 #learning-observation-page .obs-chip{position:relative;display:inline-flex;cursor:pointer}
 #learning-observation-page .obs-chip input{position:absolute;opacity:0;width:1px;height:1px}
@@ -110,15 +118,17 @@
 body.obs-printing{background:#fff!important}
 body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
-#learning-observation-page{page:obs;max-width:none!important;font-size:10pt;color:#000}
+#learning-observation-page{page:obs;max-width:none!important;font-size:9.5pt;line-height:1.35;color:#000}
+#learning-observation-page ::placeholder{color:transparent!important}
+#learning-observation-page .text-sm,#learning-observation-page .text-xs{font-size:9.5pt!important}#learning-observation-page h3{font-size:10pt!important;margin:0 0 2px!important}
 #learning-observation-page .no-print{display:none!important}
 #learning-observation-page .obs-print-only{display:inline}
 #learning-observation-page .obs-frame{display:block;border:1px solid #222}
-#learning-observation-page .obs-block{margin:0!important;padding:6px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
+#learning-observation-page .obs-block{margin:0!important;padding:4px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
 #learning-observation-page .obs-frame>.obs-block:first-child{border-top:0!important}
 #learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 4px!important}
 #learning-observation-page #observation-school-title{font-size:14pt;color:#000;margin:0}
-#learning-observation-page .obs-head h2{justify-content:center;font-size:16pt;margin:0 0 6px}
+#learning-observation-page .obs-head h2{justify-content:center;font-size:15pt;margin:0 0 4px}
 #learning-observation-page .obs-grid3{gap:0;grid-template-columns:1fr 1.35fr 1fr}
 #learning-observation-page .obs-meta>div,#learning-observation-page .obs-challenge{display:flex;align-items:flex-start;gap:4px}
 #learning-observation-page .obs-meta label,#learning-observation-page .obs-challenge label{white-space:nowrap;margin:0}
@@ -133,13 +143,14 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chip input:checked+span::before{background:#111}
 #learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
 #learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
-#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2)}
-#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:90px}
+#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2);aspect-ratio:3/2}
+#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:80px}
 #learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
 #learning-observation-page .obs-act-label h3{margin:0}
 #learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-content:center}
-#learning-observation-page .obs-sec{margin-top:1.2em}
-#learning-observation-page .obs-sign{display:flex;justify-content:flex-end;align-items:flex-end;gap:4px;margin:6px 8px 0}
+#learning-observation-page .obs-sec{margin-top:1em}
+#learning-observation-page #observation-feedback{min-height:20mm}
+#learning-observation-page .obs-sign{margin-top:10px}
 #learning-observation-page .obs-sign .obs-input{flex:none;width:5cm}
 }
 </style>
@@ -1242,6 +1253,15 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
   <form id="learning-observation-form" novalidate class="space-y-4">
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-board">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-heading font-bold text-sm">📊 本學期觀察進度 <span id="obs-board-sem" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
+        <p id="obs-board-sum" class="text-xs font-bold text-sage-dark"></p>
+      </div>
+      <p class="text-[11px] text-wood-dark/60 mt-1">每位幼兒每學期寫 2 次。同班老師會即時看到彼此的標示，避免重複；點幼兒姓名會帶入下方表單，「＋」手動標示已寫、「－」取消自己的最近一次標示。</p>
+      <div id="obs-board-list" class="obs-board mt-3"></div>
+      <p id="obs-board-msg" class="text-xs font-bold mt-2" role="status"></p>
+    </div>
     <div class="obs-frame">
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <div class="obs-grid3 obs-meta">
@@ -1250,7 +1270,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期：</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
       </div>
       <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
-        <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單</button>
+        <button type="button" class="obs-btn" data-action="copy-pickup">🚌 從接送系統複製全園名單</button>
+        <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單檔</button>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
         <p class="text-[11px] text-wood-dark/60 flex-1 min-w-[12rem]">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。</p>
         <p id="observation-roster-status" class="text-xs font-bold w-full" role="status"></p>
@@ -1268,7 +1289,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <textarea id="observation-note" name="observationNote" rows="3" placeholder="請記錄幼兒在操作過程中的表現" class="obs-input obs-auto"></textarea>
     </div>
     <div class="obs-block obs-act paper-card rounded-3xl p-6 shadow-card">
-      <div class="obs-act-label"><h3 class="font-heading font-bold text-sm">學習區活動紀錄</h3><label class="obs-upload no-print">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="學習區活動紀錄" hidden></label></div>
+      <div class="obs-act-label"><h3 class="font-heading font-bold text-sm">學習區活動紀錄</h3><label class="obs-upload no-print">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="學習區活動紀錄" hidden></label><p class="no-print text-[11px] text-wood-dark/50 mt-1">列印限一頁 A4，建議 2 張</p></div>
       <div class="obs-photos obs-photos-2" data-area-preview="學習區活動紀錄"></div>
     </div>
     <div class="obs-block obs-note rounded-3xl p-6 shadow-card">
@@ -1292,11 +1313,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <h3 class="font-heading font-bold text-sm">邀請家長一起參與幼兒在學習區的學習過程分享。</h3>
       <p class="text-xs text-wood-dark/60 mt-1 mb-3">（引導語例句：你在哪一區做的作品？這個作品名稱？為什麼想要做（畫）這個作品？有遇到困難嗎？遇到困難時你怎麼解決？）</p>
-      <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80">家長回饋：</label>
+      <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80 no-print">家長回饋：</label>
       <textarea id="observation-feedback" name="familyFeedback" rows="5" placeholder="請填寫家長回饋" class="obs-input obs-auto"></textarea>
+      <div class="obs-sign"><label for="observation-signature" class="text-sm font-bold text-wood-dark/80">家長簽名：</label><input id="observation-signature" name="parentSignature" type="text" class="obs-input" style="max-width:14rem"></div>
     </div>
     </div>
-    <div class="obs-sign"><label for="observation-signature" class="text-sm font-bold text-wood-dark/80">家長簽名：</label><input id="observation-signature" name="parentSignature" type="text" class="obs-input" style="max-width:14rem"></div>
     <div class="no-print flex flex-wrap items-center gap-3">
       <button type="submit" id="observation-save" class="px-6 py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50">儲存觀察紀錄</button>
       <p id="observation-status" class="text-sm font-bold" role="status" aria-live="polite"></p>
@@ -3506,7 +3527,7 @@ function kgApp() {
     const nm = roster[cs.value] || [];
     setOptions(ch, nm, nm.length ? '請選擇幼兒' : '請先匯入幼兒名單', true);
     if (nm.includes(cn) || cn === '__manual__') ch.value = cn;
-    ch.disabled = !cs.value; toggleManual();
+    ch.disabled = !cs.value; toggleManual(); syncMarks();
   }
   function rosterMsg(t, bad) { const e = $('#observation-roster-status'); if (e) { e.textContent = t; e.className = 'text-xs font-bold w-full ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
   function parseRoster(text, defCls) {
@@ -3545,6 +3566,85 @@ function kgApp() {
     try { await saveRoster(); } catch (e) { msg += '（雲端同步失敗：' + (e.code || e.message) + '，目前只存在這台裝置）'; }
     rosterMsg(msg);
   }
+  /* ---- 從接送系統複製全園幼兒名單（讀 pickup/allkids，依座號排序）---- */
+  async function copyFromPickup() {
+    if (!fbUser()) { rosterMsg('請先登入後再複製。', true); return; }
+    rosterMsg('讀取接送系統名單中…');
+    const snap = await firebase.firestore().collection('pickup').doc('allkids').get();
+    const kids = snap.exists && Array.isArray(snap.data().kids) ? snap.data().kids : [];
+    if (!kids.length) throw new Error('接送系統尚未匯入全園幼兒名單');
+    const by = {};
+    kids.filter(k => k && k.cls && k.name).sort((a, b) => (a.no || 0) - (b.no || 0)).forEach(k => { (by[k.cls] = by[k.cls] || []).push(String(k.name).trim()); });
+    const cls = Object.keys(by), total = cls.reduce((n, c) => n + by[c].length, 0);
+    if (!confirm('將複製 ' + cls.length + ' 個班級、共 ' + total + ' 位幼兒。這些班級原有的名單會被取代，確定嗎？')) { rosterMsg(''); return; }
+    cls.forEach(c => { roster[c] = by[c]; });
+    localStorage.setItem(LS, JSON.stringify(roster)); refreshRoster(true);
+    let msg = '已從接送系統複製 ' + cls.length + ' 個班級、' + total + ' 位幼兒。';
+    try { await saveRoster(); } catch (e) { msg += '（雲端同步失敗：' + (e.code || e.message) + '，目前只存在這台裝置）'; }
+    rosterMsg(msg);
+  }
+
+  /* ---- 本學期觀察進度：每人每學期 2 次，同班老師共用（observationMarks）---- */
+  const GOAL = 2;
+  let marks = [], unMarks = null, marksKey = '';
+  const semOf = d => { const p = String(d || today()).split('-').map(Number), y = p[0], m = p[1]; return m >= 8 ? (y - 1911) + '-1' : m === 1 ? (y - 1912) + '-1' : (y - 1912) + '-2'; }; // 8–1 月上學期、2–7 月下學期
+  const semLabel = k => { const a = k.split('-'); return a[0] + ' 學年度' + (a[1] === '1' ? '上' : '下') + '學期'; };
+  const curCls = () => { const c = $('#observation-class'); return c && c.value && c.value !== '__manual__' ? c.value : ''; };
+  const curSem = () => semOf(($('input[name="observationDate"]') || {}).value);
+  const byTime = (a, b) => String(a.date).localeCompare(String(b.date)) || ((a.createdAt && a.createdAt.seconds || 0) - (b.createdAt && b.createdAt.seconds || 0));
+  function boardMsg(t, bad) { const e = $('#obs-board-msg'); if (e) { e.textContent = t; e.className = 'text-xs font-bold mt-2 ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
+  function syncMarks() {
+    if (!page) return;
+    const u = fbUser(), cls = curCls(), sem = curSem(), key = sem + '|' + cls;
+    if (!u || !cls) { if (unMarks) { unMarks(); unMarks = null; } marksKey = ''; marks = []; renderBoard(); return; }
+    if (key === marksKey && unMarks) { renderBoard(); return; }
+    if (unMarks) unMarks();
+    marksKey = key; marks = [];
+    unMarks = firebase.firestore().collection('observationMarks').where('semester', '==', sem).where('className', '==', cls)
+      .onSnapshot(s => { marks = s.docs.map(d => ({ id: d.id, ...d.data() })); renderBoard(); },
+        e => boardMsg('讀取進度失敗：' + (e.code || e.message), true));
+    renderBoard();
+  }
+  function addMark(cls, name, date, obsId) {
+    const u = fbUser();
+    return firebase.firestore().collection('observationMarks').add({
+      semester: semOf(date), className: cls, childName: name, date: date || today(), obsId: obsId || '', manual: !obsId,
+      byUid: u.uid, byName: u.displayName || (u.email || '').split('@')[0], byEmail: u.email || '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+  async function undoMark(name) {
+    const u = fbUser(), mine = marks.filter(m => m.childName === name && m.byUid === u.uid).sort(byTime), pick = mine[mine.length - 1];
+    if (!pick) { boardMsg('只能取消自己標示的紀錄。', true); return; }
+    if (!confirm('取消「' + name + '」' + pick.date + ' 的標示？（不會刪除已儲存的觀察紀錄）')) return;
+    await firebase.firestore().collection('observationMarks').doc(pick.id).delete();
+  }
+  function pickChild(name) {
+    const ch = $('#observation-child'); if (!ch) return;
+    ch.value = name; if (ch.value !== name) return;
+    ch.dispatchEvent(new Event('change')); ch.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  function renderBoard() {
+    const box = $('#obs-board-list'); if (!box) return;
+    const cls = curCls(), sem = curSem(), names = roster[cls] || [], sum = $('#obs-board-sum');
+    $('#obs-board-sem').textContent = semLabel(sem) + (cls ? '｜' + cls : '');
+    box.innerHTML = ''; sum.textContent = '';
+    if (!cls) { box.textContent = '請先在下方選擇班級。'; return; }
+    if (!names.length) { box.textContent = '這個班級還沒有幼兒名單，請先從接送系統複製或匯入。'; return; }
+    let done = 0;
+    names.forEach(name => {
+      const ms = marks.filter(m => m.childName === name).sort(byTime), n = ms.length; if (n >= GOAL) done++;
+      const wrap = document.createElement('div'); wrap.className = 'obs-bchip n' + Math.min(n, GOAL);
+      const mk = (txt, cls2, title, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls2; b.textContent = txt; b.title = title; b.addEventListener('click', fn); return b; };
+      const main = mk(name + '　' + '●'.repeat(Math.min(n, GOAL)) + '○'.repeat(Math.max(0, GOAL - n)) + (n > GOAL ? '＋' + (n - GOAL) : ''), 'b-main',
+        n ? ms.map((m, i) => '第' + (i + 1) + '次 ' + m.date + ' ' + m.byName + (m.manual ? '（手動標示）' : '')).join('\n') : '尚未寫過', () => pickChild(name));
+      const plus = mk('＋', 'b-act', '標示已寫一次', async () => { try { await addMark(cls, name, ($('input[name="observationDate"]') || {}).value, ''); } catch (e) { boardMsg('標示失敗：' + (e.code || e.message), true); } });
+      const minus = mk('－', 'b-act', '取消我標示的最近一次', async () => { try { await undoMark(name); } catch (e) { boardMsg('取消失敗：' + (e.code || e.message), true); } });
+      wrap.append(main, plus, minus); box.appendChild(wrap);
+    });
+    sum.textContent = '已完成 ' + done + '／' + names.length + ' 位（每人 ' + GOAL + ' 次）';
+  }
+
   function subscribe() {
     const u = fbUser(); if (!u || (unsub && unsubUid === u.uid)) return;
     if (unsub) unsub();
@@ -3560,6 +3660,12 @@ function kgApp() {
     refreshRoster(true);
     cs.addEventListener('change', () => refreshRoster(true));
     ch.addEventListener('change', toggleManual);
+    $('input[name="observationDate"]').addEventListener('change', syncMarks);
+    $('[data-action="copy-pickup"]').addEventListener('click', async (e) => {
+      const b = e.currentTarget; b.disabled = true;
+      try { await copyFromPickup(); } catch (err) { rosterMsg('複製失敗：' + (err.code || err.message || err), true); }
+      b.disabled = false;
+    });
     $('[data-action="import-children"]').addEventListener('click', () => fi.click());
     fi.addEventListener('change', async () => {
       const f = fi.files && fi.files[0]; if (!f) return;
@@ -3598,6 +3704,7 @@ function kgApp() {
     if (d.className === '__manual__') d.className = (d.classNameManual || '').trim();
     if (d.childName === '__manual__') d.childName = (d.childNameManual || '').trim();
     delete d.classNameManual; delete d.childNameManual;
+    d.semester = semOf(d.observationDate);
     d.learningAreas = $$('input[name="learningAreas"]:checked', f).map(e => e.value);
     d.performances = $$('input[name="performances"]:checked', f).map(e => e.value);
     d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '', level: d.indicatorLevel || '' };
@@ -3687,10 +3794,18 @@ function kgApp() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (saving || !form.reportValidity()) return;
+      const payload = collectFormData(form);
+      if (payload.className && payload.childName && marksKey === payload.semester + '|' + payload.className
+        && marks.filter(m => m.childName === payload.childName).length >= GOAL
+        && !confirm('「' + payload.childName + '」本學期已經有 ' + GOAL + ' 次觀察紀錄，仍要再儲存一筆嗎？')) return;
       saving = true; btn.disabled = true; btn.textContent = '儲存中…'; say('');
       try { // 儲存後按鈕維持「已儲存」，改動內容才恢復，避免連點產生重複紀錄
-        const r = await saveLearningObservation(collectFormData(form), photoEntries(form));
-        say(r.mode === 'firebase' ? '觀察紀錄已儲存' + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
+        const r = await saveLearningObservation(payload, photoEntries(form));
+        let extra = '';
+        if (r.mode === 'firebase' && payload.className && payload.childName) { // 存檔成功後自動標示本學期進度
+          try { await addMark(payload.className, payload.childName, payload.observationDate, r.id); } catch (e) { extra = '（進度標示失敗：' + (e.code || e.message) + '）'; }
+        }
+        say(r.mode === 'firebase' ? '觀察紀錄已儲存' + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' + extra : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
         btn.textContent = '✓ 已儲存';
       } catch (err) {
         console.error('儲存觀察紀錄失敗', err);
@@ -3710,12 +3825,12 @@ function kgApp() {
     if (!form || el.dataset.obsReady) return;
     el.dataset.obsReady = '1';
     initIndicators(); initRoster(); initAreas(); initForm();
-    $('input[name="observationDate"]').value = today();
+    $('input[name="observationDate"]').value = today(); syncMarks();
   }
   function sync(el, data, sig, active) {
     app = data;
     if (page !== el) mount(el);
-    if (active) { refreshRoster(); subscribe(); growChallenge(); }
+    if (active) { refreshRoster(); subscribe(); syncMarks(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
   window.addEventListener('beforeprint', () => { growChallenge(); if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
