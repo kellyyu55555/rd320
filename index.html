@@ -78,14 +78,18 @@
 <style id="learning-observation-styles">
 /* 學習區觀察表：全部限定在 #learning-observation-page，不影響其他分頁 */
 #learning-observation-page [hidden]{display:none!important}
+#learning-observation-page .obs-print-only{display:none}
+#learning-observation-page .obs-frame{display:flex;flex-direction:column;gap:1rem}
 #learning-observation-page .obs-input{width:100%;box-sizing:border-box;margin-top:.25rem;padding:.5rem .75rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font:inherit;font-size:.875rem}
 #learning-observation-page .obs-input:disabled{opacity:.55;background:#FAF3E6;cursor:not-allowed}
-#learning-observation-page textarea.obs-input{resize:vertical;min-height:7rem}
+#learning-observation-page textarea.obs-auto{min-height:0;resize:none;overflow:hidden;line-height:1.6}
 #learning-observation-page .obs-btn{padding:.5rem 1rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s}
 #learning-observation-page .obs-btn:hover{background:#FAF3E6}
 #learning-observation-page .obs-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
 #learning-observation-page .obs-areas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
-#learning-observation-page .obs-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+#learning-observation-page .obs-chips{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+#learning-observation-page .obs-chips .obs-inline{flex:1;min-width:10rem;width:auto;margin:0}
+#learning-observation-page .obs-sec{margin-top:1rem}
 #learning-observation-page .obs-note{background:#FFF8E8;border:1px solid #EEE2CF}
 #learning-observation-page .obs-chip{position:relative;display:inline-flex;cursor:pointer}
 #learning-observation-page .obs-chip input{position:absolute;opacity:0;width:1px;height:1px}
@@ -97,8 +101,9 @@
 #learning-observation-page .obs-area.is-on{border-color:#8FA37E;background:#F3F7EE}
 #learning-observation-page .obs-area .obs-chip{display:flex}#learning-observation-page .obs-area .obs-chip span{flex:1;justify-content:center;border-radius:.75rem}
 #learning-observation-page .obs-upload{display:inline-flex;align-items:center;gap:.3rem;margin-top:.5rem;padding:.25rem .6rem;border-radius:.5rem;background:#FAF3E6;color:#2F6271;font-size:.75rem;font-weight:700;cursor:pointer}
-#learning-observation-page .obs-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-top:.5rem}
-#learning-observation-page .obs-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;background:#eee}
+#learning-observation-page .obs-photos{display:flex;flex-wrap:wrap;justify-content:center;gap:.3rem;margin-top:.5rem}
+#learning-observation-page .obs-photos img{width:calc((100% - .6rem)/3);aspect-ratio:1;object-fit:cover;border-radius:.4rem;background:#eee}
+#learning-observation-page .obs-photos-2 img{width:calc((100% - .3rem)/2);aspect-ratio:4/3}
 @media(max-width:700px){#learning-observation-page .obs-grid3{grid-template-columns:1fr}#learning-observation-page .obs-areas{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @page obs{size:A4 portrait;margin:12mm}
 @media print{
@@ -107,23 +112,35 @@ body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
 #learning-observation-page{page:obs;max-width:none!important;font-size:10pt;color:#000}
 #learning-observation-page .no-print{display:none!important}
-#learning-observation-page .obs-block{margin:7px 0!important;padding:9px!important;border:1px solid #333!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
-#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0!important}
+#learning-observation-page .obs-print-only{display:inline}
+#learning-observation-page .obs-frame{display:block;border:1px solid #222}
+#learning-observation-page .obs-block{margin:0!important;padding:6px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
+#learning-observation-page .obs-frame>.obs-block:first-child{border-top:0!important}
+#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 4px!important}
 #learning-observation-page #observation-school-title{font-size:14pt;color:#000;margin:0}
 #learning-observation-page .obs-head h2{justify-content:center;font-size:16pt;margin:0 0 6px}
-#learning-observation-page .obs-grid3{gap:0;grid-template-columns:1fr 1.35fr 1fr;border:1px solid #222}
-#learning-observation-page .obs-meta>div,#learning-observation-page .obs-challenge{display:flex;align-items:center;gap:4px;padding:4px 7px}
-#learning-observation-page .obs-meta>div{border-right:1px solid #222}#learning-observation-page .obs-meta>div:last-child{border-right:0}
-#learning-observation-page .obs-challenge{margin:0!important;border:1px solid #222;border-top:0;font-size:11pt}
+#learning-observation-page .obs-grid3{gap:0;grid-template-columns:1fr 1.35fr 1fr}
+#learning-observation-page .obs-meta>div,#learning-observation-page .obs-challenge{display:flex;align-items:flex-start;gap:4px}
 #learning-observation-page .obs-meta label,#learning-observation-page .obs-challenge label{white-space:nowrap;margin:0}
-#learning-observation-page .obs-input{flex:1;width:auto;min-width:0;margin:0;padding:2px 4px;border:0;border-bottom:1px solid #555;border-radius:0;background:#fff;appearance:none}
-#learning-observation-page textarea.obs-input{min-height:115px;border:1px solid #555}
-#learning-observation-page .obs-areas{grid-template-columns:repeat(4,1fr);gap:5px}
-#learning-observation-page .obs-area{padding:4px;border:1px solid #333!important;border-radius:0;background:#fff!important;break-inside:avoid}
+#learning-observation-page .obs-input{flex:1;width:auto;min-width:0;margin:0;padding:0 4px;border:0;border-bottom:1px solid #555;border-radius:0;background:#fff;appearance:none}
+#learning-observation-page textarea.obs-auto{border:0;padding:0 2px}
+#learning-observation-page .obs-areas-block{padding:0!important}
+#learning-observation-page .obs-areas{grid-template-columns:repeat(4,1fr);gap:0;border-bottom:0}
+#learning-observation-page .obs-area{padding:4px;border:0!important;border-right:1px solid #222!important;border-bottom:1px solid #222!important;border-radius:0;background:#fff!important}
+#learning-observation-page .obs-area:nth-child(4n){border-right:0!important}#learning-observation-page .obs-area:nth-last-child(-n+4){border-bottom:0!important}
 #learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:2px 4px;border:0;border-radius:0;background:#fff!important;color:#000;font-size:10pt}
-#learning-observation-page .obs-chip span::before{content:"";display:inline-block;width:11px;height:11px;border:1px solid #111;font-size:10px;line-height:11px;text-align:center}
-#learning-observation-page .obs-chip input:checked+span::before{content:"✓"}
-#learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{border:1px solid #555;border-radius:0}
+#learning-observation-page .obs-chip span::before{content:"";display:inline-block;width:10px;height:10px;border:1px solid #111;background:#fff}
+#learning-observation-page .obs-chip input:checked+span::before{background:#111}
+#learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
+#learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
+#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2)}
+#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:90px}
+#learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
+#learning-observation-page .obs-act-label h3{margin:0}
+#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-content:center}
+#learning-observation-page .obs-sec{margin-top:1.2em}
+#learning-observation-page .obs-sign{display:flex;justify-content:flex-end;align-items:flex-end;gap:4px;margin:6px 8px 0}
+#learning-observation-page .obs-sign .obs-input{flex:none;width:5cm}
 }
 </style>
 </head>
@@ -1225,13 +1242,13 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
   <form id="learning-observation-form" novalidate class="space-y-4">
+    <div class="obs-frame">
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <div class="obs-grid3 obs-meta">
-        <div><label for="observation-class" class="text-sm font-bold text-wood-dark/80">班級</label><select id="observation-class" name="className" required class="obs-input"><option value="">請選擇班級</option></select><input id="observation-class-manual" name="classNameManual" type="text" placeholder="請輸入班級" hidden class="obs-input"></div>
-        <div><label for="observation-child" class="text-sm font-bold text-wood-dark/80">姓名</label><select id="observation-child" name="childName" required class="obs-input"><option value="">請先選擇班級</option></select><input id="observation-child-manual" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden class="obs-input"></div>
-        <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
+        <div><label for="observation-class" class="text-sm font-bold text-wood-dark/80">班級：</label><select id="observation-class" name="className" required class="obs-input"><option value="">請選擇班級</option></select><input id="observation-class-manual" name="classNameManual" type="text" placeholder="請輸入班級" hidden class="obs-input"></div>
+        <div><label for="observation-child" class="text-sm font-bold text-wood-dark/80">姓名：</label><select id="observation-child" name="childName" required class="obs-input"><option value="">請先選擇班級</option></select><input id="observation-child-manual" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden class="obs-input"></div>
+        <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期：</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
       </div>
-      <div class="obs-challenge mt-4"><label for="challenge-area" class="text-sm font-bold text-wood-dark/80">今天我挑戰的學習區是......</label><input id="challenge-area" name="challengeArea" type="text" placeholder="請填寫今天挑戰的學習區" class="obs-input"></div>
       <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
         <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單</button>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
@@ -1239,34 +1256,47 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <p id="observation-roster-status" class="text-xs font-bold w-full" role="status"></p>
       </div>
     </div>
-    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
-      <h3 class="font-heading font-bold text-sm mb-3">觀察學習區 <span class="no-print text-[11px] font-normal text-wood-dark/50">勾選後可上傳該區照片</span></h3>
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card obs-challenge-block">
+      <div class="obs-challenge"><label for="challenge-area" class="text-sm font-bold text-wood-dark/80">今天我挑戰的學習區是……</label><textarea id="challenge-area" name="challengeArea" rows="1" placeholder="請填寫今天挑戰的學習區" class="obs-input obs-auto"></textarea></div>
+    </div>
+    <div class="obs-block obs-areas-block paper-card rounded-3xl p-6 shadow-card">
+      <h3 class="no-print font-heading font-bold text-sm mb-3">觀察學習區 <span class="text-[11px] font-normal text-wood-dark/50">勾選後可上傳該區照片</span></h3>
       <div class="obs-areas"><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="語文區"><span>語文區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="語文區" hidden></label><div class="obs-photos" data-area-preview="語文區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="數學區"><span>數學區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="數學區" hidden></label><div class="obs-photos" data-area-preview="數學區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="積木區"><span>積木區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區" hidden></label><div class="obs-photos" data-area-preview="積木區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="組合建構區"><span>組合建構區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區" hidden></label><div class="obs-photos" data-area-preview="組合建構區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="美勞區"><span>美勞區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="美勞區" hidden></label><div class="obs-photos" data-area-preview="美勞區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="生活自理區"><span>生活自理區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="生活自理區" hidden></label><div class="obs-photos" data-area-preview="生活自理區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="鬆散素材區"><span>鬆散素材區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="鬆散素材區" hidden></label><div class="obs-photos" data-area-preview="鬆散素材區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip"><input type="checkbox" name="learningAreas" value="扮演區"><span>扮演區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區" hidden></label><div class="obs-photos" data-area-preview="扮演區" data-area-extra hidden></div></div></div>
+    </div>
+    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+      <label for="observation-note" class="text-sm font-bold text-wood-dark/80">在操作過程中……</label>
+      <textarea id="observation-note" name="observationNote" rows="3" placeholder="請記錄幼兒在操作過程中的表現" class="obs-input obs-auto"></textarea>
+    </div>
+    <div class="obs-block obs-act paper-card rounded-3xl p-6 shadow-card">
+      <div class="obs-act-label"><h3 class="font-heading font-bold text-sm">學習區活動紀錄</h3><label class="obs-upload no-print">📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="學習區活動紀錄" hidden></label></div>
+      <div class="obs-photos obs-photos-2" data-area-preview="學習區活動紀錄"></div>
     </div>
     <div class="obs-block obs-note rounded-3xl p-6 shadow-card">
       <h3 class="font-heading font-bold text-sm mb-2">親愛的家長您好：</h3>
       <p class="text-sm leading-relaxed">學習區並不是讓孩子隨意玩耍的過渡時間，而是蘊含許多未來學習所需的基礎能力發展。例如：透過操作教具訓練小肌肉的穩定度，以培養日後握筆的能力；或是在擺放積木、拼圖時，學習空間概念，為未來喜歡數字打下良好基礎。</p>
-    </div>
-    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
-      <h3 class="font-heading font-bold text-sm mb-3">學習表現 <span class="no-print text-[11px] font-normal text-wood-dark/50">可複選</span></h3>
-      <div class="obs-chips" id="performance-options"><label class="obs-chip"><input type="checkbox" name="performances" value="專心學習"><span>專心學習</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="獨自完成範例"><span>獨自完成範例</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="展現創意點子"><span>展現創意點子</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="同儕合作"><span>同儕合作</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="能持續發展"><span>能持續發展</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="能力穩定"><span>能力穩定</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="特殊事件紀錄"><span>特殊事件紀錄</span></label></div>
-    </div>
-    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
-      <h3 class="font-heading font-bold text-sm mb-3">學習指標</h3>
-      <div class="obs-grid3">
-        <div><label for="indicator-age" class="text-sm font-bold text-wood-dark/80">年齡層</label><select id="indicator-age" name="indicatorAge" required class="obs-input"><option value="">請先選擇年齡層</option></select></div>
-        <div><label for="indicator-category" class="text-sm font-bold text-wood-dark/80">分類</label><select id="indicator-category" name="indicatorCategory" required disabled class="obs-input"><option value="">請先選擇分類</option></select></div>
-        <div><label for="indicator-item" class="text-sm font-bold text-wood-dark/80">指標</label><select id="indicator-item" name="indicatorItem" required disabled class="obs-input"><option value="">請先選擇學習指標</option></select></div>
+      <div class="obs-sec"><p class="text-sm font-bold text-wood-dark/80 mb-2">學習表現：老師評語：</p>
+        <div class="obs-chips" id="performance-options"><label class="obs-chip"><input type="checkbox" name="performances" value="專心學習"><span>專心學習</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="獨自完成範例圖"><span>獨自完成範例圖</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="展現創意點子"><span>展現創意點子</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="同儕合作無間"><span>同儕合作無間</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="無特殊事件紀錄"><span>無特殊事件紀錄</span></label><label class="obs-chip"><input type="checkbox" name="performances" value="特殊事件紀錄"><span>特殊事件紀錄</span></label><input name="specialEventNote" type="text" placeholder="特殊事件說明" class="obs-input obs-inline" aria-label="特殊事件紀錄內容"></div></div>
+      <div class="obs-sec">
+        <div class="no-print">
+          <p class="text-sm font-bold text-wood-dark/80 mb-2">學習指標</p>
+          <div class="obs-grid3">
+            <div><label for="indicator-age" class="text-sm font-bold text-wood-dark/80">年齡層</label><select id="indicator-age" name="indicatorAge" required class="obs-input"><option value="">請先選擇年齡層</option></select></div>
+            <div><label for="indicator-category" class="text-sm font-bold text-wood-dark/80">分類</label><select id="indicator-category" name="indicatorCategory" required disabled class="obs-input"><option value="">請先選擇分類</option></select></div>
+            <div><label for="indicator-item" class="text-sm font-bold text-wood-dark/80">指標</label><select id="indicator-item" name="indicatorItem" required disabled class="obs-input"><option value="">請先選擇學習指標</option></select></div>
+          </div>
+          <div id="selected-indicator" class="mt-3 p-3 rounded-xl bg-sage-light text-sage-dark text-sm font-bold" hidden></div>
+        </div>
+        <div class="obs-chips mt-3"><span id="selected-indicator-print" class="obs-print-only">學習指標：</span><span class="no-print text-sm font-bold text-wood-dark/80">指標評量：</span><label class="obs-chip"><input type="radio" name="indicatorLevel" value="需多練習"><span>需多練習</span></label><label class="obs-chip"><input type="radio" name="indicatorLevel" value="持續發展"><span>持續發展</span></label><label class="obs-chip"><input type="radio" name="indicatorLevel" value="能力穩定"><span>能力穩定</span></label></div>
       </div>
-      <div id="selected-indicator" class="mt-3 p-3 rounded-xl bg-sage-light text-sage-dark text-sm font-bold" hidden></div>
     </div>
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <h3 class="font-heading font-bold text-sm">邀請家長一起參與幼兒在學習區的學習過程分享。</h3>
-      <p class="text-xs text-wood-dark/60 mt-1 mb-3">（引導語例句：你在哪一區做的作品？這個作品叫什麼？為什麼想要做？遇到困難嗎？遇到困難你怎麼解決？）</p>
-      <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80">家長回饋</label>
-      <textarea id="observation-feedback" name="familyFeedback" rows="7" placeholder="請填寫家長回饋" class="obs-input"></textarea>
-      <div class="mt-3"><label for="observation-signature" class="text-sm font-bold text-wood-dark/80">家長簽名</label><input id="observation-signature" name="parentSignature" type="text" class="obs-input"></div>
+      <p class="text-xs text-wood-dark/60 mt-1 mb-3">（引導語例句：你在哪一區做的作品？這個作品名稱？為什麼想要做（畫）這個作品？有遇到困難嗎？遇到困難時你怎麼解決？）</p>
+      <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80">家長回饋：</label>
+      <textarea id="observation-feedback" name="familyFeedback" rows="5" placeholder="請填寫家長回饋" class="obs-input obs-auto"></textarea>
     </div>
+    </div>
+    <div class="obs-sign"><label for="observation-signature" class="text-sm font-bold text-wood-dark/80">家長簽名：</label><input id="observation-signature" name="parentSignature" type="text" class="obs-input" style="max-width:14rem"></div>
     <div class="no-print flex flex-wrap items-center gap-3">
       <button type="submit" id="observation-save" class="px-6 py-3 rounded-xl bg-sage text-paper font-heading font-bold hover:bg-sage-dark transition disabled:opacity-50">儲存觀察紀錄</button>
       <p id="observation-status" class="text-sm font-bold" role="status" aria-live="polite"></p>
@@ -3438,20 +3468,20 @@ function kgApp() {
   }
 
   function initIndicators() {
-    const age = $('#indicator-age'), cat = $('#indicator-category'), item = $('#indicator-item'), box = $('#selected-indicator');
+    const age = $('#indicator-age'), cat = $('#indicator-category'), item = $('#indicator-item'), box = $('#selected-indicator'), pr = $('#selected-indicator-print');
     const data = getIndicatorData();
     setOptions(age, Object.keys(data), '請先選擇年齡層');
     age.addEventListener('change', () => {
       const c = age.value ? Object.keys(data[age.value]) : [];
       setOptions(cat, c, '請再選擇分類'); cat.disabled = !c.length;
-      setOptions(item, [], '請先選擇學習指標'); item.disabled = true; box.hidden = true;
+      setOptions(item, [], '請先選擇學習指標'); item.disabled = true; box.hidden = true; pr.textContent = '學習指標：';
     });
     cat.addEventListener('change', () => {
       const i = age.value && cat.value ? data[age.value][cat.value] : [];
-      setOptions(item, i, '請再選擇學習指標'); item.disabled = !i.length; box.hidden = true;
+      setOptions(item, i, '請再選擇學習指標'); item.disabled = !i.length; box.hidden = true; pr.textContent = '學習指標：';
     });
     item.addEventListener('change', () => {
-      box.hidden = !item.value;
+      box.hidden = !item.value; pr.textContent = '學習指標：' + item.value;
       if (item.value) box.textContent = '已選擇：' + age.value + '｜' + cat.value + '｜' + item.value;
     });
   }
@@ -3559,7 +3589,8 @@ function kgApp() {
     syncAreas();
   }
   // 只收「已勾選學習區」的照片，取消勾選的區不會偷偷上傳
-  const photoEntries = f => $$('[data-area-photo]', f).filter(i => { const c = $('input[name="learningAreas"][value="' + CSS.escape(i.dataset.areaPhoto) + '"]', f); return c && c.checked; })
+  const ACT = '學習區活動紀錄';
+  const photoEntries = f => $$('[data-area-photo]', f).filter(i => { if (i.dataset.areaPhoto === ACT) return true; const c = $('input[name="learningAreas"][value="' + CSS.escape(i.dataset.areaPhoto) + '"]', f); return c && c.checked; })
     .flatMap(i => Array.from(i.files || []).map(file => ({ area: i.dataset.areaPhoto, file })));
 
   function collectFormData(f) {
@@ -3569,8 +3600,8 @@ function kgApp() {
     delete d.classNameManual; delete d.childNameManual;
     d.learningAreas = $$('input[name="learningAreas"]:checked', f).map(e => e.value);
     d.performances = $$('input[name="performances"]:checked', f).map(e => e.value);
-    d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '' };
-    delete d.indicatorAge; delete d.indicatorCategory; delete d.indicatorItem;
+    d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '', level: d.indicatorLevel || '' };
+    delete d.indicatorLevel; delete d.indicatorAge; delete d.indicatorCategory; delete d.indicatorItem;
     d.areaPhotoFiles = photoEntries(f).reduce((g, e) => { (g[e.area] = g[e.area] || []).push({ name: e.file.name, type: e.file.type, size: e.file.size }); return g; }, {});
     return d;
   }
@@ -3634,7 +3665,7 @@ function kgApp() {
   function resetForm() {
     form.reset();
     [['category', '請先選擇分類'], ['item', '請先選擇學習指標']].forEach(([k, t]) => { const s = $('#indicator-' + k); setOptions(s, [], t); s.disabled = true; });
-    $('#selected-indicator').hidden = true;
+    $('#selected-indicator').hidden = true; $('#selected-indicator-print').textContent = '學習指標：';
     $$('[data-area-photo]', form).forEach(i => { i.value = ''; });
     $$('[data-area-preview]', form).forEach(p => { p.innerHTML = ''; });
     photoUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
@@ -3644,11 +3675,10 @@ function kgApp() {
   }
 
   function growChallenge() { // 挑戰學習區欄位依內容自動長高（自動換行）
-    const t = $('#challenge-area'); if (!t || !t.scrollHeight) return;
-    t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
+    $$('textarea.obs-auto').forEach(t => { if (!t.scrollHeight) return; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; });
   }
   function initForm() {
-    $('#challenge-area').addEventListener('input', growChallenge);
+    $$('textarea.obs-auto').forEach(t => t.addEventListener('input', growChallenge));
     window.addEventListener('resize', growChallenge);
     const st = $('#observation-status'), btn = $('#observation-save'); let saving = false;
     const say = (t, bad) => { st.textContent = t; st.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); };
