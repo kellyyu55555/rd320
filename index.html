@@ -3638,12 +3638,18 @@ function kgApp() {
     $$('[data-area-photo]', form).forEach(i => { i.value = ''; });
     $$('[data-area-preview]', form).forEach(p => { p.innerHTML = ''; });
     photoUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
-    syncAreas(); refreshRoster(true);
+    syncAreas(); refreshRoster(true); growChallenge();
     $('input[name="observationDate"]').value = today();
     const b = $('#observation-save'); b.disabled = false; b.textContent = '儲存觀察紀錄';
   }
 
+  function growChallenge() { // 挑戰學習區欄位依內容自動長高（自動換行）
+    const t = $('#challenge-area'); if (!t || !t.scrollHeight) return;
+    t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
+  }
   function initForm() {
+    $('#challenge-area').addEventListener('input', growChallenge);
+    window.addEventListener('resize', growChallenge);
     const st = $('#observation-status'), btn = $('#observation-save'); let saving = false;
     const say = (t, bad) => { st.textContent = t; st.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); };
     const unlock = () => { if (!saving) { btn.disabled = false; btn.textContent = '儲存觀察紀錄'; } };
@@ -3679,10 +3685,10 @@ function kgApp() {
   function sync(el, data, sig, active) {
     app = data;
     if (page !== el) mount(el);
-    if (active) { refreshRoster(); subscribe(); }
+    if (active) { refreshRoster(); subscribe(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
-  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
+  window.addEventListener('beforeprint', () => { growChallenge(); if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
   window.addEventListener('afterprint', () => document.body.classList.remove('obs-printing'));
 
   window.saveLearningObservation = saveLearningObservation;
