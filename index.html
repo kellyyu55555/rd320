@@ -92,6 +92,11 @@
 #learning-observation-page .obs-chips .obs-inline{flex:1;min-width:10rem;width:auto;margin:0}
 #learning-observation-page .obs-sec{margin-top:1rem}
 #learning-observation-page .obs-sign{display:flex;justify-content:flex-end;align-items:center;gap:.5rem;margin-top:.75rem}
+#learning-observation-page .obs-srow{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;border:2px solid #EEE2CF;border-radius:.75rem;background:#FFFDF8;font-size:.8rem;font-weight:700}
+#learning-observation-page .obs-srow.is-edit{border-color:#8FA37E;background:#F3F7EE}
+#learning-observation-page .obs-srow .s-t{flex:1;min-width:0}
+#learning-observation-page .obs-srow button{border:1px solid rgba(200,162,122,.5);border-radius:.5rem;background:#fff;padding:.2rem .6rem;font:inherit;cursor:pointer}
+#learning-observation-page .obs-shrow{display:block;padding:.25rem .1rem;font-size:.85rem;cursor:pointer}
 #learning-observation-page .obs-board{display:flex;flex-wrap:wrap;gap:.5rem}
 #learning-observation-page .obs-bchip{display:inline-flex;align-items:stretch;border:2px solid #EEE2CF;border-radius:.75rem;background:#FFFDF8;overflow:hidden;font-size:.8rem;font-weight:700}
 #learning-observation-page .obs-bchip button{border:0;background:transparent;padding:.3rem .55rem;font:inherit;cursor:pointer}
@@ -113,6 +118,10 @@
 #learning-observation-page .obs-photos{display:flex;flex-wrap:wrap;justify-content:center;gap:.3rem;margin-top:.5rem}
 #learning-observation-page .obs-photos img{width:calc((100% - .6rem)/3);aspect-ratio:1;object-fit:cover;border-radius:.4rem;background:#eee}
 #learning-observation-page .obs-photos-2 img{width:calc((100% - .3rem)/2);aspect-ratio:4/3}
+#learning-observation-page .obs-ph{position:relative;display:block;width:calc((100% - .6rem)/3)}
+#learning-observation-page .obs-photos-2 .obs-ph{width:calc((100% - .3rem)/2)}
+#learning-observation-page .obs-ph img{width:100%}
+#learning-observation-page .obs-ph .ph-x{position:absolute;top:2px;right:2px;width:1.3rem;height:1.3rem;border:0;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;line-height:1.3rem;cursor:pointer}
 @media(max-width:640px){#learning-observation-page .obs-grid3{grid-template-columns:1fr}#learning-observation-page .obs-areas{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @page obs{size:A4 portrait;margin:10mm}
 @media print{
@@ -148,6 +157,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
 #learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
 #learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2);aspect-ratio:auto;height:40mm}
+#learning-observation-page .obs-ph{width:calc((100% - 6px)/3)}#learning-observation-page .obs-photos-2 .obs-ph{width:calc((100% - 3px)/2)}#learning-observation-page .obs-ph img{width:100%}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:80px}
 #learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
 #learning-observation-page .obs-act-label h3{margin:0}
@@ -1265,6 +1275,24 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <p class="text-[11px] text-wood-dark/60 mt-1">每位幼兒每學期寫 2 次。同班老師會即時看到彼此的標示，避免重複；點幼兒姓名會帶入下方表單，「＋」手動標示已寫、「－」取消自己的最近一次標示。</p>
       <div id="obs-board-list" class="obs-board mt-3"></div>
       <p id="obs-board-msg" class="text-xs font-bold mt-2" role="status"></p>
+    </div>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-saved">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-heading font-bold text-sm">🗂️ 我已儲存的觀察紀錄 <span id="obs-saved-sub" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
+        <button type="button" class="obs-btn" data-action="new-observation">＋ 新增一筆</button>
+      </div>
+      <p class="text-[11px] text-wood-dark/60 mt-1">儲存後隨時可以點「開啟編輯」讀取、修改、補照片，再按「更新觀察紀錄」。</p>
+      <div id="obs-saved-list" class="mt-3 space-y-2"></div>
+      <h4 class="font-heading font-bold text-sm mt-5">👥 分享給我的紀錄 <span class="text-[11px] font-normal text-wood-dark/60">可開啟並共同編輯</span></h4>
+      <div id="obs-shared-list" class="mt-2 space-y-2"></div>
+    </div>
+    <div id="obs-edit-banner" class="no-print flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-sage-light text-sage-dark px-4 py-2 text-sm font-bold" hidden><span id="obs-edit-text"></span><button type="button" class="obs-btn" data-action="cancel-edit">取消編輯</button></div>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-share">
+      <h3 class="font-heading font-bold text-sm">👥 分享給老師（可一起編輯）</h3>
+      <p class="text-[11px] text-wood-dark/60 mt-1">勾選的老師會在「分享給我的紀錄」看到這筆，並可讀取、編輯、補照片；但不能刪除，也不能更改分享名單。新增紀錄時會沿用你上次的勾選。</p>
+      <input id="obs-share-q" type="text" placeholder="搜尋姓名或 Email" class="obs-input">
+      <div id="obs-share-list" class="mt-2" style="max-height:14rem;overflow:auto"></div>
+      <p id="obs-share-note" class="text-xs font-bold text-coral mt-1"></p>
     </div>
     <div class="obs-frame">
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
@@ -3531,7 +3559,7 @@ function kgApp() {
     const nm = roster[cs.value] || [];
     setOptions(ch, nm, nm.length ? '請選擇幼兒' : '請先匯入幼兒名單', true);
     if (nm.includes(cn) || cn === '__manual__') ch.value = cn;
-    ch.disabled = !cs.value; toggleManual(); syncMarks();
+    ch.disabled = !cs.value; toggleManual(); syncMarks(); renderSaved();
   }
   function rosterMsg(t, bad) { const e = $('#observation-roster-status'); if (e) { e.textContent = t; e.className = 'text-xs font-bold w-full ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
   function parseRoster(text, defCls) {
@@ -3649,6 +3677,131 @@ function kgApp() {
     sum.textContent = '已完成 ' + done + '／' + names.length + ' 位（每人 ' + GOAL + ' 次）';
   }
 
+  /* ---- 分享給老師（可共同編輯）：沿用週誌的 teacherDir 老師名單與 sharedWith 小寫 Email 清單 ---- */
+  let teachers = [], teachersLoaded = false, shareSel = new Set(), shareQ = '';
+  const DEF_KEY = 'obsShareDefault';
+  const defaultShare = () => { try { return JSON.parse(localStorage.getItem(DEF_KEY) || '[]'); } catch (e) { return []; } };
+  async function loadTeachers() {
+    const u = fbUser(); if (teachersLoaded || !u) return;
+    teachersLoaded = true;
+    try {
+      const sn = await firebase.firestore().collection('teacherDir').get();
+      teachers = sn.docs.map(x => x.data()).filter(x => x.email && String(x.email).toLowerCase() !== (u.email || '').toLowerCase());
+      const n = $('#obs-share-note'); if (n) n.textContent = '';
+    } catch (e) { teachersLoaded = false; const n = $('#obs-share-note'); if (n) n.textContent = '讀取老師名單失敗：' + (e.code || e.message); }
+    renderShare();
+  }
+  function renderShare() {
+    const box = $('#obs-share-list'); if (!box) return;
+    const cls = curCls(), q = shareQ.trim().toLowerCase(), locked = !!(editing && !editing.owner);
+    const same = t => ((t.classes || []).includes(cls) ? 0 : 1);
+    const list = teachers.filter(t => !q || (String(t.name || '') + ' ' + t.email).toLowerCase().includes(q))
+      .sort((a, b) => same(a) - same(b) || String(a.name || a.email).localeCompare(String(b.name || b.email), 'zh-Hant'));
+    box.innerHTML = '';
+    if (!list.length) { box.textContent = teachers.length ? '找不到符合的老師。' : '目前沒有其他老師的名單（需要對方登入過一次系統）。'; return; }
+    list.forEach(t => {
+      const em = String(t.email).toLowerCase(), lb = document.createElement('label'); lb.className = 'obs-shrow';
+      const ck = document.createElement('input'); ck.type = 'checkbox'; ck.checked = shareSel.has(em); ck.disabled = locked;
+      ck.addEventListener('change', () => { if (ck.checked) shareSel.add(em); else shareSel.delete(em); if (!editing) localStorage.setItem(DEF_KEY, JSON.stringify([...shareSel])); });
+      const sp = document.createElement('span'); sp.textContent = ' ' + (t.name || t.email) + '　' + t.email + (same(t) === 0 ? '　【同班】' : '');
+      lb.append(ck, sp); box.appendChild(lb);
+    });
+    const n = $('#obs-share-note'); if (n && locked) n.textContent = '這是別人分享給你的紀錄，只有擁有者可以更改分享名單。';
+  }
+
+  /* ---- 已儲存的紀錄：讀取、編輯、刪除 ---- */
+  let editing = null, saved = [], sharedIn = [], unSaved = null, unShared = null, unSavedUid = '';
+  const saveLabel = () => (editing ? '更新觀察紀錄' : '儲存觀察紀錄');
+  const mkBtn = (txt, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.addEventListener('click', fn); return b; };
+  function updateEditUI() {
+    const bn = $('#obs-edit-banner'); if (bn) bn.hidden = !editing;
+    const tx = $('#obs-edit-text'); if (tx) tx.textContent = editing ? '✏️ 編輯中：' + editing.title + (editing.owner ? '' : '（' + editing.ownerName + ' 分享給你，可共同編輯）') : '';
+    renderSaved();
+  }
+  function subscribeSaved() {
+    const u = fbUser(); if (!u || (unSaved && unSavedUid === u.uid)) return;
+    if (unSaved) unSaved(); if (unShared) unShared();
+    unSavedUid = u.uid;
+    unSaved = firebase.firestore().collection('learningObservations').where('uid', '==', u.uid)
+      .onSnapshot(s => { saved = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSaved(); },
+        e => { const el = $('#obs-saved-list'); if (el) el.textContent = '讀取失敗：' + (e.code || e.message); });
+    unShared = firebase.firestore().collection('learningObservations').where('sharedWith', 'array-contains', (u.email || '').toLowerCase())
+      .onSnapshot(s => { sharedIn = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSaved(); },
+        e => { const el = $('#obs-shared-list'); if (el) el.textContent = '讀取失敗：' + (e.code || e.message); });
+  }
+  function renderSaved() {
+    const cls = curCls(), sub = $('#obs-saved-sub'); if (sub) sub.textContent = '｜' + (cls || '全部班級');
+    const mkRow = (x, shared) => {
+      const row = document.createElement('div'); row.className = 'obs-srow' + (editing && editing.id === x.id ? ' is-edit' : '');
+      const n = (x.sharedWith || []).length;
+      const t = document.createElement('span'); t.className = 's-t';
+      t.textContent = (x.observationDate || '') + '　' + (x.childName || '') + (cls ? '' : '（' + (x.className || '') + '）') + (x.photoCount ? '　📷' + x.photoCount : '')
+        + (shared ? '　👥 ' + (x.userName || x.userEmail || '其他老師') : (n ? '　👥 已分享 ' + n + ' 人' : ''));
+      row.append(t, mkBtn('開啟編輯', async () => { try { await loadRecord(x.id); } catch (e) { alert('讀取失敗：' + (e.code || e.message)); } }));
+      if (!shared) row.appendChild(mkBtn('刪除', async () => { try { await deleteRecord(x.id); } catch (e) { alert('刪除失敗：' + (e.code || e.message)); } }));
+      return row;
+    };
+    const fill = (id, src, shared, empty) => {
+      const box = $(id); if (!box) return; box.innerHTML = '';
+      const list = src.filter(x => !cls || x.className === cls).sort((a, b) => String(b.observationDate || '').localeCompare(String(a.observationDate || ''))).slice(0, 60);
+      if (!list.length) { box.textContent = empty; return; }
+      list.forEach(x => box.appendChild(mkRow(x, shared)));
+    };
+    fill('#obs-saved-list', saved, false, '還沒有已儲存的紀錄。');
+    fill('#obs-shared-list', sharedIn, true, '目前沒有其他老師分享給你的紀錄。');
+  }
+  function addExistingPhoto(p) {
+    const pv = $('[data-area-preview="' + CSS.escape(p.area || '') + '"]'); if (!pv) return;
+    const w = document.createElement('span'); w.className = 'obs-ph';
+    const im = document.createElement('img'); im.src = p.data; im.alt = (p.area || '') + '：' + (p.name || '');
+    const x = mkBtn('×', () => { editing.removed.add(p.id); w.remove(); form.dispatchEvent(new Event('input')); }); x.className = 'ph-x no-print'; x.title = '移除這張照片';
+    w.append(im, x); pv.appendChild(w);
+  }
+  async function loadRecord(id) {
+    const ref = firebase.firestore().collection('learningObservations').doc(id), snap = await ref.get();
+    if (!snap.exists) throw new Error('找不到這筆紀錄');
+    const d = snap.data(), ps = await ref.collection('photos').get();
+    resetForm();
+    const setSel = (sid, mid, v) => { const s = $(sid), m = $(mid); if (!s || !v) return; if (Array.from(s.options).some(o => o.value === v)) s.value = v; else { s.value = '__manual__'; if (m) m.value = v; } };
+    const txt = (n, v) => { const e = form.elements[n]; if (e) e.value = v || ''; };
+    setSel('#observation-class', '#observation-class-manual', d.className);
+    $('#observation-class').dispatchEvent(new Event('change'));
+    setSel('#observation-child', '#observation-child-manual', d.childName);
+    $('#observation-child').dispatchEvent(new Event('change'));
+    const dt = $('input[name="observationDate"]'); dt.value = d.observationDate || today(); dt.dispatchEvent(new Event('change'));
+    ['observationNote', 'specialEventNote', 'familyFeedback', 'parentSignature'].forEach(n => txt(n, d[n]));
+    [['performances', d.performances], ['learningAreas', d.learningAreas]].forEach(([n, vals]) => (vals || []).forEach(v => { const c = form.querySelector('input[name="' + n + '"][value="' + CSS.escape(v) + '"]'); if (c) c.checked = true; }));
+    syncAreas();
+    const ind = d.indicator || {}, pick = (s, v) => { if (v && Array.from(s.options).some(o => o.value === v)) { s.value = v; s.dispatchEvent(new Event('change')); return true; } return false; };
+    if (pick($('#indicator-age'), ind.age) && pick($('#indicator-category'), ind.category)) pick($('#indicator-item'), ind.item);
+    if (ind.level) { const lv = form.querySelector('input[name="indicatorLevel"][value="' + CSS.escape(ind.level) + '"]'); if (lv) lv.checked = true; }
+    const me = fbUser();
+    shareSel = new Set((d.sharedWith || []).map(x => String(x).toLowerCase()));
+    editing = { id, owner: d.uid === me.uid, ownerName: d.userName || d.userEmail || '', title: (d.observationDate || '') + '　' + (d.childName || ''), existing: ps.docs.map(p => ({ id: p.id, area: p.data().area, name: p.data().name || '', data: p.data().data })), removed: new Set() };
+    editing.existing.forEach(addExistingPhoto);
+    growChallenge(); updateEditUI(); renderShare();
+    const b = $('#observation-save'); b.disabled = false; b.textContent = saveLabel();
+  }
+  async function deleteRecord(id) {
+    const x = saved.find(s => s.id === id);
+    if (!confirm('確定刪除「' + ((x && x.observationDate) || '') + ' ' + ((x && x.childName) || '') + '」這筆觀察紀錄（含照片）？刪除後無法復原。')) return;
+    const db = firebase.firestore(), ref = db.collection('learningObservations').doc(id), u = fbUser();
+    const ms = await db.collection('observationMarks').where('obsId', '==', id).get();
+    await Promise.all(ms.docs.filter(m => m.data().byUid === u.uid).map(m => m.ref.delete()));
+    const ps = await ref.collection('photos').get();
+    await Promise.all(ps.docs.map(p => p.ref.delete()));
+    await ref.delete();
+    if (editing && editing.id === id) resetForm();
+  }
+  async function fixMarks(id, payload) { // 編輯後讓進度標示跟著新的班級／幼兒／日期
+    const db = firebase.firestore(), u = fbUser(), qs = await db.collection('observationMarks').where('obsId', '==', id).get();
+    const mine = qs.docs.filter(m => m.data().byUid === u.uid);
+    const same = mine.some(m => { const v = m.data(); return v.className === payload.className && v.childName === payload.childName && v.semester === payload.semester && v.date === payload.observationDate; });
+    if (same) return;
+    await Promise.all(mine.map(m => m.ref.delete()));
+    await addMark(payload.className, payload.childName, payload.observationDate, id);
+  }
+
   function subscribe() {
     const u = fbUser(); if (!u || (unsub && unsubUid === u.uid)) return;
     if (unsub) unsub();
@@ -3689,10 +3842,10 @@ function kgApp() {
   function initAreas() {
     $$('[data-area-photo]').forEach(inp => inp.addEventListener('change', () => {
       const a = inp.dataset.areaPhoto, pv = $('[data-area-preview="' + CSS.escape(a) + '"]'); if (!pv) return;
-      pv.innerHTML = '';
+      pv.querySelectorAll('img[data-new]').forEach(n => n.remove());
       Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
         const u = URL.createObjectURL(f); photoUrls.push(u);
-        const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name; pv.appendChild(im);
+        const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name; im.dataset.new = '1'; pv.appendChild(im);
       });
     }));
     $$('input[name="learningAreas"]').forEach(c => c.addEventListener('change', syncAreas));
@@ -3709,6 +3862,7 @@ function kgApp() {
     if (d.childName === '__manual__') d.childName = (d.childNameManual || '').trim();
     delete d.classNameManual; delete d.childNameManual;
     d.semester = semOf(d.observationDate);
+    d.sharedWith = [...shareSel].map(x => String(x).toLowerCase());
     d.learningAreas = $$('input[name="learningAreas"]:checked', f).map(e => e.value);
     d.performances = $$('input[name="performances"]:checked', f).map(e => e.value);
     d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '', level: d.indicatorLevel || '' };
@@ -3717,7 +3871,7 @@ function kgApp() {
     return d;
   }
 
-  async function saveLearningObservation(payload, photos) {
+  async function saveLearningObservation(payload, photos, edit) {
     const all = Array.from(photos || []);
     if (!fbUser()) { // 沒登入 Firebase 時只存文字到本機
       const saved = JSON.parse(localStorage.getItem('learningObservations') || '[]');
@@ -3727,12 +3881,13 @@ function kgApp() {
       return { id, mode: 'local' };
     }
     const MAX = 24, MAXB = 10 * 1024 * 1024;
-    if (all.length > MAX) throw new Error('照片最多上傳 ' + MAX + ' 張');
+    const isEdit = !!(edit && edit.id), kept = isEdit ? edit.existing.filter(p => !edit.removed.has(p.id)) : [];
+    if (all.length + kept.length > MAX) throw new Error('照片最多 ' + MAX + ' 張');
     const entries = all.filter(e => e.file && e.file.type && e.file.type.startsWith('image/'));
     if (entries.some(e => e.file.size > MAXB)) throw new Error('單張照片不可超過 10 MB');
     // 照片壓縮成 JPEG 後存在 learningObservations/{id}/photos 子集合（和週誌相同做法，不使用 Firebase Storage）
     const user = firebase.auth().currentUser, db = firebase.firestore();
-    const docRef = db.collection('learningObservations').doc(), done = [];
+    const docRef = isEdit ? db.collection('learningObservations').doc(edit.id) : db.collection('learningObservations').doc(), done = [];
     const shrink = f => new Promise((ok, bad) => {
       const fr = new FileReader(); fr.onerror = bad;
       fr.onload = () => {
@@ -3747,34 +3902,35 @@ function kgApp() {
       fr.readAsDataURL(f);
     });
     try {
-      const areaPhotoIds = {};
       const prepared = [];
       for (const e of entries) {
-        const id = 'ph' + Date.now() + Math.random().toString(36).slice(2, 6);
-        prepared.push({ id, area: e.area, name: e.file.name, data: await shrink(e.file) });
-        (areaPhotoIds[e.area] = areaPhotoIds[e.area] || []).push(id);
+        prepared.push({ id: 'ph' + Date.now() + Math.random().toString(36).slice(2, 6), area: e.area, name: e.file.name, data: await shrink(e.file) });
       }
-      // 先寫主文件（子集合規則要靠它判斷本人），再寫照片
-      await docRef.set({
-        ...payload, areaPhotoIds, photoCount: prepared.length,
-        photoMeta: prepared.map(p => ({ id: p.id, area: p.area, name: p.name })),
-        uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      for (const p of prepared) {
-        await docRef.collection('photos').doc(p.id).set({ data: p.data, area: p.area, name: p.name, createdAt: Date.now() });
-        done.push(p.id);
+      const list = kept.concat(prepared).map(p => ({ id: p.id, area: p.area, name: p.name }));
+      const meta = { areaPhotoIds: list.reduce((g, p) => { (g[p.area] = g[p.area] || []).push(p.id); return g; }, {}), photoCount: list.length, photoMeta: list };
+      const writePhotos = async () => {
+        for (const p of prepared) { await docRef.collection('photos').doc(p.id).set({ data: p.data, area: p.area, name: p.name, createdAt: Date.now() }); done.push(p.id); }
+      };
+      const TS = firebase.firestore.FieldValue.serverTimestamp();
+      if (isEdit) { // 更新：先寫新照片，再改主文件，最後才刪被移除的照片
+        await writePhotos();
+        const body = { ...payload }; if (edit.owner === false) delete body.sharedWith; // 被分享的老師不能改分享名單
+        await docRef.update({ ...body, ...meta, updatedAt: TS });
+        await Promise.all(edit.existing.filter(p => edit.removed.has(p.id)).map(p => docRef.collection('photos').doc(p.id).delete().catch(() => {})));
+      } else { // 新增：先寫主文件（子集合規則要靠它判斷本人），再寫照片
+        await docRef.set({ ...payload, ...meta, uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos', createdAt: TS, updatedAt: TS });
+        await writePhotos();
       }
-      return { id: docRef.id, mode: 'firebase', photoCount: prepared.length };
-    } catch (err) { // 失敗時先刪已寫入的照片，再刪主文件，避免留下殘缺紀錄
+      return { id: docRef.id, mode: 'firebase', photoCount: list.length };
+    } catch (err) { // 失敗時清掉這次新寫的照片；新增失敗再刪主文件，避免留下殘缺紀錄
       await Promise.all(done.map(id => docRef.collection('photos').doc(id).delete().catch(() => {})));
-      await docRef.delete().catch(() => {});
+      if (!isEdit) await docRef.delete().catch(() => {});
       throw err;
     }
   }
 
   function resetForm() {
-    form.reset();
+    form.reset(); editing = null; shareSel = new Set(defaultShare()); renderShare();
     [['category', '請先選擇分類'], ['item', '請先選擇學習指標']].forEach(([k, t]) => { const s = $('#indicator-' + k); setOptions(s, [], t); s.disabled = true; });
     $('#selected-indicator').hidden = true; $('#selected-indicator-print').textContent = '學習指標：';
     $$('[data-area-photo]', form).forEach(i => { i.value = ''; });
@@ -3782,7 +3938,7 @@ function kgApp() {
     photoUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
     syncAreas(); refreshRoster(true); growChallenge();
     $('input[name="observationDate"]').value = today();
-    const b = $('#observation-save'); b.disabled = false; b.textContent = '儲存觀察紀錄';
+    const b = $('#observation-save'); b.disabled = false; b.textContent = saveLabel(); updateEditUI();
   }
 
   function growChallenge() { // 挑戰學習區欄位依內容自動長高（自動換行）
@@ -3793,34 +3949,39 @@ function kgApp() {
     window.addEventListener('resize', growChallenge);
     const st = $('#observation-status'), btn = $('#observation-save'); let saving = false;
     const say = (t, bad) => { st.textContent = t; st.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); };
-    const unlock = () => { if (!saving) { btn.disabled = false; btn.textContent = '儲存觀察紀錄'; } };
+    const unlock = () => { if (!saving) { btn.disabled = false; btn.textContent = saveLabel(); } };
     form.addEventListener('input', unlock); form.addEventListener('change', unlock);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (saving || !form.reportValidity()) return;
       const payload = collectFormData(form);
-      if (payload.className && payload.childName && marksKey === payload.semester + '|' + payload.className
+      if (!editing && payload.className && payload.childName && marksKey === payload.semester + '|' + payload.className
         && marks.filter(m => m.childName === payload.childName).length >= GOAL
         && !confirm('「' + payload.childName + '」本學期已經有 ' + GOAL + ' 次觀察紀錄，仍要再儲存一筆嗎？')) return;
       saving = true; btn.disabled = true; btn.textContent = '儲存中…'; say('');
       try { // 儲存後按鈕維持「已儲存」，改動內容才恢復，避免連點產生重複紀錄
-        const r = await saveLearningObservation(payload, photoEntries(form));
+        const wasEdit = !!editing, ownerEdit = !editing || editing.owner;
+        const r = await saveLearningObservation(payload, photoEntries(form), editing);
         let extra = '';
-        if (r.mode === 'firebase' && payload.className && payload.childName) { // 存檔成功後自動標示本學期進度
-          try { await addMark(payload.className, payload.childName, payload.observationDate, r.id); } catch (e) { extra = '（進度標示失敗：' + (e.code || e.message) + '）'; }
+        if (r.mode === 'firebase' && payload.className && payload.childName && ownerEdit) { // 存檔成功後自動標示（或更新）本學期進度（共同編輯者不動擁有者的標示）
+          try { if (wasEdit) await fixMarks(r.id, payload); else await addMark(payload.className, payload.childName, payload.observationDate, r.id); } catch (e) { extra = '（進度標示失敗：' + (e.code || e.message) + '）'; }
         }
-        say(r.mode === 'firebase' ? '觀察紀錄已儲存' + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' + extra : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
-        btn.textContent = '✓ 已儲存';
+        say(r.mode === 'firebase' ? (wasEdit ? '觀察紀錄已更新' : '觀察紀錄已儲存') + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' + extra : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
+        if (r.mode === 'firebase') { try { await loadRecord(r.id); } catch (e) { console.error(e); } } // 存檔後直接進入編輯狀態，之後可繼續修改
+        btn.textContent = '✓ 已儲存'; btn.disabled = true;
       } catch (err) {
         console.error('儲存觀察紀錄失敗', err);
         say('儲存失敗：' + (err.code || err.message || '請稍後再試'), true);
-        btn.disabled = false; btn.textContent = '儲存觀察紀錄';
+        btn.disabled = false; btn.textContent = saveLabel();
       } finally { saving = false; }
     });
     $('[data-action="reset-observation"]').addEventListener('click', () => {
       if (!confirm('確定要清除本頁已填寫的內容與照片嗎？')) return;
       resetForm(); say('本頁內容已清除。');
     });
+    $('#obs-share-q').addEventListener('input', (e) => { e.stopPropagation(); shareQ = e.target.value; renderShare(); });
+    $('[data-action="cancel-edit"]').addEventListener('click', () => { if (confirm('放棄目前的修改並關閉編輯？')) { resetForm(); say(''); } });
+    $('[data-action="new-observation"]').addEventListener('click', () => { if (editing && !confirm('目前正在編輯一筆紀錄，要關閉並開始新的一筆嗎？')) return; resetForm(); say(''); });
     $('[data-action="print-observation"]').addEventListener('click', () => { document.body.classList.add('obs-printing'); window.print(); });
   }
 
@@ -3828,13 +3989,14 @@ function kgApp() {
     page = el; form = el.querySelector('#learning-observation-form');
     if (!form || el.dataset.obsReady) return;
     el.dataset.obsReady = '1';
+    shareSel = new Set(defaultShare());
     initIndicators(); initRoster(); initAreas(); initForm();
     $('input[name="observationDate"]').value = today(); syncMarks();
   }
   function sync(el, data, sig, active) {
     app = data;
     if (page !== el) mount(el);
-    if (active) { refreshRoster(); subscribe(); syncMarks(); growChallenge(); }
+    if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
   window.addEventListener('beforeprint', () => { growChallenge(); if (page && page.offsetParent !== null) document.body.classList.add('obs-printing'); });
