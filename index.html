@@ -166,13 +166,14 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chip input:checked+span::before{background:#111}
 #learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
 #learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
-#learning-observation-page .obs-photos-2 img{width:calc((100% - 3px)/2);aspect-ratio:auto;height:auto;align-self:stretch;object-fit:contain;background:#fff}
-#learning-observation-page .obs-ph{display:flex}#learning-observation-page .obs-photos-2 .obs-ph img{height:auto;object-fit:contain}
+#learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;width:calc((100% - 3px)/2);align-self:stretch;min-height:30mm}
+#learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;background:#fff;border:1px solid #555}
+#learning-observation-page .obs-act{overflow:hidden}
 #learning-observation-page .obs-ph{width:calc((100% - 6px)/3)}#learning-observation-page .obs-photos-2 .obs-ph{width:calc((100% - 3px)/2)}#learning-observation-page .obs-ph img{width:100%}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px}
 #learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
 #learning-observation-page .obs-act-label h3{margin:0}
-#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-content:stretch}
+#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-items:stretch;align-content:stretch}
 #learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:70px}
 #learning-observation-page .obs-sec{margin-top:.7em}
 #learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
@@ -3955,10 +3956,11 @@ function kgApp() {
   function initAreas() {
     $$('[data-area-photo]').forEach(inp => inp.addEventListener('change', () => {
       const a = inp.dataset.areaPhoto, pv = $('[data-area-preview="' + CSS.escape(a) + '"]'); if (!pv) return;
-      pv.querySelectorAll('img[data-new]').forEach(n => n.remove());
+      pv.querySelectorAll('.obs-ph[data-new]').forEach(n => n.remove());
       Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
         const u = URL.createObjectURL(f); photoUrls.push(u);
-        const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name; im.dataset.new = '1'; pv.appendChild(im);
+        const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name;
+        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); // 包一層，列印時才能依頁面剩餘空間等比放大
       });
     }));
     const apv = $('[data-area-preview="學習區活動紀錄"]'), act = $('.obs-act'); // 有活動照片時，列印讓照片撐滿頁面剩餘空間
