@@ -133,7 +133,7 @@
 body.obs-printing{background:#fff!important}
 body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
-#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000;display:flex;flex-direction:column;height:calc(100vh - 1mm);overflow-x:clip}
+#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.3;color:#000;display:flex;flex-direction:column;height:calc(100vh - 1mm);overflow-x:clip}
 #learning-observation-page #learning-observation-form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin-top:0}
 #learning-observation-page [data-obspanel="fill"]{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 #learning-observation-page *{font-family:inherit}
@@ -169,7 +169,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chips .obs-inline{border:0}
 #learning-observation-page .obs-chips .obs-inline:placeholder-shown{display:none}
 #learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;align-items:stretch;gap:2px;margin:2px 0 0;padding:0}
-#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:24mm}
+#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:22mm}
 #learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:42mm;overflow:hidden}
 #learning-observation-page .obs-act-label{white-space:nowrap;writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
@@ -186,7 +186,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .mb-3,#learning-observation-page .mb-2{margin-bottom:2px!important}#learning-observation-page .mt-1{margin-top:0!important}
 #learning-observation-page .obs-fb{display:flex;flex-direction:column}
 #learning-observation-page .obs-frame>.obs-fb{flex:1 1 auto}
-#learning-observation-page #observation-feedback{min-height:10mm}
+#learning-observation-page #observation-feedback{min-height:0}
 #learning-observation-page .obs-sign{margin-top:auto;padding-top:4px;align-items:flex-end;gap:4px}
 #learning-observation-page .obs-sign .obs-input{flex:none;width:5cm}
 }
@@ -3676,6 +3676,10 @@ function kgApp() {
     const a = $('#obs-pt-sem'), b = $('#obs-pt-cls');
     if (a) a.textContent = semTitle(curSem()); if (b) b.textContent = cls;
   }
+  function printFit(on) { // 列印時家長回饋欄若沒填，縮成一小行，讓整份保持一頁；列印完恢復
+    const t = $('#observation-feedback'); if (!t) return;
+    if (on) { if (!t.value.trim()) t.style.height = '6mm'; } else growChallenge();
+  }
   function boardMsg(t, bad) { const e = $('#obs-board-msg'); if (e) { e.textContent = t; e.className = 'text-xs font-bold mt-2 ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
   function syncMarks() {
     if (!page) return;
@@ -4115,7 +4119,7 @@ function kgApp() {
     $('#obs-share-q').addEventListener('input', (e) => { e.stopPropagation(); shareQ = e.target.value; renderShare(); });
     $('[data-action="cancel-edit"]').addEventListener('click', () => { if (confirm('放棄目前的修改並關閉編輯？')) { resetForm(); say(''); } });
     $$('[data-obstab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.obstab)));
-    $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); printTitle(); growChallenge(); document.body.classList.add('obs-printing'); window.print(); });
+    $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); printTitle(); growChallenge(); printFit(true); document.body.classList.add('obs-printing'); window.print(); });
   }
 
   function mount(el) {
@@ -4132,8 +4136,8 @@ function kgApp() {
     if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
-  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); printTitle(); growChallenge(); document.body.classList.add('obs-printing'); } });
-  window.addEventListener('afterprint', () => document.body.classList.remove('obs-printing'));
+  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); printTitle(); growChallenge(); printFit(true); document.body.classList.add('obs-printing'); } });
+  window.addEventListener('afterprint', () => { document.body.classList.remove('obs-printing'); printFit(false); });
 
   window.saveLearningObservation = saveLearningObservation;
   window.learningObservation = { get indicatorData() { return getIndicatorData(); }, collectFormData, saveLearningObservation };
