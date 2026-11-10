@@ -133,7 +133,7 @@
 body.obs-printing{background:#fff!important}
 body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
-#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000;display:flex;flex-direction:column;height:279mm}
+#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000;display:flex;flex-direction:column;height:calc(100vh - 1mm);overflow-x:clip}
 #learning-observation-page #learning-observation-form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin-top:0}
 #learning-observation-page [data-obspanel="fill"]{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 #learning-observation-page *{font-family:inherit}
@@ -168,18 +168,18 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chip input:checked+span::before,#learning-observation-page .obs-box input:checked+span::before{content:"";background:#111;border-color:#111}
 #learning-observation-page .obs-chips .obs-inline{border:0}
 #learning-observation-page .obs-chips .obs-inline:placeholder-shown{display:none}
-#learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:2px 0 0;padding:0}
-#learning-observation-page .obs-area .obs-ph{flex:var(--ar,1) 1 0;width:auto;min-width:0;height:auto}
-#learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:auto;max-height:36mm;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
-#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px;overflow:hidden}
-#learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
+#learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;align-items:stretch;gap:2px;margin:2px 0 0;padding:0}
+#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:24mm}
+#learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
+#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:42mm;overflow:hidden}
+#learning-observation-page .obs-act-label{white-space:nowrap;writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
 #learning-observation-page .obs-act-label h3{margin:0}
 #learning-observation-page .obs-act .obs-photos{flex:1;display:flex;flex-wrap:nowrap;align-items:stretch;gap:4px;margin:0;padding:4px}
 #learning-observation-page .obs-act .obs-photos.many{flex-wrap:wrap;align-content:stretch}
 #learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;flex:var(--ar,1.33) 1 0;width:auto;min-width:0;min-height:30mm}
 #learning-observation-page .obs-photos-2.many .obs-ph{flex:1 1 calc(50% - 4px)}
 #learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
-#learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:70px}
+#learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:42mm}
 #learning-observation-page .obs-act.has-photos~.obs-fb{flex:none}
 #learning-observation-page .obs-sec{margin-top:.8em}
 #learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
