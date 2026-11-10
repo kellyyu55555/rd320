@@ -133,17 +133,19 @@
 body.obs-printing{background:#fff!important}
 body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
-#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000}
+#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000;display:flex;flex-direction:column;height:279mm}
+#learning-observation-page #learning-observation-form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin-top:0}
+#learning-observation-page [data-obspanel="fill"]{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 #learning-observation-page *{font-family:inherit}
 #learning-observation-page ::placeholder{color:transparent!important}
 #learning-observation-page .text-sm,#learning-observation-page .text-xs{font-size:12pt!important}#learning-observation-page h3{font-size:12pt!important;margin:0 0 2px!important}
 #learning-observation-page .no-print{display:none!important}
 #learning-observation-page .obs-print-only{display:inline}
-#learning-observation-page .obs-frame{display:flex;flex-direction:column;gap:0;height:255mm;border:1px solid #222}
+#learning-observation-page .obs-frame{display:flex;flex-direction:column;gap:0;flex:1 1 auto;min-height:0;margin-top:0!important;border:1px solid #222}
 #learning-observation-page .obs-frame>.obs-block{flex:none}
 #learning-observation-page .obs-block{margin:0!important;padding:3px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
 #learning-observation-page .obs-frame>.obs-block:first-child{border-top:0!important}
-#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 6px!important}
+#learning-observation-page .obs-head{flex:none;display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 6px!important}
 #learning-observation-page #observation-school-title{font-size:18pt!important;font-weight:bold;line-height:1.3;color:#000;margin:0 0 8px}
 #learning-observation-page .obs-head h2{display:flex;justify-content:center;gap:0!important;font-size:15pt;font-weight:bold;line-height:1.35;margin:0 0 4px}
 #learning-observation-page .obs-pt-cls{color:#c55a11;text-decoration:underline}
@@ -166,16 +168,19 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chip input:checked+span::before,#learning-observation-page .obs-box input:checked+span::before{content:"";background:#111;border-color:#111}
 #learning-observation-page .obs-chips .obs-inline{border:0}
 #learning-observation-page .obs-chips .obs-inline:placeholder-shown{display:none}
-#learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;gap:2px;margin:2px 0 0;padding:0}
-#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:24mm}
-#learning-observation-page .obs-area .obs-ph img{width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border:0;border-radius:0}
+#learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;align-items:center;gap:2px;margin:2px 0 0;padding:0}
+#learning-observation-page .obs-area .obs-ph{flex:var(--ar,1) 1 0;width:auto;min-width:0;height:auto}
+#learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:auto;max-height:36mm;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px;overflow:hidden}
 #learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
 #learning-observation-page .obs-act-label h3{margin:0}
-#learning-observation-page .obs-act .obs-photos{flex:1;display:flex;flex-wrap:wrap;align-items:stretch;align-content:stretch;gap:3px;margin:0;padding:0}
-#learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;flex:1 1 calc(50% - 3px);width:auto;min-height:30mm}
-#learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border:0;border-radius:0}
-#learning-observation-page .obs-frame>.obs-act.has-photos{flex:3 1 auto;min-height:70px}
+#learning-observation-page .obs-act .obs-photos{flex:1;display:flex;flex-wrap:nowrap;align-items:stretch;gap:4px;margin:0;padding:4px}
+#learning-observation-page .obs-act .obs-photos.many{flex-wrap:wrap;align-content:stretch}
+#learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;flex:var(--ar,1.33) 1 0;width:auto;min-width:0;min-height:30mm}
+#learning-observation-page .obs-photos-2.many .obs-ph{flex:1 1 calc(50% - 4px)}
+#learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
+#learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:70px}
+#learning-observation-page .obs-act.has-photos~.obs-fb{flex:none}
 #learning-observation-page .obs-sec{margin-top:.8em}
 #learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
 #learning-observation-page .mb-3,#learning-observation-page .mb-2{margin-bottom:2px!important}#learning-observation-page .mt-1{margin-top:0!important}
@@ -3807,7 +3812,7 @@ function kgApp() {
     const w = document.createElement('span'); w.className = 'obs-ph';
     const im = document.createElement('img'); im.src = p.data; im.alt = (p.area || '') + '：' + (p.name || '');
     const x = mkBtn('×', () => { editing.removed.add(p.id); w.remove(); form.dispatchEvent(new Event('input')); }); x.className = 'ph-x no-print'; x.title = '移除這張照片';
-    w.append(im, x); pv.appendChild(w);
+    w.append(im, x); pv.appendChild(w); setAr(im, w);
   }
   async function loadRecord(id) {
     const ref = firebase.firestore().collection('learningObservations').doc(id), snap = await ref.get();
@@ -3963,6 +3968,7 @@ function kgApp() {
       $$('[data-area-extra]', c).forEach(n => { n.hidden = !on; });
     });
   }
+  const setAr = (im, w) => { const f = () => w.style.setProperty('--ar', (im.naturalWidth / im.naturalHeight).toFixed(3)); if (im.complete && im.naturalWidth) f(); else im.onload = f; }; // 照片格子依照片長寬比調整，不裁切
   function initAreas() {
     $$('[data-area-photo]').forEach(inp => inp.addEventListener('change', () => {
       const a = inp.dataset.areaPhoto, pv = $('[data-area-preview="' + CSS.escape(a) + '"]'); if (!pv) return;
@@ -3970,11 +3976,11 @@ function kgApp() {
       Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
         const u = URL.createObjectURL(f); photoUrls.push(u);
         const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name;
-        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); // 包一層，列印時才能依頁面剩餘空間等比放大
+        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); setAr(im, w); // 包一層，列印時才能依頁面剩餘空間等比放大
       });
     }));
     const apv = $('[data-area-preview="學習區活動紀錄"]'), act = $('.obs-act'); // 有活動照片時，列印讓照片撐滿頁面剩餘空間
-    if (apv && act) new MutationObserver(() => act.classList.toggle('has-photos', apv.children.length > 0)).observe(apv, { childList: true });
+    if (apv && act) new MutationObserver(() => { act.classList.toggle('has-photos', apv.children.length > 0); apv.classList.toggle('many', apv.children.length > 2); }).observe(apv, { childList: true });
     $$('input[name="learningAreas"]').forEach(c => c.addEventListener('change', syncAreas));
     syncAreas();
   }
