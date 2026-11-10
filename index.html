@@ -128,58 +128,61 @@
 #learning-observation-page .obs-ph img{width:100%}
 #learning-observation-page .obs-ph .ph-x{position:absolute;top:2px;right:2px;width:1.3rem;height:1.3rem;border:0;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;line-height:1.3rem;cursor:pointer}
 @media(max-width:640px){#learning-observation-page .obs-grid3{grid-template-columns:1fr}#learning-observation-page .obs-areas{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@page obs{size:A4 portrait;margin:10mm}
+@page obs{size:A4 portrait;margin:8mm}
 @media print{
 body.obs-printing{background:#fff!important}
 body.obs-printing header,body.obs-printing footer,body.obs-printing .fixed,body.obs-printing div[style*="position:fixed"]{display:none!important}
 body.obs-printing main{max-width:none!important;margin:0!important;padding:0!important}
-#learning-observation-page{page:obs;max-width:none!important;font-size:9pt;line-height:1.3;color:#000}
+#learning-observation-page{page:obs;max-width:none!important;font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",serif;font-size:12pt;line-height:1.4;color:#000}
+#learning-observation-page *{font-family:inherit}
 #learning-observation-page ::placeholder{color:transparent!important}
-#learning-observation-page .text-sm,#learning-observation-page .text-xs{font-size:9pt!important}#learning-observation-page h3{font-size:10pt!important;margin:0 0 2px!important}
+#learning-observation-page .text-sm,#learning-observation-page .text-xs{font-size:12pt!important}#learning-observation-page h3{font-size:12pt!important;margin:0 0 2px!important}
 #learning-observation-page .no-print{display:none!important}
 #learning-observation-page .obs-print-only{display:inline}
-#learning-observation-page .obs-frame{display:flex;flex-direction:column;height:255mm;border:1px solid #222}
+#learning-observation-page .obs-frame{display:flex;flex-direction:column;gap:0;height:255mm;border:1px solid #222}
 #learning-observation-page .obs-frame>.obs-block{flex:none}
 #learning-observation-page .obs-block{margin:0!important;padding:3px 8px!important;border:0!important;border-top:1px solid #222!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
 #learning-observation-page .obs-frame>.obs-block:first-child{border-top:0!important}
-#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 4px!important}
-#learning-observation-page #observation-school-title{font-size:14pt;color:#000;margin:0}
-#learning-observation-page .obs-head h2{justify-content:center;font-size:15pt;margin:0 0 4px}
+#learning-observation-page .obs-head{display:block!important;text-align:center;border:0!important;padding:0!important;margin:0 0 6px!important}
+#learning-observation-page #observation-school-title{font-size:18pt!important;font-weight:bold;line-height:1.3;color:#000;margin:0 0 8px}
+#learning-observation-page .obs-head h2{display:flex;justify-content:center;gap:0!important;font-size:15pt;font-weight:bold;line-height:1.35;margin:0 0 4px}
+#learning-observation-page .obs-pt-cls{color:#c55a11;text-decoration:underline}
 #learning-observation-page .obs-grid3{gap:0;grid-template-columns:1fr 1.35fr 1fr}
-#learning-observation-page .obs-meta>div,#learning-observation-page .obs-challenge{display:flex;align-items:flex-start;gap:4px}
-#learning-observation-page .obs-meta label,#learning-observation-page .obs-challenge label{white-space:nowrap;margin:0}
+#learning-observation-page .obs-meta>div{display:flex;align-items:flex-start;gap:4px}
+#learning-observation-page .obs-meta label{white-space:nowrap;margin:0}
 #learning-observation-page .obs-input{flex:1;width:auto;min-width:0;margin:0;padding:0 4px;border:0;border-bottom:1px solid #555;border-radius:0;background:#fff;appearance:none}
 #learning-observation-page textarea.obs-auto{display:block;flex:none;width:100%;box-sizing:border-box;border:0;padding:0 2px}
 #learning-observation-page .obs-block>label{display:block}
 #learning-observation-page .obs-areas-block{padding:0!important}
-#learning-observation-page .obs-ch-title{margin:0!important;padding:4px 8px;border-bottom:1pt solid #222;font-size:10pt!important}
-#learning-observation-page .obs-area .obs-chip span{justify-content:flex-start}
-#learning-observation-page .obs-box span::before{margin-right:0;border:1px solid #111;border-radius:0;width:10px;height:10px;line-height:11px;font-size:10px}
-#learning-observation-page .obs-box input:checked+span::before{content:"";background:#111;border-color:#111}
+#learning-observation-page .obs-ch-title{margin:0!important;padding:3px 8px;border-bottom:1pt solid #222}
 #learning-observation-page .obs-areas{display:table;table-layout:fixed;width:100%;border-collapse:collapse}
 #learning-observation-page .obs-arow{display:table-row}
-#learning-observation-page .obs-area{display:table-cell;width:25%;vertical-align:top;padding:4px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
+#learning-observation-page .obs-area{display:table-cell;width:25%;vertical-align:top;padding:2px 4px 3px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
 #learning-observation-page .obs-arow>.obs-area:first-child{border-left:0!important}#learning-observation-page .obs-arow>.obs-area:last-child{border-right:0!important}
 #learning-observation-page .obs-arow:first-child>.obs-area{border-top:0!important}#learning-observation-page .obs-arow:last-child>.obs-area{border-bottom:0!important}
-#learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:2px 4px;border:0;border-radius:0;background:#fff!important;color:#000;font-size:10pt}
-#learning-observation-page .obs-chip span::before{content:"";display:inline-block;width:10px;height:10px;border:1px solid #111;background:#fff}
-#learning-observation-page .obs-chip input:checked+span::before{background:#111}
-#learning-observation-page .obs-chips .obs-inline{border-bottom:1px solid #555}
-#learning-observation-page .obs-photos{gap:3px}#learning-observation-page .obs-photos img{width:calc((100% - 6px)/3);border:1px solid #555;border-radius:0}
-#learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;width:calc((100% - 3px)/2);align-self:stretch;min-height:30mm}
-#learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;background:#fff;border:1px solid #555}
-#learning-observation-page .obs-act{overflow:hidden}
-#learning-observation-page .obs-ph{width:calc((100% - 6px)/3)}#learning-observation-page .obs-photos-2 .obs-ph{width:calc((100% - 3px)/2)}#learning-observation-page .obs-ph img{width:100%}
-#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px}
-#learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em;font-size:10pt}
+#learning-observation-page .obs-area .obs-chip span{justify-content:flex-start}
+#learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:2px 4px;border:0;border-radius:0;background:#fff!important;color:#000;font-size:12pt}
+#learning-observation-page .obs-chip span::before,#learning-observation-page .obs-box span::before{content:"";display:inline-block;flex:none;width:11px;height:11px;margin-right:0;border:1px solid #111;border-radius:0;background:#fff;font-size:10px;line-height:11px}
+#learning-observation-page .obs-chip input:checked+span::before,#learning-observation-page .obs-box input:checked+span::before{content:"";background:#111;border-color:#111}
+#learning-observation-page .obs-chips .obs-inline{border:0}
+#learning-observation-page .obs-chips .obs-inline:placeholder-shown{display:none}
+#learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;gap:2px;margin:2px 0 0;padding:0}
+#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:24mm}
+#learning-observation-page .obs-area .obs-ph img{width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border:0;border-radius:0}
+#learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:70px;overflow:hidden}
+#learning-observation-page .obs-act-label{writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
 #learning-observation-page .obs-act-label h3{margin:0}
-#learning-observation-page .obs-act .obs-photos{flex:1;margin:0;padding:6px;align-items:stretch;align-content:stretch}
-#learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:70px}
-#learning-observation-page .obs-sec{margin-top:.7em}
+#learning-observation-page .obs-act .obs-photos{flex:1;display:flex;flex-wrap:wrap;align-items:stretch;align-content:stretch;gap:3px;margin:0;padding:0}
+#learning-observation-page .obs-photos-2 .obs-ph{position:relative;display:block;flex:1 1 calc(50% - 3px);width:auto;min-height:30mm}
+#learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;border:0;border-radius:0}
+#learning-observation-page .obs-frame>.obs-act.has-photos{flex:3 1 auto;min-height:70px}
+#learning-observation-page .obs-sec{margin-top:.8em}
 #learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
 #learning-observation-page .mb-3,#learning-observation-page .mb-2{margin-bottom:2px!important}#learning-observation-page .mt-1{margin-top:0!important}
+#learning-observation-page .obs-fb{display:flex;flex-direction:column}
+#learning-observation-page .obs-frame>.obs-fb{flex:1 1 auto}
 #learning-observation-page #observation-feedback{min-height:10mm}
-#learning-observation-page .obs-sign{margin-top:4px}
+#learning-observation-page .obs-sign{margin-top:auto;padding-top:4px;align-items:flex-end;gap:4px}
 #learning-observation-page .obs-sign .obs-input{flex:none;width:5cm}
 }
 </style>
@@ -1277,7 +1280,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
   <div class="obs-block obs-head paper-card rounded-3xl p-6 shadow-card flex flex-wrap items-start justify-between gap-3">
     <div>
       <p id="observation-school-title" class="text-xs font-bold text-wood-dark/60">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</p>
-      <h2 id="observation-title" class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl no-print">📷</span> 學習區觀察紀錄表</h2>
+      <h2 id="observation-title" class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl no-print">📷</span> <span id="obs-pt-sem" class="obs-print-only"></span><span id="obs-pt-cls" class="obs-print-only obs-pt-cls"></span>學習區觀察紀錄表</h2>
     </div>
     <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
@@ -1362,7 +1365,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <div class="obs-chips mt-3"><span id="selected-indicator-print" class="obs-print-only">學習指標：</span><span class="no-print text-sm font-bold text-wood-dark/80">指標評量：</span><label class="obs-chip"><input type="radio" name="indicatorLevel" value="需多練習"><span>需多練習</span></label><label class="obs-chip"><input type="radio" name="indicatorLevel" value="持續發展"><span>持續發展</span></label><label class="obs-chip"><input type="radio" name="indicatorLevel" value="能力穩定"><span>能力穩定</span></label></div>
       </div>
     </div>
-    <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
+    <div class="obs-block obs-fb paper-card rounded-3xl p-6 shadow-card">
       <h3 class="font-heading font-bold text-sm">邀請家長一起參與幼兒在學習區的學習過程分享。</h3>
       <p class="text-xs text-wood-dark/60 mt-1 mb-3">（引導語例句：你在哪一區做的作品？這個作品名稱？為什麼想要做（畫）這個作品？有遇到困難嗎？遇到困難時你怎麼解決？）</p>
       <label for="observation-feedback" class="text-sm font-bold text-wood-dark/80 no-print">家長回饋：</label>
@@ -3661,6 +3664,13 @@ function kgApp() {
   const curCls = () => { const c = $('#observation-class'); return c && c.value && c.value !== '__manual__' ? c.value : ''; };
   const curSem = () => semOf(($('input[name="observationDate"]') || {}).value);
   const byTime = (a, b) => String(a.date).localeCompare(String(b.date)) || ((a.createdAt && a.createdAt.seconds || 0) - (b.createdAt && b.createdAt.seconds || 0));
+  const semTitle = k => { const a = k.split('-'); return a[0] + '學年度' + (a[1] === '1' ? '上' : '下') + '學期'; };
+  function printTitle() { // 列印標題比照週誌：「115學年度上學期【班級】學習區觀察紀錄表」
+    const cs = $('#observation-class'), man = $('#observation-class-manual');
+    const cls = cs && cs.value === '__manual__' ? ((man && man.value) || '').trim() : (cs ? cs.value : '');
+    const a = $('#obs-pt-sem'), b = $('#obs-pt-cls');
+    if (a) a.textContent = semTitle(curSem()); if (b) b.textContent = cls;
+  }
   function boardMsg(t, bad) { const e = $('#obs-board-msg'); if (e) { e.textContent = t; e.className = 'text-xs font-bold mt-2 ' + (bad ? 'text-coral' : 'text-sage-dark'); } }
   function syncMarks() {
     if (!page) return;
@@ -4099,7 +4109,7 @@ function kgApp() {
     $('#obs-share-q').addEventListener('input', (e) => { e.stopPropagation(); shareQ = e.target.value; renderShare(); });
     $('[data-action="cancel-edit"]').addEventListener('click', () => { if (confirm('放棄目前的修改並關閉編輯？')) { resetForm(); say(''); } });
     $$('[data-obstab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.obstab)));
-    $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); document.body.classList.add('obs-printing'); window.print(); });
+    $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); printTitle(); growChallenge(); document.body.classList.add('obs-printing'); window.print(); });
   }
 
   function mount(el) {
@@ -4116,7 +4126,7 @@ function kgApp() {
     if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
-  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); growChallenge(); document.body.classList.add('obs-printing'); } });
+  window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); printTitle(); growChallenge(); document.body.classList.add('obs-printing'); } });
   window.addEventListener('afterprint', () => document.body.classList.remove('obs-printing'));
 
   window.saveLearningObservation = saveLearningObservation;
