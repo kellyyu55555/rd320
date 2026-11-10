@@ -336,7 +336,8 @@ function calc(){const m=$('#mon').value;let tot=0;
   const adj=[ov.days!=null?`出席天數 ${d0}→${days}`:'',ov.fee!=null?`費用 ${f0}→${fee}`:'',ov.lm!=null?`超時 ${l0}→${lm}`:'',ov.note||''].filter(Boolean).join('；');
   return{k,days,d0,fee,f0,lm,l0,ov,adj,ab:monthAbs.filter(a=>a.kid==k.id).length,la:lateAll.filter(r=>r.kid==k.id).length};}).filter(r=>!r.k.temp||r.d0>0||monthAdj[r.k.id]);
  return{rows,tot,m};}
-async function renderReport(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();const mk=(v,x)=>v+(x!=null?' ✎':'');
+async function renderReport(){try{await renderReportCore()}catch(e){reportErr(e,"月總表載入")}}
+async function renderReportCore(){if(!isAdmin)return;await loadMonth();const{rows,tot}=calc();const mk=(v,x)=>v+(x!=null?' ✎':'');
  $('#rep').innerHTML='<tr><th>幼兒</th><th>班級</th><th>方案</th><th>出席天數</th><th>請假天數</th><th>費用</th><th>當月超時</th><th>累計超時</th><th>調整／備註</th><th></th></tr>'+rows.map(r=>
   `<tr><td>${esc(r.k.name)}</td><td>${esc(r.k.cls)}</td><td>${planName(r.k)}</td><td>${mk(r.days,r.ov.days)}</td><td>${r.ab}</td><td>${mk(r.fee,r.ov.fee)}</td><td class="${r.lm?'late':''}">${mk(r.lm,r.ov.lm)}</td><td>${r.la}</td><td class="mu">${esc(r.adj)}</td><td><button class="btn" style="padding:4px 10px;font-size:15px" onclick="editAdj('${r.k.id}')">編輯</button></td></tr>`).join('')+`<tr><th colspan="5">總計</th><th>${tot}</th><th></th><th></th><th></th><th></th></tr>`;}
 function editAdj(kid){const r=calc().rows.find(x=>x.k.id==kid);if(!r)return;
@@ -355,13 +356,15 @@ async function saveAdj(kid){const r=calc().rows.find(x=>x.k.id==kid);if(!r)retur
  $('#adj').classList.add('hide');toast('✔ 已儲存調整');renderReport();}
 async function resetAdj(kid){if(!confirm('還原為系統計算？（會清除這位幼兒本月的手動調整與備註）'))return;
  await db.collection('pickup_adjust').doc($('#mon').value+'_'+kid).delete();$('#adj').classList.add('hide');toast('已還原');renderReport();}
-async function exportCSV(){await loadMonth();const{rows,tot,m}=calc();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+async function exportCSV(){try{await exportCSVCore()}catch(e){reportErr(e,"匯出月總表")}}
+async function exportCSVCore(){await loadMonth();const{rows,tot,m}=calc();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  let L=[['幼兒','班級','方案','出席天數','請假天數','費用','當月超時次數','累計超時次數','調整／備註']];
  rows.forEach(r=>L.push([r.k.name,r.k.cls,planName(r.k),r.days,r.ab,r.fee,r.lm,r.la,r.adj]));
  L.push(['總計','','','','',tot,'','','']);L.push([]);L.push(['日期','幼兒','接回時間','接回人','登記老師','是否超時','更正說明']);
  monthRecs.slice().sort((a,b)=>(a.date+a.time)<(b.date+b.time)?-1:1).forEach(r=>L.push([r.date,r.kname||kidOf(r.kid).name,r.time,r.who,r.by,r.late?'超時':'',(r.edits||[]).map(e=>e.by+'：'+e.reason+'（'+e.fromWho+'→'+e.toWho+(e.fromTime!=e.toTime?'，'+e.fromTime+'→'+e.toTime:'')+'）').join('；')]));
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv'}));
- a.download=`課後延托月總表_${m}.csv`;a.click();}
+ a.download=`課後延托月總表_${m}.csv`;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},1500);toast('✔ 已匯出 '+m+' 月總表');}
+function reportErr(e,what){console.error(what,e);const c=e&&e.code||'';let msg=what+'失敗：';if(c=='permission-denied')msg+='沒有讀取權限，請管理者到 Firebase 規則補上 pickup_temp、pickup_absent、pickup_adjust 三個集合';else if(c=='failed-precondition')msg+='資料庫缺少索引，請開啟 Console 點紅字裡的連結建立';else msg+=(c||(e&&e.message)||e);toast(msg,true);alert(msg);}
 
 // ===== 語音登記 =====
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false,lastVoice=null,pendWho='';
