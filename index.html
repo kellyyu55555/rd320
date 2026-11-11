@@ -1659,7 +1659,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1111-K1</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1111-K2</footer>
     </div>
   </template>
 
@@ -3922,7 +3922,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1111-K1</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1111-K2</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5627,7 +5627,8 @@ function showActivity(id){
   const flow = (Array.isArray(a.flow)?a.flow:[]).filter(x=>x&&typeof x==="object");
   openModal(h("div",null,
     h("div",{class:"mh"},h("div",{class:"m"},[typeOf(a),str(a.semester)].filter(Boolean).join("．")),h("h2",null,str(a.name)),
-      h("div",{class:"meta"},h("span",null,"呈報日期：",h("b",null,str(a.reportDate)||"—")),statusPill(a.status))),
+      h("div",{class:"meta"},h("span",null,"呈報日期：",h("b",null,str(a.reportDate)||"—")),statusPill(a.status),
+        a.driveUrl ? h("a",{href:str(a.driveUrl),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},"☁️ 已上傳雲端："+(str(a.driveName)||"開啟檔案")) : null)),
     h("div",{class:"mb"},
       h("table",{class:"form"},h("tbody",null,
         tr("活動地點",str(a.location)), tr("舉辦時間",str(a.time)),
@@ -5645,6 +5646,8 @@ function showActivity(id){
       h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份活動計畫？",`「${str(a.name)}」刪除後無法復原。`,"刪除",async()=>{ const ids=idsOf(a.photos).concat(idsOf(a.flowImages)); await S.db.doc(ACT_COL+"/"+a.id).delete(); toast("已刪除");
         if (S.assets) for (const x of ids){ try{ await photoStore.delete(x); }catch(_){} } })},"刪除"),
       h("span",{class:"sp"}),
+      h("button",{class:"btn",onclick:()=>printAct(a.id)},"🖨 列印"),
+      (()=>{ const st=h("span",{class:"err",style:"align-self:center"}); const b=h("button",{class:"btn",onclick:()=>uploadAct(a.id,b,st)},"☁️ 上傳雲端硬碟"); return [st,b]; })(),
       h("button",{class:"btn",onclick:()=>editActivity(a.id,true)},"複製成新計畫"),
       h("button",{class:"btn primary",onclick:()=>editActivity(a.id)},"編輯"))));
 }
@@ -5833,6 +5836,97 @@ function seedButton(){
     h("p",{class:"empty"},"第一次使用：按下面的按鈕，會把原本 Word 檔裡的社區踏查、出汗性大肌肉課程和活動計畫匯入資料庫（已經有資料的部分不會被覆蓋）。"),
     h("div",{style:"margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"}, b), st);
 }
+/* ---------- 列印與上傳雲端硬碟（沿用系統的 PdfUtil 與 Apps Script 上傳網址） ---------- */
+const DRIVE_FOLDERS = {
+  "仁德活動計畫": "https://drive.google.com/drive/folders/1bnmZzrFK3CDEh_46k6fO4Gk5XuuS3aBW",
+  "社區活動計畫": "https://drive.google.com/drive/folders/1hbCVj0HUoXazwbEebsUkxymVuOIJjgTO",
+  "研習活動計畫": "https://drive.google.com/drive/folders/1az6cyqE6vCje7tULSdrkW3A3lbbXwlTz"
+};
+const esc = v => str(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const lines = v => str(v).split("\n").map(l=>esc(l)||"&nbsp;").join("<br>");
+const actFileName = a => `${str(a.semester)}_${typeOf(a)}_${str(a.name)||"未命名"}.pdf`.replace(/[\\/:*?"<>|]/g,"_");
+const amt = x => (x && x.amount!=null && x.amount!=="") ? num(x.amount).toLocaleString("zh-TW")+" 元" : "（金額未定）";
+async function photosOf(ids){ const out={}; await Promise.all(ids.map(async id=>{ out[id]=await loadPhoto(id); })); return out; }
+
+function actPrintHtml(a, pics, pdf){
+  const flow = (Array.isArray(a.flow)?a.flow:[]).filter(x=>x&&typeof x==="object");
+  const fimgs = idsOf(a.flowImages).filter(id=>pics[id]), photos = idsOf(a.photos).filter(id=>pics[id]);
+  const mon = (list)=> (Array.isArray(list)?list:[]).filter(x=>x&&(x.item||x.amount)).map(x=>`<div>${esc(x.item)}　${amt(x)}</div>`).join("") || "&nbsp;";
+  const chk = t => (str(a.planType)===t ? "■" : "□") + t;
+  const row = (k,v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+  const opt = (k,v) => str(v).trim() ? row(k, lines(v)) : "";
+  const css = `@page{size:A4 portrait;margin:14mm 15mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000;background:#fff}
+.bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
+.wrap{max-width:${pdf?"none":"180mm"};margin:0 auto}@media screen{.wrap{padding:${pdf?"0":"10mm 0"}}}
+.hd{text-align:center;margin-bottom:6px}.hd .t{font-size:15pt;font-weight:bold;margin-top:2px}.rd{text-align:right;margin-bottom:6px}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:5px 7px;vertical-align:top;word-break:break-all;text-align:left}
+th{font-weight:normal;background:#f2f2f2}
+.fm th{width:38mm}.money td{width:50%}.money .h{text-align:center;background:#f2f2f2}
+.p2,.p3{break-before:page;page-break-before:always}.sec{font-weight:bold;margin:0 0 6px}
+.flow th{text-align:center}.flow td.n{text-align:center}
+.fimg{text-align:center;margin-top:8px}.fimg img{max-width:100%;max-height:240mm}
+.ph td{text-align:center;vertical-align:middle;padding:3px;height:70mm}.ph img{max-width:100%;max-height:66mm;display:block;margin:0 auto}.ph tr{break-inside:avoid}
+.sign{display:flex;justify-content:space-between;align-items:flex-end;margin:18px 2em 0}.sign span{display:inline-block;min-width:42mm;border-bottom:1px solid #000;margin-left:4px;padding:0 4px 4px;text-align:center}`;
+  const photoRows = [];
+  for (let i=0;i<photos.length;i+=2) photoRows.push(`<tr>${[0,1].map(k=>`<td>${photos[i+k]?`<img src="${pics[photos[i+k]]}" alt="">`:""}</td>`).join("")}</tr>`);
+  const sign = `<div class="sign"><div>承辦人：<span>${esc(a.handler)}</span></div><div>園長：<span>${esc(a.director)}</span></div></div>`;
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(actFileName(a).replace(/\.pdf$/,""))}</title><style>${css}</style></head><body>
+${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」，勾選「背景圖形」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
+<div class="wrap"><div class="pg1">
+<div class="hd"><div>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</div><div class="t">${esc(a.semester)}－${esc(typeOf(a))}－${esc(a.name)}</div></div>
+<div class="rd">呈報日期：${esc(a.reportDate)||"　　　　"}</div>
+<table class="fm"><tbody>
+${row("一、活動名稱",esc(a.name))}${row("二、活動地點",esc(a.location)||"&nbsp;")}${row("三、舉辦時間",esc(a.time)||"&nbsp;")}
+${row("四、舉辦宗旨或目的", arr(a.purpose).map((p,i)=>`<div>${i+1}. ${esc(p)}</div>`).join("")||"&nbsp;")}
+${row("五、服務對象及人數",lines(a.target))}${row("六、活動內容",lines(a.content))}
+${opt("通知對象",a.notify)}${opt("配合單位",a.partner)}${opt("工作人員",a.staff)}${opt("準備物品",a.prep)}${opt("執行與聯絡",a.contact)}${opt("注意事項",a.notes)}
+</tbody></table>
+<table class="money" style="border-top:0"><tbody><tr><td class="h" style="border-top:0">七、經費預算　收入</td><td class="h" style="border-top:0">支出</td></tr>
+<tr><td>${mon(a.income)}<div>總計：${sumOf(a.income).toLocaleString("zh-TW")} 元</div></td><td>${mon(a.expense)}<div>總計：${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></td></tr></tbody></table>
+<table style="border-top:0"><tbody><tr><td style="border-top:0">八、其他說明（是否為年度計畫、協辦單位、社會資源運用情形等）<br>　${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</td></tr></tbody></table>
+${sign}
+</div>
+${flow.length||fimgs.length ? `<div class="p2"><div class="sec">活動流程與道具規劃</div>
+${flow.length?`<table class="flow"><colgroup><col style="width:8%"><col style="width:20%"><col style="width:34%"><col style="width:22%"><col style="width:16%"></colgroup>
+<thead><tr><th></th><th>活動名稱</th><th>玩法說明</th><th>道具與器材需求</th><th>負責人員</th></tr></thead>
+<tbody>${flow.map((x,i)=>`<tr><td class="n">${i+1}</td><td>${lines(x.name)}</td><td>${lines(x.desc)}</td><td>${lines(x.props)}</td><td>${lines(x.staff)}</td></tr>`).join("")}</tbody></table>`:""}
+${fimgs.map(id=>`<div class="fimg"><img src="${pics[id]}" alt=""></div>`).join("")}</div>`:""}
+${photos.length ? `<div class="p3"><div class="sec">活動照片</div><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table>${sign}</div>`:""}
+</div>${pdf?"":'<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},500)})<\/script>'}</body></html>`;
+}
+
+async function printAct(id){
+  const a = S.activities.find(x=>x.id===id); if(!a) return;
+  const w = window.open("", "_blank"); if (!w){ alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次"); return; }
+  w.document.write('<p style="font:16px sans-serif;padding:20px">載入中…</p>');
+  try{
+    const pics = await photosOf(idsOf(a.photos).concat(idsOf(a.flowImages)));
+    w.document.open(); w.document.write(actPrintHtml(a, pics, false)); w.document.close();
+  }catch(e){ w.close(); alert("列印失敗：" + (e.code || e.message)); }
+}
+
+async function uploadAct(id, btn, status){
+  const a = S.activities.find(x=>x.id===id); if(!a) return;
+  if (!window.PdfUtil){ alert("上傳元件尚未載入，請重新整理頁面"); return; }
+  if (!window.__driveUrl){ alert("尚未設定雲端硬碟上傳。\n請到「管理者後台 → ☁️ 雲端硬碟上傳設定」貼上上傳網址。"); return; }
+  const fid = PdfUtil.folderId(DRIVE_FOLDERS[typeOf(a)]);
+  if (!fid){ alert("找不到「"+typeOf(a)+"」的雲端硬碟資料夾"); return; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "產生 PDF 中…"; status.textContent = "";
+  try{
+    const pics = await photosOf(idsOf(a.photos).concat(idsOf(a.flowImages)));
+    const po = { landscape:false, margin:12, units:".pg1,.p2,.p3", keepRows:true };
+    const blob = await PdfUtil.htmlToPdf(actPrintHtml(a, pics, true), po);
+    btn.textContent = "上傳中…";
+    const nm = actFileName(a), j = await PdfUtil.upload(blob, { filename:nm, subfolder:"", folderId:fid });
+    const url = j.url || j.fileUrl || "";
+    await S.db.doc(ACT_COL+"/"+id).update({ driveUrl:url, driveName:nm, driveAt:Date.now() });
+    toast("已上傳雲端硬碟 ✅");
+    if (url && confirm("已上傳到雲端硬碟 ✅\n檔名：" + nm + "\n要現在開啟檔案嗎？")) window.open(url, "_blank");
+  }catch(e){ console.error(e); status.textContent = "上傳失敗：" + (e.code || e.message); }
+  finally{ btn.disabled = false; btn.textContent = label; }
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
