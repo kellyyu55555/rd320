@@ -287,7 +287,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='laminate' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🧷 護貝膜申請
           </button>
-          <button x-show="(isAdmin || planOpen) && !restrictedPW" @click="view='plan'"
+          <button x-show="!restrictedPW" @click="view='plan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='plan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📚 教學計畫
@@ -324,6 +324,16 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='motor' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🏃 出汗性大肌肉
           </button>
+          <button x-show="!restrictedPW" @click="view='schedule'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='schedule' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🕘 作息表
+          </button>
+          <button x-show="!restrictedPW" @click="view='calendar'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='calendar' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📅 行事曆
+          </button>
           <button x-show="isAdmin && !restrictedPW" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
@@ -349,6 +359,12 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h2 class="font-heading font-black text-xl mt-1" x-text="`👋 ${myName || (currentUser && (currentUser.displayName || currentUser.email)) || ''}${isAdmin ? '（管理者）' : ' 老師'}，您好！`"></h2>
             <p class="text-sm text-wood-dark/70 mt-1">請選擇要使用的功能；之後也可以隨時點上方的「🏠 目錄」回到這裡。</p>
           </div>
+          <div x-show="currentUser && !restrictedPW" x-effect="if(currentUser && !restrictedPW && !homeLineAsked){ homeLineAsked=true; lineBindStatus().then(r=>{ homeLineBound=!!(r&&r.bound) }).catch(()=>{}) }" class="paper-card rounded-3xl px-6 py-4 shadow-card flex flex-wrap items-center gap-3" style="background:#f2f8ee">
+            <span class="font-heading font-bold text-sm">🔔 綁定 LINE 通知</span>
+            <span x-show="homeLineBound===true" class="text-sm font-bold text-sage-dark">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>
+            <span x-show="homeLineBound!==true" class="text-sm text-wood-dark/70">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>
+            <button type="button" @click="homeBindLine()" class="ml-auto px-4 py-1.5 rounded-full bg-paper border border-wood-light/50 text-sm font-bold hover:bg-cream" x-text="homeLineBound===true ? '重新綁定' : '取得綁定碼'"></button>
+          </div>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <button type="button" x-show="true" @click="view='teacher'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🧸</span></div>
@@ -360,7 +376,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">護貝膜申請</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">申請護貝膜，查看申請紀錄與剩餘張數</p>
           </button>
-          <button type="button" x-show="(isAdmin || planOpen) && !restrictedPW" @click="view='plan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="!restrictedPW" @click="view='plan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📚</span></div>
             <h3 class="font-heading font-black text-base mt-3">教學計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班學習區教學計畫、照片與匯出 PDF</p>
@@ -394,6 +410,16 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🏃</span></div>
             <h3 class="font-heading font-black text-base mt-3">出汗性大肌肉</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每月循環式體能活動：暖身、四關闖關、收操</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='schedule'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🕘</span></div>
+            <h3 class="font-heading font-black text-base mt-3">作息表</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">3-5歲班與兩歲專班的一日作息、核心素養與學習重點</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='calendar'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📅</span></div>
+            <h3 class="font-heading font-black text-base mt-3">行事曆</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">本學期每月節慶、行政、教保活動、健康安全與社區活動</p>
           </button>
           <button type="button" x-show="isAdmin && !restrictedPW" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
@@ -732,7 +758,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 教學計畫 ============ -->
-        <section x-show="view==='plan' && currentUser && !restrictedPW && (isAdmin || planOpen)" x-effect="if(view==='plan'&&currentUser&&(isAdmin||planOpen)&&window.PlanUI) PlanUI.sync($data)" class="space-y-4">
+        <section x-show="view==='plan' && currentUser && !restrictedPW" x-effect="if(view==='plan'&&currentUser&&!restrictedPW&&window.PlanUI) PlanUI.sync($data)" class="space-y-4">
           <div id="planRoot" class="paper-card rounded-3xl p-6 shadow-card"></div>
         </section>
 
@@ -742,7 +768,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin)" x-effect="if(['walk','motor','actplan'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin)" x-effect="if(['walk','motor','actplan','schedule','calendar'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1574,8 +1600,10 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <h3 class="font-heading font-bold text-sm">📊 本學期觀察進度 <span id="obs-board-sem" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
         <p id="obs-board-sum" class="text-xs font-bold text-sage-dark"></p>
       </div>
-      <p class="text-[11px] text-wood-dark/60 mt-1">每位幼兒每學期寫 2 次。同班老師會即時看到彼此的標示，避免重複；點幼兒姓名會帶入下方表單，「＋」手動標示已寫、「－」取消自己的最近一次標示。</p>
+      <p class="text-[11px] text-wood-dark/60 mt-1">每位幼兒每學期寫 2 次。同班老師會即時看到彼此的標示，避免重複；點幼兒姓名會帶入下方表單，「＋」手動標示已寫、「－」取消自己的最近一次標示。第一份：✅ 完成（有家長簽名）、✍️ 已寫但缺家長簽名、⬜ 尚未寫。</p>
       <div id="obs-board-list" class="obs-board mt-3"></div>
+      <div id="obs-first-sum" class="text-xs mt-2 leading-relaxed"></div>
+      <div class="flex flex-wrap items-center gap-2 mt-3"><button type="button" class="obs-btn" data-action="import-pdf">📄 匯入舊觀察紀錄 PDF</button><span class="text-[11px] text-wood-dark/60">先在下方選好班級，再匯入包含全班幼兒的 PDF；系統會依姓名標示第一份是否完成（有家長簽名才算完成）。</span><input id="obs-pdf-file" type="file" accept="application/pdf,.pdf" hidden></div>
       <p id="obs-board-msg" class="text-xs font-bold mt-2" role="status"></p>
     </div>
     <div id="obs-edit-banner" class="no-print flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-sage-light text-sage-dark px-4 py-2 text-sm font-bold" hidden><span id="obs-edit-text"></span><button type="button" class="obs-btn" data-action="cancel-edit">取消編輯</button></div>
@@ -1659,7 +1687,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1111-K2</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K4</footer>
     </div>
   </template>
 
@@ -2353,7 +2381,7 @@ const iso=t=>t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+Stri
 const tch=L=>[L.t1,L.t2].map(x=>String(x||"").trim()).filter(Boolean).join("、")||String(L.teachers||"");
 const who=l=>{const n=l.submittedByName||l.ownerName||"",e=l.submittedByEmail||l.ownerEmail||"";const fx=t=>{const k=String(t||"").trim().replace(/老師$/,"");return(d&&d.NAME_FIX&&d.NAME_FIX[k])||t};return fx(n||e||tch(l)||"（未知帳號）")};
 const LINE_COOLDOWN=60*60*1000;
-const lineMsg=r=>{if(!r)return"LINE 通知失敗（沒有回應）";if(r.noBinding)return"這位老師尚未綁定 LINE，所以沒有傳 LINE（請她在「📝 週誌」按「取得綁定碼」完成綁定）。";if((r.errors||[]).some(x=>x&&x.status===429)||String(r.detail||"").indexOf("monthly limit")>=0||String(r.error||"").indexOf("monthly limit")>=0)return"本月 LINE 訊息額度已用完（免費方案每月 200 則），要等下個月 1 號重置，或升級官方帳號方案。系統內的狀態和說明已經存好，老師開啟系統就看得到。";if(r.error)return"LINE 通知沒有送出："+r.error+(r.detail?"（"+r.detail+"）":"");if(r.sent>0)return"已傳 LINE 通知給老師 ✅";return"LINE 通知沒有送出："+JSON.stringify(r.errors||r).slice(0,160)};
+const lineMsg=r=>{if(!r)return"LINE 通知失敗（沒有回應）";if(r.noBinding)return"這位老師尚未綁定 LINE，所以沒有傳 LINE（請她在「🏠 目錄」按「取得綁定碼」完成綁定）。";if((r.errors||[]).some(x=>x&&x.status===429)||String(r.detail||"").indexOf("monthly limit")>=0||String(r.error||"").indexOf("monthly limit")>=0)return"本月 LINE 訊息額度已用完（免費方案每月 200 則），要等下個月 1 號重置，或升級官方帳號方案。系統內的狀態和說明已經存好，老師開啟系統就看得到。";if(r.error)return"LINE 通知沒有送出："+r.error+(r.detail?"（"+r.detail+"）":"");if(r.sent>0)return"已傳 LINE 通知給老師 ✅";return"LINE 通知沒有送出："+JSON.stringify(r.errors||r).slice(0,160)};
 const myEmail=()=>String(((d&&d.currentUser)||{}).email||"").toLowerCase();
 const myNm=()=>String((d&&d.myName)||((d&&d.currentUser)||{}).displayName||((d&&d.currentUser)||{}).email||"").replace(/[\\\/:*?"<>|]/g,"").trim();
 function mergeLogs(){const ids=new Set(logsOwn.map(x=>x.id)),hid=new Set((prefs&&prefs.hiddenShared)||[]);logs=logsOwn.concat(logsShr.filter(x=>!ids.has(x.id)&&!hid.has(x.id)))}
@@ -2623,7 +2651,7 @@ function allHtml(){const DD=dedupLogs(),logs=DD.arr,subN=l=>["submitted","review
  <p style="font-size:14px;font-weight:700;margin:10px 0 6px">${clsSel==null?"📥 最新送出的週誌（最多 10 份）":clsSel==="*"?"📁 全部班級的已閱週誌":`📁 ${esc(clsSel)} 的已閱週誌`}（${rows.length}）</p>
  ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${badge(l)}${extBadge(l)}${subN(l)>1?` <span style="background:#e8f0fb;color:#1f3d7a;border:1px solid #9db8e0;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700">🔁 第${subN(l)}次送出</span>`:""}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　送出者：<b style="color:#2f5597">${esc(who(l))}</b>${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}<button class="wkb" data-rm="${l.id}" style="color:#c0392b">🗑 刪除</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">${clsSel==null?"沒有符合條件的週誌":"這個班級還沒有「標記已閱」的週誌"}</p>`}</div>`}
 function mineHtml(){const adm=false,kw=q.trim();const rows=logs.filter(l=>l.uid===(d.currentUser||{}).uid||(l.sharedWith||[]).includes(myEmail())).filter(l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw))).sort((a,b)=>String(b.dateFrom).localeCompare(String(a.dateFrom)));
- return `<div class="wk" style="font-family:inherit">${tabs()}${`<div class="wkcard" style="background:#f2f8ee"><div style="font-size:13px"><b>🔔 綁定 LINE 通知</b>　${lineBound===true?'<span style="color:#375623;font-weight:700">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>':'<span style="color:#7a6f57">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>'}</div><button class="wkb" data-lbind="1">${lineBound===true?"重新綁定":"取得綁定碼"}</button></div>`}${impCard()}${sharePanel()}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><button class="wkb" data-newext="1" title="把做好的班刊（Canva 連結或 PDF）交給管理員">📰 新增 PDF班刊</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
+ return `<div class="wk" style="font-family:inherit">${tabs()}${sharePanel()}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><button class="wkb" data-newext="1" title="把做好的班刊（Canva 連結或 PDF）交給管理員">📰 新增 PDF班刊</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
  ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${esc(l.sem||"")}${badge(l)}${extBadge(l)}${l.uid!==(d.currentUser||{}).uid?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">👥 ${esc(l.ownerName||l.ownerEmail||"")} 分享</span>`:((l.sharedWith||[]).length?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">已分享給 ${(l.sharedWith||[]).length} 位</span>`:"")}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}${adm?`　｜　${esc(l.ownerName||l.ownerEmail||"")}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${adm&&l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">${adm?"查看／編輯":(l.uid!==(d.currentUser||{}).uid?"查看":"編輯")}</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}${l.uid===(d.currentUser||{}).uid?`<button class="wkb" data-dup="${l.id}">複製</button><button class="wkb" data-share="${l.id}">👥 分享</button><button class="wkb" data-rm="${l.id}" style="color:#c0392b">刪除</button>`:`<button class="wkb" data-unshare="${l.id}" style="color:#c0392b" title="從我的清單移除（不會刪除對方的原始週誌）">移除</button>`}</div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">還沒有週誌，按「＋ 新增週誌」開始填寫</p>`}</div>`}
 function viewerHtml(){const L=cur;if(L.kind==="ext")return extViewerHtml();
@@ -2757,7 +2785,7 @@ function kgApp() {
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
-    weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
+    homeLineBound: null, homeLineAsked: false, weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
     teacherPick: '', pairs: [], newPairTeacher: '', newPairClass: '', pairPick: '',
     genres: ['遊戲書','韻文','故事','散文','知識概念','文化類'], cultureSubs: ['新年','母親節','端午節','中秋節','聖誕節'],
     exportGenres: [], exportSubs: [], classifyAll: false, classifyMore: false,
@@ -3874,6 +3902,7 @@ function kgApp() {
     notifyLineTo(email, text) { return this.fnPost('line-notify', { toEmail: email, text }); },
     lineBindInit() { return this.fnPost('line-bind', { action: 'init' }); },
     lineBindStatus() { return this.fnPost('line-bind', { action: 'status' }); },
+    async homeBindLine() { let r; try { r = await this.lineBindInit(); } catch (x) { r = null; } if (r && r.code) alert(`綁定 LINE 通知的步驟：\n1. 用手機 LINE 加入園所官方帳號為好友\n2. 在聊天室傳送下面這段文字給官方帳號：\n\n綁定 ${r.code}\n\n（綁定碼 10 分鐘內有效，傳送後官方帳號會回覆「綁定成功」）`); else alert('取得綁定碼失敗：' + ((r && r.error) || '請確認 Netlify 的 LINE 函式已部署')); this.homeLineAsked = false; },
     async notifyLine(text, verbose = false) {
       const say = (m) => { if (verbose || this.isAdmin) this.showToast(m, 8000); };
       try {
@@ -3922,7 +3951,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1111-K2</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K4</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -4096,10 +4125,10 @@ function kgApp() {
         e => boardMsg('讀取進度失敗：' + (e.code || e.message), true));
     renderBoard();
   }
-  function addMark(cls, name, date, obsId) {
+  function addMark(cls, name, date, obsId, signed, extra) {
     const u = fbUser();
     return firebase.firestore().collection('observationMarks').add({
-      semester: semOf(date), className: cls, childName: name, date: date || today(), obsId: obsId || '', manual: !obsId,
+      semester: semOf(date), className: cls, childName: name, date: date || today(), obsId: obsId || '', manual: !obsId, signed: signed !== false, ...(extra || {}),
       byUid: u.uid, byName: u.displayName || (u.email || '').split('@')[0], byEmail: u.email || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -4120,20 +4149,101 @@ function kgApp() {
     const cls = curCls(), sem = curSem(), names = roster[cls] || [], sum = $('#obs-board-sum');
     $('#obs-board-sem').textContent = semLabel(sem) + (cls ? '｜' + cls : '');
     box.innerHTML = ''; sum.textContent = '';
+    { const fsum = $('#obs-first-sum'); if (fsum) fsum.innerHTML = ''; }
     if (!cls) { box.textContent = '請先在下方選擇班級。'; return; }
     if (!names.length) { box.textContent = '這個班級還沒有幼兒名單，請先從接送系統複製或匯入。'; return; }
-    let done = 0;
+    let done = 0, f1 = 0; const nosign = [], none = [];
     names.forEach(name => {
       const ms = marks.filter(m => m.childName === name).sort(byTime), n = ms.length; if (n >= GOAL) done++;
+      const fs = firstState(ms); if (fs === 'done') f1++; else if (fs === 'nosign') nosign.push(name); else none.push(name);
       const wrap = document.createElement('div'); wrap.className = 'obs-bchip n' + Math.min(n, GOAL);
       const mk = (txt, cls2, title, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls2; b.textContent = txt; b.title = title; b.addEventListener('click', fn); return b; };
-      const main = mk(name + '　' + '●'.repeat(Math.min(n, GOAL)) + '○'.repeat(Math.max(0, GOAL - n)) + (n > GOAL ? '＋' + (n - GOAL) : ''), 'b-main',
-        n ? ms.map((m, i) => '第' + (i + 1) + '次 ' + m.date + ' ' + m.byName + (m.manual ? '（手動標示）' : '')).join('\n') : '尚未寫過', () => pickChild(name));
+      const main = mk((fs === 'done' ? '✅ ' : fs === 'nosign' ? '✍️ ' : '⬜ ') + name + '　' + '●'.repeat(Math.min(n, GOAL)) + '○'.repeat(Math.max(0, GOAL - n)) + (n > GOAL ? '＋' + (n - GOAL) : ''), 'b-main',
+        n ? ms.map((m, i) => '第' + (i + 1) + '次 ' + m.date + ' ' + m.byName + (m.source === 'pdf' ? '（PDF 匯入）' : m.manual ? '（手動標示）' : '') + (m.signed === false ? '（缺家長簽名）' : '')).join('\n') : '尚未寫過', () => pickChild(name));
       const plus = mk('＋', 'b-act', '標示已寫一次', async () => { try { await addMark(cls, name, ($('input[name="observationDate"]') || {}).value, ''); } catch (e) { boardMsg('標示失敗：' + (e.code || e.message), true); } });
       const minus = mk('－', 'b-act', '取消我標示的最近一次', async () => { try { await undoMark(name); } catch (e) { boardMsg('取消失敗：' + (e.code || e.message), true); } });
       wrap.append(main, plus, minus); box.appendChild(wrap);
     });
-    sum.textContent = '已完成 ' + done + '／' + names.length + ' 位（每人 ' + GOAL + ' 次）';
+    sum.textContent = '第一份完成 ' + f1 + '／' + names.length + ' 位｜兩次都寫完 ' + done + ' 位';
+    const fsum = $('#obs-first-sum'); if (fsum) { fsum.innerHTML = ''; [['⬜ 尚未寫第一份', none], ['✍️ 已寫但缺家長簽名', nosign]].forEach(([t, l]) => { if (!l.length) return; const p = document.createElement('div'); p.textContent = t + '（' + l.length + '）：' + l.join('、'); fsum.appendChild(p); }); }
+  }
+
+  const escP = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* ---- 老師匯入舊觀察紀錄 PDF：依幼兒姓名找出 PDF 裡有哪些幼兒，有家長簽名才算完成第一份 ---- */
+  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  async function loadPdfJs() {
+    if (window.pdfjsLib) return window.pdfjsLib;
+    await new Promise((ok, bad) => { const s = document.createElement('script'); s.src = PDFJS + 'pdf.min.js'; s.onload = ok; s.onerror = () => bad(new Error('PDF 讀取元件載入失敗，請確認網路後再試')); document.head.appendChild(s); });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
+    return window.pdfjsLib;
+  }
+  async function pdfPages(file) {
+    const lib = await loadPdfJs();
+    const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const tc = await (await doc.getPage(i)).getTextContent();
+      pages.push(tc.items.map(t => t.str).join('').replace(/\s+/g, ''));
+    }
+    return pages;
+  }
+  // 家長簽名欄後面有沒有文字（手寫簽名是圖片，讀不到文字，會判斷為「無法判斷」）
+  function signOf(text) {
+    const i = text.lastIndexOf('家長簽名'); if (i < 0) return 'unknown';
+    let rest = text.slice(i + 4).replace(/^[：:＿_\-－\s]+/, '');
+    rest = rest.split(/日期|家長回饋|教師|老師簽名|園長|學習區|桃園市|第\d+頁/)[0].replace(/[＿_\s：:（）()\/]/g, '');
+    return /[一-鿿A-Za-z]/.test(rest) ? 'yes' : 'no';
+  }
+  function firstState(ms) { // 第一份觀察紀錄：有家長簽名才算完整；舊資料沒有簽名欄位的視為已完成
+    if (!ms.length) return 'none';
+    return ms.some(m => m.signed !== false) ? 'done' : 'nosign';
+  }
+  async function importPdf(file) {
+    const cls = curCls(); if (!cls) throw new Error('請先在下方表單選擇班級，再匯入 PDF');
+    const names = roster[cls] || []; if (!names.length) throw new Error('「' + cls + '」還沒有幼兒名單');
+    boardMsg('讀取 PDF 中…');
+    const pages = await pdfPages(file), noText = pages.every(p => !p);
+    const found = names.map(n => {
+      const pg = []; pages.forEach((p, i) => { if (p.includes(n)) pg.push(i); });
+      const sign = pg.length ? (pg.some(i => signOf(pages[i]) === 'yes') ? 'yes' : pg.every(i => signOf(pages[i]) === 'unknown') ? 'unknown' : 'no') : '';
+      return { name: n, pages: pg, sign, state: firstState(marks.filter(m => m.childName === n)) };
+    });
+    boardMsg('');
+    showPdfDialog(file, cls, found, noText);
+  }
+  function showPdfDialog(file, cls, found, noText) {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,20,.45);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto';
+    const opt = (v, t, sel) => `<option value="${v}" ${sel ? 'selected' : ''}>${t}</option>`;
+    const signTxt = s => s === 'yes' ? '<span style="color:#2f6b4f;font-weight:700">有簽名</span>' : s === 'no' ? '<span style="color:#b4472f">沒有簽名</span>' : s === 'unknown' ? '<span style="color:#8a7a55">無法判斷（可能是手寫）</span>' : '—';
+    const rows = found.map((f, i) => {
+      const def = f.state === 'done' ? 'skip' : (f.pages.length ? (f.sign === 'yes' ? 'done' : 'nosign') : 'skip');
+      const now = f.state === 'done' ? '✅ 已完成' : f.state === 'nosign' ? '✍️ 缺家長簽名' : '⬜ 未完成';
+      return `<tr style="border-top:1px solid #eee5d3"><td style="padding:6px 8px;font-weight:700">${escP(f.name)}</td><td style="padding:6px 8px">${now}</td>
+        <td style="padding:6px 8px">${f.pages.length ? '第 ' + f.pages.map(p => p + 1).join('、') + ' 頁' : '<span style="color:#9a917a">沒找到</span>'}</td><td style="padding:6px 8px">${signTxt(f.sign)}</td>
+        <td style="padding:6px 8px"><select data-pi="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px">${opt('skip', '不標示', def === 'skip')}${opt('done', '完成（有家長簽名）', def === 'done')}${opt('nosign', '已寫，缺家長簽名', def === 'nosign')}</select></td></tr>`;
+    }).join('');
+    ov.innerHTML = `<div style="background:#fffdf8;border-radius:18px;max-width:760px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-size:14px">
+      <div style="padding:18px 22px 8px;border-bottom:1px solid #eee5d3"><b style="font-size:18px">📄 匯入舊觀察紀錄：${escP(file.name)}</b>
+      <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">${escP(cls)}｜${semLabel(curSem())}。有家長簽名才算完成第一份。系統依 PDF 文字找出幼兒姓名與家長簽名欄；手寫簽名是圖片讀不到，請對照 PDF 自行調整。</p>
+      ${noText ? '<p style="margin:8px 0 0;color:#b4472f;font-weight:700">這份 PDF 讀不到文字（可能是掃描檔），請在下面逐一選擇。</p>' : ''}</div>
+      <div style="padding:10px 22px;max-height:60vh;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="color:#6f6a5e;font-size:12px;text-align:left"><th style="padding:4px 8px">幼兒</th><th style="padding:4px 8px">目前</th><th style="padding:4px 8px">PDF 中</th><th style="padding:4px 8px">家長簽名</th><th style="padding:4px 8px">匯入後標示為</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #eee5d3"><span data-pst style="flex:1;color:#b4472f;font-weight:700;align-self:center"></span>
+      <button type="button" data-pcancel style="border:1px solid #cdbf9e;background:#fff;border-radius:10px;padding:6px 14px;cursor:pointer">取消</button><button type="button" data-pgo style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:10px;padding:6px 14px;cursor:pointer">確定標示</button></div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('[data-pcancel]').onclick = () => ov.remove();
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    ov.querySelector('[data-pgo]').onclick = async (e) => {
+      const btn = e.currentTarget, st = ov.querySelector('[data-pst]');
+      const todo = [...ov.querySelectorAll('select[data-pi]')].map(s => ({ f: found[+s.dataset.pi], v: s.value })).filter(x => x.v !== 'skip');
+      if (!todo.length) { st.textContent = '沒有要標示的幼兒。'; return; }
+      btn.disabled = true; btn.textContent = '標示中…';
+      try {
+        const date = ($('input[name="observationDate"]') || {}).value || today();
+        for (const x of todo) await addMark(cls, x.f.name, date, '', x.v === 'done', { source: 'pdf', fileName: file.name });
+        ov.remove(); boardMsg('已從「' + file.name + '」標示 ' + todo.length + ' 位幼兒。');
+      } catch (err) { btn.disabled = false; btn.textContent = '確定標示'; st.textContent = '標示失敗：' + (err.code || err.message); }
+    };
   }
 
   /* ---- 分享給老師（可共同編輯）：沿用週誌的 teacherDir 老師名單與 sharedWith 小寫 Email 清單 ---- */
@@ -4320,10 +4430,11 @@ function kgApp() {
   async function fixMarks(id, payload) { // 編輯後讓進度標示跟著新的班級／幼兒／日期
     const db = firebase.firestore(), u = fbUser(), qs = await db.collection('observationMarks').where('obsId', '==', id).get();
     const mine = qs.docs.filter(m => m.data().byUid === u.uid);
-    const same = mine.some(m => { const v = m.data(); return v.className === payload.className && v.childName === payload.childName && v.semester === payload.semester && v.date === payload.observationDate; });
+    const sg = !!String(payload.parentSignature || '').trim();
+    const same = mine.some(m => { const v = m.data(); return v.className === payload.className && v.childName === payload.childName && v.semester === payload.semester && v.date === payload.observationDate && (v.signed !== false) === sg; });
     if (same) return;
     await Promise.all(mine.map(m => m.ref.delete()));
-    await addMark(payload.className, payload.childName, payload.observationDate, id);
+    await addMark(payload.className, payload.childName, payload.observationDate, id, sg);
   }
 
   /* ---- 管理員：匯入舊紀錄檔（CSV／JSON，不含照片）---- */
@@ -4378,7 +4489,7 @@ function kgApp() {
       good.slice(i, i + 200).forEach(rec => {
         const ref = db.collection('learningObservations').doc();
         b.set(ref, { ...rec, photoCount: 0, photoMeta: [], areaPhotoIds: {}, uid: u.uid, userEmail: u.email || '', userName: u.displayName || '', storageMode: 'imported', importedFrom: file.name, createdAt: TS, updatedAt: TS });
-        b.set(db.collection('observationMarks').doc(), { semester: rec.semester, className: rec.className, childName: rec.childName, date: rec.observationDate, obsId: ref.id, manual: false, byUid: u.uid, byName: by, byEmail: u.email || '', createdAt: TS });
+        b.set(db.collection('observationMarks').doc(), { semester: rec.semester, className: rec.className, childName: rec.childName, date: rec.observationDate, obsId: ref.id, manual: false, signed: !!String(rec.parentSignature || '').trim(), byUid: u.uid, byName: by, byEmail: u.email || '', createdAt: TS });
       });
       await b.commit();
     }
@@ -4408,6 +4519,9 @@ function kgApp() {
     const of = $('#old-records-file');
     $('[data-action="import-old"]').addEventListener('click', () => of.click());
     $('[data-action="old-sample"]').addEventListener('click', downloadOldSample);
+    const pf = $('#obs-pdf-file');
+    $('[data-action="import-pdf"]').addEventListener('click', () => pf.click());
+    pf.addEventListener('change', async () => { const f = pf.files && pf.files[0]; if (!f) return; try { await importPdf(f); } catch (e) { boardMsg('匯入失敗：' + (e.code || e.message || e), true); } pf.value = ''; });
     of.addEventListener('change', async () => {
       const f = of.files && of.files[0]; if (!f) return;
       try { await importOld(f); } catch (e) { rosterMsg('匯入失敗：' + (e.code || e.message || e), true); }
@@ -4690,7 +4804,7 @@ function kgApp() {
         const r = await saveLearningObservation(payload, photoEntries(form), editing);
         let extra = '';
         if (r.mode === 'firebase' && payload.className && payload.childName && ownerEdit) { // 存檔成功後自動標示（或更新）本學期進度（共同編輯者不動擁有者的標示）
-          try { if (wasEdit) await fixMarks(r.id, payload); else await addMark(payload.className, payload.childName, payload.observationDate, r.id); } catch (e) { extra = '（進度標示失敗：' + (e.code || e.message) + '）'; }
+          try { if (wasEdit) await fixMarks(r.id, payload); else await addMark(payload.className, payload.childName, payload.observationDate, r.id, !!String(payload.parentSignature || '').trim()); } catch (e) { extra = '（進度標示失敗：' + (e.code || e.message) + '）'; }
         }
         say(r.mode === 'firebase' ? (wasEdit ? '觀察紀錄已更新' : '觀察紀錄已儲存') + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' + extra : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
         if (r.mode === 'firebase') { try { await loadRecord(r.id); } catch (e) { console.error(e); } } // 存檔後直接進入編輯狀態，之後可繼續修改
@@ -5260,6 +5374,25 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 
 #kb button{cursor:pointer;font:inherit}
 #kb{padding-bottom:24px}
+#kb table.sched{width:100%;border-collapse:collapse;font-size:14px;min-width:760px;background:var(--paper)}
+#kb table.sched th,#kb table.sched td{border:1px solid var(--line);padding:8px 10px;vertical-align:middle;text-align:center;white-space:pre-wrap}
+#kb table.sched th{background:#f6f1e4;color:var(--muted);font-weight:500}
+#kb table.sched td.per{writing-mode:vertical-rl;letter-spacing:.3em;font-weight:700;color:var(--accent);background:#fbf8f0;width:38px}
+#kb table.sched td.tm{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
+#kb table.sched td.act{font-weight:700}
+#kb table.sched td.core{font-size:13px;color:var(--accent);background:#fbf8f0;width:110px}
+#kb table.sched tr.focus td{text-align:left;font-size:13px;color:var(--muted);background:#fdfbf6}
+#kb .calm{padding:16px 20px}
+#kb .calm.now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+#kb .calh{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+#kb .calh b{font-family:"Noto Serif TC",serif;font-size:22px;color:var(--accent)}
+#kb .calh span{color:var(--muted);font-size:13px}
+#kb .calh .sp{flex:1}
+#kb .calg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+#kb .calc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbf8f0}
+#kb .calc h3{font-size:13px;color:var(--gold);margin:0 0 4px}
+#kb .calc ul{font-size:14px;padding-left:18px}
+#kb .calc li{margin:2px 0}
 
 </style>
 <script>
@@ -5271,6 +5404,7 @@ const S = {
   k:{ walk:{programs:{},courses:[],program:"two",gotP:false,gotC:false},
        motor:{programs:{},courses:[],program:"two",gotP:false,gotC:false} },
   activities:[], got:{activities:false},
+  sch:{list:[],got:false,group:"three5",sel:{}}, cal:{list:[],got:false,sel:""},
   view:"walk", actType:"社區活動計畫"
 };
 const $ = s => document.querySelector(s);
@@ -5316,11 +5450,13 @@ function renderTabs(){
 /* ---------- render ---------- */
 function render(){
   if (!S.isAdmin && S.view==="activities") S.view="walk";
-  if (S.view!=="activities" && !isKind(S.view)) S.view="walk";
+  if (!isPage(S.view)) S.view="walk";
   renderTabs();
   const app = $("#kb-app"); app.replaceChildren();
   if (S.failed){ app.append(h("div",{class:"notice"},S.failed)); return; }
   if (S.view==="activities") return renderActivities(app);
+  if (S.view==="schedule") return renderSchedule(app);
+  if (S.view==="calendar") return renderCalendar(app);
   renderCourses(app);
 }
 
@@ -5816,7 +5952,7 @@ function editActivity(id, copy, focus){
 }
 
 /* ---------- first-time import of the original documents ---------- */
-const SEED = {"walkPrograms/two": {"name": "兩歲專班", "title": "兩歲專班社區踏查年度課程", "theme": "認識仁德非營利幼兒園、仁德國小與社區環境", "cls": "兩歲專班", "period": "9月～隔年6月", "note": "", "goals": ["願意參與校園與社區踏查活動。", "認識幼兒園、校園與社區環境。", "透過感官觀察花草樹木與自然變化。", "練習牽手走路與遵守安全規則。", "願意用簡單語詞表達觀察與感受。", "建立幼兒對生活環境的熟悉感與安全感。"], "order": 1}, "walkPrograms/three5": {"name": "3-5歲", "title": "115學年度3-5歲社區踏查課程", "theme": "", "cls": "3-5歲", "period": "115年9月～116年6月", "note": "仁德非營利幼兒園委託社團法人臺灣宛靜文教協會辦理", "goals": [], "order": 2}, "walkCourses/c2-01": {"program": "two", "month": "9月", "title": "認識我的幼兒園", "goals": ["認識班級與校園環境。", "建立幼兒安全感。", "練習排隊與牽手。"], "content": "教師帶領幼兒認識班級教室、鞋櫃、廁所、洗手台與遊戲區，透過校園散步方式讓幼兒慢慢熟悉幼兒園環境。活動中引導幼兒認識自己的物品位置與班級標誌，並練習排隊、牽手與慢慢走。教師也會陪伴幼兒觀察校園中的顏色與設備，透過簡單對話與互動，幫助幼兒建立對新環境的安全感與歸屬感。", "reflection": "觀察幼兒對新環境的適應情形，適時增加陪伴與安撫，協助幼兒建立安全感。", "areas": ["扮演區：扮演上學情境。", "語文區：認識自己的姓名與照片。", "建構區：使用積木拼出教室。"], "order": 1}, "walkCourses/c2-02": {"program": "two", "month": "10月", "title": "校園散步趣", "goals": ["認識校園空間。", "練習觀察周遭環境。", "建立基本行走安全。"], "content": "教師帶領幼兒到校園操場與走廊散步，觀察校園中的遊樂器材、樹木、花圃與教室外觀。活動中鼓勵幼兒看看校園裡有哪些顏色、聲音與不同的地面材質，並透過簡單提問引導幼兒注意周遭環境。教師陪伴幼兒練習牽手走路與慢慢前進，讓幼兒在輕鬆散步過程中增加對校園環境的熟悉感與安全感。", "reflection": "幼兒對操場與戶外空間特別有興趣，可增加停留觀察時間。", "areas": ["美勞區：校園塗鴉創作。", "感官區：觸摸不同材質。", "積木區：拼搭操場設施。"], "order": 2}, "walkCourses/c2-03": {"program": "two", "month": "11月", "title": "花草樹木小探索", "goals": ["觀察校園植物。", "運用感官探索自然。", "培養愛護植物態度。"], "content": "教師帶領幼兒觀察校園中的花草樹木，鼓勵幼兒摸摸樹皮、看看葉子顏色與形狀，並聆聽風吹樹葉的聲音。活動中提供小袋子讓幼兒撿拾地上的落葉，陪伴幼兒比較葉子的大小與顏色差異。教師也會提醒幼兒不隨意摘花與拉扯樹枝，透過實際探索活動培養幼兒對自然環境的好奇與愛護態度。", "reflection": "幼兒對落葉與樹皮觸感興趣高，可增加自然素材操作活動。", "areas": ["美勞區：葉子拓印拼貼。", "感官區：觀察樹葉與種子。", "語文區：植物圖片命名。"], "order": 3}, "walkCourses/c2-04": {"program": "two", "month": "12月", "title": "校園建築觀察", "goals": ["認識校園建築。", "觀察形狀與顏色。", "建立空間概念。"], "content": "教師帶領幼兒觀察校園中的門、窗戶、樓梯、牆面與柱子，引導幼兒認識圓形、方形與長方形等簡單形狀。活動中鼓勵幼兒比較建築物的高低、大小與顏色差異，並透過摸摸牆壁與地板感受不同材質。教師陪伴幼兒在校園中慢慢觀察，增加幼兒對校園建築與空間環境的熟悉感。", "reflection": "幼兒喜歡尋找不同顏色與形狀，可搭配積木延伸建構活動。", "areas": ["建構區：積木蓋房子。", "數學區：形狀配對遊戲。", "美勞區：彩色建築創作。"], "order": 4}, "walkCourses/c2-05": {"program": "two", "month": "2月", "title": "冬天的校園", "goals": ["感受冬天天氣。", "認識季節變化。", "建立保暖觀念。"], "content": "教師帶領幼兒感受冬天校園的天氣變化，觀察陽光、陰影與冬季植物的不同。活動中引導幼兒摸摸冷冷的風，感受陽光照射時的溫暖，也陪伴幼兒觀察樹葉與花草在冬天的變化。教師提醒幼兒穿外套與注意保暖，透過實際生活經驗幫助幼兒認識冬天天氣與季節特色。", "reflection": "冬季活動時間可適度縮短，避免幼兒受寒。", "areas": ["扮演區：冬天穿衣遊戲。", "感官區：冷熱觸感體驗。", "語文區：冬天圖片配對。"], "order": 5}, "walkCourses/c2-06": {"program": "two", "month": "3月", "title": "交通安全小寶寶", "goals": ["認識交通安全。", "練習安全行走。", "建立自我保護觀念。"], "content": "教師帶領幼兒觀察校園周邊的人行道、斑馬線與紅綠燈，介紹過馬路時停、看、聽的重要性。活動中引導幼兒觀察車輛與行人，並練習牽手慢慢走與排隊等待。教師透過實際情境說明交通安全的重要，幫助幼兒建立基本的安全概念與自我保護能力，增加日常生活中的安全經驗。", "reflection": "可透過角色扮演遊戲加深幼兒交通安全印象。", "areas": ["扮演區：交通警察遊戲。", "積木區：道路建構。", "語文區：交通工具圖卡。"], "order": 6}, "walkCourses/c2-07": {"program": "two", "month": "4月", "title": "認識社區裡的人", "goals": ["認識社區工作者。", "練習打招呼。", "培養禮貌態度。"], "content": "教師帶領幼兒認識校園與社區中照顧大家的人，例如警衛叔叔、清潔阿姨與行政老師。活動中鼓勵幼兒主動揮手打招呼與說謝謝，並陪伴幼兒觀察不同工作內容。教師透過互動與簡單介紹，幫助幼兒了解社區中每個人都有不同工作，也培養幼兒基本禮貌與人際互動能力。", "reflection": "幼兒對熟悉的大人較願意互動，可逐步增加社區接觸機會。", "areas": ["扮演區：職業角色扮演。", "語文區：人物圖片配對。", "美勞區：感謝卡製作。"], "order": 7}, "walkCourses/c2-08": {"program": "two", "month": "5月", "title": "春天來了", "goals": ["觀察春天自然變化。", "認識花朵與昆蟲。", "培養觀察能力。"], "content": "教師陪伴幼兒觀察春天校園中的花朵、新葉與小昆蟲，鼓勵幼兒看看花的顏色、聞聞花香與觀察葉子的變化。活動中引導幼兒感受春天天氣逐漸變暖，也陪伴幼兒觀察蝴蝶與小昆蟲移動。透過實際自然探索活動，增加幼兒對春天季節變化與自然環境的好奇與觀察經驗。", "reflection": "幼兒對花朵顏色與昆蟲移動特別有興趣，可增加觀察時間。", "areas": ["美勞區：花朵拓印。", "感官區：觀察種子發芽。", "語文區：春天圖卡命名。"], "order": 8}, "walkCourses/c2-09": {"program": "two", "month": "6月", "title": "社區商店小發現", "goals": ["認識社區商店。", "學習排隊與等待。", "增加生活經驗。"], "content": "教師帶領幼兒散步觀察幼兒園附近的商店，例如早餐店、便利商店或文具店。活動中介紹商店販售的物品與工作人員，並提醒幼兒學習排隊與等待。教師也會引導幼兒觀察不同商品的顏色與種類，透過實際生活情境增加幼兒對社區環境與日常購物經驗的認識。", "reflection": "幼兒對食物與商品特別有興趣，可延伸扮演商店遊戲。", "areas": ["扮演區：商店買賣遊戲。", "數學區：商品分類。", "美勞區：購物袋創作。"], "order": 9}, "walkCourses/c35-01": {"program": "three5", "month": "115年9月", "title": "認識我的幼兒園", "goals": ["認識幼兒園各空間及功能。", "建立安全感及歸屬感。", "學習遵守園內生活規範。", "能與同儕共同探索校園。"], "content": "教師帶領幼兒實地走訪教室、行政室、健康中心、廚房、遊戲場及操場，引導幼兒觀察各場所用途，討論不同空間提供哪些服務。幼兒利用平板或圖卡拍攝、記錄自己最喜歡的地方，回到教室共同製作「我的幼兒園地圖」。", "reflection": "幼兒對遊戲場及大型遊具最感興趣，可增加自由探索時間。部分新生對陌生環境較緊張，可安排舊生陪伴及合作探索活動，提升安全感。", "areas": ["語文區：校園地圖配對", "語文區：空間名稱認讀", "建構區：積木建造幼兒園", "美勞區：我的幼兒園創作", "扮演區：小老師、小校長角色扮演"], "order": 1}, "walkCourses/c35-02": {"program": "three5", "month": "115年10月", "title": "秋天的仁德公園", "goals": ["觀察秋季自然變化。", "比較植物差異。", "培養愛護自然態度。", "運用五感探索環境。"], "content": "至仁德公園撿拾落葉、觀察植物、樹木及昆蟲，運用放大鏡觀察葉脈及樹皮紋路，討論秋天有哪些改變，蒐集自然素材回園創作。", "reflection": "幼兒喜歡觀察昆蟲，可增加自然探索工具，鼓勵提出問題與討論。", "areas": ["科學區：葉子分類", "美勞區：落葉拼貼", "數學區：葉片排序", "語文區：秋天圖鑑"], "order": 2}, "walkCourses/c35-03": {"program": "three5", "month": "115年11月", "title": "社區安全小尖兵", "goals": ["認識交通安全。", "學習安全過馬路。", "建立公共安全觀念。", "培養自我保護能力。"], "content": "實地觀察幼兒園周邊斑馬線、紅綠燈、人行道及交通號誌，練習停、看、聽，模擬安全過馬路。", "reflection": "可搭配交通角色扮演，增進實際應用能力。", "areas": ["扮演區：交通警察", "建構區：道路建設", "科學區：交通號誌分類", "語文區：交通標誌配對"], "order": 3}, "walkCourses/c35-04": {"program": "three5", "month": "115年12月", "title": "探索興豐公園生態", "goals": ["認識公園生態。", "觀察植物及昆蟲。", "培養尊重生命態度。", "建立環境保護觀念。"], "content": "觀察花草樹木、昆蟲、鳥類，使用觀察紀錄表完成自然日記。", "reflection": "幼兒喜歡使用放大鏡觀察，可提供更多探究材料。", "areas": ["科學區：昆蟲觀察", "美勞區：自然拼貼", "語文區：生態圖卡", "建構區：公園模型"], "order": 4}, "walkCourses/c35-05": {"program": "three5", "month": "116年1月", "title": "我是小小建築師", "goals": ["認識社區建築。", "比較建築特色。", "培養空間概念。", "學習觀察建築功能。"], "content": "觀察仁德國小、幼兒園及社區建築，討論外觀、高度、用途及建築特色。", "reflection": "可加入拍照紀錄，讓幼兒比較不同建築。", "areas": ["建構區：建築設計", "美勞區：房屋創作", "數學區：形狀分類", "語文區：建築圖卡"], "order": 5}, "walkCourses/c35-06": {"program": "three5", "month": "116年2月", "title": "冬天的社區", "goals": ["感受冬季氣候。", "觀察冬季植物。", "學習保暖方式。", "建立健康生活概念。"], "content": "觀察冬天天氣、樹木及植物變化，討論如何保暖。", "reflection": "可搭配天氣紀錄，增加幼兒比較能力。", "areas": ["科學區：溫度紀錄", "語文區：冬天繪本", "扮演區：冬季穿衣", "美勞區：冬景創作"], "order": 6}, "walkCourses/c35-07": {"program": "three5", "month": "116年3月", "title": "認識社區工作者", "goals": ["認識不同職業。", "尊重工作者。", "培養感恩態度。", "學習人際互動。"], "content": "拜訪警衛、行政老師、清潔人員及社區商家，訪問工作內容。", "reflection": "可讓幼兒事先設計訪問題目，提高參與度。", "areas": ["扮演區：職業體驗", "語文區：職業配對", "美勞區：感謝卡", "建構區：社區模型"], "order": 7}, "walkCourses/c35-08": {"program": "three5", "month": "116年4月", "title": "春天花草大發現", "goals": ["觀察春季植物。", "認識昆蟲。", "培養自然觀察能力。", "建立愛護環境態度。"], "content": "至興豐公園觀察花朵、新芽及昆蟲，完成春天觀察紀錄。", "reflection": "可延長觀察時間，鼓勵幼兒提出探究問題。", "areas": ["科學區：植物生長", "美勞區：花朵拓印", "語文區：春天圖鑑", "數學區：花瓣數數"], "order": 8}, "walkCourses/c35-09": {"program": "three5", "month": "116年5月", "title": "我是環保小公民", "goals": ["建立環保概念。", "學習垃圾分類。", "愛護公園環境。", "培養公民責任。"], "content": "至仁德公園進行環境觀察，了解垃圾分類及資源回收，討論如何共同維護環境。", "reflection": "可結合世界地球日活動，深化環保行動。", "areas": ["科學區：資源回收分類", "扮演區：環保志工", "美勞區：環保創作", "語文區：環保繪本"], "order": 9}, "walkCourses/c35-10": {"program": "three5", "month": "116年6月", "title": "我的社區成果展", "goals": ["回顧一年踏查成果。", "整理探索經驗。", "培養分享能力。", "建立社區認同感。"], "content": "整理照片、作品及觀察紀錄，共同製作《我的社區小書》，布置成果展並擔任小小導覽員向家長介紹。", "reflection": "幼兒經過一年的社區探索，已能運用觀察、紀錄與分享方式表達想法，未來可增加幼兒自主規劃探索路線及問題探究的機會。", "areas": ["語文區：社區小書", "建構區：社區立體模型", "美勞區：成果海報", "扮演區：小小導覽員", "科學區：探索成果展示"], "order": 10}, "motorPrograms/two": {"name": "兩歲專班", "title": "115學年度第一學期出汗性大肌肉循環式活動計劃表", "note": "桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)", "theme": "", "cls": "兩歲專班", "period": "115學年度第一學期（8月～1月）", "goals": [], "order": 1}, "motorCourses/m2-01": {"program": "two", "order": 1, "month": "8月", "title": "小泰山叢林探險（綜合體能）", "resources": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "森林動物律動", "content": "老師帶領幼兒模仿：模仿猴子走路、大象甩鼻子、大熊慢慢走、小鳥拍拍翅膀\n搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"}, "stations": [{"name": "森林小橋", "equipment": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "ability": "下肢肌力、平衡能力、身體穩定控制"}, {"name": "彩虹石散步", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "ability": "身體協調能力、跨步能力、平衡能力"}, {"name": "呼拉圈散步", "equipment": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "ability": "下肢控制能力、身體協調、方向感"}, {"name": "小猴子餵水果", "equipment": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。", "ability": "手眼協調、投擲能力、力道控制"}], "cooldown": {"title": "森林深呼吸", "content": "教師播放柔和音樂，引導幼兒：\n🌳 大樹伸懶腰（雙手向上伸展）   🐦 小鳥飛回家（雙手慢慢放下）\n🌬 深深吸一口氣，再慢慢吐氣\n最後一起拍拍手臂、拍拍大腿、拍拍小腿放鬆肌肉。"}}, "motorCourses/m2-02": {"program": "two", "order": 2, "month": "9月", "title": "氣球勇士探險記（綜合障礙闖關）", "resources": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "消防員出任務", "content": "教師帶領幼兒配合音樂模仿探險家的動作。\n小兔子跳跳跳（小步彈跳） --小熊慢慢走 --小鴨搖搖走 --飛機張開翅膀 --火車慢慢開"}, "stations": [{"name": "勇闖山洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "ability": "鑽爬能力、空間概念、身體控制能力"}, {"name": "彩虹石小徑", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "ability": "平衡能力、身體協調"}, {"name": "氣球快遞員", "equipment": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "ability": "手眼協調、力道控制、專注力"}, {"name": "呼拉圈探險路", "equipment": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "ability": "身體協調能力、平衡能力"}], "cooldown": {"title": "氣球慢慢放氣", "content": "教師帶領幼兒想像自己是一顆大氣球。\n雙手慢慢向上伸展，吸一口氣--身體慢慢蹲下，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n最後一起喝水、擦汗，分享今天完成探險的心情。"}}, "motorCourses/m2-03": {"program": "two", "order": 3, "month": "10月", "title": "海洋尋寶大作戰（觸覺與肌力）", "resources": ["波浪觸覺步道滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "indicators": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "海洋生物動一動", "content": "教師播放海洋音樂，引導幼兒模仿海洋生物。\n小魚游來游去 --螃蟹橫著走 --海龜慢慢爬 --海豚跳一跳（小彈跳） --水母飄呀飄"}, "stations": [{"name": "海底觸覺步道", "equipment": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "ability": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"name": "海豚翻翻樂", "equipment": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "ability": "前庭覺發展、動作協調"}, {"name": "海底小探險", "equipment": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "ability": "上肢肌力、四肢協調"}, {"name": "袋鼠尋寶趣", "equipment": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "ability": "下肢肌力、身體協調"}], "cooldown": {"title": "海浪深呼吸伸展", "content": "教師帶領幼兒想像自己躺在沙灘上。\n雙手做海浪擺動。\n深深吸一口氣。\n慢慢吐氣。\n互相拍拍肩膀、手臂及大腿放鬆肌肉。"}}, "motorCourses/m2-04": {"program": "two", "order": 4, "month": "11月", "title": "小騎士拉力賽（方向控制）", "resources": ["Weplay三輪車", "呼拉圈", "小皮球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "indicators": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "小小交通工具出發囉", "content": "教師播放輕快音樂，引導幼兒模仿各種交通工具。\n小汽車開呀開--摩托車轉轉方向盤--小火車嗚嗚出發--飛機展開翅膀--腳踏車踩踩踏板"}, "stations": [{"name": "直線小騎士", "equipment": "Weplay三輪車", "play": "幼兒騎乘三輪車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "ability": "踩踏能力、平衡能力"}, {"name": "小騎士繞彎道", "equipment": "三角錐", "play": "幼兒騎乘三輪車，慢慢繞過三角錐，不碰倒三角錐，再騎回起點。", "ability": "方向控制能力、身體控制能力"}, {"name": "補給站送貨員", "equipment": "小布球、呼拉圈", "play": "幼兒將三輪車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "ability": "手眼協調、投擲能力"}, {"name": "交通號誌散步", "equipment": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "ability": "身體控制能力、專注力"}], "cooldown": {"title": "小騎士回車庫", "content": "教師引導幼兒想像今天完成了拉力賽。\n雙手向上伸展，吸一口氣--雙手慢慢放下，吐氣--坐姿向前伸展雙腳--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n喝水、擦汗，分享今天騎車的心情。"}}, "motorCourses/m2-05": {"program": "two", "order": 5, "month": "12月", "title": "歡樂雪國氣球傘（團隊合作）", "resources": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "雪花飄飄真好玩", "content": "教師播放輕快音樂，帶領幼兒模仿雪國情境。\n小雪花飄呀飄（雙手左右擺動）--小企鵝搖搖走--北極熊慢慢走--小兔子輕輕跳（小幅度）--雙手堆雪人"}, "stations": [{"name": "穿越雪洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "ability": "四肢協調能力"}, {"name": "跨越雪堆", "equipment": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "ability": "動作控制、平衡能力"}, {"name": "拍擊雪球", "equipment": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "ability": "手眼協調能力"}, {"name": "雪浪大冒險", "equipment": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "ability": "上、下肢肌力、協調"}], "cooldown": {"title": "圍爐取暖", "content": "教師帶領幼兒圍坐成圓圈。\n雙手向上伸展，吸一口氣--慢慢放下雙手，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n互相說一句：「你好棒！」"}}, "motorCourses/m2-06": {"program": "two", "order": 6, "month": "1月", "title": "歡樂馬戲團（平衡與反應）", "resources": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "馬戲團明星登場", "content": "教師播放歡樂音樂，引導幼兒模仿馬戲團角色。\n小丑搖搖走--小熊踏步走--小兔子跳一跳（小幅度）--大象甩鼻子--小鳥拍拍翅膀"}, "stations": [{"name": "平衡小明星", "equipment": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "ability": "平衡、核心控制"}, {"name": "小丑繞圈圈", "equipment": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "ability": "方向控制能力、空間概念"}, {"name": "彩虹小腳印", "equipment": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "ability": "平衡能力、空間知覺"}, {"name": "呼拉圈歡樂派對", "equipment": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "ability": "跨步能力、身體協調"}], "cooldown": {"title": "完美謝幕", "content": "教師帶領幼兒一起完成馬戲團謝幕。\n雙手向上伸展，深深吸氣--雙手慢慢放下，吐氣--輕拍肩膀、手臂、大腿、小腿放鬆肌肉。\n大家互相拍拍手，給自己一個掌聲。"}}, "activityPlans/a-halloween-115": {"name": "社區教保資源活動－萬聖節南瓜燈籠DIY", "semester": "115學年度第一學期", "location": "仁德非營利幼兒園", "date": "2026-10-15", "time": "115年10月15日上午10:00-11:00", "purpose": ["結合萬聖節節慶活動，增進幼兒對多元文化的認識。", "透過親子共同創作南瓜燈籠，促進親子互動與情感交流。", "鼓勵社區家庭參與幼兒園活動，增進社區與園所連結。", "培養幼兒創造力、美感及手眼協調能力。"], "target": "學校鄰近社區內學齡前幼兒且家長能陪同出席參加者，9對親子(幼兒＋家長)", "content": "", "notify": "2-6歲幼兒及其照顧者(鼓勵未就學幼兒親子共同參與) 非該校(園)幼兒及家長優先", "partner": "家長及老師", "staff": "園長林佳靜+教保組長游雅真", "prep": "1.DIY物品-游雅真\n2.拍照-林佳靜\n3.桌子/椅子-教保組長及會計", "contact": "活動預告、行前海報－教保組長\n活動規劃---教保組長", "notes": "﹡本活動依報名先後順序錄取，如有取消由候補名單依序遞補。\n﹡本活動錄取順序以網路報名優先，現場報名次之。\n﹡一張報名表限填2位幼兒。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "10月-搗蛋鬼燈籠掛飾8吋(多元)33*10", "amount": 330}], "planType": "年度計畫", "reportDate": "115.08.01", "handler": "游雅真", "director": "", "status": "已呈報", "type": "社區活動計畫"}, "activityPlans/a-sportsday-115": {"type": "仁德活動計畫", "name": "115學年度親子運動會", "semester": "115學年度第一學期", "location": "", "date": "2026-10-31", "time": "115年10月31日（星期六）", "purpose": ["為促進幼兒身體動作發展、增進親子互動情誼，並建立家園良好溝通橋樑，特舉辦全園性親子運動會，透過趣味體能遊戲與團體合作，讓孩子在歡樂中展現自信與活力。"], "target": "全體幼生", "content": "", "notify": "", "partner": "", "staff": "", "prep": "", "contact": "", "notes": "本計畫園長核可後實施，修正時亦同。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "場地費", "amount": 4000}, {"item": "空調費用", "amount": 5000}, {"item": "班牌（5組）", "amount": 2400}, {"item": "餐盒", "amount": null}, {"item": "禮物", "amount": null}], "flow": [], "planType": "全園性節慶活動", "reportDate": "", "handler": "", "director": "", "status": "草稿"}};
+const SEED = {"walkPrograms/two": {"name": "兩歲專班", "title": "兩歲專班社區踏查年度課程", "theme": "認識仁德非營利幼兒園、仁德國小與社區環境", "cls": "兩歲專班", "period": "9月～隔年6月", "note": "", "goals": ["願意參與校園與社區踏查活動。", "認識幼兒園、校園與社區環境。", "透過感官觀察花草樹木與自然變化。", "練習牽手走路與遵守安全規則。", "願意用簡單語詞表達觀察與感受。", "建立幼兒對生活環境的熟悉感與安全感。"], "order": 1}, "walkPrograms/three5": {"name": "3-5歲", "title": "115學年度3-5歲社區踏查課程", "theme": "", "cls": "3-5歲", "period": "115年9月～116年6月", "note": "仁德非營利幼兒園委託社團法人臺灣宛靜文教協會辦理", "goals": [], "order": 2}, "walkCourses/c2-01": {"program": "two", "month": "9月", "title": "認識我的幼兒園", "goals": ["認識班級與校園環境。", "建立幼兒安全感。", "練習排隊與牽手。"], "content": "教師帶領幼兒認識班級教室、鞋櫃、廁所、洗手台與遊戲區，透過校園散步方式讓幼兒慢慢熟悉幼兒園環境。活動中引導幼兒認識自己的物品位置與班級標誌，並練習排隊、牽手與慢慢走。教師也會陪伴幼兒觀察校園中的顏色與設備，透過簡單對話與互動，幫助幼兒建立對新環境的安全感與歸屬感。", "reflection": "觀察幼兒對新環境的適應情形，適時增加陪伴與安撫，協助幼兒建立安全感。", "areas": ["扮演區：扮演上學情境。", "語文區：認識自己的姓名與照片。", "建構區：使用積木拼出教室。"], "order": 1}, "walkCourses/c2-02": {"program": "two", "month": "10月", "title": "校園散步趣", "goals": ["認識校園空間。", "練習觀察周遭環境。", "建立基本行走安全。"], "content": "教師帶領幼兒到校園操場與走廊散步，觀察校園中的遊樂器材、樹木、花圃與教室外觀。活動中鼓勵幼兒看看校園裡有哪些顏色、聲音與不同的地面材質，並透過簡單提問引導幼兒注意周遭環境。教師陪伴幼兒練習牽手走路與慢慢前進，讓幼兒在輕鬆散步過程中增加對校園環境的熟悉感與安全感。", "reflection": "幼兒對操場與戶外空間特別有興趣，可增加停留觀察時間。", "areas": ["美勞區：校園塗鴉創作。", "感官區：觸摸不同材質。", "積木區：拼搭操場設施。"], "order": 2}, "walkCourses/c2-03": {"program": "two", "month": "11月", "title": "花草樹木小探索", "goals": ["觀察校園植物。", "運用感官探索自然。", "培養愛護植物態度。"], "content": "教師帶領幼兒觀察校園中的花草樹木，鼓勵幼兒摸摸樹皮、看看葉子顏色與形狀，並聆聽風吹樹葉的聲音。活動中提供小袋子讓幼兒撿拾地上的落葉，陪伴幼兒比較葉子的大小與顏色差異。教師也會提醒幼兒不隨意摘花與拉扯樹枝，透過實際探索活動培養幼兒對自然環境的好奇與愛護態度。", "reflection": "幼兒對落葉與樹皮觸感興趣高，可增加自然素材操作活動。", "areas": ["美勞區：葉子拓印拼貼。", "感官區：觀察樹葉與種子。", "語文區：植物圖片命名。"], "order": 3}, "walkCourses/c2-04": {"program": "two", "month": "12月", "title": "校園建築觀察", "goals": ["認識校園建築。", "觀察形狀與顏色。", "建立空間概念。"], "content": "教師帶領幼兒觀察校園中的門、窗戶、樓梯、牆面與柱子，引導幼兒認識圓形、方形與長方形等簡單形狀。活動中鼓勵幼兒比較建築物的高低、大小與顏色差異，並透過摸摸牆壁與地板感受不同材質。教師陪伴幼兒在校園中慢慢觀察，增加幼兒對校園建築與空間環境的熟悉感。", "reflection": "幼兒喜歡尋找不同顏色與形狀，可搭配積木延伸建構活動。", "areas": ["建構區：積木蓋房子。", "數學區：形狀配對遊戲。", "美勞區：彩色建築創作。"], "order": 4}, "walkCourses/c2-05": {"program": "two", "month": "2月", "title": "冬天的校園", "goals": ["感受冬天天氣。", "認識季節變化。", "建立保暖觀念。"], "content": "教師帶領幼兒感受冬天校園的天氣變化，觀察陽光、陰影與冬季植物的不同。活動中引導幼兒摸摸冷冷的風，感受陽光照射時的溫暖，也陪伴幼兒觀察樹葉與花草在冬天的變化。教師提醒幼兒穿外套與注意保暖，透過實際生活經驗幫助幼兒認識冬天天氣與季節特色。", "reflection": "冬季活動時間可適度縮短，避免幼兒受寒。", "areas": ["扮演區：冬天穿衣遊戲。", "感官區：冷熱觸感體驗。", "語文區：冬天圖片配對。"], "order": 5}, "walkCourses/c2-06": {"program": "two", "month": "3月", "title": "交通安全小寶寶", "goals": ["認識交通安全。", "練習安全行走。", "建立自我保護觀念。"], "content": "教師帶領幼兒觀察校園周邊的人行道、斑馬線與紅綠燈，介紹過馬路時停、看、聽的重要性。活動中引導幼兒觀察車輛與行人，並練習牽手慢慢走與排隊等待。教師透過實際情境說明交通安全的重要，幫助幼兒建立基本的安全概念與自我保護能力，增加日常生活中的安全經驗。", "reflection": "可透過角色扮演遊戲加深幼兒交通安全印象。", "areas": ["扮演區：交通警察遊戲。", "積木區：道路建構。", "語文區：交通工具圖卡。"], "order": 6}, "walkCourses/c2-07": {"program": "two", "month": "4月", "title": "認識社區裡的人", "goals": ["認識社區工作者。", "練習打招呼。", "培養禮貌態度。"], "content": "教師帶領幼兒認識校園與社區中照顧大家的人，例如警衛叔叔、清潔阿姨與行政老師。活動中鼓勵幼兒主動揮手打招呼與說謝謝，並陪伴幼兒觀察不同工作內容。教師透過互動與簡單介紹，幫助幼兒了解社區中每個人都有不同工作，也培養幼兒基本禮貌與人際互動能力。", "reflection": "幼兒對熟悉的大人較願意互動，可逐步增加社區接觸機會。", "areas": ["扮演區：職業角色扮演。", "語文區：人物圖片配對。", "美勞區：感謝卡製作。"], "order": 7}, "walkCourses/c2-08": {"program": "two", "month": "5月", "title": "春天來了", "goals": ["觀察春天自然變化。", "認識花朵與昆蟲。", "培養觀察能力。"], "content": "教師陪伴幼兒觀察春天校園中的花朵、新葉與小昆蟲，鼓勵幼兒看看花的顏色、聞聞花香與觀察葉子的變化。活動中引導幼兒感受春天天氣逐漸變暖，也陪伴幼兒觀察蝴蝶與小昆蟲移動。透過實際自然探索活動，增加幼兒對春天季節變化與自然環境的好奇與觀察經驗。", "reflection": "幼兒對花朵顏色與昆蟲移動特別有興趣，可增加觀察時間。", "areas": ["美勞區：花朵拓印。", "感官區：觀察種子發芽。", "語文區：春天圖卡命名。"], "order": 8}, "walkCourses/c2-09": {"program": "two", "month": "6月", "title": "社區商店小發現", "goals": ["認識社區商店。", "學習排隊與等待。", "增加生活經驗。"], "content": "教師帶領幼兒散步觀察幼兒園附近的商店，例如早餐店、便利商店或文具店。活動中介紹商店販售的物品與工作人員，並提醒幼兒學習排隊與等待。教師也會引導幼兒觀察不同商品的顏色與種類，透過實際生活情境增加幼兒對社區環境與日常購物經驗的認識。", "reflection": "幼兒對食物與商品特別有興趣，可延伸扮演商店遊戲。", "areas": ["扮演區：商店買賣遊戲。", "數學區：商品分類。", "美勞區：購物袋創作。"], "order": 9}, "walkCourses/c35-01": {"program": "three5", "month": "115年9月", "title": "認識我的幼兒園", "goals": ["認識幼兒園各空間及功能。", "建立安全感及歸屬感。", "學習遵守園內生活規範。", "能與同儕共同探索校園。"], "content": "教師帶領幼兒實地走訪教室、行政室、健康中心、廚房、遊戲場及操場，引導幼兒觀察各場所用途，討論不同空間提供哪些服務。幼兒利用平板或圖卡拍攝、記錄自己最喜歡的地方，回到教室共同製作「我的幼兒園地圖」。", "reflection": "幼兒對遊戲場及大型遊具最感興趣，可增加自由探索時間。部分新生對陌生環境較緊張，可安排舊生陪伴及合作探索活動，提升安全感。", "areas": ["語文區：校園地圖配對", "語文區：空間名稱認讀", "建構區：積木建造幼兒園", "美勞區：我的幼兒園創作", "扮演區：小老師、小校長角色扮演"], "order": 1}, "walkCourses/c35-02": {"program": "three5", "month": "115年10月", "title": "秋天的仁德公園", "goals": ["觀察秋季自然變化。", "比較植物差異。", "培養愛護自然態度。", "運用五感探索環境。"], "content": "至仁德公園撿拾落葉、觀察植物、樹木及昆蟲，運用放大鏡觀察葉脈及樹皮紋路，討論秋天有哪些改變，蒐集自然素材回園創作。", "reflection": "幼兒喜歡觀察昆蟲，可增加自然探索工具，鼓勵提出問題與討論。", "areas": ["科學區：葉子分類", "美勞區：落葉拼貼", "數學區：葉片排序", "語文區：秋天圖鑑"], "order": 2}, "walkCourses/c35-03": {"program": "three5", "month": "115年11月", "title": "社區安全小尖兵", "goals": ["認識交通安全。", "學習安全過馬路。", "建立公共安全觀念。", "培養自我保護能力。"], "content": "實地觀察幼兒園周邊斑馬線、紅綠燈、人行道及交通號誌，練習停、看、聽，模擬安全過馬路。", "reflection": "可搭配交通角色扮演，增進實際應用能力。", "areas": ["扮演區：交通警察", "建構區：道路建設", "科學區：交通號誌分類", "語文區：交通標誌配對"], "order": 3}, "walkCourses/c35-04": {"program": "three5", "month": "115年12月", "title": "探索興豐公園生態", "goals": ["認識公園生態。", "觀察植物及昆蟲。", "培養尊重生命態度。", "建立環境保護觀念。"], "content": "觀察花草樹木、昆蟲、鳥類，使用觀察紀錄表完成自然日記。", "reflection": "幼兒喜歡使用放大鏡觀察，可提供更多探究材料。", "areas": ["科學區：昆蟲觀察", "美勞區：自然拼貼", "語文區：生態圖卡", "建構區：公園模型"], "order": 4}, "walkCourses/c35-05": {"program": "three5", "month": "116年1月", "title": "我是小小建築師", "goals": ["認識社區建築。", "比較建築特色。", "培養空間概念。", "學習觀察建築功能。"], "content": "觀察仁德國小、幼兒園及社區建築，討論外觀、高度、用途及建築特色。", "reflection": "可加入拍照紀錄，讓幼兒比較不同建築。", "areas": ["建構區：建築設計", "美勞區：房屋創作", "數學區：形狀分類", "語文區：建築圖卡"], "order": 5}, "walkCourses/c35-06": {"program": "three5", "month": "116年2月", "title": "冬天的社區", "goals": ["感受冬季氣候。", "觀察冬季植物。", "學習保暖方式。", "建立健康生活概念。"], "content": "觀察冬天天氣、樹木及植物變化，討論如何保暖。", "reflection": "可搭配天氣紀錄，增加幼兒比較能力。", "areas": ["科學區：溫度紀錄", "語文區：冬天繪本", "扮演區：冬季穿衣", "美勞區：冬景創作"], "order": 6}, "walkCourses/c35-07": {"program": "three5", "month": "116年3月", "title": "認識社區工作者", "goals": ["認識不同職業。", "尊重工作者。", "培養感恩態度。", "學習人際互動。"], "content": "拜訪警衛、行政老師、清潔人員及社區商家，訪問工作內容。", "reflection": "可讓幼兒事先設計訪問題目，提高參與度。", "areas": ["扮演區：職業體驗", "語文區：職業配對", "美勞區：感謝卡", "建構區：社區模型"], "order": 7}, "walkCourses/c35-08": {"program": "three5", "month": "116年4月", "title": "春天花草大發現", "goals": ["觀察春季植物。", "認識昆蟲。", "培養自然觀察能力。", "建立愛護環境態度。"], "content": "至興豐公園觀察花朵、新芽及昆蟲，完成春天觀察紀錄。", "reflection": "可延長觀察時間，鼓勵幼兒提出探究問題。", "areas": ["科學區：植物生長", "美勞區：花朵拓印", "語文區：春天圖鑑", "數學區：花瓣數數"], "order": 8}, "walkCourses/c35-09": {"program": "three5", "month": "116年5月", "title": "我是環保小公民", "goals": ["建立環保概念。", "學習垃圾分類。", "愛護公園環境。", "培養公民責任。"], "content": "至仁德公園進行環境觀察，了解垃圾分類及資源回收，討論如何共同維護環境。", "reflection": "可結合世界地球日活動，深化環保行動。", "areas": ["科學區：資源回收分類", "扮演區：環保志工", "美勞區：環保創作", "語文區：環保繪本"], "order": 9}, "walkCourses/c35-10": {"program": "three5", "month": "116年6月", "title": "我的社區成果展", "goals": ["回顧一年踏查成果。", "整理探索經驗。", "培養分享能力。", "建立社區認同感。"], "content": "整理照片、作品及觀察紀錄，共同製作《我的社區小書》，布置成果展並擔任小小導覽員向家長介紹。", "reflection": "幼兒經過一年的社區探索，已能運用觀察、紀錄與分享方式表達想法，未來可增加幼兒自主規劃探索路線及問題探究的機會。", "areas": ["語文區：社區小書", "建構區：社區立體模型", "美勞區：成果海報", "扮演區：小小導覽員", "科學區：探索成果展示"], "order": 10}, "motorPrograms/two": {"name": "兩歲專班", "title": "115學年度第一學期出汗性大肌肉循環式活動計劃表", "note": "桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)", "theme": "", "cls": "兩歲專班", "period": "115學年度第一學期（8月～1月）", "goals": [], "order": 1}, "motorCourses/m2-01": {"program": "two", "order": 1, "month": "8月", "title": "小泰山叢林探險（綜合體能）", "resources": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "森林動物律動", "content": "老師帶領幼兒模仿：模仿猴子走路、大象甩鼻子、大熊慢慢走、小鳥拍拍翅膀\n搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"}, "stations": [{"name": "森林小橋", "equipment": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "ability": "下肢肌力、平衡能力、身體穩定控制"}, {"name": "彩虹石散步", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "ability": "身體協調能力、跨步能力、平衡能力"}, {"name": "呼拉圈散步", "equipment": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "ability": "下肢控制能力、身體協調、方向感"}, {"name": "小猴子餵水果", "equipment": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。", "ability": "手眼協調、投擲能力、力道控制"}], "cooldown": {"title": "森林深呼吸", "content": "教師播放柔和音樂，引導幼兒：\n🌳 大樹伸懶腰（雙手向上伸展）   🐦 小鳥飛回家（雙手慢慢放下）\n🌬 深深吸一口氣，再慢慢吐氣\n最後一起拍拍手臂、拍拍大腿、拍拍小腿放鬆肌肉。"}}, "motorCourses/m2-02": {"program": "two", "order": 2, "month": "9月", "title": "氣球勇士探險記（綜合障礙闖關）", "resources": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "消防員出任務", "content": "教師帶領幼兒配合音樂模仿探險家的動作。\n小兔子跳跳跳（小步彈跳） --小熊慢慢走 --小鴨搖搖走 --飛機張開翅膀 --火車慢慢開"}, "stations": [{"name": "勇闖山洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "ability": "鑽爬能力、空間概念、身體控制能力"}, {"name": "彩虹石小徑", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "ability": "平衡能力、身體協調"}, {"name": "氣球快遞員", "equipment": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "ability": "手眼協調、力道控制、專注力"}, {"name": "呼拉圈探險路", "equipment": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "ability": "身體協調能力、平衡能力"}], "cooldown": {"title": "氣球慢慢放氣", "content": "教師帶領幼兒想像自己是一顆大氣球。\n雙手慢慢向上伸展，吸一口氣--身體慢慢蹲下，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n最後一起喝水、擦汗，分享今天完成探險的心情。"}}, "motorCourses/m2-03": {"program": "two", "order": 3, "month": "10月", "title": "海洋尋寶大作戰（觸覺與肌力）", "resources": ["波浪觸覺步道滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "indicators": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "海洋生物動一動", "content": "教師播放海洋音樂，引導幼兒模仿海洋生物。\n小魚游來游去 --螃蟹橫著走 --海龜慢慢爬 --海豚跳一跳（小彈跳） --水母飄呀飄"}, "stations": [{"name": "海底觸覺步道", "equipment": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "ability": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"name": "海豚翻翻樂", "equipment": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "ability": "前庭覺發展、動作協調"}, {"name": "海底小探險", "equipment": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "ability": "上肢肌力、四肢協調"}, {"name": "袋鼠尋寶趣", "equipment": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "ability": "下肢肌力、身體協調"}], "cooldown": {"title": "海浪深呼吸伸展", "content": "教師帶領幼兒想像自己躺在沙灘上。\n雙手做海浪擺動。\n深深吸一口氣。\n慢慢吐氣。\n互相拍拍肩膀、手臂及大腿放鬆肌肉。"}}, "motorCourses/m2-04": {"program": "two", "order": 4, "month": "11月", "title": "小騎士拉力賽（方向控制）", "resources": ["Weplay三輪車", "呼拉圈", "小皮球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "indicators": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "小小交通工具出發囉", "content": "教師播放輕快音樂，引導幼兒模仿各種交通工具。\n小汽車開呀開--摩托車轉轉方向盤--小火車嗚嗚出發--飛機展開翅膀--腳踏車踩踩踏板"}, "stations": [{"name": "直線小騎士", "equipment": "Weplay三輪車", "play": "幼兒騎乘三輪車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "ability": "踩踏能力、平衡能力"}, {"name": "小騎士繞彎道", "equipment": "三角錐", "play": "幼兒騎乘三輪車，慢慢繞過三角錐，不碰倒三角錐，再騎回起點。", "ability": "方向控制能力、身體控制能力"}, {"name": "補給站送貨員", "equipment": "小布球、呼拉圈", "play": "幼兒將三輪車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "ability": "手眼協調、投擲能力"}, {"name": "交通號誌散步", "equipment": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "ability": "身體控制能力、專注力"}], "cooldown": {"title": "小騎士回車庫", "content": "教師引導幼兒想像今天完成了拉力賽。\n雙手向上伸展，吸一口氣--雙手慢慢放下，吐氣--坐姿向前伸展雙腳--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n喝水、擦汗，分享今天騎車的心情。"}}, "motorCourses/m2-05": {"program": "two", "order": 5, "month": "12月", "title": "歡樂雪國氣球傘（團隊合作）", "resources": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "雪花飄飄真好玩", "content": "教師播放輕快音樂，帶領幼兒模仿雪國情境。\n小雪花飄呀飄（雙手左右擺動）--小企鵝搖搖走--北極熊慢慢走--小兔子輕輕跳（小幅度）--雙手堆雪人"}, "stations": [{"name": "穿越雪洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "ability": "四肢協調能力"}, {"name": "跨越雪堆", "equipment": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "ability": "動作控制、平衡能力"}, {"name": "拍擊雪球", "equipment": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "ability": "手眼協調能力"}, {"name": "雪浪大冒險", "equipment": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "ability": "上、下肢肌力、協調"}], "cooldown": {"title": "圍爐取暖", "content": "教師帶領幼兒圍坐成圓圈。\n雙手向上伸展，吸一口氣--慢慢放下雙手，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n互相說一句：「你好棒！」"}}, "motorCourses/m2-06": {"program": "two", "order": 6, "month": "1月", "title": "歡樂馬戲團（平衡與反應）", "resources": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "馬戲團明星登場", "content": "教師播放歡樂音樂，引導幼兒模仿馬戲團角色。\n小丑搖搖走--小熊踏步走--小兔子跳一跳（小幅度）--大象甩鼻子--小鳥拍拍翅膀"}, "stations": [{"name": "平衡小明星", "equipment": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "ability": "平衡、核心控制"}, {"name": "小丑繞圈圈", "equipment": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "ability": "方向控制能力、空間概念"}, {"name": "彩虹小腳印", "equipment": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "ability": "平衡能力、空間知覺"}, {"name": "呼拉圈歡樂派對", "equipment": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "ability": "跨步能力、身體協調"}], "cooldown": {"title": "完美謝幕", "content": "教師帶領幼兒一起完成馬戲團謝幕。\n雙手向上伸展，深深吸氣--雙手慢慢放下，吐氣--輕拍肩膀、手臂、大腿、小腿放鬆肌肉。\n大家互相拍拍手，給自己一個掌聲。"}}, "activityPlans/a-halloween-115": {"name": "社區教保資源活動－萬聖節南瓜燈籠DIY", "semester": "115學年度第一學期", "location": "仁德非營利幼兒園", "date": "2026-10-15", "time": "115年10月15日上午10:00-11:00", "purpose": ["結合萬聖節節慶活動，增進幼兒對多元文化的認識。", "透過親子共同創作南瓜燈籠，促進親子互動與情感交流。", "鼓勵社區家庭參與幼兒園活動，增進社區與園所連結。", "培養幼兒創造力、美感及手眼協調能力。"], "target": "學校鄰近社區內學齡前幼兒且家長能陪同出席參加者，9對親子(幼兒＋家長)", "content": "", "notify": "2-6歲幼兒及其照顧者(鼓勵未就學幼兒親子共同參與) 非該校(園)幼兒及家長優先", "partner": "家長及老師", "staff": "園長林佳靜+教保組長游雅真", "prep": "1.DIY物品-游雅真\n2.拍照-林佳靜\n3.桌子/椅子-教保組長及會計", "contact": "活動預告、行前海報－教保組長\n活動規劃---教保組長", "notes": "﹡本活動依報名先後順序錄取，如有取消由候補名單依序遞補。\n﹡本活動錄取順序以網路報名優先，現場報名次之。\n﹡一張報名表限填2位幼兒。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "10月-搗蛋鬼燈籠掛飾8吋(多元)33*10", "amount": 330}], "planType": "年度計畫", "reportDate": "115.08.01", "handler": "游雅真", "director": "", "status": "已呈報", "type": "社區活動計畫"}, "activityPlans/a-sportsday-115": {"type": "仁德活動計畫", "name": "115學年度親子運動會", "semester": "115學年度第一學期", "location": "", "date": "2026-10-31", "time": "115年10月31日（星期六）", "purpose": ["為促進幼兒身體動作發展、增進親子互動情誼，並建立家園良好溝通橋樑，特舉辦全園性親子運動會，透過趣味體能遊戲與團體合作，讓孩子在歡樂中展現自信與活力。"], "target": "全體幼生", "content": "", "notify": "", "partner": "", "staff": "", "prep": "", "contact": "", "notes": "本計畫園長核可後實施，修正時亦同。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "場地費", "amount": 4000}, {"item": "空調費用", "amount": 5000}, {"item": "班牌（5組）", "amount": 2400}, {"item": "餐盒", "amount": null}, {"item": "禮物", "amount": null}], "flow": [], "planType": "全園性節慶活動", "reportDate": "", "handler": "", "director": "", "status": "草稿"}, "schedules/s-two-1": {"group": "two", "name": "幸運草班", "title": "幸運草班作息表", "order": 1, "rows": [{"period": "上午", "time": "8:00-8:20", "days": ["幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節"], "core": "自主管理", "focus": "用愉悅的心情來上學，會用禮貌用語打招呼，能自己整理物品。"}, {"period": "上午", "time": "8:20-9:00", "days": ["出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分"], "core": "自主管理\n覺知辨識", "focus": "模仿常見的穩定性及移動性的動作，養成運動的好習慣，培養動作與健康 。\n學習遵守團體規範"}, {"period": "上午", "time": "09:00-09:30", "days": ["營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育"], "core": "自主管理\n表達溝通", "focus": "能平穩坐在椅子上用餐，餐後可以自己收拾餐碗，培養日常生活的健康行為。"}, {"period": "上午", "time": "09:30-10:30", "days": ["學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間"], "core": "自主管理\n覺知辨識\n關懷合作\n想像創作\n推理賞析\n表達溝通", "focus": "探索自己喜歡做的事，樂於與同儕一起遊戲，並能操作各項素材或器材。\n學習遵守團體規範,對日常的生活中的事物練習自己可以嘗試完成的自理行為。"}, {"period": "上午", "time": "10:30-11:30", "days": ["團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)"], "core": "", "focus": "學習遵守團體規範,樂於與友伴一起遊戲和活動，學習合宜的人際關係。"}, {"period": "上午", "time": "11:30-12:00", "days": ["美味營養午餐", "美味營養午餐", "美味營養午餐", "美味營養午餐", "美味營養午餐"], "core": "自主管理\n覺知辨識", "focus": "能平穩坐在椅子上用餐,餐後可以自己收拾餐碗,並能模仿日常生活的健康行為。"}, {"period": "下午", "time": "12:00-12:30", "days": ["繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息"], "core": "推理賞析", "focus": "學習重點：繪本賞析培養表達與推理，散步活動覺察自然與多感官體驗，連結學習生活。"}, {"period": "下午", "time": "12:30-14:30", "days": ["甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休"], "core": "自主管理", "focus": "學習規律作息,讓身體適時的休息,以幫助成長發育以及穩定的情緒。"}, {"period": "下午", "time": "14:30-15:30", "days": ["全園性活動", "一日生活統整與分享", "一日生活統整與分享", "一日生活統整與分享", "一日生活統整與分享"], "core": "關懷合作\n覺知辨識\n推理賞析\n表達溝通", "focus": "玩具分享、繪本時間、(生活.人際.品德.人格.生命教育認知)"}, {"period": "下午", "time": "15:30-16:10", "days": ["美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心"], "core": "自主管理\n覺知辨識", "focus": "參與日常生活的健康行為，穩坐在椅子上用餐且能自己主動收拾整理用餐環境。"}, {"period": "下午", "time": "16:10-17:00", "days": ["生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理"], "core": "自主管理\n表達溝通", "focus": "練習自己收拾書包,擁有愉悅的心情並能耐心等待家人接回以及與老師、同儕說再見。"}], "note": ""}, "schedules/s-two-2": {"group": "two", "name": "仙草花班", "title": "仙草花班作息表", "order": 2, "rows": [{"period": "上午", "time": "8:00-8:20", "days": ["幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節", "幼兒園入園/身心安頓/健康觀察/情緒調節"], "core": "自主管理", "focus": "用愉悅的心情來上學，會用禮貌用語打招呼，能自己整理物品。"}, {"period": "上午", "time": "8:20-9:00", "days": ["團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)", "團體活動/多元學習(唱遊律動手指謠……等)"], "core": "自主管理\n覺知辨識", "focus": "模仿常見的穩定性及移動性的動作，養成運動的好習慣，培養動作與健康 。\n學習遵守團體規範 學習遵守團體規範,樂於與友伴一起遊戲和活動，學習合宜的人際關係。"}, {"period": "上午", "time": "09:00-09:30", "days": ["營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育", "營養點心/生活教育"], "core": "自主管理\n表達溝通", "focus": "能平穩坐在椅子上用餐，餐後可以自己收拾餐碗，培養日常生活的健康行為。"}, {"period": "上午", "time": "09:30-10:30", "days": ["學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間", "學習區自由探索團討時間/分享時間"], "core": "自主管理\n覺知辨識\n關懷合作\n想像創作\n推理賞析\n表達溝通", "focus": "探索自己喜歡做的事，樂於與同儕一起遊戲，並能操作各項素材或器材。\n學習遵守團體規範,對日常的生活中的事物練習自己可以嘗試完成的自理行為。"}, {"period": "上午", "time": "10:30-11:30", "days": ["出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分"], "core": "", "focus": "模仿常見的穩定性及移動性的動作，養成運動的好習慣，培養動作與健康 。\n學習遵守團體規範"}, {"period": "上午", "time": "11:30-12:00", "days": ["美味營養午餐", "美味營養午餐", "美味營養午餐", "美味營養午餐", "美味營養午餐"], "core": "自主管理\n覺知辨識", "focus": "能平穩坐在椅子上用餐,餐後可以自己收拾餐碗,並能模仿日常生活的健康行為。"}, {"period": "下午", "time": "12:00-12:30", "days": ["繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息"], "core": "推理賞析", "focus": "學習重點：繪本賞析培養表達與推理，散步活動覺察自然與多感官體驗，連結學習生活。"}, {"period": "下午", "time": "12:30-14:30", "days": ["甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休"], "core": "自主管理", "focus": "學習規律作息,讓身體適時的休息,以幫助成長發育以及穩定的情緒。"}, {"period": "下午", "time": "14:30-15:30", "days": ["全園性活動", "一日生活統整與分享", "一日生活統整與分享", "一日生活統整與分享", "一日生活統整與分享"], "core": "關懷合作\n覺知辨識\n推理賞析\n表達溝通", "focus": "玩具分享、繪本時間、(生活.人際.品德.人格.生命教育認知)"}, {"period": "下午", "time": "15:30-16:10", "days": ["美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心"], "core": "自主管理\n覺知辨識", "focus": "參與日常生活的健康行為，穩坐在椅子上用餐且能自己主動收拾整理用餐環境。"}, {"period": "下午", "time": "16:10-17:00", "days": ["生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理", "生活自理/愛的抱抱/溫馨叮嚀/服裝儀容整理"], "core": "自主管理\n表達溝通", "focus": "練習自己收拾書包,擁有愉悅的心情並能耐心等待家人接回以及與老師、同儕說再見。"}], "note": ""}, "schedules/s-three5-1": {"group": "three5", "name": "3-5歲班", "title": "3-5歲班作息表", "order": 1, "rows": [{"period": "上午", "time": "8:00-8:20", "days": ["幼兒入園/整理書包與環境", "幼兒入園/整理書包與環境", "幼兒入園/整理書包與環境", "幼兒入園/整理書包與環境", "幼兒入園/整理書包與環境"], "core": "自主管理", "focus": "學習重點：調整情緒、主動與人打招呼熟練並自主完成每日例行性整潔活動。"}, {"period": "上午", "time": "08:20-9:00", "days": ["出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分", "出汗性大肌肉活動/補充水分"], "core": "自主管理\n覺知辨識", "focus": "學習重點：．遵守遊戲規則．能自我保護注意安全．受傷會主動告知老師"}, {"period": "上午", "time": "09:00-09:30", "days": ["營養點心", "營養點心", "營養點心", "營養點心", "營養點心"], "core": "自主管理\n表達溝通", "focus": "學習重點:能於用完餐點後自行收拾與整理環境 。"}, {"period": "上午", "time": "09:30-11:30", "days": ["學習區時間個別自由探索與操作/分享時間", "學習區時間個別自由探索與操作/分享時間", "學習區時間個別自由探索與操作/分享時間", "學習區時間個別自由探索與操作/分享時間", "學習區時間個別自由探索與操作/分享時間"], "core": "自主管理\n覺知辨識\n關懷合作\n想像創作\n推理賞析\n表達溝通", "focus": "學習重點：有始有終完成自己選擇的任務。．願意與同儕協商找出解決方法 ．樂於分享或描述自己的經驗"}, {"period": "上午", "time": "11:30-12:00", "days": ["美味營養午餐/健康潔牙/生活教育", "美味營養午餐/健康潔牙/生活教育", "美味營養午餐/健康潔牙/生活教育", "美味營養午餐/健康潔牙/生活教育", "美味營養午餐/健康潔牙/生活教育"], "core": "", "focus": "學習重點：均衡飲食 並保持正向情緒,培養用餐禮儀與習慣學習良好健康行為。"}, {"period": "上午", "time": "12:00-12:30", "days": ["繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息", "繪本賞析/散步/望遠休息"], "core": "自主管理\n覺知辨識", "focus": "學習重點：繪本賞析培養表達與推理，散步活動覺察自然與多感官體驗，連結學習生活。"}, {"period": "下午", "time": "12:30-14:00", "days": ["甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休", "甜蜜午休"], "core": "自主管理", "focus": "學習規律作息,讓身體適時的休息,以幫助成長發育以及穩定的情緒。"}, {"period": "下午", "time": "14:00-15:30", "days": ["全園性活動", "統整與分享", "社區踏查", "整理服裝/一日生活統整與分享", "整理服裝/一日生活統整與分享"], "core": "關懷合作\n覺知辨識\n推理賞析\n表達溝通", "focus": "學習重點:培養多元活動與分享能力，促進幼兒身心全面成長與社交互動。"}, {"period": "下午", "time": "15:30-16:10", "days": ["美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心", "美味營養點心"], "core": "自主管理\n覺知辨識", "focus": "學習重點:能於用完餐點後自行收拾與整理、並感謝廚房阿姨一天的辛勞。"}, {"period": "下午", "time": "16:10-17:00", "days": ["回顧活動/自我整理/服裝儀容整理", "回顧活動/自我整理/服裝儀容整理", "回顧活動/自我整理/服裝儀容整理", "回顧活動/自我整理/服裝儀容整理", "回顧活動/自我整理/服裝儀容整理"], "core": "自主管理\n表達溝通", "focus": "學習重點:透過回顧學習重點,練習以圖像、符號做紀錄,並回應自己看法或想法。"}], "note": ""}, "calendars/cal-115-1": {"title": "115學年度第一學期行事曆", "note": "桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會）", "order": 1, "months": [{"month": "8月", "weeks": "第1–5週（08/01–08/30）", "festival": ["08/08父親節"], "admin": ["8/03全園室內外設施設備檢查", "＊幼兒團體保險投保", "＊飲水設備定期維護", "＊每月25日公告菜單", "＊幼生基本資料", "課後留園調查", "114學年度工作報告"], "care": ["08/01新生座談會", "08/01研習：節慶中的學習：學習區規劃與課綱實踐", "08/03新學期開學活動", "08/03教學研討會議", "08/03八月慶生會", "8/03–07父親節活動", "08/10–28親師座談會（個別）", "學齡前兒童發展篩檢", "8/17–28舊生家長訪談"], "health": ["08/10–08/16期初測量身高體重", "08/10宣導：登革熱宣導", "08/24我是禮貌小寶寶宣導", "08/24實施及統計學齡前兒童發展檢核", "＊每兩週清洗睡袋", "每週睡袋清洗", "＊漂白水泡製容器檢核"], "community": ["＊學期初安排特殊需求幼兒學期IEP會議"]}, {"month": "9月", "weeks": "第6–9週（08/31–09/27）", "festival": ["09/25中秋節", "09/28教師節"], "admin": ["＊飲水設備定期維護", "＊每月25日公告菜單", "9/21園務會議"], "care": ["＊親子共讀繪本借閱（09/04開始隔週借閱）", "＊學年初總結性評量（09/30上傳電子檔）", "09/03教學研討會議", "09/04專業發展輔導", "09/07九月慶生會", "9/07地震消防宣導", "09/18地震逃生演練－預演", "09/21地震逃生演練－正式", "09/23中秋節戲劇表演活動", "09/24DIY－米紙蛋黃酥"], "health": ["09/07防震防災宣導", "09/14宣導：視力保健宣導", "09/21宣導：腸病毒防治宣導", "每週睡袋清洗"], "community": ["＊小中大班社區探訪開始（09/03開始）", "09/19社區親職講座：數位教養新思維－拉近親子的數位距離", "＊親子共讀繪本借閱"]}, {"month": "10月", "weeks": "第10–14週（09/28–11/01）", "festival": ["10/10雙十節（10/09補假一天）", "10/25光復節（10/26補假一天）"], "admin": ["10/16勞資會議", "＊飲水設備定期維護、水質檢測", "＊每月25日公告菜單"], "care": ["10/01教學研討會議", "10/02專業發展輔導", "10/05十月慶生會", "10/31小鬼當家親子運動會"], "health": ["10/05宣導：交通安全宣導", "每週睡袋清洗"], "community": ["＊社區免費學齡前兒童發展篩檢活動", "10/15社區活動－萬聖節南瓜燈籠DIY"]}, {"month": "11月", "weeks": "第15–18週（11/02–11/29）", "festival": [], "admin": ["＊飲水設備定期維護", "＊每月25日公告菜單"], "care": ["11/01教學研討會議", "11/02十一月慶生會", "11/06專業發展輔導"], "health": ["11/09表達情緒宣導", "11/23交通安全宣導", "每週睡袋清洗"], "community": ["11/13社區兒童發展篩檢", "11/14社區親職講座－全語文—從生活情境探索符號", "11/21西屯附幼參訪"]}, {"month": "12月", "weeks": "第19–22週（11/30–12/27）", "festival": ["12/25行憲紀念日"], "admin": ["＊教職員平時考核", "12/27公告115-2收退費基準及減免收費規定", "＊飲水設備定期維護", "＊每月25日公告菜單"], "care": ["12/03教學研討會議", "12/04專業發展輔導", "12/07十二月慶生會", "12/22多元文化－冬至習俗介紹", "12/25多元文化－行憲紀念日＆聖誕節介紹"], "health": ["12/14健康飲食宣導", "12/28緊急傷病演練：外傷出血＆異物哽塞", "每週睡袋清洗"], "community": ["12/04社區活動／DIY－金蔥聖誕天使"]}, {"month": "1月", "weeks": "第23–27週（12/28–01/31）", "festival": ["01/01元旦"], "admin": ["期末全園消毒日", "勞資會議", "財產盤點", "＊飲水設備定期維護、水質檢測"], "care": ["01/04教學研討會議", "01/08一月慶生會", "01/08專業發展輔導", "1/23總結性評量第二次繳交", "01/25研習：3-5歲學習區規劃", "01/25–01/29期末全園消毒清潔／備課日", "1/29全園性教保活動課程發展會議", "1/29研習：愛拼豆陣營（1/26繳交心得）"], "health": ["1/11–17期末測量身高體重", "1/15宣導：口腔保健宣導", "1/23全園消毒日", "每週睡袋清洗"], "community": ["1/20社區活動／DIY富貴紅包袋", "＊學期末安排特殊需求幼兒學期IEP會議"]}]}};
 function seedButton(){
   if (!S.isAdmin) return null;
   const st = h("div",{class:"err",style:"margin-top:8px"});
@@ -5833,7 +5969,7 @@ function seedButton(){
     }catch(e){ b.disabled=false; st.textContent=errText(e); }
   }},"匯入原始資料");
   return h("div",{style:"margin-top:14px"},
-    h("p",{class:"empty"},"第一次使用：按下面的按鈕，會把原本 Word 檔裡的社區踏查、出汗性大肌肉課程和活動計畫匯入資料庫（已經有資料的部分不會被覆蓋）。"),
+    h("p",{class:"empty"},"第一次使用：按下面的按鈕，會把原本檔案裡的社區踏查、出汗性大肌肉課程、活動計畫、作息表和行事曆匯入資料庫（已經有資料的部分不會被覆蓋）。"),
     h("div",{style:"margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"}, b), st);
 }
 /* ---------- 列印與上傳雲端硬碟（沿用系統的 PdfUtil 與 Apps Script 上傳網址） ---------- */
@@ -5927,6 +6063,191 @@ async function uploadAct(id, btn, status){
   finally{ btn.disabled = false; btn.textContent = label; }
 }
 
+/* ---------- 作息表（3-5歲班／兩歲專班）與行事曆：老師檢視、管理者編輯 ---------- */
+const SCH_COL = "schedules", CAL_COL = "calendars";
+const SCH_GROUPS = [["three5","3-5歲班"],["two","兩歲專班"]];
+const DAYS = ["星期一","星期二","星期三","星期四","星期五"];
+const CAL_CATS = [["festival","節慶"],["admin","行政"],["care","教保暨全園活動"],["health","健康安全"],["community","多元文化暨社區活動／協力服務"]];
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar";
+
+function renderSchedule(app){
+  const sc = S.sch;
+  if (!sc.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "作息表載入中…")); return; }
+  app.append(h("div",{class:"subtabs"}, SCH_GROUPS.map(([g,label]) =>
+    h("button",{class:"kchip","aria-pressed":String(sc.group===g), onclick:()=>{ sc.group=g; render(); }}, label))));
+  const list = sc.list.filter(x=>x.group===sc.group).sort((a,b)=>num(a.order)-num(b.order));
+  if (!list.length){
+    app.append(h("div",{class:"notice"},"這個班別還沒有作息表。",
+      S.isAdmin ? h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:()=>editSchedule(null)},"＋ 新增作息表")) : null,
+      !sc.list.length ? seedButton() : null));
+    return;
+  }
+  if (!list.some(x=>x.id===sc.sel[sc.group])) sc.sel[sc.group] = list[0].id;
+  const cur = list.find(x=>x.id===sc.sel[sc.group]);
+  if (list.length>1 || S.isAdmin) app.append(h("div",{class:"subtabs"}, list.map(x =>
+    h("button",{class:"kchip","aria-pressed":String(x.id===cur.id), onclick:()=>{ sc.sel[sc.group]=x.id; render(); }}, str(x.name)||"作息表")),
+    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editSchedule(null)},"＋ 新增作息表") : null));
+  const rows = (Array.isArray(cur.rows)?cur.rows:[]).filter(r=>r&&typeof r==="object");
+  const head = h("tr",null, h("th",null,"時段"), h("th",null,"時間"), DAYS.map(d=>h("th",null,d)), h("th",null,"核心素養"));
+  const body = [];
+  rows.forEach((r,i) => {
+    const days = DAYS.map((_,k)=>str((Array.isArray(r.days)?r.days:[])[k]));
+    const cells = []; let k = 0;
+    while (k<5){ let n=1; while (k+n<5 && days[k+n]===days[k]) n++; cells.push(h("td",{colspan:String(n),class:"act"},days[k])); k+=n; }
+    const first = i===0 || str(rows[i-1].period)!==str(r.period);
+    let span = 0; if (first){ for (let j=i;j<rows.length && str(rows[j].period)===str(r.period);j++) span+=2; }
+    body.push(h("tr",null,
+      first ? h("td",{rowspan:String(span),class:"per"},str(r.period)) : null,
+      h("td",{class:"tm"},str(r.time)), cells,
+      h("td",{rowspan:"2",class:"core"},str(r.core))));
+    body.push(h("tr",{class:"focus"}, h("td",{colspan:"6"}, str(r.focus) ? "學習重點："+str(r.focus).replace(/^學習重點[:：]\s*/,"") : "")));
+  });
+  app.append(h("section",{class:"intro"},
+    h("p",{class:"note"},"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）"),
+    h("h1",null,str(cur.title)||str(cur.name)),
+    str(cur.note) ? h("p",{class:"note",style:"margin-top:6px"},str(cur.note)) : null,
+    S.isAdmin ? h("button",{class:"btn abs",onclick:()=>editSchedule(cur.id)},"編輯作息表") : null));
+  app.append(h("div",{class:"tablewrap"}, h("table",{class:"sched"}, h("thead",null,head), h("tbody",null,body))));
+}
+
+function editSchedule(id){
+  const sc = S.sch, cur = id ? sc.list.find(x=>x.id===id) : null;
+  const f = {
+    group: h("select",{class:"in"}, SCH_GROUPS.map(([g,l])=>h("option",{value:g,selected:(cur?cur.group:sc.group)===g},l))),
+    name: h("input",{class:"in",value:cur?str(cur.name):"",placeholder:"例如：幸運草班"}),
+    title: h("input",{class:"in",value:cur?str(cur.title):"",placeholder:"例如：幸運草班作息表"}),
+    order: h("input",{class:"in",type:"number",min:"1",value:String(cur?num(cur.order):(sc.list.filter(x=>x.group===sc.group).length+1))}),
+    note: h("input",{class:"in",value:cur?str(cur.note):"",placeholder:"（選填）備註"})
+  };
+  const box = h("div",{class:"flowed"});
+  const renum = () => [...box.children].forEach((r,i)=>r.querySelector(".no").textContent=`第 ${i+1} 個時段`);
+  const add = (x={}) => {
+    const days = DAYS.map((_,k)=>str((Array.isArray(x.days)?x.days:[])[k]));
+    const sameAll = days.every(d=>d===days[0]);
+    const per = h("select",{class:"in"}, ["上午","下午"].map(p=>h("option",{selected:str(x.period||"上午")===p},p)));
+    const tm = h("input",{class:"in",value:str(x.time),placeholder:"例如：8:00-8:20"});
+    const same = h("input",{type:"checkbox"}); same.checked = sameAll;
+    const one = h("input",{class:"in",value:sameAll?days[0]:"",placeholder:"活動內容（星期一到五相同）"});
+    const five = DAYS.map((d,k)=>h("input",{class:"in",value:days[k],placeholder:d}));
+    const fiveBox = h("div",{style:"display:grid;grid-template-columns:repeat(5,1fr);gap:6px"}, five);
+    const sync = () => { one.style.display = same.checked ? "" : "none"; fiveBox.style.display = same.checked ? "none" : "grid"; };
+    same.addEventListener("change",()=>{ if(same.checked) one.value = five[0].value; else five.forEach(i=>{ if(!i.value) i.value = one.value; }); sync(); });
+    const core = h("input",{class:"in",value:str(x.core).split("\n").join("、"),placeholder:"核心素養（用、分隔）"});
+    const focus = h("textarea",{class:"in",placeholder:"學習重點"}); focus.value = str(x.focus);
+    const row = h("div",{class:"fr"},
+      h("div",{class:"hd"},h("span",{class:"no"}),h("span",{class:"sp"}),
+        h("button",{type:"button","aria-label":"上移",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } }},"↑"),
+        h("button",{type:"button","aria-label":"移除",onclick:()=>{ row.remove(); renum(); }},"×")),
+      h("div",{class:"f2"},per,tm),
+      h("label",{style:"font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center"},same,"星期一到五活動相同"),
+      one, fiveBox, core, focus);
+    sync();
+    row._read = () => ({ period:per.value, time:tm.value.trim(),
+      days: same.checked ? DAYS.map(()=>one.value.trim()) : five.map(i=>i.value.trim()),
+      core: core.value.split(/[、,，\n]/).map(s=>s.trim()).filter(Boolean).join("\n"), focus: focus.value.trim() });
+    box.append(row); renum();
+  };
+  ((cur && Array.isArray(cur.rows) && cur.rows.length) ? cur.rows : [{}]).forEach(x=>add(x||{}));
+  const err = h("div",{class:"err"});
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if (!f.name.value.trim()){ err.textContent="請填寫班級／作息表名稱。"; return; }
+    const data = { group:f.group.value, name:f.name.value.trim(), title:f.title.value.trim()||f.name.value.trim()+"作息表",
+      order:num(f.order.value)||1, note:f.note.value.trim(), rows:[...box.children].map(r=>r._read()).filter(r=>r.time||r.days.some(Boolean)) };
+    save.disabled=true; err.textContent="";
+    try{ const ref = id ? S.db.doc(SCH_COL+"/"+id) : S.db.collection(SCH_COL).doc(); await ref.set(data);
+      sc.group = data.group; sc.sel[data.group] = ref.id; closeModal(); toast("已儲存"); render(); }
+    catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  const del = id ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份作息表？",`「${str(cur.name)}」刪除後無法復原。`,"刪除",()=>S.db.doc(SCH_COL+"/"+id).delete().then(()=>toast("已刪除")))},"刪除") : null;
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null,id?"編輯作息表":"新增作息表")),
+    h("div",{class:"mb f"},
+      h("div",{class:"f2"},h("label",{class:"fl"},"班別",f.group),h("label",{class:"fl"},"排序",f.order)),
+      h("div",{class:"f2"},h("label",{class:"fl"},"名稱（分頁顯示）",f.name),h("label",{class:"fl"},"標題",f.title)),
+      h("label",{class:"fl"},"備註",f.note),
+      h("label",{class:"fl"},"時段",box), h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增時段"), err),
+    h("div",{class:"mf"},del,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+}
+
+function renderCalendar(app){
+  const cc = S.cal;
+  if (!cc.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "行事曆載入中…")); return; }
+  const list = [...cc.list].sort((a,b)=>num(b.order)-num(a.order));
+  if (!list.length){
+    app.append(h("div",{class:"notice"},"還沒有行事曆。",
+      S.isAdmin ? h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:()=>editCalendar(null)},"＋ 新增行事曆")) : null, seedButton()));
+    return;
+  }
+  if (!list.some(x=>x.id===cc.sel)) cc.sel = list[0].id;
+  const cur = list.find(x=>x.id===cc.sel);
+  if (list.length>1 || S.isAdmin) app.append(h("div",{class:"subtabs"}, list.map(x =>
+    h("button",{class:"kchip","aria-pressed":String(x.id===cur.id), onclick:()=>{ cc.sel=x.id; render(); }}, str(x.title)||"行事曆")),
+    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editCalendar(null)},"＋ 新增行事曆") : null));
+  const months = (Array.isArray(cur.months)?cur.months:[]).filter(m=>m&&typeof m==="object");
+  const nowM = (new Date().getMonth()+1)+"月";
+  app.append(h("section",{class:"intro"},
+    str(cur.note) ? h("p",{class:"note"},str(cur.note)) : null,
+    h("h1",null,str(cur.title)),
+    months.length ? h("div",{class:"subtabs",style:"margin:10px 0 0"}, months.map((m,i)=>
+      h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")))) : null,
+    S.isAdmin ? h("button",{class:"btn abs",onclick:()=>editCalendar(cur.id)},"編輯標題") : null));
+  if (!months.length) app.append(h("div",{class:"notice"},"這份行事曆還沒有月份。"));
+  months.forEach((m,i)=>{
+    app.append(h("section",{class:"intro calm"+(str(m.month)===nowM?" now":""),id:"kb-m"+i},
+      h("div",{class:"calh"},h("b",null,str(m.month)),h("span",null,str(m.weeks)),
+        S.isAdmin ? h("span",{class:"sp"}) : null,
+        S.isAdmin ? h("button",{class:"btn",onclick:()=>editMonth(cur.id,i)},"編輯") : null),
+      h("div",{class:"calg"}, CAL_CATS.map(([k,label])=>{
+        const items = arr(m[k]);
+        return h("div",{class:"calc"},h("h3",null,label), items.length ? h("ul",null,items.map(t=>h("li",null,t))) : h("p",{class:"empty"},"—"));
+      }))));
+  });
+  if (S.isAdmin) app.append(h("button",{class:"btn primary",onclick:()=>editMonth(cur.id,-1)},"＋ 新增月份"));
+}
+
+function editCalendar(id){
+  const cur = id ? S.cal.list.find(x=>x.id===id) : null;
+  const f = { title:h("input",{class:"in",value:cur?str(cur.title):"",placeholder:"例如：115學年度第二學期行事曆"}),
+    note:h("input",{class:"in",value:cur?str(cur.note):"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會）"}),
+    order:h("input",{class:"in",type:"number",value:String(cur?num(cur.order):(S.cal.list.reduce((m,x)=>Math.max(m,num(x.order)),0)+1))}) };
+  const err = h("div",{class:"err"});
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if(!f.title.value.trim()){ err.textContent="請填寫標題。"; return; }
+    save.disabled=true;
+    try{ const ref = id ? S.db.doc(CAL_COL+"/"+id) : S.db.collection(CAL_COL).doc();
+      if (id) await ref.update({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value)});
+      else await ref.set({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value),months:[]});
+      S.cal.sel = ref.id; closeModal(); toast("已儲存"); render(); }
+    catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  const del = id ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(CAL_COL+"/"+id).delete().then(()=>toast("已刪除")))},"刪除整份") : null;
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,id?"編輯行事曆":"新增行事曆")),
+    h("div",{class:"mb f"}, h("label",{class:"fl"},"標題",f.title), h("label",{class:"fl"},"上方說明",f.note), h("label",{class:"fl"},"排序（數字大的排前面）",f.order), err),
+    h("div",{class:"mf"},del,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)), true);
+}
+
+function editMonth(calId, idx){
+  const cal = S.cal.list.find(x=>x.id===calId); if(!cal) return;
+  const months = (Array.isArray(cal.months)?cal.months:[]).map(m=>Object.assign({},m));
+  const m = idx>=0 ? months[idx] : {};
+  const f = { month:h("input",{class:"in",value:str(m.month),placeholder:"例如：2月"}), weeks:h("input",{class:"in",value:str(m.weeks),placeholder:"例如：第1–4週（02/01–02/28）"}) };
+  const tas = {}; CAL_CATS.forEach(([k])=>{ tas[k]=h("textarea",{class:"in"}); tas[k].value = arr(m[k]).join("\n"); });
+  const err = h("div",{class:"err"});
+  const write = async next => S.db.doc(CAL_COL+"/"+calId).update({ months: next });
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if(!f.month.value.trim()){ err.textContent="請填寫月份。"; return; }
+    const data = { month:f.month.value.trim(), weeks:f.weeks.value.trim() }; CAL_CATS.forEach(([k])=>data[k]=linesOf(tas[k].value));
+    if (idx>=0) months[idx]=data; else months.push(data);
+    save.disabled=true; try{ await write(months); closeModal(); toast("已儲存"); }catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  const del = idx>=0 ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(m.month)}」刪除後無法復原。`,"刪除",()=>write(months.filter((_,i)=>i!==idx)).then(()=>toast("已刪除")))},"刪除月份") : null;
+  const up = idx>0 ? h("button",{class:"btn",onclick:async()=>{ const t=months[idx-1]; months[idx-1]=months[idx]; months[idx]=t; try{ await write(months); closeModal(); }catch(e){ err.textContent=errText(e); } }},"↑ 往前移") : null;
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,idx>=0?"編輯月份":"新增月份")),
+    h("div",{class:"mb f"}, h("div",{class:"f2"},h("label",{class:"fl"},"月份",f.month),h("label",{class:"fl"},"週次／日期",f.weeks)),
+      CAL_CATS.map(([k,l])=>h("label",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項）")),tas[k])), err),
+    h("div",{class:"mf"},del,up,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -5947,7 +6268,7 @@ function sync(d, view){
   if (!document.getElementById("kb-app")) return;
   if (view==="actplan") view = "activities";
   const key = d.currentUser.uid + "|" + !!d.isAdmin;
-  if ((view==="activities" || isKind(view)) && (view!==S.view || key!==subKey)){
+  if (isPage(view) && (view!==S.view || key!==subKey)){
     S.view = view; S.openAct = null; const L=document.getElementById("kb-layer"); if (L) L.replaceChildren();
   }
   if (key !== subKey){
@@ -5958,6 +6279,9 @@ function sync(d, view){
       unsubs.push(subscribe(d.db.collection(cfg.progCol),k,"gotP",snap=>{ const o={}; snap.docs.forEach(x=>{ o[x.id]=x.data(); }); k.programs=o; }));
       unsubs.push(subscribe(d.db.collection(cfg.courseCol),k,"gotC",snap=>{ k.courses=snap.docs.map(x=>({id:x.id,...x.data()})); }));
     }
+    S.sch.got = false; S.cal.got = false;
+    unsubs.push(subscribe(d.db.collection(SCH_COL),S.sch,"got",snap=>{ S.sch.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    unsubs.push(subscribe(d.db.collection(CAL_COL),S.cal,"got",snap=>{ S.cal.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
     S.got.activities = false; S.activities = [];
     if (S.isAdmin) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
