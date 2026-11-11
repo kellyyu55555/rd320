@@ -1187,6 +1187,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="space-y-1 max-h-72 overflow-y-auto mb-3">
               <template x-for="m in approvedMembers" :key="'am_'+m.id"><div class="flex items-center gap-2 border-b border-wood-light/15 py-1.5 text-sm">
                 <span class="flex-1 min-w-0"><b x-text="m.name || '—'"></b> <span class="text-xs text-wood-dark/50 font-num" x-text="m.id"></span></span>
+                <button @click="renameMember(m)" class="text-wood-dark text-xs font-bold hover:underline whitespace-nowrap">✏️ 改姓名</button>
                 <button @click="blockMember(m)" class="text-coral text-xs font-bold hover:underline whitespace-nowrap">停用（離職）</button>
               </div></template>
               <p x-show="approvedMembers.length===0" class="text-xs text-wood-dark/40 py-2">尚無已核准帳號，可按「匯入曾登入過的帳號」一次加入目前的老師。</p>
@@ -2280,9 +2281,10 @@ function rtToolbarHtml(){const o=(a,f)=>a.map(x=>`<option value="${x}">${f?f(x):
 const bullets=(s,m)=>lines(s).map(l=>`<div class="bl">${m} ${esc(l)}</div>`).join("");
 function fillWalk(L){const W=(WALK[L.walk.src]||{})[String(L.walk.month)];if(W)L.walk.goals=W.goals.join("\n");return !!W}
 function fillGm(L){const g=gmOf(L)[L.gm.month];if(!g)return false;const gl=g.gates.map(x=>[x.title,"玩法："+(x.play||"")].join("\n"));L.gm.text=[g.name].concat(g.warm?["二、循環體能闖關（30分鐘）共四關"]:[],gl).join("\n");L.gm.inds=g.inds.join("\n");L.gm.abil=g.goals.join("\n");L.gm.res=g.res.join("、");return true}
+const tName=()=>{const n=String(d.myName||"").trim();return (d.fixName&&d.fixName(n))||n||String((d.currentUser||{}).displayName||"").trim()};
 function newLog(){const t=new Date();t.setDate(t.getDate()-((t.getDay()+6)%7));const b=new Date(t);b.setDate(b.getDate()+4);const u=d.currentUser||{},f=iso(t),m=+f.slice(5,7),P=prefs||{};
- const L={id:"w"+Date.now(),status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:u.displayName||"",createdAt:Date.now(),status:"draft",cls:P.cls||"",sem:semOf(f),dateFrom:f,dateTo:iso(b),ages:Object.assign({"大班":false,"中班":false,"小班":false,"幼幼班":false,"大中混齡":false,"中小混齡":false,"兩歲專班":false},P.ages||{}),t1:P.t1!=null?P.t1:(u.displayName||""),t2:P.t2||"",bg:P.bg||"",inc:{walk:true,gm:true,lz:true,ws:true},weeks:calcWeeks(f,iso(b)),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
- walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{src:"中小班",month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:"",guide:"",sopts:[],dev:"",effect:"",recorder:P.recorder!=null?P.recorder:(u.displayName||""),leader:P.leader||"",director:P.director||""}};
+ const L={id:"w"+Date.now(),status:"draft",uid:u.uid,ownerEmail:u.email||"",ownerName:tName()||u.displayName||"",createdAt:Date.now(),status:"draft",cls:P.cls||"",sem:semOf(f),dateFrom:f,dateTo:iso(b),ages:Object.assign({"大班":false,"中班":false,"小班":false,"幼幼班":false,"大中混齡":false,"中小混齡":false,"兩歲專班":false},P.ages||{}),t1:P.t1!=null?P.t1:(u.displayName||""),t2:P.t2||"",bg:P.bg||"",inc:{walk:true,gm:true,lz:true,ws:true},weeks:calcWeeks(f,iso(b)),ws:{slots:[{id:"",cap:""},{id:"",cap:""}]},
+ walk:{src:"c35",month:WALK.c35[m]?m:9,label:"學習目標",goals:"",photos:[]},gm:{src:"中小班",month:GM[m]?m:9,text:"",inds:"",abil:"",res:"",photos:[]},ev:{},lz:{interact:"",reflect:"",strategy:"",guide:"",sopts:[],dev:"",effect:"",recorder:tName()||P.recorder||u.displayName||"",leader:P.leader||"",director:P.director||""}};
  L.teachers=tch(L);fillWalk(L);fillGm(L);return L}
 function fillTeach(L){const ts=(d.pairObjs||[]).filter(p=>p.c===L.cls).map(p=>p.t).filter(Boolean);if(!ts.length)return false;L.t1=ts[0]||"";L.t2=ts[1]||"";L.teachers=tch(L);return true}
 function prefsOf(L){return{cls:L.cls||"",ages:L.ages,t1:L.t1||"",t2:L.t2||"",bg:L.bg||"",recorder:L.lz.recorder||"",leader:L.lz.leader||"",director:L.lz.director||"",updatedAt:Date.now()}}
@@ -2553,9 +2555,11 @@ function bind(){
   if(ds.unshare){await unshareMe(ds.unshare);return}
   if(ds.undo!==undefined&&b.hasAttribute("data-undo")){await histGo(-1);return}
   if(ds.redo!==undefined&&b.hasAttribute("data-redo")){await histGo(1);return}
-  if(ds.open){cur=JSON.parse(JSON.stringify(logs.find(l=>l.id===ds.open)));viewOnly=cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin&&(cur.sharedWith||[]).includes(myEmail());rvNote="";edDirty=false;try{await loadPhotos(cur)}catch(x){}render();return}
+  if(ds.open){cur=JSON.parse(JSON.stringify(logs.find(l=>l.id===ds.open)));viewOnly=cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin&&(cur.sharedWith||[]).includes(myEmail());rvNote="";edDirty=false;try{await loadPhotos(cur)}catch(x){}
+   const tn=tName(),fixR=!viewOnly&&cur.uid===(d.currentUser||{}).uid&&cur.status!=="reviewed"&&tn&&cur.lz&&cur.lz.recorder!==tn;if(fixR)cur.lz.recorder=tn;
+   render();if(fixR)later();return}
   if(ds.print){const L=logs.find(l=>l.id===ds.print);if(L)printLog(L);return}
-  if(ds.dup){viewOnly=false;const o=logs.find(l=>l.id===ds.dup);if(!o)return;const c=JSON.parse(JSON.stringify(o));c.id="w"+Date.now();c.sharedWith=[];delete c.importKey;c.createdAt=Date.now();c.uid=(d.currentUser||{}).uid;c.ownerEmail=(d.currentUser||{}).email||"";c.ownerName=(d.currentUser||{}).displayName||"";c.status="draft";c.submittedAt=0;c.returnReason="";c.walk.photos=[];c.gm.photos=[];c.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};c.weeks=calcWeeks(c.dateFrom,c.dateTo);c.status="draft";delete c.submittedAt;delete c.reviewedAt;delete c.reviewedBy;cur=c;await saveCur();render();return}
+  if(ds.dup){viewOnly=false;const o=logs.find(l=>l.id===ds.dup);if(!o)return;const c=JSON.parse(JSON.stringify(o));c.id="w"+Date.now();c.sharedWith=[];delete c.importKey;c.createdAt=Date.now();c.uid=(d.currentUser||{}).uid;c.ownerEmail=(d.currentUser||{}).email||"";c.ownerName=tName()||(d.currentUser||{}).displayName||"";if(c.lz)c.lz.recorder=tName()||c.lz.recorder||"";c.status="draft";c.submittedAt=0;c.returnReason="";c.walk.photos=[];c.gm.photos=[];c.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};c.weeks=calcWeeks(c.dateFrom,c.dateTo);c.status="draft";delete c.submittedAt;delete c.reviewedAt;delete c.reviewedBy;cur=c;await saveCur();render();return}
   if(ds.rm){const o=logs.find(l=>l.id===ds.rm);if(!o||!confirm(`確定要刪除「${o.cls||""} ${roc(o.dateFrom)}｜${who(o)}」這份週誌嗎？照片也會一併刪除，無法復原。`))return;try{const s=await col().doc(o.id).collection("photos").get();for(const x of s.docs)await x.ref.delete();await col().doc(o.id).delete()}catch(x){alert("刪除失敗（"+(x.code||x.message)+"）")}return}
   if(ds.back){clearTimeout(saveT);await flushCur();viewOnly=false;cur=null;render();return}
   if(ds.printcur){clearTimeout(saveT);await flushCur();printLog(cur);return}
@@ -2742,6 +2746,17 @@ function kgApp() {
     },
     NAME_FIX: { '淑紀': '張淑紀', '小包': '張淑紀', '黃小非': '黃宛孜', '花花': '陳卉庭' },
     fixName(n) { const t = String(n || '').trim().replace(/老師$/, ''); return this.NAME_FIX[t] || ''; },
+    async renameMember(m) { // 管理員：設定帳號對應的老師姓名（週誌「紀錄老師」等欄位會自動帶入）
+      if (!this.isAdmin) return;
+      const list = (this.teacherRoster || []).filter(Boolean);
+      const nn = String(prompt(`設定「${m.id}」的老師姓名：${list.length ? '\n（老師名單：' + list.join('、') + '）' : ''}`, m.name || '') || '').trim();
+      if (!nn || nn === m.name) return;
+      try {
+        await this.db.collection('members').doc(m.id).set({ name: nn, updatedBy: this.whoAmI(), updatedAt: Date.now() }, { merge: true });
+        try { await this.db.collection('teacherDir').doc(m.id).set({ name: nn }, { merge: true }); } catch (e) {}
+        this.showToast(`已把 ${m.id} 的姓名改為「${nn}」，老師重新整理頁面後生效`);
+      } catch (e) { this.showToast('修改失敗（' + (e.code || e.message) + '）'); }
+    },
     async fixMemberNames(silent) {
       if (!this.isAdmin) return;
       let admins = []; try { const a = await this.db.collection('config').doc('admins').get(); admins = (a.exists ? (a.data().emails || []) : []).map(x => String(x).trim().toLowerCase()); } catch (e) {}
