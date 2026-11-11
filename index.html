@@ -314,6 +314,21 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             🩺 衛教宣導
             <span x-show="isAdmin && healthPending.length>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="healthPending.length"></span>
           </button>
+          <button x-show="!restrictedPW" @click="view='walk'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='walk' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🌿 社區踏查
+          </button>
+          <button x-show="!restrictedPW" @click="view='motor'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='motor' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🏃 出汗性大肌肉
+          </button>
+          <button x-show="isAdmin && !restrictedPW" @click="view='actplan'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🗓️ 活動計畫
+          </button>
           <button x-show="isAdmin" @click="view='admin'"
             x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount+healthPending.length)>0 ? `(${adminPendingCount+weeklyPendingCount+healthPending.length}) ` : '') + baseTitle"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
@@ -369,6 +384,21 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🩺</span><span x-show="(isAdmin ? healthPending.length : 0)>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待審 ${(isAdmin ? healthPending.length : 0)}`"></span></div>
             <h3 class="font-heading font-black text-base mt-3">衛教宣導</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">填寫衛教宣導紀錄、列印與上傳雲端硬碟</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='walk'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🌿</span></div>
+            <h3 class="font-heading font-black text-base mt-3">社區踏查課程</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">兩歲專班、3-5歲每月社區踏查主題與學習區延伸</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='motor'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🏃</span></div>
+            <h3 class="font-heading font-black text-base mt-3">出汗性大肌肉</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每月循環式體能活動：暖身、四關闖關、收操</p>
+          </button>
+          <button type="button" x-show="isAdmin && !restrictedPW" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
+            <h3 class="font-heading font-black text-base mt-3">活動計畫</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德活動計畫（僅管理者）</p>
           </button>
           <button type="button" x-show="isAdmin" @click="view='admin'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📋</span><span x-show="adminPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待處理 ${adminPendingCount}`"></span></div>
@@ -709,6 +739,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <!-- ============ 週誌 ============ -->
         <section x-show="view==='weekly' && currentUser && !restrictedPW" x-effect="if(view==='weekly'&&currentUser&&window.WeeklyUI) WeeklyUI.sync($data)" class="space-y-4">
           <div id="weeklyRoot" class="paper-card rounded-3xl p-6 shadow-card"></div>
+        </section>
+
+        <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
+        <section x-show="['walk','motor','actplan'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin)" x-effect="if(['walk','motor','actplan'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin)" class="space-y-4">
+          <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
         <!-- ============ 管理者端 ============ -->
@@ -1624,7 +1659,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1022-I13</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1111-K1</footer>
     </div>
   </template>
 
@@ -3887,7 +3922,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1022-I13</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1111-K1</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5103,6 +5138,745 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
   }
   window.HealthEdu = { mount, sync };
 })();
+</script>
+<!-- ============ 社區踏查／出汗性大肌肉／活動計畫 模組 ============ -->
+<style>
+#kb{
+  --bg:#f7f4ec; --paper:#fffdf8; --ink:#2b2a26; --muted:#6f6a5e; --line:#e3dccb;
+  --accent:#2f6b4f; --accent-soft:#e3efe7; --warn:#b4472f; --warn-soft:#f8e6e0;
+  --gold:#c08a2d; --radius:14px; --shadow:0 1px 2px rgba(60,50,20,.06),0 4px 16px rgba(60,50,20,.06);
+}
+#kb *{box-sizing:border-box}
+#kb{color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:16px;line-height:1.7}
+#kb ul{list-style:disc;padding-left:20px;margin:0}
+#kb h1,#kb h2,#kb h3{font-weight:700}
+#kb p{margin:0}
+#kb button{font:inherit;cursor:pointer}
+#kb .notice{background:var(--paper);border:1px dashed var(--line);border-radius:var(--radius);padding:28px;text-align:center;color:var(--muted)}
+#kb .subtabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+#kb .kchip{border:1px solid var(--line);background:var(--paper);padding:6px 16px;border-radius:999px;color:var(--ink)}
+#kb .kchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+#kb .intro{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow);margin-bottom:22px;position:relative}
+#kb .intro h1{font-family:"Noto Serif TC",serif;font-size:24px;margin:0 0 4px}
+#kb .intro .note{color:var(--muted);font-size:13px;margin:0 0 10px}
+#kb .meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--muted);margin:6px 0}
+#kb .meta b{color:var(--ink);font-weight:500}
+#kb .intro ul{margin:8px 0 0;padding-left:20px}
+#kb .intro h3{font-size:14px;margin:14px 0 0;color:var(--accent)}
+#kb .toolbar{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+#kb .toolbar h2{font-size:17px;margin:0}
+#kb .toolbar .sp{flex:1}
+#kb .btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 14px;border-radius:10px;font-size:14px}
+#kb .btn:hover{border-color:#cfc6b0}
+#kb .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#kb .btn.danger{color:var(--warn);border-color:#e9c4b9}
+#kb .btn.danger.solid{background:var(--warn);color:#fff;border-color:var(--warn)}
+#kb .btn:disabled{opacity:.5;cursor:default}
+#kb .abs{position:absolute;top:18px;right:18px}
+#kb .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+#kb .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;text-align:left;box-shadow:var(--shadow);transition:transform .12s,border-color .12s;display:flex;flex-direction:column;gap:6px;color:inherit}
+#kb .card:hover{transform:translateY(-2px);border-color:#c9d9cd}
+#kb .card .m{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+#kb .card .t{font-family:"Noto Serif TC",serif;font-size:18px;font-weight:700;line-height:1.4}
+#kb .card .g{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#kb .list{display:flex;flex-direction:column;gap:10px}
+#kb .row{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center}
+#kb .row .t{font-size:17px}
+#kb .pill{font-size:12px;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+#kb .pill.draft{background:#f1ece0;color:var(--muted)}
+#kb .pill.ok{background:#e6eefb;color:#2c5aa0}
+#kb .money{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+#kb .scrim{z-index:60 !important;position:fixed;inset:0;background:rgba(30,28,20,.42);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto;z-index:20}
+#kb .modal{background:var(--paper);border-radius:18px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative}
+#kb .modal.sm{max-width:420px}
+#kb .mh{padding:22px 26px 10px;border-bottom:1px solid var(--line)}
+#kb .mh .m{font-size:13px;color:var(--accent);font-weight:700}
+#kb .mh h2{font-family:"Noto Serif TC",serif;font-size:22px;margin:2px 40px 6px 0}
+#kb .mb{padding:18px 26px}
+#kb .mf{padding:14px 26px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line);flex-wrap:wrap}
+#kb .mf .sp{flex:1}
+#kb .x{position:absolute;top:14px;right:14px;border:0;background:none;font-size:22px;color:var(--muted);width:36px;height:36px;border-radius:50%}
+#kb .x:hover{background:#f0ebdf}
+#kb .sec{margin:0 0 18px}
+#kb .sec h3{font-size:14px;margin:0 0 6px;color:var(--accent);display:flex;align-items:center;gap:8px}
+#kb .sec h3::before{content:"";width:4px;height:14px;background:var(--accent);border-radius:2px}
+#kb .sec p{margin:0;white-space:pre-wrap}
+#kb .sec ul{margin:0;padding-left:20px}
+#kb .areas{display:flex;flex-wrap:wrap;gap:8px}
+#kb .area{border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-size:14px;background:#fbf8f0}
+#kb .area b{color:var(--gold);font-weight:700;margin-right:4px}
+#kb .f{display:grid;gap:14px}
+#kb .f2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#kb label.fl{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
+#kb label.fl small{font-weight:400}
+#kb input.in,#kb textarea.in,#kb select.in{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+#kb textarea.in{min-height:84px;resize:vertical}
+#kb input.in:focus,#kb textarea.in:focus,#kb select.in:focus{outline:2px solid #bcd8c6;border-color:var(--accent)}
+#kb .err{color:var(--warn);font-size:13px;min-height:1em}
+#kb .lines{display:grid;gap:6px}
+#kb .lines .ln{display:grid;grid-template-columns:1fr 110px 32px;gap:6px}
+#kb .lines .ln button{border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted)}
+#kb table.form{width:100%;border-collapse:collapse;font-size:14px}
+#kb table.form th,#kb table.form td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+#kb table.form th{background:#f6f1e4;width:120px;font-weight:500;color:var(--muted);white-space:nowrap}
+#kb table.form td{white-space:pre-wrap}
+#kb .tablewrap{overflow-x:auto;border-radius:10px}
+#kb table.flow{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+#kb table.flow th,#kb table.flow td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left;white-space:pre-wrap}
+#kb table.flow th{background:#f6f1e4;font-weight:500;color:var(--muted)}
+#kb table.flow td.n{color:var(--muted);text-align:center;width:36px}
+#kb .flowed{display:grid;gap:10px}
+#kb .fr{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbf8f0;display:grid;gap:6px}
+#kb .fr .hd{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+#kb .fr .hd .sp{flex:1}
+#kb .fr .hd button{border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted);padding:0 8px}
+#kb .fr textarea.in{min-height:60px}
+#kb .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#kb .photo{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#f1ece0;aspect-ratio:4/3}
+#kb .photo.wide{aspect-ratio:auto}
+#kb .photo img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+#kb .photo.wide img{height:auto;object-fit:contain}
+#kb .photo .del{position:absolute;top:6px;right:6px;border:0;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;width:28px;height:28px;font-size:16px;line-height:28px;padding:0}
+#kb .flowimgs{display:grid;gap:10px}
+#kb .uprow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+#kb .uprow .hint{font-size:13px;color:var(--muted)}
+#kb .lightbox{max-width:min(1100px,96vw)}
+#kb .lightbox img{width:100%;display:block;border-radius:18px}
+#kb .stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+#kb .station{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fbf8f0;font-size:14px;display:grid;gap:4px}
+#kb .station .sn{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.06em}
+#kb .station .st{font-family:"Noto Serif TC",serif;font-weight:700;font-size:16px}
+#kb .station b{color:var(--accent);font-weight:500;margin-right:6px}
+#kb .sign{display:flex;gap:30px;justify-content:flex-end;font-size:14px;color:var(--muted);margin-top:12px}
+#kb .empty{color:var(--muted);font-size:14px}
+#kb .toast{z-index:70 !important;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2b2a26;color:#fff;padding:8px 18px;border-radius:999px;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
+#kb .toast.on{opacity:1}
+@media (max-width:640px){
+#kb .f2{grid-template-columns:1fr}
+#kb .row{grid-template-columns:1fr}
+#kb .mh,#kb .mb,#kb .mf{padding-left:18px;padding-right:18px}
+#kb .abs{position:static;margin-top:10px}
+}
+
+#kb button{cursor:pointer;font:inherit}
+#kb{padding-bottom:24px}
+
+</style>
+<script>
+
+(() => {
+"use strict";
+const S = {
+  db:null, assets:null, isAdmin:false, ready:false, failed:"", stale:false,
+  k:{ walk:{programs:{},courses:[],program:"two",gotP:false,gotC:false},
+       motor:{programs:{},courses:[],program:"two",gotP:false,gotC:false} },
+  activities:[], got:{activities:false},
+  view:"walk", actType:"社區活動計畫"
+};
+const $ = s => document.querySelector(s);
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  if (attrs) for (const [k,v] of Object.entries(attrs)){
+    if (v==null || v===false) continue;
+    if (k==="class") el.className=v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k==="value") el.value=v;
+    else el.setAttribute(k, v===true?"":v);
+  }
+  for (const c of kids.flat()){
+    if (c==null || c===false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const arr = v => Array.isArray(v) ? v.filter(x=>typeof x==="string") : [];
+const str = v => typeof v==="string" ? v : (v==null ? "" : String(v));
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const toast = msg => { if (S.d && typeof S.d.showToast==="function") return S.d.showToast(msg); const t=$("#kb-toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2200); };
+const linesOf = s => str(s).split("\n").map(x=>x.trim()).filter(Boolean);
+
+const ACT_COL = "activityPlans", PHOTO_COL = "activityPlanPhotos";
+/* ---------- course kinds ---------- */
+const KINDS = {
+  walk:  { label:"社區踏查課程", progCol:"walkPrograms",  courseCol:"walkCourses",  unit:"每月主題" },
+  motor: { label:"出汗性大肌肉", progCol:"motorPrograms", courseCol:"motorCourses", unit:"每月活動" }
+};
+const isKind = v => Object.prototype.hasOwnProperty.call(KINDS, v);
+const K = () => S.k[S.view];
+const C = () => KINDS[S.view];
+
+/* ---------- navigation ---------- */
+function setHash(){}
+function readHash(){}
+
+function renderTabs(){
+
+}
+
+/* ---------- render ---------- */
+function render(){
+  if (!S.isAdmin && S.view==="activities") S.view="walk";
+  if (S.view!=="activities" && !isKind(S.view)) S.view="walk";
+  renderTabs();
+  const app = $("#kb-app"); app.replaceChildren();
+  if (S.failed){ app.append(h("div",{class:"notice"},S.failed)); return; }
+  if (S.view==="activities") return renderActivities(app);
+  renderCourses(app);
+}
+
+function programList(){
+  return Object.entries(K().programs).sort((a,b)=>num(a[1].order)-num(b[1].order));
+}
+
+function renderCourses(app){
+  const k = K(), cfg = C(), progs = programList();
+  if (!k.gotP || !k.gotC){
+    app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "課程載入中…")); return;
+  }
+  if (!progs.length){
+    app.append(h("div",{class:"notice"},"目前還沒有課程資料。",
+      S.isAdmin ? h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:()=>editProgram(null)},"＋ 自己新增班級")) : null,
+      seedButton()));
+    return;
+  }
+  if (!k.programs[k.program]) k.program = progs[0][0];
+  setHash();
+  app.append(h("div",{class:"subtabs"}, progs.map(([id,p]) =>
+    h("button",{class:"kchip","aria-pressed":String(id===k.program), onclick:()=>{k.program=id; setHash(); render();}}, str(p.name)||id)),
+    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editProgram(null)},"＋ 新增班級") : null));
+
+  const p = k.programs[k.program];
+  app.append(h("section",{class:"intro"},
+    p.note ? h("p",{class:"note"},str(p.note)) : null,
+    h("h1",null,str(p.title)),
+    h("div",{class:"meta"},
+      p.theme ? h("span",null,"主題：",h("b",null,str(p.theme))) : null,
+      p.cls ? h("span",null,"適用班級：",h("b",null,str(p.cls))) : null,
+      p.period ? h("span",null,"實施期間：",h("b",null,str(p.period))) : null),
+    arr(p.goals).length ? [h("h3",null,"課程目標"), h("ul",null, arr(p.goals).map(g=>h("li",null,g)))] : null,
+    S.isAdmin ? h("button",{class:"btn abs", onclick:()=>editProgram(k.program)},"編輯課程資訊") : null));
+
+  const list = k.courses.filter(c=>c.program===k.program).sort((a,b)=>num(a.order)-num(b.order));
+  app.append(h("div",{class:"toolbar"},
+    h("h2",null,`${cfg.unit}（${list.length}）`), h("span",{class:"sp"}),
+    S.isAdmin ? h("button",{class:"btn primary", onclick:()=>editCourse(null)},"＋ 新增月份") : null));
+  if (!list.length){ app.append(h("div",{class:"notice"},"這個班級還沒有月份資料。")); return; }
+  app.append(h("div",{class:"kgrid"}, list.map(c =>
+    h("button",{class:"card", onclick:()=>showCourse(c.id)},
+      h("span",{class:"m"},str(c.month)),
+      h("span",{class:"t"},str(c.title)),
+      h("span",{class:"g"}, S.view==="motor" ? (Array.isArray(c.stations)?c.stations:[]).map(s=>str(s&&s.name)).filter(Boolean).join("．") : arr(c.goals).join("　"))))));
+}
+
+/* ---------- modal helpers ---------- */
+let lastFocus=null;
+function openModal(node, small){
+  lastFocus = document.activeElement;
+  const close = () => closeModal();
+  const m = h("div",{class:"modal"+(small?" sm":""),role:"dialog","aria-modal":"true"},
+    h("button",{class:"x","aria-label":"關閉",onclick:close},"×"), node);
+  const scrim = h("div",{class:"scrim", onclick:e=>{ if(e.target===scrim) close(); }}, m);
+  $("#kb-layer").replaceChildren(scrim);
+  const f = m.querySelector("input,textarea,select"); (f||m.querySelector(".x")).focus();
+}
+function closeModal(){ S.openAct=null; $("#kb-layer").replaceChildren(); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#kb-layer").firstChild) closeModal(); });
+
+function confirmBox(title, msg, okLabel, onOk){
+  const err = h("div",{class:"err"});
+  const ok = h("button",{class:"btn danger solid", onclick:async()=>{
+    ok.disabled=true; err.textContent="";
+    try{ await onOk(); closeModal(); }catch(e){ ok.disabled=false; err.textContent=errText(e); }
+  }}, okLabel);
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null,title)),
+    h("div",{class:"mb"},h("p",{style:"margin:0"},msg),err),
+    h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),ok)), true);
+}
+function errText(e){
+  const c = e && e.code;
+  if (c==="permission-denied") return "沒有權限儲存（請確認 Firestore 規則已開放這個功能給管理員寫入）。";
+  if (c==="invalid_argument") return "沒有權限，或資料格式不正確，無法儲存。";
+  if (c==="quota_exceeded") return "資料空間已滿，請先刪除一些舊資料。";
+  if (c==="resource_exhausted") return "操作太頻繁，請稍等幾秒再試。";
+  return "儲存失敗，請稍後再試。";
+}
+
+/* ---------- course detail & edit ---------- */
+const listSec = (title, items) => h("div",{class:"sec"},h("h3",null,title), items.length ? h("ul",null,items.map(g=>h("li",null,g))) : h("p",{class:"empty"},"未填寫"));
+const textSec = (title, text) => h("div",{class:"sec"},h("h3",null,title), h("p",null,str(text)||"未填寫"));
+const stationsOf = c => (Array.isArray(c.stations)?c.stations:[]).filter(x=>x&&typeof x==="object");
+const partOf = v => (v && typeof v==="object") ? v : {};
+
+function showCourse(id){
+  const k = K(), cfg = C(), motor = S.view==="motor";
+  const c = k.courses.find(x=>x.id===id); if(!c) return;
+  let body;
+  if (motor){
+    const w = partOf(c.warmup), cd = partOf(c.cooldown), st = stationsOf(c);
+    body = [
+      h("div",{class:"sec"},h("h3",null,"教學資源"), arr(c.resources).length ? h("div",{class:"areas"},arr(c.resources).map(r=>h("span",{class:"area"},r))) : h("p",{class:"empty"},"未填寫")),
+      listSec("課程發展目標", arr(c.goals)),
+      listSec("學習指標", arr(c.indicators)),
+      h("div",{class:"sec"},h("h3",null,"一、暖身活動（5分鐘）"+(str(w.title)?"｜"+str(w.title):"")), h("p",null,str(w.content)||"未填寫")),
+      h("div",{class:"sec"},h("h3",null,`二、循環體能闖關（30分鐘）共${st.length}關`),
+        st.length ? h("div",{class:"stations"}, st.map((s,i)=>h("div",{class:"station"},
+          h("div",{class:"sn"},`第${"一二三四五六七八九十"[i]||i+1}關`),
+          h("div",{class:"st"},str(s.name)),
+          s.equipment ? h("div",null,h("b",null,"器材"),str(s.equipment)) : null,
+          s.play ? h("div",null,h("b",null,"玩法"),str(s.play)) : null,
+          s.ability ? h("div",null,h("b",null,"培養能力"),str(s.ability)) : null))) : h("p",{class:"empty"},"未填寫")),
+      h("div",{class:"sec"},h("h3",null,"三、收操（5分鐘）"+(str(cd.title)?"｜"+str(cd.title):"")), h("p",null,str(cd.content)||"未填寫"))
+    ];
+  } else {
+    const areas = arr(c.areas).map(a=>{ const i=a.indexOf("："); return i>0 ? h("span",{class:"area"},h("b",null,a.slice(0,i)),a.slice(i+1)) : h("span",{class:"area"},a); });
+    body = [
+      listSec("活動目標", arr(c.goals)),
+      textSec("活動內容", c.content),
+      textSec("教師省思", c.reflection),
+      h("div",{class:"sec"},h("h3",null,"學習區延伸"), areas.length ? h("div",{class:"areas"},areas) : h("p",{class:"empty"},"未填寫"))
+    ];
+  }
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("div",{class:"m"},`${cfg.label}．${str(k.programs[c.program]?.name)}．${str(c.month)}`),h("h2",null,str(c.title))),
+    h("div",{class:"mb"},body),
+    S.isAdmin ? h("div",{class:"mf"},
+      h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(c.month)}｜${str(c.title)}」刪除後無法復原。`,"刪除",()=>S.db.doc(cfg.courseCol+"/"+c.id).delete().then(()=>toast("已刪除")))},"刪除"),
+      h("span",{class:"sp"}),
+      h("button",{class:"btn primary",onclick:()=>editCourse(c.id)},"編輯")) : null));
+}
+
+function stationEditor(list){
+  const box = h("div",{class:"flowed"});
+  const renum = () => [...box.children].forEach((r,i)=>r.querySelector(".no").textContent=`第 ${i+1} 關`);
+  const add = (x={}) => {
+    const name=h("input",{class:"in",placeholder:"關卡名稱",value:str(x.name)});
+    const eq=h("input",{class:"in",placeholder:"器材",value:str(x.equipment)});
+    const play=h("textarea",{class:"in",placeholder:"玩法"}); play.value=str(x.play);
+    const ab=h("input",{class:"in",placeholder:"培養能力",value:str(x.ability)});
+    const row = h("div",{class:"fr"},
+      h("div",{class:"hd"},h("span",{class:"no"}),h("span",{class:"sp"}),
+        h("button",{type:"button","aria-label":"上移",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } }},"↑"),
+        h("button",{type:"button","aria-label":"移除",onclick:()=>{ row.remove(); renum(); }},"×")),
+      h("div",{class:"f2"},name,eq), play, ab);
+    row._read = () => ({name:name.value.trim(),equipment:eq.value.trim(),play:play.value.trim(),ability:ab.value.trim()});
+    box.append(row); renum();
+  };
+  const init = Array.isArray(list)&&list.length ? list : [{},{},{},{}];
+  init.forEach(x=>add(x||{}));
+  const wrap = h("div",{class:"flowed"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增關卡"));
+  wrap.read = () => [...box.children].map(r=>r._read()).filter(x=>x.name||x.equipment||x.play||x.ability);
+  return wrap;
+}
+
+function editCourse(id){
+  const k = K(), cfg = C(), motor = S.view==="motor";
+  const c = id ? k.courses.find(x=>x.id===id) : null;
+  const same = k.courses.filter(x=>x.program===k.program);
+  const nextOrder = same.reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+  const ta = (v, minH) => { const t=h("textarea",{class:"in",style:minH?`min-height:${minH}px`:null}); t.value=v; return t; };
+  const f = {
+    program: h("select",{class:"in"}, programList().map(([pid,p])=>h("option",{value:pid, selected:(c?c.program:k.program)===pid},str(p.name)||pid))),
+    month: h("input",{class:"in",value:c?str(c.month):"",placeholder:"例如：9月 或 115年9月"}),
+    order: h("input",{class:"in",type:"number",min:"1",value:String(c?num(c.order):nextOrder)}),
+    title: h("input",{class:"in",value:c?str(c.title):""}),
+    goals: ta(c ? arr(c.goals).join("\n") : "")
+  };
+  const L = (label, el, hint) => h("label",{class:"fl"}, hint ? h("span",null,label+" ",h("small",null,hint)) : label, el);
+  let fields;
+  if (motor){
+    const w = partOf(c&&c.warmup), cd = partOf(c&&c.cooldown);
+    Object.assign(f, {
+      resources: ta(c ? arr(c.resources).join("\n") : ""), indicators: ta(c ? arr(c.indicators).join("\n") : ""),
+      wTitle: h("input",{class:"in",value:str(w.title),placeholder:"例如：森林動物律動"}), wContent: ta(str(w.content)),
+      stations: stationEditor(c && c.stations),
+      cTitle: h("input",{class:"in",value:str(cd.title),placeholder:"例如：森林深呼吸"}), cContent: ta(str(cd.content))
+    });
+    fields = [
+      L("教學資源",f.resources,"（一行一項）"), L("課程發展目標",f.goals,"（一行一項）"), L("學習指標",f.indicators,"（一行一項）"),
+      L("暖身活動名稱",f.wTitle), L("暖身活動內容",f.wContent),
+      L("循環體能闖關",f.stations),
+      L("收操名稱",f.cTitle), L("收操內容",f.cContent)
+    ];
+  } else {
+    Object.assign(f, { content: ta(c ? str(c.content) : "",130), reflection: ta(c ? str(c.reflection) : ""), areas: ta(c ? arr(c.areas).join("\n") : "") });
+    fields = [
+      L("活動目標",f.goals,"（一行一項）"), L("活動內容",f.content), L("教師省思",f.reflection),
+      L("學習區延伸",f.areas,"（一行一項，例如：美勞區：落葉拼貼）")
+    ];
+  }
+  const err = h("div",{class:"err"});
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    const title=f.title.value.trim(), month=f.month.value.trim();
+    if(!title||!month){ err.textContent="請填寫月份和名稱。"; return; }
+    const data = { program:f.program.value, month, title, order:num(f.order.value)||nextOrder, goals:linesOf(f.goals.value) };
+    if (motor) Object.assign(data, { resources:linesOf(f.resources.value), indicators:linesOf(f.indicators.value),
+        warmup:{title:f.wTitle.value.trim(),content:f.wContent.value.trim()}, stations:f.stations.read(),
+        cooldown:{title:f.cTitle.value.trim(),content:f.cContent.value.trim()} });
+    else Object.assign(data, { content:f.content.value.trim(), reflection:f.reflection.value.trim(), areas:linesOf(f.areas.value) });
+    save.disabled=true; err.textContent="";
+    try{
+      const ref = id ? S.db.doc(cfg.courseCol+"/"+id) : S.db.collection(cfg.courseCol).doc();
+      await ref.set(data); closeModal(); toast("已儲存"); k.program=data.program; render();
+    }catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null,(id?"編輯":"新增")+(motor?"月份活動":"月份主題"))),
+    h("div",{class:"mb f"},
+      h("div",{class:"f2"},L("班級",f.program),L("排序",f.order)),
+      h("div",{class:"f2"},L("月份",f.month),L(motor?"活動名稱":"主題名稱",f.title)),
+      fields, err),
+    h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+}
+
+function editProgram(pid){
+  const k = K(), cfg = C();
+  const p = (pid && k.programs[pid]) || {};
+  const f = { name:h("input",{class:"in",value:str(p.name),placeholder:"例如：兩歲專班"}), title:h("input",{class:"in",value:str(p.title)}),
+    note:h("input",{class:"in",value:str(p.note)}), theme:h("input",{class:"in",value:str(p.theme)}),
+    cls:h("input",{class:"in",value:str(p.cls)}), period:h("input",{class:"in",value:str(p.period)}), goals:h("textarea",{class:"in"}) };
+  f.goals.value = arr(p.goals).join("\n");
+  const err = h("div",{class:"err"});
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if(!f.name.value.trim()||!f.title.value.trim()){ err.textContent="請填寫班級名稱和課程標題。"; return; }
+    save.disabled=true; err.textContent="";
+    const order = pid ? num(p.order) : Object.values(k.programs).reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+    try{
+      const ref = pid ? S.db.doc(cfg.progCol+"/"+pid) : S.db.collection(cfg.progCol).doc();
+      await ref.set({ order, name:f.name.value.trim(), title:f.title.value.trim(), note:f.note.value.trim(),
+        theme:f.theme.value.trim(), cls:f.cls.value.trim(), period:f.period.value.trim(), goals:linesOf(f.goals.value) });
+      if (!pid) k.program = ref.id;
+      closeModal(); toast("已儲存"); render();
+    }catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  const delBtn = pid ? h("button",{class:"btn danger",onclick:()=>{
+    if (k.courses.some(c=>c.program===pid)){ err.textContent="這個班級底下還有月份資料，請先刪除月份再刪除班級。"; return; }
+    confirmBox("刪除這個班級？",`「${str(p.name)}」刪除後無法復原。`,"刪除",()=>S.db.doc(cfg.progCol+"/"+pid).delete().then(()=>toast("已刪除")));
+  }},"刪除班級") : null;
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null,pid?"編輯課程資訊":"新增班級")),
+    h("div",{class:"mb f"},
+      h("div",{class:"f2"},h("label",{class:"fl"},"班級名稱（分頁顯示）",f.name),h("label",{class:"fl"},"適用班級",f.cls)),
+      h("label",{class:"fl"},"課程標題",f.title),
+      h("label",{class:"fl"},"標題上方說明",f.note),
+      h("div",{class:"f2"},h("label",{class:"fl"},"主題",f.theme),h("label",{class:"fl"},"實施期間",f.period)),
+      h("label",{class:"fl"},h("span",null,"課程目標 ",h("small",null,"（一行一項）")),f.goals), err),
+    h("div",{class:"mf"},delBtn,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+}
+
+/* ---------- activities (admin only) ---------- */
+const sumOf = list => (Array.isArray(list)?list:[]).reduce((s,x)=>s+num(x&&x.amount),0);
+const money = n => n.toLocaleString("zh-TW")+" 元";
+const ACT_TYPES = ["社區活動計畫","研習活動計畫","仁德活動計畫"];
+const typeOf = a => ACT_TYPES.includes(a.type) ? a.type : ACT_TYPES[0];
+const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
+
+function renderActivities(app){
+  if (!S.got.activities){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "活動計畫載入中…")); return; }
+  if (!ACT_TYPES.includes(S.actType)) S.actType = ACT_TYPES[0];
+  app.append(h("div",{class:"subtabs"}, ACT_TYPES.map(t =>
+    h("button",{class:"kchip","aria-pressed":String(t===S.actType), onclick:()=>{S.actType=t; render();}},
+      `${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`))));
+  const list = S.activities.filter(a=>typeOf(a)===S.actType).sort((a,b)=>str(b.date).localeCompare(str(a.date)));
+  app.append(h("div",{class:"toolbar"},h("h2",null,S.actType),h("span",{class:"sp"}),
+    h("button",{class:"btn primary",onclick:()=>editActivity(null)},"＋ 新增"+S.actType)));
+  if (!list.length){ app.append(h("div",{class:"notice"},`還沒有${S.actType}。`, !S.activities.length ? seedButton() : null)); return; }
+  app.append(h("div",{class:"list"}, list.map(a =>
+    h("button",{class:"card row",onclick:()=>showActivity(a.id)},
+      h("span",null,h("span",{class:"m"},[str(a.semester),str(a.time)].filter(Boolean).join("．")),h("br"),h("span",{class:"t"},str(a.name))),
+      h("span",{class:"money"},"支出 "+money(sumOf(a.expense))),
+      statusPill(a.status)))));
+}
+
+function imgTile(a, field, aid, wide){
+  return h("div",{class:"photo"+(wide?" wide":"")},
+    photoImg(aid,{onclick:()=>lightbox(aid,()=>showActivity(a.id))}),
+    S.assets ? h("button",{class:"del","aria-label":"刪除圖片",onclick:()=>removeImage(a.id,field,aid)},"×") : null);
+}
+function flowSection(a, flow){
+  const imgs = idsOf(a.flowImages);
+  const status = h("span",{class:"hint"});
+  return h("div",{class:"sec",style:"margin-top:18px"},h("h3",null,"活動流程與道具規劃"),
+    flow.length ? h("div",{class:"tablewrap"},h("table",{class:"flow"},
+      h("thead",null,h("tr",null,["","活動名稱","玩法說明","道具與器材需求","負責人員"].map(t=>h("th",null,t)))),
+      h("tbody",null,flow.map((x,i)=>h("tr",null,h("td",{class:"n"},String(i+1)),h("td",null,str(x.name)),h("td",null,str(x.desc)),h("td",null,str(x.props)),h("td",null,str(x.staff))))))) : null,
+    imgs.length ? h("div",{class:"flowimgs",style:flow.length?"margin-top:10px":null}, imgs.map(id=>imgTile(a,"flowImages",id,true))) : null,
+    !flow.length && !imgs.length ? h("p",{class:"empty"},"尚未填寫，可以手填或上傳流程表圖片。") : null,
+    h("div",{class:"uprow"},
+      h("button",{class:"btn",onclick:()=>editActivity(a.id,false,"flow")},flow.length?"編輯流程表":"手填流程表"),
+      S.assets ? h("button",{class:"btn",onclick:()=>pickImages(true,fs=>uploadTo(a.id,"flowImages",fs,status))},"上傳流程表圖片") : null,
+      status));
+}
+function photoSection(a){
+  const imgs = idsOf(a.photos);
+  const status = h("span",{class:"hint"});
+  return h("div",{class:"sec"},h("h3",null,`活動照片（${imgs.length}）`),
+    imgs.length ? h("div",{class:"photos"}, imgs.map(id=>imgTile(a,"photos",id,false))) : h("p",{class:"empty"},"還沒有照片。"),
+    S.assets ? h("div",{class:"uprow"},
+      h("button",{class:"btn primary",onclick:()=>pickImages(true,fs=>uploadTo(a.id,"photos",fs,status))},"＋ 上傳照片"),
+      h("span",{class:"hint"},"可一次選多張"), status)
+      : null);
+}
+
+function showActivity(id){
+  const a = S.activities.find(x=>x.id===id); if(!a) return;
+  S.openAct = id;
+  const tr = (k,v) => h("tr",null,h("th",null,k),h("td",null,v));
+  const items = list => (Array.isArray(list)?list:[]).filter(x=>x&&(x.item||x.amount)).map(x=>`${str(x.item)}　${x.amount==null||x.amount===""?"（金額未定）":money(num(x.amount))}`).join("\n") || "—";
+  const opt = (k,v) => str(v).trim() ? tr(k,v) : null;
+  const flow = (Array.isArray(a.flow)?a.flow:[]).filter(x=>x&&typeof x==="object");
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("div",{class:"m"},[typeOf(a),str(a.semester)].filter(Boolean).join("．")),h("h2",null,str(a.name)),
+      h("div",{class:"meta"},h("span",null,"呈報日期：",h("b",null,str(a.reportDate)||"—")),statusPill(a.status))),
+    h("div",{class:"mb"},
+      h("table",{class:"form"},h("tbody",null,
+        tr("活動地點",str(a.location)), tr("舉辦時間",str(a.time)),
+        tr("宗旨或目的", arr(a.purpose).map((p,i)=>`${i+1}. ${p}`).join("\n")),
+        tr("服務對象及人數",str(a.target)), opt("活動內容",a.content),
+        opt("通知對象",a.notify), opt("配合單位",a.partner), opt("工作人員",a.staff),
+        opt("準備物品",a.prep), opt("執行與聯絡",a.contact), opt("注意事項",a.notes),
+        tr("經費收入",items(a.income)+`\n總計：${money(sumOf(a.income))}`),
+        tr("經費支出",items(a.expense)+`\n總計：${money(sumOf(a.expense))}`),
+        tr("計畫類別",str(a.planType)))),
+      flowSection(a, flow),
+      photoSection(a),
+      h("div",{class:"sign"},h("span",null,"承辦人：",str(a.handler)||"＿＿＿"),h("span",null,"園長：",str(a.director)||"＿＿＿"))),
+    h("div",{class:"mf"},
+      h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份活動計畫？",`「${str(a.name)}」刪除後無法復原。`,"刪除",async()=>{ const ids=idsOf(a.photos).concat(idsOf(a.flowImages)); await S.db.doc(ACT_COL+"/"+a.id).delete(); toast("已刪除");
+        if (S.assets) for (const x of ids){ try{ await photoStore.delete(x); }catch(_){} } })},"刪除"),
+      h("span",{class:"sp"}),
+      h("button",{class:"btn",onclick:()=>editActivity(a.id,true)},"複製成新計畫"),
+      h("button",{class:"btn primary",onclick:()=>editActivity(a.id)},"編輯"))));
+}
+
+function moneyLines(list){
+  const box = h("div",{class:"lines"});
+  const add = (item="",amount="") => {
+    const ln = h("div",{class:"ln"},
+      h("input",{class:"in",placeholder:"項目",value:item}),
+      h("input",{class:"in",type:"number",placeholder:"金額",value:String(amount)}),
+      h("button",{type:"button","aria-label":"移除",onclick:()=>ln.remove()},"×"));
+    box.append(ln);
+  };
+  (Array.isArray(list)&&list.length?list:[{item:"",amount:""}]).forEach(x=>add(str(x&&x.item), x&&x.amount!==""&&x.amount!=null?num(x.amount):""));
+  const wrap = h("div",{class:"lines"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增一列"));
+  wrap.read = () => [...box.children].map(ln=>{ const [i,a]=ln.querySelectorAll("input"); return {item:i.value.trim(),amount:a.value.trim()===""?null:num(a.value)}; }).filter(x=>x.item||x.amount);
+  return wrap;
+}
+
+const idsOf = v => (Array.isArray(v)?v:[]).map(x=>typeof x==="string"?x:(x&&x.id)).filter(x=>typeof x==="string"&&x);
+const PH_IMG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30"><rect width="40" height="30" fill="#f1ece0"/></svg>');
+const PCACHE = {}, PQUEUE = {};
+function loadPhoto(id){
+  if (PCACHE[id]) return Promise.resolve(PCACHE[id]);
+  if (!PQUEUE[id]) PQUEUE[id] = S.db.collection(PHOTO_COL).doc(id).get().then(x=>{ const d=x.exists?x.data():null; if(d&&d.data){ PCACHE[id]=d.data; } return PCACHE[id]||null; }).catch(()=>null);
+  return PQUEUE[id];
+}
+function photoImg(id, attrs){
+  const img = h("img", Object.assign({src:PCACHE[id]||PH_IMG, alt:""}, attrs||{}));
+  if (!PCACHE[id]) loadPhoto(id).then(u=>{ if(u) img.src=u; else img.replaceWith(h("div",{style:"padding:20px;color:var(--muted);font-size:13px"},"圖片無法顯示")); });
+  return img;
+}
+function shrinkToDataUrl(file){
+  return new Promise((ok,bad)=>{
+    const fr = new FileReader(); fr.onerror = bad;
+    fr.onload = () => { const im = new Image();
+      im.onerror = () => bad(new Error("無法讀取「"+file.name+"」，請改用 JPG 或 PNG（iPhone 的 HEIC 照片請先轉成 JPG）。"));
+      im.onload = () => { const k=Math.min(1,1600/Math.max(im.width,im.height)), c=document.createElement("canvas");
+        c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+        let q=.8, out=c.toDataURL("image/jpeg",q); while(out.length>700000 && q>.4){ q-=.1; out=c.toDataURL("image/jpeg",q); }
+        if (out.length>900000) bad(new Error("照片太大，請先縮小後再上傳。")); else ok(out); };
+      im.src = fr.result; };
+    fr.readAsDataURL(file);
+  });
+}
+const photoStore = {
+  async upload(file){
+    const data = await shrinkToDataUrl(file);
+    const ref = S.db.collection(PHOTO_COL).doc();
+    await ref.set({ data, name:str(file.name), uid:(S.d&&S.d.currentUser&&S.d.currentUser.uid)||"", createdAt:Date.now() });
+    PCACHE[ref.id] = data; return ref.id;
+  },
+  async delete(id){ delete PCACHE[id]; await S.db.collection(PHOTO_COL).doc(id).delete(); }
+};
+function pickImages(multiple, onFiles){
+  const inp = h("input",{type:"file",accept:"image/*",multiple:multiple||null,style:"display:none"});
+  inp.addEventListener("change",()=>{ const fs=[...inp.files].filter(f=>/^image\//.test(f.type)); inp.remove(); if(fs.length) onFiles(fs); });
+  document.body.append(inp); inp.click();
+}
+async function uploadTo(actId, field, files, status){
+  let done=0, failed="";
+  const ids=[];
+  for (const f of files){
+    status.textContent = `上傳中… ${done+1}/${files.length}`;
+    try{ ids.push(await photoStore.upload(f)); done++; }
+    catch(e){ failed = (e && e.code) ? errText(e) : (str(e && e.message) || "上傳失敗，請稍後再試。"); break; }
+  }
+  if (ids.length){
+    const cur = S.activities.find(x=>x.id===actId);
+    const next = idsOf(cur && cur[field]).concat(ids);
+    try{ await S.db.doc(ACT_COL+"/"+actId).update({[field]:next}); }
+    catch(e){ failed = errText(e); }
+  }
+  status.textContent = failed || "";
+  if (!failed) toast(`已上傳 ${done} 張`);
+}
+function removeImage(actId, field, assetId){
+  confirmBox("刪除這張圖片？","刪除後無法復原。","刪除", async()=>{
+    const cur = S.activities.find(x=>x.id===actId);
+    await S.db.doc(ACT_COL+"/"+actId).update({[field]: idsOf(cur && cur[field]).filter(x=>x!==assetId)});
+    try{ await photoStore.delete(assetId); }catch(_){}
+    toast("已刪除");
+    setTimeout(()=>showActivity(actId),0);
+  });
+}
+function lightbox(id, back){
+  $("#kb-layer").replaceChildren(h("div",{class:"scrim",onclick:()=>back()},
+    h("div",{class:"modal lightbox"},photoImg(id))));
+}
+
+function flowEditor(list){
+  const box = h("div",{class:"flowed"});
+  const renum = () => [...box.children].forEach((r,i)=>r.querySelector(".no").textContent=`第 ${i+1} 項`);
+  const add = (x={}) => {
+    const name=h("input",{class:"in",placeholder:"活動名稱",value:str(x.name)});
+    const desc=h("textarea",{class:"in",placeholder:"玩法說明"}); desc.value=str(x.desc);
+    const props=h("input",{class:"in",placeholder:"道具與器材需求",value:str(x.props)});
+    const staff=h("input",{class:"in",placeholder:"負責人員",value:str(x.staff)});
+    const row = h("div",{class:"fr"},
+      h("div",{class:"hd"},h("span",{class:"no"}),h("span",{class:"sp"}),
+        h("button",{type:"button","aria-label":"上移",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } }},"↑"),
+        h("button",{type:"button","aria-label":"移除",onclick:()=>{ row.remove(); renum(); }},"×")),
+      name, desc, h("div",{class:"f2"},props,staff));
+    row._read = () => ({name:name.value.trim(),desc:desc.value.trim(),props:props.value.trim(),staff:staff.value.trim()});
+    box.append(row); renum();
+  };
+  (Array.isArray(list)?list:[]).forEach(x=>add(x||{}));
+  const wrap = h("div",{class:"flowed"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增流程項目"));
+  wrap.read = () => [...box.children].map(r=>r._read()).filter(x=>x.name||x.desc||x.props||x.staff);
+  return wrap;
+}
+
+function editActivity(id, copy, focus){
+  const a = id ? S.activities.find(x=>x.id===id) : null;
+  const v = k => a ? str(a[k]) : "";
+  const inp = (k,ph) => h("input",{class:"in",value:v(k),placeholder:ph||null});
+  const ta = (k,rows) => { const t=h("textarea",{class:"in",style:rows?`min-height:${rows}px`:null}); t.value=v(k); return t; };
+  const f = {
+    name:inp("name"), semester:inp("semester","例如：115學年度第一學期"),
+    type:h("select",{class:"in"},ACT_TYPES.map(o=>h("option",{selected:(a?typeOf(a):S.actType)===o},o))),
+    location:inp("location"), date:h("input",{class:"in",type:"date",value:v("date")}), time:inp("time","例如：115年10月15日上午10:00-11:00"),
+    purpose:h("textarea",{class:"in"}), target:ta("target",60), content:ta("content"),
+    notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:ta("notes"),
+    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense), flow:flowEditor(a&&a.flow),
+    planType:h("select",{class:"in"},["年度計畫","非年度計畫","全園性節慶活動"].map(o=>h("option",{selected:v("planType")===o},o))),
+    status:h("select",{class:"in"},["草稿","已呈報","已核准"].map(o=>h("option",{selected:(copy?"草稿":(v("status")||"草稿"))===o},o))),
+    reportDate:inp("reportDate","例如：115.08.01"), handler:inp("handler"), director:inp("director")
+  };
+  f.purpose.value = a ? arr(a.purpose).join("\n") : "";
+  if (copy){ f.name.value = v("name")+"（複本）"; }
+  const err = h("div",{class:"err"});
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if(!f.name.value.trim()){ err.textContent="請填寫活動名稱。"; return; }
+    const data = {};
+    for (const k of ["name","semester","type","location","date","time","target","content","notify","partner","staff","prep","contact","notes","planType","status","reportDate","handler","director"])
+      data[k] = f[k].value.trim();
+    data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read();
+    const latest = (id && !copy) ? S.activities.find(x=>x.id===id) : null;
+    data.photos = idsOf(latest && latest.photos); data.flowImages = idsOf(latest && latest.flowImages);
+    save.disabled=true; err.textContent="";
+    try{
+      const ref = (id && !copy) ? S.db.doc(ACT_COL+"/"+id) : S.db.collection(ACT_COL).doc();
+      await ref.set(data); closeModal(); toast("已儲存"); S.actType=data.type; render();
+    }catch(e){ save.disabled=false; err.textContent=errText(e); }
+  }},"儲存");
+  const L = (label, el, hint) => h("label",{class:"fl"}, hint ? h("span",null,label+" ",h("small",null,hint)) : label, el);
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null, copy?"複製成新活動計畫":(id?"編輯活動計畫":"新增活動計畫"))),
+    h("div",{class:"mb f"},
+      L("活動名稱",f.name),
+      h("div",{class:"f2"},L("計畫分類",f.type),L("學期",f.semester)),
+      h("div",{class:"f2"},L("活動地點",f.location),L("活動日期（排序用）",f.date)),
+      L("舉辦時間",f.time),
+      L("宗旨或目的",f.purpose,"（一行一項）"),
+      L("服務對象及人數",f.target), L("活動內容",f.content),
+      h("div",{class:"f2"},L("通知對象",f.notify),L("配合單位",f.partner)),
+      h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
+      L("準備物品",f.prep), L("注意事項",f.notes),
+      L("活動流程與道具規劃",f.flow,"（可留空；流程表圖片請在檢視頁上傳）"),
+      L("經費收入",f.income), L("經費支出",f.expense),
+      h("div",{class:"f2"},L("計畫類別",f.planType),L("狀態",f.status)),
+      h("div",{class:"f2"},L("呈報日期",f.reportDate),L("承辦人",f.handler)),
+      L("園長",f.director), err),
+    h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+  if (focus==="flow"){ f.flow.scrollIntoView({block:"start"}); if(!f.flow.read().length) f.flow.querySelector(".btn").click(); }
+}
+
+/* ---------- first-time import of the original documents ---------- */
+const SEED = {"walkPrograms/two": {"name": "兩歲專班", "title": "兩歲專班社區踏查年度課程", "theme": "認識仁德非營利幼兒園、仁德國小與社區環境", "cls": "兩歲專班", "period": "9月～隔年6月", "note": "", "goals": ["願意參與校園與社區踏查活動。", "認識幼兒園、校園與社區環境。", "透過感官觀察花草樹木與自然變化。", "練習牽手走路與遵守安全規則。", "願意用簡單語詞表達觀察與感受。", "建立幼兒對生活環境的熟悉感與安全感。"], "order": 1}, "walkPrograms/three5": {"name": "3-5歲", "title": "115學年度3-5歲社區踏查課程", "theme": "", "cls": "3-5歲", "period": "115年9月～116年6月", "note": "仁德非營利幼兒園委託社團法人臺灣宛靜文教協會辦理", "goals": [], "order": 2}, "walkCourses/c2-01": {"program": "two", "month": "9月", "title": "認識我的幼兒園", "goals": ["認識班級與校園環境。", "建立幼兒安全感。", "練習排隊與牽手。"], "content": "教師帶領幼兒認識班級教室、鞋櫃、廁所、洗手台與遊戲區，透過校園散步方式讓幼兒慢慢熟悉幼兒園環境。活動中引導幼兒認識自己的物品位置與班級標誌，並練習排隊、牽手與慢慢走。教師也會陪伴幼兒觀察校園中的顏色與設備，透過簡單對話與互動，幫助幼兒建立對新環境的安全感與歸屬感。", "reflection": "觀察幼兒對新環境的適應情形，適時增加陪伴與安撫，協助幼兒建立安全感。", "areas": ["扮演區：扮演上學情境。", "語文區：認識自己的姓名與照片。", "建構區：使用積木拼出教室。"], "order": 1}, "walkCourses/c2-02": {"program": "two", "month": "10月", "title": "校園散步趣", "goals": ["認識校園空間。", "練習觀察周遭環境。", "建立基本行走安全。"], "content": "教師帶領幼兒到校園操場與走廊散步，觀察校園中的遊樂器材、樹木、花圃與教室外觀。活動中鼓勵幼兒看看校園裡有哪些顏色、聲音與不同的地面材質，並透過簡單提問引導幼兒注意周遭環境。教師陪伴幼兒練習牽手走路與慢慢前進，讓幼兒在輕鬆散步過程中增加對校園環境的熟悉感與安全感。", "reflection": "幼兒對操場與戶外空間特別有興趣，可增加停留觀察時間。", "areas": ["美勞區：校園塗鴉創作。", "感官區：觸摸不同材質。", "積木區：拼搭操場設施。"], "order": 2}, "walkCourses/c2-03": {"program": "two", "month": "11月", "title": "花草樹木小探索", "goals": ["觀察校園植物。", "運用感官探索自然。", "培養愛護植物態度。"], "content": "教師帶領幼兒觀察校園中的花草樹木，鼓勵幼兒摸摸樹皮、看看葉子顏色與形狀，並聆聽風吹樹葉的聲音。活動中提供小袋子讓幼兒撿拾地上的落葉，陪伴幼兒比較葉子的大小與顏色差異。教師也會提醒幼兒不隨意摘花與拉扯樹枝，透過實際探索活動培養幼兒對自然環境的好奇與愛護態度。", "reflection": "幼兒對落葉與樹皮觸感興趣高，可增加自然素材操作活動。", "areas": ["美勞區：葉子拓印拼貼。", "感官區：觀察樹葉與種子。", "語文區：植物圖片命名。"], "order": 3}, "walkCourses/c2-04": {"program": "two", "month": "12月", "title": "校園建築觀察", "goals": ["認識校園建築。", "觀察形狀與顏色。", "建立空間概念。"], "content": "教師帶領幼兒觀察校園中的門、窗戶、樓梯、牆面與柱子，引導幼兒認識圓形、方形與長方形等簡單形狀。活動中鼓勵幼兒比較建築物的高低、大小與顏色差異，並透過摸摸牆壁與地板感受不同材質。教師陪伴幼兒在校園中慢慢觀察，增加幼兒對校園建築與空間環境的熟悉感。", "reflection": "幼兒喜歡尋找不同顏色與形狀，可搭配積木延伸建構活動。", "areas": ["建構區：積木蓋房子。", "數學區：形狀配對遊戲。", "美勞區：彩色建築創作。"], "order": 4}, "walkCourses/c2-05": {"program": "two", "month": "2月", "title": "冬天的校園", "goals": ["感受冬天天氣。", "認識季節變化。", "建立保暖觀念。"], "content": "教師帶領幼兒感受冬天校園的天氣變化，觀察陽光、陰影與冬季植物的不同。活動中引導幼兒摸摸冷冷的風，感受陽光照射時的溫暖，也陪伴幼兒觀察樹葉與花草在冬天的變化。教師提醒幼兒穿外套與注意保暖，透過實際生活經驗幫助幼兒認識冬天天氣與季節特色。", "reflection": "冬季活動時間可適度縮短，避免幼兒受寒。", "areas": ["扮演區：冬天穿衣遊戲。", "感官區：冷熱觸感體驗。", "語文區：冬天圖片配對。"], "order": 5}, "walkCourses/c2-06": {"program": "two", "month": "3月", "title": "交通安全小寶寶", "goals": ["認識交通安全。", "練習安全行走。", "建立自我保護觀念。"], "content": "教師帶領幼兒觀察校園周邊的人行道、斑馬線與紅綠燈，介紹過馬路時停、看、聽的重要性。活動中引導幼兒觀察車輛與行人，並練習牽手慢慢走與排隊等待。教師透過實際情境說明交通安全的重要，幫助幼兒建立基本的安全概念與自我保護能力，增加日常生活中的安全經驗。", "reflection": "可透過角色扮演遊戲加深幼兒交通安全印象。", "areas": ["扮演區：交通警察遊戲。", "積木區：道路建構。", "語文區：交通工具圖卡。"], "order": 6}, "walkCourses/c2-07": {"program": "two", "month": "4月", "title": "認識社區裡的人", "goals": ["認識社區工作者。", "練習打招呼。", "培養禮貌態度。"], "content": "教師帶領幼兒認識校園與社區中照顧大家的人，例如警衛叔叔、清潔阿姨與行政老師。活動中鼓勵幼兒主動揮手打招呼與說謝謝，並陪伴幼兒觀察不同工作內容。教師透過互動與簡單介紹，幫助幼兒了解社區中每個人都有不同工作，也培養幼兒基本禮貌與人際互動能力。", "reflection": "幼兒對熟悉的大人較願意互動，可逐步增加社區接觸機會。", "areas": ["扮演區：職業角色扮演。", "語文區：人物圖片配對。", "美勞區：感謝卡製作。"], "order": 7}, "walkCourses/c2-08": {"program": "two", "month": "5月", "title": "春天來了", "goals": ["觀察春天自然變化。", "認識花朵與昆蟲。", "培養觀察能力。"], "content": "教師陪伴幼兒觀察春天校園中的花朵、新葉與小昆蟲，鼓勵幼兒看看花的顏色、聞聞花香與觀察葉子的變化。活動中引導幼兒感受春天天氣逐漸變暖，也陪伴幼兒觀察蝴蝶與小昆蟲移動。透過實際自然探索活動，增加幼兒對春天季節變化與自然環境的好奇與觀察經驗。", "reflection": "幼兒對花朵顏色與昆蟲移動特別有興趣，可增加觀察時間。", "areas": ["美勞區：花朵拓印。", "感官區：觀察種子發芽。", "語文區：春天圖卡命名。"], "order": 8}, "walkCourses/c2-09": {"program": "two", "month": "6月", "title": "社區商店小發現", "goals": ["認識社區商店。", "學習排隊與等待。", "增加生活經驗。"], "content": "教師帶領幼兒散步觀察幼兒園附近的商店，例如早餐店、便利商店或文具店。活動中介紹商店販售的物品與工作人員，並提醒幼兒學習排隊與等待。教師也會引導幼兒觀察不同商品的顏色與種類，透過實際生活情境增加幼兒對社區環境與日常購物經驗的認識。", "reflection": "幼兒對食物與商品特別有興趣，可延伸扮演商店遊戲。", "areas": ["扮演區：商店買賣遊戲。", "數學區：商品分類。", "美勞區：購物袋創作。"], "order": 9}, "walkCourses/c35-01": {"program": "three5", "month": "115年9月", "title": "認識我的幼兒園", "goals": ["認識幼兒園各空間及功能。", "建立安全感及歸屬感。", "學習遵守園內生活規範。", "能與同儕共同探索校園。"], "content": "教師帶領幼兒實地走訪教室、行政室、健康中心、廚房、遊戲場及操場，引導幼兒觀察各場所用途，討論不同空間提供哪些服務。幼兒利用平板或圖卡拍攝、記錄自己最喜歡的地方，回到教室共同製作「我的幼兒園地圖」。", "reflection": "幼兒對遊戲場及大型遊具最感興趣，可增加自由探索時間。部分新生對陌生環境較緊張，可安排舊生陪伴及合作探索活動，提升安全感。", "areas": ["語文區：校園地圖配對", "語文區：空間名稱認讀", "建構區：積木建造幼兒園", "美勞區：我的幼兒園創作", "扮演區：小老師、小校長角色扮演"], "order": 1}, "walkCourses/c35-02": {"program": "three5", "month": "115年10月", "title": "秋天的仁德公園", "goals": ["觀察秋季自然變化。", "比較植物差異。", "培養愛護自然態度。", "運用五感探索環境。"], "content": "至仁德公園撿拾落葉、觀察植物、樹木及昆蟲，運用放大鏡觀察葉脈及樹皮紋路，討論秋天有哪些改變，蒐集自然素材回園創作。", "reflection": "幼兒喜歡觀察昆蟲，可增加自然探索工具，鼓勵提出問題與討論。", "areas": ["科學區：葉子分類", "美勞區：落葉拼貼", "數學區：葉片排序", "語文區：秋天圖鑑"], "order": 2}, "walkCourses/c35-03": {"program": "three5", "month": "115年11月", "title": "社區安全小尖兵", "goals": ["認識交通安全。", "學習安全過馬路。", "建立公共安全觀念。", "培養自我保護能力。"], "content": "實地觀察幼兒園周邊斑馬線、紅綠燈、人行道及交通號誌，練習停、看、聽，模擬安全過馬路。", "reflection": "可搭配交通角色扮演，增進實際應用能力。", "areas": ["扮演區：交通警察", "建構區：道路建設", "科學區：交通號誌分類", "語文區：交通標誌配對"], "order": 3}, "walkCourses/c35-04": {"program": "three5", "month": "115年12月", "title": "探索興豐公園生態", "goals": ["認識公園生態。", "觀察植物及昆蟲。", "培養尊重生命態度。", "建立環境保護觀念。"], "content": "觀察花草樹木、昆蟲、鳥類，使用觀察紀錄表完成自然日記。", "reflection": "幼兒喜歡使用放大鏡觀察，可提供更多探究材料。", "areas": ["科學區：昆蟲觀察", "美勞區：自然拼貼", "語文區：生態圖卡", "建構區：公園模型"], "order": 4}, "walkCourses/c35-05": {"program": "three5", "month": "116年1月", "title": "我是小小建築師", "goals": ["認識社區建築。", "比較建築特色。", "培養空間概念。", "學習觀察建築功能。"], "content": "觀察仁德國小、幼兒園及社區建築，討論外觀、高度、用途及建築特色。", "reflection": "可加入拍照紀錄，讓幼兒比較不同建築。", "areas": ["建構區：建築設計", "美勞區：房屋創作", "數學區：形狀分類", "語文區：建築圖卡"], "order": 5}, "walkCourses/c35-06": {"program": "three5", "month": "116年2月", "title": "冬天的社區", "goals": ["感受冬季氣候。", "觀察冬季植物。", "學習保暖方式。", "建立健康生活概念。"], "content": "觀察冬天天氣、樹木及植物變化，討論如何保暖。", "reflection": "可搭配天氣紀錄，增加幼兒比較能力。", "areas": ["科學區：溫度紀錄", "語文區：冬天繪本", "扮演區：冬季穿衣", "美勞區：冬景創作"], "order": 6}, "walkCourses/c35-07": {"program": "three5", "month": "116年3月", "title": "認識社區工作者", "goals": ["認識不同職業。", "尊重工作者。", "培養感恩態度。", "學習人際互動。"], "content": "拜訪警衛、行政老師、清潔人員及社區商家，訪問工作內容。", "reflection": "可讓幼兒事先設計訪問題目，提高參與度。", "areas": ["扮演區：職業體驗", "語文區：職業配對", "美勞區：感謝卡", "建構區：社區模型"], "order": 7}, "walkCourses/c35-08": {"program": "three5", "month": "116年4月", "title": "春天花草大發現", "goals": ["觀察春季植物。", "認識昆蟲。", "培養自然觀察能力。", "建立愛護環境態度。"], "content": "至興豐公園觀察花朵、新芽及昆蟲，完成春天觀察紀錄。", "reflection": "可延長觀察時間，鼓勵幼兒提出探究問題。", "areas": ["科學區：植物生長", "美勞區：花朵拓印", "語文區：春天圖鑑", "數學區：花瓣數數"], "order": 8}, "walkCourses/c35-09": {"program": "three5", "month": "116年5月", "title": "我是環保小公民", "goals": ["建立環保概念。", "學習垃圾分類。", "愛護公園環境。", "培養公民責任。"], "content": "至仁德公園進行環境觀察，了解垃圾分類及資源回收，討論如何共同維護環境。", "reflection": "可結合世界地球日活動，深化環保行動。", "areas": ["科學區：資源回收分類", "扮演區：環保志工", "美勞區：環保創作", "語文區：環保繪本"], "order": 9}, "walkCourses/c35-10": {"program": "three5", "month": "116年6月", "title": "我的社區成果展", "goals": ["回顧一年踏查成果。", "整理探索經驗。", "培養分享能力。", "建立社區認同感。"], "content": "整理照片、作品及觀察紀錄，共同製作《我的社區小書》，布置成果展並擔任小小導覽員向家長介紹。", "reflection": "幼兒經過一年的社區探索，已能運用觀察、紀錄與分享方式表達想法，未來可增加幼兒自主規劃探索路線及問題探究的機會。", "areas": ["語文區：社區小書", "建構區：社區立體模型", "美勞區：成果海報", "扮演區：小小導覽員", "科學區：探索成果展示"], "order": 10}, "motorPrograms/two": {"name": "兩歲專班", "title": "115學年度第一學期出汗性大肌肉循環式活動計劃表", "note": "桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)", "theme": "", "cls": "兩歲專班", "period": "115學年度第一學期（8月～1月）", "goals": [], "order": 1}, "motorCourses/m2-01": {"program": "two", "order": 1, "month": "8月", "title": "小泰山叢林探險（綜合體能）", "resources": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "森林動物律動", "content": "老師帶領幼兒模仿：模仿猴子走路、大象甩鼻子、大熊慢慢走、小鳥拍拍翅膀\n搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"}, "stations": [{"name": "森林小橋", "equipment": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "ability": "下肢肌力、平衡能力、身體穩定控制"}, {"name": "彩虹石散步", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "ability": "身體協調能力、跨步能力、平衡能力"}, {"name": "呼拉圈散步", "equipment": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "ability": "下肢控制能力、身體協調、方向感"}, {"name": "小猴子餵水果", "equipment": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。", "ability": "手眼協調、投擲能力、力道控制"}], "cooldown": {"title": "森林深呼吸", "content": "教師播放柔和音樂，引導幼兒：\n🌳 大樹伸懶腰（雙手向上伸展）   🐦 小鳥飛回家（雙手慢慢放下）\n🌬 深深吸一口氣，再慢慢吐氣\n最後一起拍拍手臂、拍拍大腿、拍拍小腿放鬆肌肉。"}}, "motorCourses/m2-02": {"program": "two", "order": 2, "month": "9月", "title": "氣球勇士探險記（綜合障礙闖關）", "resources": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "indicators": ["身-幼-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warmup": {"title": "消防員出任務", "content": "教師帶領幼兒配合音樂模仿探險家的動作。\n小兔子跳跳跳（小步彈跳） --小熊慢慢走 --小鴨搖搖走 --飛機張開翅膀 --火車慢慢開"}, "stations": [{"name": "勇闖山洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "ability": "鑽爬能力、空間概念、身體控制能力"}, {"name": "彩虹石小徑", "equipment": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "ability": "平衡能力、身體協調"}, {"name": "氣球快遞員", "equipment": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "ability": "手眼協調、力道控制、專注力"}, {"name": "呼拉圈探險路", "equipment": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "ability": "身體協調能力、平衡能力"}], "cooldown": {"title": "氣球慢慢放氣", "content": "教師帶領幼兒想像自己是一顆大氣球。\n雙手慢慢向上伸展，吸一口氣--身體慢慢蹲下，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n最後一起喝水、擦汗，分享今天完成探險的心情。"}}, "motorCourses/m2-03": {"program": "two", "order": 3, "month": "10月", "title": "海洋尋寶大作戰（觸覺與肌力）", "resources": ["波浪觸覺步道滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "indicators": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "海洋生物動一動", "content": "教師播放海洋音樂，引導幼兒模仿海洋生物。\n小魚游來游去 --螃蟹橫著走 --海龜慢慢爬 --海豚跳一跳（小彈跳） --水母飄呀飄"}, "stations": [{"name": "海底觸覺步道", "equipment": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "ability": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"name": "海豚翻翻樂", "equipment": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "ability": "前庭覺發展、動作協調"}, {"name": "海底小探險", "equipment": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "ability": "上肢肌力、四肢協調"}, {"name": "袋鼠尋寶趣", "equipment": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "ability": "下肢肌力、身體協調"}], "cooldown": {"title": "海浪深呼吸伸展", "content": "教師帶領幼兒想像自己躺在沙灘上。\n雙手做海浪擺動。\n深深吸一口氣。\n慢慢吐氣。\n互相拍拍肩膀、手臂及大腿放鬆肌肉。"}}, "motorCourses/m2-04": {"program": "two", "order": 4, "month": "11月", "title": "小騎士拉力賽（方向控制）", "resources": ["Weplay三輪車", "呼拉圈", "小皮球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "indicators": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全"], "warmup": {"title": "小小交通工具出發囉", "content": "教師播放輕快音樂，引導幼兒模仿各種交通工具。\n小汽車開呀開--摩托車轉轉方向盤--小火車嗚嗚出發--飛機展開翅膀--腳踏車踩踩踏板"}, "stations": [{"name": "直線小騎士", "equipment": "Weplay三輪車", "play": "幼兒騎乘三輪車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "ability": "踩踏能力、平衡能力"}, {"name": "小騎士繞彎道", "equipment": "三角錐", "play": "幼兒騎乘三輪車，慢慢繞過三角錐，不碰倒三角錐，再騎回起點。", "ability": "方向控制能力、身體控制能力"}, {"name": "補給站送貨員", "equipment": "小布球、呼拉圈", "play": "幼兒將三輪車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "ability": "手眼協調、投擲能力"}, {"name": "交通號誌散步", "equipment": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "ability": "身體控制能力、專注力"}], "cooldown": {"title": "小騎士回車庫", "content": "教師引導幼兒想像今天完成了拉力賽。\n雙手向上伸展，吸一口氣--雙手慢慢放下，吐氣--坐姿向前伸展雙腳--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n喝水、擦汗，分享今天騎車的心情。"}}, "motorCourses/m2-05": {"program": "two", "order": 5, "month": "12月", "title": "歡樂雪國氣球傘（團隊合作）", "resources": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "雪花飄飄真好玩", "content": "教師播放輕快音樂，帶領幼兒模仿雪國情境。\n小雪花飄呀飄（雙手左右擺動）--小企鵝搖搖走--北極熊慢慢走--小兔子輕輕跳（小幅度）--雙手堆雪人"}, "stations": [{"name": "穿越雪洞", "equipment": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "ability": "四肢協調能力"}, {"name": "跨越雪堆", "equipment": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "ability": "動作控制、平衡能力"}, {"name": "拍擊雪球", "equipment": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "ability": "手眼協調能力"}, {"name": "雪浪大冒險", "equipment": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "ability": "上、下肢肌力、協調"}], "cooldown": {"title": "圍爐取暖", "content": "教師帶領幼兒圍坐成圓圈。\n雙手向上伸展，吸一口氣--慢慢放下雙手，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。\n互相說一句：「你好棒！」"}}, "motorCourses/m2-06": {"program": "two", "order": 6, "month": "1月", "title": "歡樂馬戲團（平衡與反應）", "resources": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "indicators": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warmup": {"title": "馬戲團明星登場", "content": "教師播放歡樂音樂，引導幼兒模仿馬戲團角色。\n小丑搖搖走--小熊踏步走--小兔子跳一跳（小幅度）--大象甩鼻子--小鳥拍拍翅膀"}, "stations": [{"name": "平衡小明星", "equipment": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "ability": "平衡、核心控制"}, {"name": "小丑繞圈圈", "equipment": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "ability": "方向控制能力、空間概念"}, {"name": "彩虹小腳印", "equipment": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "ability": "平衡能力、空間知覺"}, {"name": "呼拉圈歡樂派對", "equipment": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "ability": "跨步能力、身體協調"}], "cooldown": {"title": "完美謝幕", "content": "教師帶領幼兒一起完成馬戲團謝幕。\n雙手向上伸展，深深吸氣--雙手慢慢放下，吐氣--輕拍肩膀、手臂、大腿、小腿放鬆肌肉。\n大家互相拍拍手，給自己一個掌聲。"}}, "activityPlans/a-halloween-115": {"name": "社區教保資源活動－萬聖節南瓜燈籠DIY", "semester": "115學年度第一學期", "location": "仁德非營利幼兒園", "date": "2026-10-15", "time": "115年10月15日上午10:00-11:00", "purpose": ["結合萬聖節節慶活動，增進幼兒對多元文化的認識。", "透過親子共同創作南瓜燈籠，促進親子互動與情感交流。", "鼓勵社區家庭參與幼兒園活動，增進社區與園所連結。", "培養幼兒創造力、美感及手眼協調能力。"], "target": "學校鄰近社區內學齡前幼兒且家長能陪同出席參加者，9對親子(幼兒＋家長)", "content": "", "notify": "2-6歲幼兒及其照顧者(鼓勵未就學幼兒親子共同參與) 非該校(園)幼兒及家長優先", "partner": "家長及老師", "staff": "園長林佳靜+教保組長游雅真", "prep": "1.DIY物品-游雅真\n2.拍照-林佳靜\n3.桌子/椅子-教保組長及會計", "contact": "活動預告、行前海報－教保組長\n活動規劃---教保組長", "notes": "﹡本活動依報名先後順序錄取，如有取消由候補名單依序遞補。\n﹡本活動錄取順序以網路報名優先，現場報名次之。\n﹡一張報名表限填2位幼兒。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "10月-搗蛋鬼燈籠掛飾8吋(多元)33*10", "amount": 330}], "planType": "年度計畫", "reportDate": "115.08.01", "handler": "游雅真", "director": "", "status": "已呈報", "type": "社區活動計畫"}, "activityPlans/a-sportsday-115": {"type": "仁德活動計畫", "name": "115學年度親子運動會", "semester": "115學年度第一學期", "location": "", "date": "2026-10-31", "time": "115年10月31日（星期六）", "purpose": ["為促進幼兒身體動作發展、增進親子互動情誼，並建立家園良好溝通橋樑，特舉辦全園性親子運動會，透過趣味體能遊戲與團體合作，讓孩子在歡樂中展現自信與活力。"], "target": "全體幼生", "content": "", "notify": "", "partner": "", "staff": "", "prep": "", "contact": "", "notes": "本計畫園長核可後實施，修正時亦同。", "income": [{"item": "經費支應", "amount": 0}], "expense": [{"item": "場地費", "amount": 4000}, {"item": "空調費用", "amount": 5000}, {"item": "班牌（5組）", "amount": 2400}, {"item": "餐盒", "amount": null}, {"item": "禮物", "amount": null}], "flow": [], "planType": "全園性節慶活動", "reportDate": "", "handler": "", "director": "", "status": "草稿"}};
+function seedButton(){
+  if (!S.isAdmin) return null;
+  const st = h("div",{class:"err",style:"margin-top:8px"});
+  const b = h("button",{class:"btn primary",onclick:async()=>{
+    b.disabled=true; st.textContent="匯入中…";
+    try{
+      const cols = [...new Set(Object.keys(SEED).map(p=>p.split("/")[0]))];
+      for (const col of cols){
+        const snap = await S.db.collection(col).limit(1).get();
+        if (!snap.empty) continue;               // never overwrite existing data
+        for (const [p,data] of Object.entries(SEED)) if (p.split("/")[0]===col) await S.db.doc(p).set(data);
+      }
+      st.textContent=""; toast("已匯入原始資料");
+    }catch(e){ b.disabled=false; st.textContent=errText(e); }
+  }},"匯入原始資料");
+  return h("div",{style:"margin-top:14px"},
+    h("p",{class:"empty"},"第一次使用：按下面的按鈕，會把原本 Word 檔裡的社區踏查、出汗性大肌肉課程和活動計畫匯入資料庫（已經有資料的部分不會被覆蓋）。"),
+    h("div",{style:"margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"}, b), st);
+}
+/* ---------- boot ---------- */
+function subscribe(query, gotObj, key, map){
+  const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
+  return query.onSnapshot(snap=>{
+    if (!snap.metadata.fromCache){ clearTimeout(timer); S.stale=false; }
+    map(snap); gotObj[key]=true; render();
+  }, e=>{
+    clearTimeout(timer); gotObj[key]=true;
+    if (e && e.code==="permission-denied"){ S.failed="沒有權限讀取這些資料，請確認 Firestore 規則已開放（見說明）。"; }
+    render();
+  });
+}
+let subKey = null, unsubs = [];
+function sync(d, view){
+  S.d = d;
+  if (!d || !d.db || !d.currentUser) return;
+  if (d.restrictedPW) return;            // 只能用借還、護貝膜、管理者後台的帳號
+  if (!document.getElementById("kb-app")) return;
+  if (view==="actplan") view = "activities";
+  const key = d.currentUser.uid + "|" + !!d.isAdmin;
+  if ((view==="activities" || isKind(view)) && (view!==S.view || key!==subKey)){
+    S.view = view; S.openAct = null; const L=document.getElementById("kb-layer"); if (L) L.replaceChildren();
+  }
+  if (key !== subKey){
+    unsubs.forEach(f=>{ try{ f(); }catch(_){} }); unsubs = [];
+    subKey = key; S.db = d.db; S.isAdmin = !!d.isAdmin; S.failed = ""; S.stale = false;
+    for (const [kind,cfg] of Object.entries(KINDS)){
+      const k = S.k[kind]; k.gotP = k.gotC = false;
+      unsubs.push(subscribe(d.db.collection(cfg.progCol),k,"gotP",snap=>{ const o={}; snap.docs.forEach(x=>{ o[x.id]=x.data(); }); k.programs=o; }));
+      unsubs.push(subscribe(d.db.collection(cfg.courseCol),k,"gotC",snap=>{ k.courses=snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    }
+    S.got.activities = false; S.activities = [];
+    if (S.isAdmin) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
+      S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
+      if (S.openAct && $("#kb-layer .modal") && !$("#kb-layer .lightbox") && !$("#kb-layer input, #kb-layer textarea") && !$("#kb-layer .modal.sm")) showActivity(S.openAct);
+    }));
+    else S.got.activities = true;
+    S.assets = S.isAdmin ? photoStore : null;
+  }
+  render();
+}
+window.KbUI = { sync };
+})();
+
 </script>
 </body>
 </html>
