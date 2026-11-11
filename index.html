@@ -88,6 +88,16 @@
 #learning-observation-page .obs-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
 #learning-observation-page .obs-areas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
 #learning-observation-page .obs-arow{display:contents}
+#learning-observation-page .obs-empty{visibility:hidden}
+#learning-observation-page .obs-area-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:0 0 .75rem}
+#learning-observation-page .obs-mini{padding:.3rem .7rem;border:1px solid rgba(200,162,122,.6);border-radius:.6rem;background:#FFFDF8;font-size:.78rem;font-weight:700;cursor:pointer}
+#learning-observation-page .obs-mini:hover{background:#FAF3E6}#learning-observation-page .obs-mini-pri{background:#2F6271;border-color:#2F6271;color:#fff}
+#learning-observation-page .obs-aph{display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;color:#5a4632}
+#learning-observation-page .obs-area-edit{margin:0 0 .9rem;padding:.75rem;border:2px dashed #E3D3BA;border-radius:1rem;background:#FFFDF8}
+#learning-observation-page .obs-arow-ed{display:flex;align-items:center;gap:.4rem}#learning-observation-page .obs-arow-ed input{flex:1;max-width:16rem;margin:0}
+#learning-observation-page .obs-area .obs-photos{justify-content:flex-start}
+#learning-observation-page .obs-area .obs-photos .obs-ph{flex:0 1 auto;width:auto;max-width:100%;height:calc(var(--aph,22mm) * 1.2);background:none}
+#learning-observation-page .obs-area .obs-photos .obs-ph img{height:100%;width:auto;max-width:100%;aspect-ratio:auto;object-fit:contain;display:block}
 #learning-observation-page .obs-chips{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
 #learning-observation-page .obs-chips .obs-inline{flex:1;min-width:10rem;width:auto;margin:0}
 #learning-observation-page .obs-sec{margin-top:1rem}
@@ -174,8 +184,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-chips .obs-inline{border:0}
 #learning-observation-page .obs-chips .obs-inline:placeholder-shown{display:none}
 #learning-observation-page .obs-area .obs-photos{display:flex;flex-wrap:nowrap;align-items:stretch;gap:2px;margin:2px 0 0;padding:0}
-#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:22mm}
-#learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
+#learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:var(--aph,22mm)}
+#learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:100%;max-width:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
+#learning-observation-page .obs-area-tools,#learning-observation-page .obs-area-edit{display:none!important}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:42mm;overflow:hidden}
 #learning-observation-page .obs-act-label{white-space:nowrap;writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
 #learning-observation-page .obs-act-label h3{margin:0}
@@ -1232,7 +1243,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 
           <div class="paper-card rounded-3xl p-6 shadow-card" x-show="adminTab==='acct'">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🔑</span> 登入紀錄查詢</h2>
+              <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">🔑</span> 登入紀錄查詢 <span class="text-xs font-normal text-wood-dark/60">（保留最近 20 天）</span></h2>
               <div class="flex items-center gap-2">
                 <input x-model="loginSearchText" @input="loginLogsShowAll=false" @input.debounce.600ms="searchLoginLogs()" @keydown.enter.prevent="searchLoginLogs()" placeholder="輸入姓名或 Email 查詢" class="rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm w-56">
                 <button type="button" @click="searchLoginLogs()" :disabled="loginSearching" class="px-4 py-2 rounded-xl bg-sage text-paper text-sm font-bold hover:bg-sage-dark transition disabled:opacity-50" x-text="loginSearching ? '查詢中…' : '🔍 查詢'"></button>
@@ -1325,6 +1336,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <h2 class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl">🩺</span> 衛教宣導紀錄</h2>
     </div>
     <div class="flex flex-wrap gap-2">
+      <button type="button" class="he-btn" data-he="print">🖨️ 列印</button>
       <button type="button" class="he-btn" data-he="new">＋ 新增一份</button>
     </div>
   </div>
@@ -1336,7 +1348,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 
   <div data-hepanel="saved" hidden class="paper-card rounded-3xl p-6 shadow-card">
     <h3 class="font-heading font-bold text-sm">🗂️ 已儲存的衛教宣導 <span id="he-saved-sub" class="he-hint"></span></h3>
-    <p class="he-hint mt-1">自己的紀錄可以開啟編輯、刪除；其他老師的紀錄只能檢視。管理員按「已閱」後才能列印和上傳雲端硬碟。</p>
+    <p class="he-hint mt-1">自己的紀錄可以開啟編輯、刪除；其他老師的紀錄只能檢視。每份都可以列印；管理員按「已閱」後才能上傳雲端硬碟。</p>
     <div id="he-list" class="mt-3 space-y-2"></div>
   </div>
 
@@ -1407,7 +1419,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <div class="flex flex-wrap items-center gap-3">
         <button type="submit" class="he-btn he-pri" id="he-save">💾 儲存</button>
         <button type="button" class="he-btn" data-he="submit" id="he-submit">📨 送出通知管理員</button>
-        <button type="button" class="he-btn" data-he="print">🖨️ 列印／存成 PDF</button>
+        <button type="button" class="he-btn" data-he="print">🖨️ 列印</button>
         <button type="button" class="he-btn" data-he="upload">☁️ 上傳雲端硬碟</button>
         <span id="he-status" class="text-sm font-bold"></span>
       </div>
@@ -1490,7 +1502,22 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
     <div class="obs-block obs-areas-block paper-card rounded-3xl p-6 shadow-card">
       <h3 class="obs-ch-title font-heading font-bold text-sm mb-3">今天我挑戰的學習區是…… <span class="no-print text-[11px] font-normal text-wood-dark/50">勾選後可上傳該區照片</span></h3>
-      <div class="obs-areas"><div class="obs-arow"><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="語文區"><span>語文區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="語文區" hidden></label><div class="obs-photos" data-area-preview="語文區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="數學區"><span>數學區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="數學區" hidden></label><div class="obs-photos" data-area-preview="數學區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="積木區"><span>積木區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="積木區" hidden></label><div class="obs-photos" data-area-preview="積木區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="組合建構區"><span>組合建構區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="組合建構區" hidden></label><div class="obs-photos" data-area-preview="組合建構區" data-area-extra hidden></div></div></div><div class="obs-arow"><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="美勞區"><span>美勞區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="美勞區" hidden></label><div class="obs-photos" data-area-preview="美勞區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="生活自理區"><span>生活自理區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="生活自理區" hidden></label><div class="obs-photos" data-area-preview="生活自理區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="鬆散素材區"><span>鬆散素材區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="鬆散素材區" hidden></label><div class="obs-photos" data-area-preview="鬆散素材區" data-area-extra hidden></div></div><div class="obs-area"><label class="obs-chip obs-box"><input type="checkbox" name="learningAreas" value="扮演區"><span>扮演區</span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple data-area-photo="扮演區" hidden></label><div class="obs-photos" data-area-preview="扮演區" data-area-extra hidden></div></div></div></div>
+      <div class="obs-area-tools no-print">
+        <button type="button" class="obs-mini" data-action="edit-areas">✏️ 編輯學習區（新增／修改／刪除）</button>
+        <label class="obs-aph">📐 學習區照片大小 <input type="range" name="areaPhotoSize" min="14" max="50" step="1" value="22"> <b data-aph-val>22</b> mm</label>
+      </div>
+      <div class="obs-area-edit no-print" id="obs-area-edit" hidden>
+        <p class="text-[11px] text-wood-dark/60 mb-2">修改名稱後按「完成」儲存；學習區清單會記在您的帳號，換電腦也一樣。已儲存的紀錄不受影響。</p>
+        <div id="obs-area-rows" class="space-y-1"></div>
+        <div class="flex flex-wrap gap-2 mt-2 items-center">
+          <input type="text" id="obs-area-new" class="obs-input" placeholder="輸入新的學習區名稱" style="width:14rem;margin:0">
+          <button type="button" class="obs-mini" data-action="area-add">＋ 新增</button>
+          <button type="button" class="obs-mini" data-action="area-reset">恢復預設</button>
+          <button type="button" class="obs-mini obs-mini-pri" data-action="area-done">完成</button>
+          <span id="obs-area-msg" class="text-[11px] font-bold"></span>
+        </div>
+      </div>
+      <div class="obs-areas" id="obs-areas"></div>
     </div>
     <div class="obs-block paper-card rounded-3xl p-6 shadow-card">
       <label for="observation-note" class="text-sm font-bold text-wood-dark/80">在操作過程中……</label>
@@ -2063,11 +2090,23 @@ function blocksOf(u,top,pageH){
  const out=[],R=e=>{const b=e.getBoundingClientRect();return[b.top-top,b.bottom-top]};
  const walk=el=>{for(const c of el.children){const v=c.ownerDocument.defaultView.getComputedStyle(c);if(v.display==="none"||v.position==="absolute"||v.position==="fixed")continue;
   if(c.tagName==="TABLE"){const hd=c.tHead?R(c.tHead):null;let first=true;
-   for(const bd of c.tBodies)for(const tr of bd.rows){const r=R(tr);out.push({t:first&&hd?hd[0]:r[0],b:r[1],hd:first?null:hd});first=false}
-   if(first){const r=R(c);out.push({t:r[0],b:r[1]})}continue}
+   for(const bd of c.tBodies)for(const tr of bd.rows){const r=R(tr);out.push({t:first&&hd?hd[0]:r[0],b:r[1],hd:first?null:hd,node:tr,tbl:c,first});first=false}
+   if(first){const r=R(c);out.push({t:r[0],b:r[1],node:c})}continue}
   const r=R(c);if(r[1]-r[0]>pageH&&c.querySelector("table")){walk(c);continue}
-  out.push({t:r[0],b:r[1],keep:/^H[1-6]$/.test(c.tagName)||c.matches(".in-h,.in-title"),kp:c.matches(".diff")})}};
+  out.push({t:r[0],b:r[1],node:c,keep:/^H[1-6]$/.test(c.tagName)||c.matches(".in-h,.in-title"),kp:c.matches(".diff")})}};
  walk(u);return out.filter(x=>x.b>x.t)}
+function buildPage(u,items){ /* 把這一頁要放的元素複製成一個獨立的頁面區塊（保留原本的外層 class，CSS 才會一樣） */
+ const box=u.cloneNode(false),map=new Map();box.removeAttribute("id");box.style.width=u.style.width;box.style.boxSizing="border-box";map.set(u,box);
+ const host=el=>{if(map.has(el))return map.get(el);const p=host(el.parentNode),c=el.cloneNode(false);c.removeAttribute("id");p.appendChild(c);map.set(el,c);return c};
+ for(const it of items){
+  if(it.tbl){let t=map.get(it.tbl);
+   if(!t){t=it.tbl.cloneNode(false);host(it.tbl.parentNode).appendChild(t);map.set(it.tbl,t);
+    Array.from(it.tbl.children).forEach(ch=>{if(ch.tagName==="COLGROUP"||ch.tagName==="CAPTION")t.appendChild(ch.cloneNode(true))});
+    if(it.tbl.tHead)t.appendChild(it.tbl.tHead.cloneNode(true));
+    t.appendChild(u.ownerDocument.createElement("tbody"))}
+   t.lastElementChild.appendChild(it.node.cloneNode(true))}
+  else host(it.node.parentNode).appendChild(it.node.cloneNode(true))}
+ return box}
 function paginate(bl,pageH){
  const pages=[];if(!bl.length)return pages;let cur={s:bl[0].t,e:bl[0].t,hd:null};
  const hh=p=>p.hd?p.hd[1]-p.hd[0]:0,fits=(p,b)=>hh(p)+(b.b-p.s)<=pageH;
@@ -2104,19 +2143,21 @@ async function htmlToPdf(html,o){
    if(fitU&&u.matches(".gmfit")){u.style.width=wpx+"px";const pgx=chmm*MM,ims=u.querySelectorAll("td.ph img"),pds=u.querySelectorAll("td.ph"),setp=(cm,pad)=>{ims.forEach(im=>{im.style.maxHeight=cm+"cm";im.style.maxWidth="98%"});pds.forEach(td=>{td.style.paddingTop=td.style.paddingBottom=pad+"px"})};let lo=1.2,hi=12;setp(lo,3);const okx=u.offsetHeight<=pgx;if(okx&&ims.length){for(let k=0;k<14;k++){const mid=(lo+hi)/2;setp(mid,mid>3.2?8:3);if(u.offsetHeight<=pgx)lo=mid;else hi=mid}setp(lo,lo>3.2?8:3)}if(!okx){setp(5.6,8);fitU=false}}
    if(fitU){const pg=chmm*MM,vis=zz=>{u.style.width=Math.round(wpx/zz)+"px";return u.offsetHeight*zz};if(vis(1)>pg){let lo=.4,hi=1;for(let k=0;k<9;k++){const mid=(lo+hi)/2;if(vis(mid)<=pg)lo=mid;else hi=mid}z=lo;vis(z)}}else{u.style.width=wpx+"px"}
    if(!fitU&&o.keepRows){
-    /* 依「列」分頁：同一列（同一欄位）不會被切成兩頁；換頁時自動重複表頭；照片太大時先縮小照片 */
-    const pageHpx=chmm*MM,win=fr.contentWindow;shrinkRows(u,pageHpx);await new Promise(r=>setTimeout(r,60));
-    const rc=u.getBoundingClientRect(),top=rc.top,W=u.offsetWidth,H=u.offsetHeight,ox=rc.left+win.scrollX,oy=top+win.scrollY;
-    const snap=(y0,y1)=>window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:wpx,x:ox,y:oy+y0,width:W,height:Math.max(1,Math.ceil(y1-y0))});
-    const hc={};
-    for(const pg of paginate(blocksOf(u,top,pageHpx),pageHpx)){
-     const segs=[];if(pg.hd)segs.push([pg.hd[0],pg.hd[1]+1,1]);segs.push([pg.s,Math.min(H,pg.e+2),0]);
-     const cvs=[];for(const g of segs){const key=g[0]+"_"+g[1];if(g[2]&&hc[key]){cvs.push(hc[key]);continue}const c=await snap(g[0],g[1]);if(g[2])hc[key]=c;cvs.push(c)}
-     const out=document.createElement("canvas");out.width=cvs[0].width;out.height=cvs.reduce((a,c)=>a+c.height,0);
-     const cx=out.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,out.width,out.height);let yy=0;for(const c of cvs){cx.drawImage(c,0,yy);yy+=c.height}
-     const hcss=segs.reduce((a,g)=>a+(g[1]-g[0]),0),k=Math.min(1,pageHpx/hcss);
-     if(!first)pdf.addPage();first=false;
-     pdf.addImage(out.toDataURL("image/jpeg",0.9),"JPEG",m+(cw-cw*k)/2,m,cw*k,hcss/W*cw*k)}
+    /* 依「列」分頁：同一列（同一欄位）不會被切成兩頁；換頁時自動重複表頭；照片太大時先縮小照片。
+       每一頁先在畫面上組成獨立區塊再整塊轉成圖片，不用裁切，文字與照片不會被切到或位移。 */
+    const pageHpx=chmm*MM;shrinkRows(u,pageHpx);await new Promise(r=>setTimeout(r,60));
+    const top=u.getBoundingClientRect().top,bl=blocksOf(u,top,pageHpx);
+    for(const pg of paginate(bl,pageHpx)){
+     const items=bl.filter(x=>x.t>=pg.s-0.5&&x.b<=pg.e+0.5);if(!items.length)continue;
+     const box=buildPage(u,items);box.style.paddingBottom="3px";u.parentNode.insertBefore(box,u.nextSibling);
+     await Promise.all(Array.from(box.querySelectorAll("img")).map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;setTimeout(r,8000)})));
+     try{
+      const W=box.offsetWidth,hcss=box.offsetHeight;
+      const cv=await window.html2canvas(box,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:wpx});
+      const k=Math.min(1,pageHpx/hcss);
+      if(!first)pdf.addPage();first=false;
+      pdf.addImage(cv.toDataURL("image/jpeg",0.9),"JPEG",m+(cw-cw*k)/2,m,cw*k,cv.height/cv.width*cw*k)
+     }finally{box.remove()}}
     continue}
    const cv=await window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:Math.round(wpx/z)});
    const W=u.offsetWidth,H=u.offsetHeight,sc=cv.width/W,pageHpx=chmm*MM,top=u.getBoundingClientRect().top;
@@ -2916,7 +2957,8 @@ function kgApp() {
           if (this.isAdmin && !this._nameFixDone && this.members.length) { this._nameFixDone = true; setTimeout(() => this.fixMemberNames(true), 800); }
         }, this.snapErr('讀取帳號名單發生問題')));
         this.unsubs.push(this.db.collection('deleteLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.deleteLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, this.snapErr('讀取刪除紀錄發生問題')));
-        this.unsubs.push(this.db.collection('loginLogs').orderBy('createdAt','desc').limit(300).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
+        const LOG_KEEP = 20 * 86400000; this.cleanLoginLogs(LOG_KEEP);
+        this.unsubs.push(this.db.collection('loginLogs').where('createdAt', '>=', Date.now() - LOG_KEEP).orderBy('createdAt','desc').limit(3000).onSnapshot(s => { this.loginLogsError = ''; this.loginLogs = s.docs.map(d => ({ id:d.id, ...d.data() })); }, (err) => { console.error('讀取登入紀錄失敗', err); this.loginLogsError = (err && err.code) || (err && err.message) || 'unknown'; }));
       }
     },
 
@@ -3026,6 +3068,17 @@ function kgApp() {
       if (this.loginSearchedKw.toLowerCase() === kw) this.loginDbResults.forEach(l => map.set(l.id, l));
       return [...map.values()].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     },
+    async cleanLoginLogs(keep) { // 管理員登入時，自動刪除超過 20 天的登入紀錄（每次開啟系統做一次）
+      if (!this.isAdmin || !this.db || this._logCleaned) return; this._logCleaned = true;
+      try {
+        for (let k = 0; k < 10; k++) {
+          const s = await this.db.collection('loginLogs').where('createdAt', '<', Date.now() - keep - 3600000).limit(400).get();
+          if (s.empty) break;
+          const b = this.db.batch(); s.docs.forEach(d => b.delete(d.ref)); await b.commit();
+          if (s.size < 400) break;
+        }
+      } catch (e) { console.warn('清除舊登入紀錄失敗（請確認 Firestore 規則已允許管理員刪除 20 天前的 loginLogs）', e); }
+    },
     async searchLoginLogs() {
       const kw = this.loginSearchText.trim();
       this.loginLogsShowAll = false;
@@ -3040,7 +3093,8 @@ function kgApp() {
         const map = new Map();
         snaps.forEach(sn => sn.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() })));
         if (kw !== this.loginSearchText.trim()) { this.loginSearching = false; return; } // 輸入已變更，丟棄過時結果
-        this.loginDbResults = [...map.values()].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+        const cut = Date.now() - 20 * 86400000;
+        this.loginDbResults = [...map.values()].filter(l => (l.createdAt || 0) >= cut).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
         this.loginSearchedKw = kw;
       } catch (e) {
         console.error('查詢登入紀錄失敗', e);
@@ -4132,6 +4186,8 @@ function kgApp() {
     if (!snap.exists) throw new Error('找不到這筆紀錄');
     const d = snap.data(), ps = await ref.collection('photos').get();
     resetForm();
+    ensureAreas([...(d.learningAreas || []), ...ps.docs.map(p => p.data().area)]);
+    if (form.elements.areaPhotoSize) { form.elements.areaPhotoSize.value = d.areaPhotoSize || 22; applyAph(); }
     const setSel = (sid, mid, v) => { const s = $(sid), m = $(mid); if (!s || !v) return; if (Array.from(s.options).some(o => o.value === v)) s.value = v; else { s.value = '__manual__'; if (m) m.value = v; } };
     const txt = (n, v) => { const e = form.elements[n]; if (e) e.value = v || ''; };
     setSel('#observation-class', '#observation-class-manual', d.className);
@@ -4274,28 +4330,151 @@ function kgApp() {
   }
 
   /* ---- 學習區與照片 ---- */
-  function syncAreas() { // 卡片一直可見，勾選後才顯示上傳按鈕與預覽（舊版整張卡片被隱藏，勾不到）
+  function syncAreas() { // 卡片一直可見，勾選後才顯示上傳按鈕與預覽
     $$('.obs-area').forEach(c => {
-      const on = $('input[name="learningAreas"]', c).checked;
+      const cb = $('input[name="learningAreas"]', c); if (!cb) return;
+      const on = cb.checked;
       c.classList.toggle('is-on', on);
       $$('[data-area-extra]', c).forEach(n => { n.hidden = !on; });
     });
   }
   const setAr = (im, w) => { const f = () => w.style.setProperty('--ar', (im.naturalWidth / im.naturalHeight).toFixed(3)); if (im.complete && im.naturalWidth) f(); else im.onload = f; }; // 照片格子依照片長寬比調整，不裁切
+
+  /* ---- 學習區清單：老師可新增、修改、刪除（存在 obsPrefs/{uid}，本機也留一份） ---- */
+  const DEF_AREAS = ['語文區', '數學區', '積木區', '組合建構區', '美勞區', '生活自理區', '鬆散素材區', '扮演區'];
+  let areaList = DEF_AREAS.slice(), areaEdit = null, areaPrefUid = '';
+  const areaKey = () => 'obsAreas_' + ((fbUser() || {}).uid || 'local');
+  function cleanAreas(a) { return Array.from(new Set((a || []).map(x => String(x || '').trim()).filter(x => x && x !== ACT))); }
+  function areaMsg(t, bad) { const e = $('#obs-area-msg'); if (e) { e.textContent = t; e.style.color = bad ? '#b03a2e' : '#2f6e4f'; } }
+  function setCellName(c, a) {
+    c.dataset.area = a;
+    $('input[name="learningAreas"]', c).value = a; $('.obs-chip span', c).textContent = a;
+    $('input[type="file"]', c).dataset.areaPhoto = a; $('.obs-photos', c).dataset.areaPreview = a;
+  }
+  function mkCell(a) {
+    const c = document.createElement('div'); c.className = 'obs-area';
+    c.innerHTML = '<label class="obs-chip obs-box"><input type="checkbox" name="learningAreas"><span></span></label><label class="obs-upload no-print" data-area-extra hidden>📷 上傳照片<input type="file" accept="image/*" multiple hidden></label><div class="obs-photos" data-area-extra hidden></div>';
+    setCellName(c, a);
+    $('input[name="learningAreas"]', c).addEventListener('change', syncAreas);
+    const inp = $('input[type="file"]', c);
+    inp.addEventListener('change', () => {
+      const area = c.dataset.area, pv = $('.obs-photos', c);
+      pv.querySelectorAll('.obs-ph[data-new]').forEach(n => n.remove());
+      Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
+        const u = URL.createObjectURL(f); photoUrls.push(u);
+        const im = document.createElement('img'); im.src = u; im.alt = area + '：' + f.name;
+        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); setAr(im, w);
+      });
+    });
+    return c;
+  }
+  function buildAreas(list) { // 重排格子；原本的格子（勾選、已選照片）會保留
+    const box = $('#obs-areas'); if (!box) return;
+    const old = new Map($$('.obs-area[data-area]', box).map(c => [c.dataset.area, c]));
+    const cells = list.map(a => old.get(a) || mkCell(a));
+    box.innerHTML = '';
+    for (let i = 0; i < cells.length; i += 4) {
+      const row = document.createElement('div'); row.className = 'obs-arow';
+      cells.slice(i, i + 4).forEach(c => row.appendChild(c));
+      while (row.children.length < 4) { const e = document.createElement('div'); e.className = 'obs-area obs-empty'; row.appendChild(e); }
+      box.appendChild(row);
+    }
+    syncAreas();
+  }
+  function ensureAreas(extra) { const add = cleanAreas(extra).filter(a => !areaList.includes(a)); buildAreas(areaList.concat(add)); }
+  function applyAph() {
+    const r = form && form.elements.areaPhotoSize; if (!r) return;
+    const v = Math.max(14, Math.min(50, +r.value || 22)); r.value = v;
+    const blk = $('.obs-areas-block'); if (blk) blk.style.setProperty('--aph', v + 'mm');
+    const t = $('[data-aph-val]'); if (t) t.textContent = v;
+  }
+  async function loadAreaPrefs() {
+    const u = fbUser(); if (!u || areaPrefUid === u.uid) return; areaPrefUid = u.uid;
+    try { const loc = JSON.parse(localStorage.getItem(areaKey()) || 'null'); if (Array.isArray(loc) && loc.length) { areaList = cleanAreas(loc); if (!editing) buildAreas(areaList); } } catch (e) {}
+    try {
+      const d = await firebase.firestore().collection('obsPrefs').doc(u.uid).get();
+      if (d.exists && Array.isArray(d.data().areas) && d.data().areas.length) {
+        areaList = cleanAreas(d.data().areas); try { localStorage.setItem(areaKey(), JSON.stringify(areaList)); } catch (e) {}
+        if (editing) ensureAreas([]); else buildAreas(areaList);
+      }
+    } catch (e) { console.warn('讀取學習區清單失敗', e); }
+  }
+  async function saveAreaPrefs() {
+    try { localStorage.setItem(areaKey(), JSON.stringify(areaList)); } catch (e) {}
+    const u = fbUser(); if (!u) return true;
+    try { await firebase.firestore().collection('obsPrefs').doc(u.uid).set({ areas: areaList, updatedAt: Date.now() }); return true; }
+    catch (e) { console.warn(e); areaMsg('已存在這台電腦；雲端儲存失敗（' + (e.code || e.message) + '），請管理員更新 Firestore 規則。', true); return false; }
+  }
+  function drawAreaEdit() {
+    const box = $('#obs-area-rows'); box.innerHTML = '';
+    areaEdit.forEach((x, i) => {
+      const row = document.createElement('div'); row.className = 'obs-arow-ed';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'obs-input'; inp.value = x.name;
+      inp.addEventListener('input', e => { e.stopPropagation(); x.name = inp.value; });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+      const up = mkBtn('↑', () => { if (i > 0) { [areaEdit[i - 1], areaEdit[i]] = [areaEdit[i], areaEdit[i - 1]]; drawAreaEdit(); } }); up.className = 'obs-mini'; up.title = '往前移';
+      const dn = mkBtn('↓', () => { if (i < areaEdit.length - 1) { [areaEdit[i + 1], areaEdit[i]] = [areaEdit[i], areaEdit[i + 1]]; drawAreaEdit(); } }); dn.className = 'obs-mini'; dn.title = '往後移';
+      const del = mkBtn('✕ 刪除', () => {
+        const c = $$('.obs-area[data-area]').find(c => c.dataset.area === x.orig);
+        const busy = c && ($('input[name="learningAreas"]', c).checked || $('.obs-photos', c).children.length);
+        if (busy && !confirm('「' + x.orig + '」目前已勾選或有照片，刪除後這張表單上的勾選與照片會移除，確定嗎？')) return;
+        areaEdit.splice(i, 1); drawAreaEdit();
+      }); del.className = 'obs-mini'; del.style.color = '#b03a2e';
+      row.append(inp, up, dn, del); box.appendChild(row);
+    });
+  }
+  function initAreaEdit() {
+    $('[data-action="edit-areas"]').addEventListener('click', () => {
+      const p = $('#obs-area-edit');
+      if (!p.hidden) { p.hidden = true; return; }
+      areaEdit = $$('.obs-area[data-area]').map(c => ({ name: c.dataset.area, orig: c.dataset.area }));
+      drawAreaEdit(); areaMsg(''); p.hidden = false;
+    });
+    const nw = $('#obs-area-new');
+    const add = () => { const v = nw.value.trim(); if (!v) return; if (areaEdit.some(x => x.name.trim() === v)) { areaMsg('已經有「' + v + '」了', true); return; } areaEdit.push({ name: v, orig: '' }); nw.value = ''; drawAreaEdit(); areaMsg(''); };
+    nw.addEventListener('input', e => e.stopPropagation());
+    nw.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    $('[data-action="area-add"]').addEventListener('click', add);
+    $('[data-action="area-reset"]').addEventListener('click', () => {
+      if (!confirm('恢復成預設的 8 個學習區嗎？')) return;
+      const cur = new Set(areaEdit.map(x => x.orig));
+      areaEdit = DEF_AREAS.map(a => ({ name: a, orig: cur.has(a) ? a : '' })); drawAreaEdit();
+    });
+    $('[data-action="area-done"]').addEventListener('click', async () => {
+      const names = areaEdit.map(x => x.name.trim());
+      if (names.some(n => !n)) { areaMsg('學習區名稱不能空白', true); return; }
+      if (names.includes(ACT)) { areaMsg('「' + ACT + '」是保留名稱，請換一個', true); return; }
+      if (new Set(names).size !== names.length) { areaMsg('有重複的學習區名稱', true); return; }
+      const cells = new Map($$('.obs-area[data-area]').map(c => [c.dataset.area, c]));
+      areaEdit.forEach(x => { // 改名：同一格子跟著改，已選的照片也一起
+        if (!x.orig || x.orig === x.name.trim()) return; const c = cells.get(x.orig); if (!c) return;
+        setCellName(c, x.name.trim()); $$('.obs-ph img', c).forEach(im => { im.alt = im.alt.replace(x.orig, x.name.trim()); });
+        if (editing && editing.existing) editing.existing.forEach(p => { if (p.area === x.orig) { if (!p.area0) p.area0 = x.orig; p.area = x.name.trim(); } });
+      });
+      const keep = new Set(areaEdit.map(x => x.orig).filter(Boolean));
+      if (editing && editing.existing) editing.existing.forEach(p => { if (p.area !== ACT && !names.includes(p.area) && !keep.has(p.area)) editing.removed.add(p.id); });
+      areaList = cleanAreas(names); buildAreas(areaList);
+      const ok = await saveAreaPrefs();
+      $('#obs-area-edit').hidden = true; form.dispatchEvent(new Event('input'));
+    });
+  }
   function initAreas() {
-    $$('[data-area-photo]').forEach(inp => inp.addEventListener('change', () => {
+    try { const loc = JSON.parse(localStorage.getItem(areaKey()) || 'null'); if (Array.isArray(loc) && loc.length) areaList = cleanAreas(loc); } catch (e) {}
+    buildAreas(areaList);
+    $$('[data-area-photo="' + ACT + '"]').forEach(inp => inp.addEventListener('change', () => {
       const a = inp.dataset.areaPhoto, pv = $('[data-area-preview="' + CSS.escape(a) + '"]'); if (!pv) return;
       pv.querySelectorAll('.obs-ph[data-new]').forEach(n => n.remove());
       Array.from(inp.files || []).filter(f => f.type.startsWith('image/')).forEach(f => {
         const u = URL.createObjectURL(f); photoUrls.push(u);
         const im = document.createElement('img'); im.src = u; im.alt = a + '：' + f.name;
-        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); setAr(im, w); // 包一層，列印時才能依頁面剩餘空間等比放大
+        const w = document.createElement('span'); w.className = 'obs-ph'; w.dataset.new = '1'; w.appendChild(im); pv.appendChild(w); setAr(im, w);
       });
     }));
     const apv = $('[data-area-preview="學習區活動紀錄"]'), act = $('.obs-act'); // 有活動照片時，列印讓照片撐滿頁面剩餘空間
     if (apv && act) new MutationObserver(() => { act.classList.toggle('has-photos', apv.children.length > 0); apv.classList.toggle('many', apv.children.length > 2); }).observe(apv, { childList: true });
-    $$('input[name="learningAreas"]').forEach(c => c.addEventListener('change', syncAreas));
-    syncAreas();
+    initAreaEdit();
+    form.elements.areaPhotoSize.addEventListener('input', applyAph);
+    applyAph();
   }
   // 只收「已勾選學習區」的照片，取消勾選的區不會偷偷上傳
   const ACT = '學習區活動紀錄';
@@ -4310,6 +4489,7 @@ function kgApp() {
     d.semester = semOf(d.observationDate);
     d.sharedWith = [...shareSel].map(x => String(x).toLowerCase());
     d.learningAreas = $$('input[name="learningAreas"]:checked', f).map(e => e.value);
+    d.areaPhotoSize = Math.max(14, Math.min(50, +d.areaPhotoSize || 22));
     d.performances = $$('input[name="performances"]:checked', f).map(e => e.value);
     d.indicator = { age: d.indicatorAge || '', category: d.indicatorCategory || '', item: d.indicatorItem || '', level: d.indicatorLevel || '' };
     delete d.indicatorLevel; delete d.indicatorAge; delete d.indicatorCategory; delete d.indicatorItem;
@@ -4363,6 +4543,7 @@ function kgApp() {
         const body = { ...payload }; if (edit.owner === false) delete body.sharedWith; // 被分享的老師不能改分享名單
         await docRef.update({ ...body, ...meta, updatedAt: TS });
         await Promise.all(edit.existing.filter(p => edit.removed.has(p.id)).map(p => docRef.collection('photos').doc(p.id).delete().catch(() => {})));
+        await Promise.all(kept.filter(p => p.area0 && p.area0 !== p.area).map(p => docRef.collection('photos').doc(p.id).update({ area: p.area }).catch(() => {})));
       } else { // 新增：先寫主文件（子集合規則要靠它判斷本人），再寫照片
         await docRef.set({ ...payload, ...meta, uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos', createdAt: TS, updatedAt: TS });
         await writePhotos();
@@ -4382,6 +4563,7 @@ function kgApp() {
     $$('[data-area-photo]', form).forEach(i => { i.value = ''; });
     $$('[data-area-preview]', form).forEach(p => { p.innerHTML = ''; });
     photoUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
+    buildAreas(areaList); applyAph(); $('#obs-area-edit').hidden = true;
     syncAreas(); refreshRoster(true); growChallenge();
     $('input[name="observationDate"]').value = today();
     const b = $('#observation-save'); b.disabled = false; b.textContent = saveLabel(); updateEditUI();
@@ -4447,7 +4629,7 @@ function kgApp() {
   function sync(el, data, sig, active) {
     app = data;
     if (page !== el) mount(el);
-    if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); }
+    if (active) { refreshRoster(); subscribe(); subscribeSaved(); loadTeachers(); syncMarks(); growChallenge(); loadAreaPrefs(); }
   }
   // 列印時只留下觀察表（隱藏頂端列、頁尾與浮動元件）
   window.addEventListener('beforeprint', () => { if (page && page.offsetParent !== null) { setTab('fill'); printTitle(); growChallenge(); printFit(true); document.body.classList.add('obs-printing'); } });
@@ -4584,8 +4766,9 @@ function kgApp() {
     $('#he-save').hidden = R;
     const sb = $('#he-submit'); sb.hidden = R || (st === 'submitted' && !isDirty) || (st === 'read' && !isDirty);
     sb.textContent = st === 'returned' ? '📨 修改完成，重新送出' : '📨 送出通知管理員';
-    $$('[data-he="print"],[data-he="upload"]').forEach(b => { b.disabled = !canOut || (isDirty && !R); });
-    $('#he-gate').textContent = !canOut ? '管理員「已閱」後才能列印和上傳雲端硬碟。' : (isDirty && !R ? '有尚未儲存的修改，請先按「儲存」再列印或上傳。' : (rec && rec.driveUrl ? '' : ''));
+    $$('[data-he="print"]').forEach(b => { b.disabled = false; });
+    $$('[data-he="upload"]').forEach(b => { b.disabled = !editing || !canOut || (isDirty && !R); });
+    $('#he-gate').textContent = !editing ? '' : !canOut ? '管理員「已閱」後才能上傳雲端硬碟。' : (isDirty && !R ? '有尚未儲存的修改，請先按「儲存」再上傳雲端硬碟。' : '');
     if (rec && rec.driveUrl) $('#he-gate').innerHTML = `☁️ 已上傳雲端硬碟：<a href="${esc(rec.driveUrl)}" target="_blank" rel="noopener" style="color:#2F6271;text-decoration:underline">開啟檔案</a>${rec.driveAt ? '（' + new Date(rec.driveAt).toLocaleString('zh-TW', { hour12: false }) + '）' : ''}`;
     // 編輯列
     $('#he-editing').hidden = !editing;
@@ -4681,7 +4864,7 @@ function kgApp() {
         ${st === 'returned' && x.reviewNote ? `<div class="he-hint" style="color:#b03a2e;font-weight:700">↩️ 退件說明：${esc(x.reviewNote)}</div>` : ''}</div>
       <div class="flex flex-wrap gap-2">
         <button type="button" class="he-btn" data-heopen="${x.id}">${can ? (adm && st === 'submitted' ? '審閱／編輯' : '開啟編輯') : '👀 檢視'}</button>
-        ${adm || st === 'read' ? `<button type="button" class="he-btn" data-heprint="${x.id}">🖨️ 列印</button>` : ''}
+        <button type="button" class="he-btn" data-heprint="${x.id}">🖨️ 列印</button>
         ${x.driveUrl ? `<a class="he-btn" href="${esc(x.driveUrl)}" target="_blank" rel="noopener">☁️ 雲端檔案</a>` : ''}
         ${can ? `<button type="button" class="he-btn" data-hedel="${x.id}">刪除</button>` : ''}
       </div></div>`;
@@ -4767,8 +4950,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
     const w = window.open('', '_blank'); if (!w) { alert('瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次'); return; }
     w.document.write('<p style="font:16px sans-serif;padding:20px">載入中…</p>');
     try {
-      const r = await getRecAndPhotos(id); if (!r) { w.close(); alert('請先按「儲存」，再列印。'); return; }
-      if (!isAdmin() && stOf(r.o) !== 'read') { w.close(); alert('管理員「已閱」後才能列印。'); return; }
+      const r = id ? await getRecAndPhotos(id) : { o: collect(), ph: photos.map(p => p.data) }; // 沒指定紀錄時，直接印目前表單內容（未儲存也可以）
       w.document.open(); w.document.write(printHtml(r.o, r.ph, false)); w.document.close();
     } catch (e) { w.close(); alert('列印失敗：' + (e.code || e.message)); }
   }
@@ -4811,7 +4993,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
       const [y, m, d] = e.target.value.split('-').map(Number), sm = semOf(new Date(y, m - 1, d)); if (SEMS.includes(sm)) form.elements.sem.value = sm; dirty();
     });
     $$('[data-hetab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.hetab)));
-    $('[data-he="print"]').addEventListener('click', () => printRec());
+    $$('[data-he="print"]').forEach(b => b.addEventListener('click', () => printRec()));
     $('[data-he="upload"]').addEventListener('click', uploadRec);
     $('[data-he="submit"]').addEventListener('click', submitToAdmin);
     $('[data-he="approve"]').addEventListener('click', () => review('read'));
