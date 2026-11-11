@@ -92,6 +92,11 @@
 #learning-observation-page .obs-chips .obs-inline{flex:1;min-width:10rem;width:auto;margin:0}
 #learning-observation-page .obs-sec{margin-top:1rem}
 #learning-observation-page .obs-sign{display:flex;justify-content:flex-end;align-items:center;gap:.5rem;margin-top:.75rem}
+#learning-observation-page .obs-acls{margin-top:.9rem}#learning-observation-page .obs-acls>h4{font-weight:900;font-size:.9rem;color:#2F6271;margin-bottom:.35rem}
+#learning-observation-page .obs-atab{width:100%;border-collapse:collapse;font-size:.8rem}#learning-observation-page .obs-atab td,#learning-observation-page .obs-atab th{border:1px solid #EEE2CF;padding:.35rem .5rem;vertical-align:top;text-align:left}
+#learning-observation-page .obs-atab th{background:#FAF3E6;font-weight:800}#learning-observation-page .obs-atab td.k{white-space:nowrap;font-weight:800;width:7.5rem}
+#learning-observation-page .obs-arec{display:inline-flex;align-items:center;gap:.25rem;margin:.15rem .3rem .15rem 0;padding:.15rem .5rem;border:1px solid #E3D3BA;border-radius:999px;background:#FFFDF8;cursor:pointer;font-weight:700}
+#learning-observation-page .obs-arec:hover{background:#EAF3F1}#learning-observation-page .obs-arec .by{color:#2F6271}#learning-observation-page .obs-arec .x{color:#b03a2e;padding:0 .15rem}
 #learning-observation-page .obs-srow{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;border:2px solid #EEE2CF;border-radius:.75rem;background:#FFFDF8;font-size:.8rem;font-weight:700}
 #learning-observation-page .obs-srow.is-edit{border-color:#8FA37E;background:#F3F7EE}
 #learning-observation-page .obs-srow .s-t{flex:1;min-width:0}
@@ -1431,6 +1436,18 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <h4 class="font-heading font-bold text-sm mt-5">👥 分享給我的紀錄 <span class="text-[11px] font-normal text-wood-dark/60">可開啟並共同編輯</span></h4>
       <div id="obs-shared-list" class="mt-2 space-y-2"></div>
     </div>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card mt-4" id="obs-admin" hidden>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-heading font-bold text-sm">🏫 各班觀察紀錄（管理員） <span id="obs-adm-sum" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
+        <div class="flex flex-wrap gap-2 items-center">
+          <select id="obs-adm-cls" class="obs-input" style="width:auto;margin:0"></select>
+          <select id="obs-adm-sem" class="obs-input" style="width:auto;margin:0"></select>
+          <input id="obs-adm-q" type="search" placeholder="搜尋幼兒或儲存人" class="obs-input" style="width:12rem;margin:0">
+        </div>
+      </div>
+      <p class="text-[11px] text-wood-dark/60 mt-1">依班級、幼兒列出全部老師已儲存的觀察紀錄，每筆都標示儲存人。點日期即可開啟檢視／編輯。</p>
+      <div id="obs-adm-list" class="mt-3"></div>
+    </div>
     </div>
     <div data-obspanel="share" hidden>
     <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-share">
@@ -2451,7 +2468,7 @@ async function rvAct(kind){const o=cur;if(!o||!d.isAdmin)return;const note=Strin
   await col().doc(o.id).set(upd,{merge:true});Object.assign(o,upd)}catch(x){alert("操作失敗（"+(x.code||x.message)+"）");return}
  const msg=kind==="ok"?`✅ 週誌管理員已閱\n${who(o)} 老師您好\n${head}\n管理員已查看您送出的週誌${note?"\n\n管理員說明：\n"+note:""}`:`↩️ 週誌被退回，請修改\n退回給：${who(o)}\n退回者：${me}\n${head}\n原因：${note}\n請至系統「📝 週誌」修改後重新送出`;
  const wantLine=kind==="ret"||!!(root.querySelector("#wkrvline")||{}).checked;let tip=kind==="ok"?"（已閱預設不傳 LINE，老師開啟系統就會看到你的說明。）":"找不到老師的 Email，沒有傳 LINE。";if(wantLine&&toE&&d.notifyLineTo){try{tip=lineMsg(await d.notifyLineTo(toE,msg))}catch(x){tip="LINE 通知失敗："+(x.message||x)}}
- rvNote="";alert((kind==="ok"?"已標記已閱":"已退件")+"\n"+tip);render()}
+ rvNote="";clearTimeout(saveT);try{await flushCur()}catch(x){}viewOnly=false;cur=null;render();try{root.scrollIntoView({block:"start"})}catch(x){}setTimeout(()=>alert((kind==="ok"?"已標記已閱":"已退件")+"\n"+tip),50)}
 function dedupLogs(){const sent=l=>["submitted","reviewed","returned"].includes(l.status),key=l=>[l.kind||"",l.cls,l.dateFrom,l.dateTo].join("|"),best={};
  logs.filter(sent).forEach(l=>{const t=l.submittedAt||l.reviewedAt||l.returnedAt||l.createdAt||0;if(!best[key(l)]||t>best[key(l)].t)best[key(l)]={id:l.id,t}});
  const hid=new Set(logs.filter(l=>sent(l)&&best[key(l)].id!==l.id).map(l=>l.id));const cnt={};logs.filter(sent).forEach(l=>{cnt[key(l)]=(cnt[key(l)]||0)+1});return{arr:showOld?logs:logs.filter(l=>!hid.has(l.id)),n:hid.size,cnt}}
@@ -3986,7 +4003,7 @@ function kgApp() {
   }
 
   /* ---- 已儲存的紀錄：讀取、編輯、刪除 ---- */
-  let editing = null, saved = [], sharedIn = [], unSaved = null, unShared = null, unSavedUid = '';
+  let editing = null, saved = [], sharedIn = [], unSaved = null, unShared = null, unSavedUid = '', allObs = [], unAll = null, unAllUid = '', admCls = '', admSem = '', admQ = '';
   const saveLabel = () => (editing ? '更新觀察紀錄' : '儲存觀察紀錄');
   const mkBtn = (txt, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.addEventListener('click', fn); return b; };
   function setTab(k) { // 分頁：fill 填寫表單／saved 已儲存／share 分享設定
@@ -3998,7 +4015,64 @@ function kgApp() {
     const tx = $('#obs-edit-text'); if (tx) tx.textContent = editing ? '✏️ 編輯中：' + editing.title + (editing.owner ? '' : '（' + editing.ownerName + ' 分享給你，可共同編輯）') : '';
     renderSaved();
   }
+  function subscribeAll() { // 管理員：讀取全部老師的觀察紀錄
+    const u = fbUser(), key = u && isAdm() ? u.uid : '';
+    const box = $('#obs-admin'); if (box) box.hidden = !key;
+    if (key === unAllUid) return;
+    if (unAll) { unAll(); unAll = null; } unAllUid = key; allObs = [];
+    if (!key) return;
+    unAll = firebase.firestore().collection('learningObservations').onSnapshot(s => { allObs = s.docs.map(d => ({ id: d.id, ...d.data() })); renderAdmin(); },
+      e => { const el = $('#obs-adm-list'); if (el) el.textContent = '讀取失敗：' + (e.code || e.message); });
+  }
+  function renderAdmin() {
+    const box = $('#obs-adm-list'); if (!box || !isAdm()) return;
+    const by = x => x.userName || (x.userEmail || '').split('@')[0] || '（未知）';
+    const sems = Array.from(new Set(allObs.map(x => x.semester).filter(Boolean))).sort().reverse();
+    if (!admSem && sems.length) admSem = sems[0];
+    const ss = $('#obs-adm-sem'); ss.innerHTML = '<option value="*">全部學期</option>' + sems.map(v => '<option value="' + v + '">' + (typeof semLabel === 'function' ? semLabel(v) : v) + '</option>').join(''); ss.value = admSem || '*';
+    const inSem = allObs.filter(x => admSem === '*' || !admSem || x.semester === admSem);
+    const clsList = Array.from(new Set([...(app && app.classes || []), ...inSem.map(x => x.className || '（未填班級）')])).filter(Boolean).sort((a, b) => zh(a, b));
+    const cnt = c => inSem.filter(x => (x.className || '（未填班級）') === c).length;
+    const cs = $('#obs-adm-cls'); cs.innerHTML = '<option value="">全部班級（' + inSem.length + '）</option>' + clsList.map(c => '<option value="' + c.replace(/"/g, '&quot;') + '">' + c + '（' + cnt(c) + '）</option>').join(''); cs.value = admCls;
+    const q = admQ.trim();
+    const rows = inSem.filter(x => (!admCls || (x.className || '（未填班級）') === admCls) && (!q || [x.childName, by(x), x.userEmail].some(v => String(v || '').includes(q))));
+    $('#obs-adm-sum').textContent = '｜共 ' + rows.length + ' 筆';
+    box.innerHTML = '';
+    const showCls = admCls ? [admCls] : clsList;
+    let any = false;
+    showCls.forEach(c => {
+      const recs = rows.filter(x => (x.className || '（未填班級）') === c);
+      const names = Array.from(new Set([...(q ? [] : (roster[c] || [])), ...recs.map(x => x.childName || '（未填幼兒）')]));
+      if (!names.length) return; any = true;
+      const sec = document.createElement('div'); sec.className = 'obs-acls';
+      const h = document.createElement('h4'); h.textContent = c + '（' + recs.length + ' 筆｜' + new Set(recs.map(x => x.childName)).size + '／' + (roster[c] || []).length + ' 位幼兒有紀錄）'; sec.appendChild(h);
+      const tb = document.createElement('table'); tb.className = 'obs-atab';
+      tb.innerHTML = '<thead><tr><th>幼兒</th><th>觀察紀錄（日期・儲存人）</th></tr></thead>';
+      const body = document.createElement('tbody');
+      names.forEach(n => {
+        const tr = document.createElement('tr'), k = document.createElement('td'), v = document.createElement('td'); k.className = 'k'; k.textContent = n;
+        const mine = recs.filter(x => (x.childName || '（未填幼兒）') === n).sort((a, b) => String(a.observationDate || '').localeCompare(String(b.observationDate || '')));
+        if (!mine.length) { v.textContent = '尚無紀錄'; v.style.color = '#a08a6c'; }
+        mine.forEach(x => {
+          const chip = document.createElement('span'); chip.className = 'obs-arec'; chip.title = '開啟這筆紀錄（儲存人：' + by(x) + (x.userEmail ? '／' + x.userEmail : '') + '）';
+          const t = document.createElement('span'); t.textContent = (x.observationDate || '未填日期') + '・';
+          const b = document.createElement('span'); b.className = 'by'; b.textContent = by(x);
+          const ph = document.createElement('span'); ph.textContent = x.photoCount ? '📷' + x.photoCount : '';
+          const del = document.createElement('span'); del.className = 'x'; del.textContent = '✕'; del.title = '刪除這筆紀錄';
+          chip.append(t, b, ph, del);
+          chip.addEventListener('click', async e => {
+            try { if (e.target === del) await deleteRecord(x.id); else await loadRecord(x.id); } catch (er) { alert('操作失敗：' + (er.code || er.message)); }
+          });
+          v.appendChild(chip);
+        });
+        tr.append(k, v); body.appendChild(tr);
+      });
+      tb.appendChild(body); sec.appendChild(tb); box.appendChild(sec);
+    });
+    if (!any) box.textContent = '沒有符合的紀錄。';
+  }
   function subscribeSaved() {
+    subscribeAll();
     const u = fbUser(); if (!u || (unSaved && unSavedUid === u.uid)) return;
     if (unSaved) unSaved(); if (unShared) unShared();
     unSavedUid = u.uid;
@@ -4065,11 +4139,11 @@ function kgApp() {
     setTab('fill'); page.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function deleteRecord(id) {
-    const x = saved.find(s => s.id === id);
+    const x = saved.find(s => s.id === id) || allObs.find(s => s.id === id);
     if (!confirm('確定刪除「' + ((x && x.observationDate) || '') + ' ' + ((x && x.childName) || '') + '」這筆觀察紀錄（含照片）？刪除後無法復原。')) return;
     const db = firebase.firestore(), ref = db.collection('learningObservations').doc(id), u = fbUser();
     const ms = await db.collection('observationMarks').where('obsId', '==', id).get();
-    await Promise.all(ms.docs.filter(m => m.data().byUid === u.uid).map(m => m.ref.delete()));
+    await Promise.all(ms.docs.filter(m => m.data().byUid === u.uid || isAdm()).map(m => m.ref.delete()));
     const ps = await ref.collection('photos').get();
     await Promise.all(ps.docs.map(p => p.ref.delete()));
     await ref.delete();
@@ -4296,6 +4370,7 @@ function kgApp() {
     syncAreas(); refreshRoster(true); growChallenge();
     $('input[name="observationDate"]').value = today();
     const b = $('#observation-save'); b.disabled = false; b.textContent = saveLabel(); updateEditUI();
+    if (isAdm()) renderAdmin();
   }
 
   function growChallenge() { // 挑戰學習區欄位依內容自動長高（自動換行）
@@ -4339,6 +4414,10 @@ function kgApp() {
     $('#obs-share-q').addEventListener('input', (e) => { e.stopPropagation(); shareQ = e.target.value; renderShare(); });
     $('[data-action="cancel-edit"]').addEventListener('click', () => { if (confirm('放棄目前的修改並關閉編輯？')) { resetForm(); say(''); } });
     $$('[data-obstab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.obstab)));
+    $('#obs-adm-cls').addEventListener('change', e => { e.stopPropagation(); admCls = e.target.value; renderAdmin(); });
+    $('#obs-adm-sem').addEventListener('change', e => { e.stopPropagation(); admSem = e.target.value; renderAdmin(); });
+    $('#obs-adm-q').addEventListener('input', e => { e.stopPropagation(); admQ = e.target.value; renderAdmin(); });
+    $('#obs-adm-q').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
     $('[data-action="print-observation"]').addEventListener('click', () => { setTab('fill'); printTitle(); growChallenge(); printFit(true); document.body.classList.add('obs-printing'); window.print(); });
   }
 
