@@ -286,9 +286,10 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='health' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🩺 衛教宣導
+            <span x-show="isAdmin && healthPending.length>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="healthPending.length"></span>
           </button>
           <button x-show="isAdmin" @click="view='admin'"
-            x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount)>0 ? `(${adminPendingCount+weeklyPendingCount}) ` : '') + baseTitle"
+            x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount+healthPending.length)>0 ? `(${adminPendingCount+weeklyPendingCount+healthPending.length}) ` : '') + baseTitle"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='admin' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📋 管理者後台
@@ -1318,7 +1319,6 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <h2 class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl">🩺</span> 衛教宣導紀錄</h2>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="he-btn" data-he="print">🖨️ 列印／存成 PDF</button>
       <button type="button" class="he-btn" data-he="new">＋ 新增一份</button>
     </div>
   </div>
@@ -1330,21 +1330,32 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 
   <div data-hepanel="saved" hidden class="paper-card rounded-3xl p-6 shadow-card">
     <h3 class="font-heading font-bold text-sm">🗂️ 已儲存的衛教宣導 <span id="he-saved-sub" class="he-hint"></span></h3>
-    <p class="he-hint mt-1">點「開啟編輯」可讀取、修改、換照片，再按「更新」。</p>
+    <p class="he-hint mt-1">自己的紀錄可以開啟編輯、刪除；其他老師的紀錄只能檢視。管理員按「已閱」後才能列印和上傳雲端硬碟。</p>
     <div id="he-list" class="mt-3 space-y-2"></div>
   </div>
 
   <form id="he-form" data-hepanel="fill" class="space-y-4" novalidate autocomplete="off">
-    <div id="he-editing" hidden class="paper-card rounded-2xl px-5 py-3 shadow-card text-sm font-bold flex flex-wrap items-center justify-between gap-2" style="background:#EAF3F1">
-      <span>✏️ 正在編輯：<span id="he-editing-name"></span></span>
-      <button type="button" class="he-btn" data-he="cancel">結束編輯（改成新增）</button>
+    <div id="he-editing" hidden class="paper-card rounded-2xl px-5 py-3 shadow-card text-sm" style="background:#EAF3F1">
+      <div class="flex flex-wrap items-center justify-between gap-2 font-bold">
+        <span><span id="he-editing-mode">✏️ 正在編輯</span>：<span id="he-editing-name"></span> <span id="he-editing-st"></span></span>
+        <button type="button" class="he-btn" data-he="cancel">關閉（改成新增）</button>
+      </div>
+      <div id="he-note" hidden class="mt-2 p-2 rounded-lg" style="background:#FDECEA;color:#9b2c22;font-weight:700"></div>
+      <div id="he-review" hidden class="mt-3 p-3 rounded-xl" style="background:#FFFDF8;border:1px solid #E3D3BA">
+        <div class="he-lb">管理員審閱</div>
+        <textarea class="he-in" id="he-rv-note" rows="2" placeholder="退件說明（退件時必填；已閱可留白）"></textarea>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" class="he-btn he-pri" data-he="approve">✅ 已閱</button>
+          <button type="button" class="he-btn" data-he="return" style="color:#b03a2e">↩️ 退件</button>
+        </div>
+      </div>
     </div>
 
     <div class="paper-card rounded-3xl p-6 shadow-card space-y-4">
       <h3 class="font-heading font-bold text-sm">基本資料</h3>
       <div class="he-g2">
         <label class="block"><span class="he-lb">學年度／學期</span>
-          <input class="he-in" name="sem" placeholder="例：115 學年度上學期"></label>
+          <select class="he-in" name="sem"><option>115 學年度上學期</option><option>115 學年度下學期</option></select></label>
         <label class="block"><span class="he-lb">宣導主題 <span class="he-hint">（標題顯示為「○○ 宣導」）</span></span>
           <input class="he-in" name="topic" placeholder="例：表達情緒"></label>
       </div>
@@ -1354,7 +1365,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           <label class="he-hint flex items-center gap-1 mt-1">或從日曆選：<input type="date" id="he-datepick" style="font-size:12px;border:1px solid #E3D3BA;border-radius:6px;padding:1px 4px"></label></div>
         <div><span class="he-lb">二、活動時間 <span class="he-hint">（固定）</span></span><br>
           <span class="he-fixed">15:00-15:30</span></div>
-        <div><span class="he-lb">三、活動地點</span>
+        <div><span class="he-lb">三、活動地點 <span class="he-hint">（會印在第三點）</span></span>
           <select class="he-in" id="he-place-sel">
             <option value="">請選擇地點</option>
             <option>三樓活動室</option>
@@ -1370,9 +1381,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
 
     <div class="paper-card rounded-3xl p-6 shadow-card space-y-4">
-      <h3 class="font-heading font-bold text-sm">活動流程 <span class="he-hint">（時間固定 15:00-15:30；活動地點會自動帶入上面選的地點）</span></h3>
+      <h3 class="font-heading font-bold text-sm">活動流程 <span class="he-hint">（時間固定 15:00-15:30）</span></h3>
       <label class="block"><span class="he-lb">活動內容</span>
-        <textarea class="he-in" name="content" rows="10" placeholder="1. …&#10;2. …&#10;3. …"></textarea></label>
+        <textarea class="he-in" name="content" rows="14" placeholder="1. …&#10;2. …&#10;3. …"></textarea></label>
       <label class="block"><span class="he-lb">器材／道具</span>
         <textarea class="he-in" name="equip" rows="3"></textarea></label>
       <label class="block"><span class="he-lb">課程調整策略</span>
@@ -1385,13 +1396,16 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
 
     <div class="paper-card rounded-3xl p-6 shadow-card space-y-3">
-      <label class="block" style="max-width:20rem"><span class="he-lb">承辦人 <span class="he-hint">（可留白，列印後簽名）</span></span>
-        <input class="he-in" name="organizer"></label>
+      <label class="block" style="max-width:20rem"><span class="he-lb">承辦人</span>
+        <select class="he-in" name="organizer"><option value="">請選擇承辦人</option></select></label>
       <div class="flex flex-wrap items-center gap-3">
         <button type="submit" class="he-btn he-pri" id="he-save">💾 儲存</button>
+        <button type="button" class="he-btn" data-he="submit" id="he-submit">📨 送出通知管理員</button>
         <button type="button" class="he-btn" data-he="print">🖨️ 列印／存成 PDF</button>
+        <button type="button" class="he-btn" data-he="upload">☁️ 上傳雲端硬碟</button>
         <span id="he-status" class="text-sm font-bold"></span>
       </div>
+      <p id="he-gate" class="he-hint"></p>
     </div>
   </form>
 </section>
@@ -2584,7 +2598,7 @@ function kgApp() {
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
-    weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
+    weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
     teacherPick: '', pairs: [], newPairTeacher: '', newPairClass: '', pairPick: '',
     genres: ['遊戲書','韻文','故事','散文','知識概念','文化類'], cultureSubs: ['新年','母親節','端午節','中秋節','聖誕節'],
     exportGenres: [], exportSubs: [], classifyAll: false, classifyMore: false,
@@ -2839,6 +2853,19 @@ function kgApp() {
         this.laminateRequests = s.docs.map(d => ({ id:d.id, ...d.data() }));
         lamFirst = false;
       }, this.snapErr('讀取護貝膜申請發生問題')));
+      { // 衛教宣導：自己的紀錄被管理員已閱／退件時，系統通知（不傳 LINE）
+        let heMineFirst = true; const me = firebase.auth().currentUser;
+        if (me) this.unsubs.push(this.db.collection('healthEducation').where('uid', '==', me.uid).onSnapshot(s => {
+          if (!heMineFirst) s.docChanges().forEach(c => {
+            const x = c.doc.data(); if (c.type !== 'modified' || c.doc.metadata.hasPendingWrites || x.reviewedBy === (me.email || '').toLowerCase() || !x.reviewedAt || x.reviewedAt < Date.now() - 120000) return;
+            const t = x.status === 'returned' ? '衛教宣導被退件' : x.status === 'read' ? '衛教宣導管理員已閱' : ''; if (!t) return;
+            const body = x.status === 'returned' ? `「${x.topic || ''} 宣導」退件說明：${x.reviewNote || ''}` : `「${x.topic || ''} 宣導」現在可以列印和上傳雲端硬碟了`;
+            this.showToast(`🔔 ${t}：${body}`, 10000); this.playBeep(); this.flashTitle(t);
+            if (window.Notification && Notification.permission === 'granted') { try { new Notification(`教具借還系統 － ${t}`, { body: body + '。請至「衛教宣導」查看。', tag: 'he-' + c.doc.id, requireInteraction: true }); } catch (e) {} }
+          });
+          heMineFirst = false;
+        }, e => console.warn('讀取我的衛教宣導失敗', e)));
+      }
       if (this.isAdmin) {
         let memFirst = true;
         let wkFirst = true;
@@ -2846,6 +2873,11 @@ function kgApp() {
           if (!wkFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('週誌已送出', `${x.cls || ''}｜${x.submittedByName || x.ownerName || x.ownerEmail || x.teachers || '（未知帳號）'} 送出了一份週誌`); } });
           this.submittedWeekly = s.docs.map(d => d.id); wkFirst = false;
         }, this.snapErr('讀取週誌狀態發生問題')));
+        let heFirst = true;
+        this.unsubs.push(this.db.collection('healthEducation').where('status', '==', 'submitted').onSnapshot(s => {
+          if (!heFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('衛教宣導已送出', `${x.submittedByName || x.userName || x.userEmail || '（未知帳號）'} 送出了「${x.topic || ''} 宣導」`); } });
+          this.healthPending = s.docs.map(d => d.id); heFirst = false;
+        }, e => console.warn('讀取衛教宣導狀態失敗', e)));
         this.unsubs.push(this.db.collection('members').onSnapshot(s => {
           if (!memFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites && c.doc.data().status === 'pending') this.notifyAdmin('新的帳號申請', `${c.doc.data().name || ''}（${c.doc.id}）申請使用系統，等待核准`); });
           this.members = s.docs.map(d => ({ id: d.id, ...d.data() })); memFirst = false;
@@ -4338,20 +4370,26 @@ function kgApp() {
 (function () {
   'use strict';
   const COL = 'healthEducation', N = 6, TIME = '15:00-15:30', DRAFT = 'healthEduDraft';
+  const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/13lLX0lkTFGbCG6Af1ZjObgcLc74_0r4i';
   const PLACES = ['三樓活動室', '各班教室', '一樓穿堂', '戶外遊戲場'];
+  const SEMS = ['115 學年度上學期', '115 學年度下學期'];
   const FIELDS = ['sem', 'topic', 'date', 'purpose', 'content', 'equip', 'strategy', 'organizer'];
-  let page = null, form = null, app = null, editing = null, list = [], unsub = null, unsubKey = '', saving = false;
+  const ST = { draft: ['草稿', '#8a7a66', '#F3ECE0'], submitted: ['已送出・待審閱', '#9a6b00', '#FFF4D6'], read: ['已閱', '#2f6e4f', '#E3F3EA'], returned: ['退件', '#b03a2e', '#FDECEA'] };
+  let page = null, form = null, app = null, editing = null, list = [], unsub = null, unsubKey = '', saving = false, firstSnap = true;
   let photos = []; // [{data, cap, changed}]
   const $ = (s, r = page) => (r ? r.querySelector(s) : null);
   const $$ = (s, r = page) => (r ? Array.from(r.querySelectorAll(s)) : []);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const fbUser = () => (window.firebase && firebase.apps && firebase.apps.length ? firebase.auth().currentUser : null);
   const isAdmin = () => !!(app && app.isAdmin);
+  const myUid = () => (fbUser() || {}).uid;
   const WD = '日一二三四五六';
+  const stOf = r => (r && r.status) || 'draft';
+  const badge = s => { const v = ST[s] || ST.draft; return `<span style="display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:800;color:${v[1]};background:${v[2]}">${v[0]}</span>`; };
 
   function semOf(dt) { // 8–1 月為上學期，2–7 月為下學期
     const d = dt || new Date(), m = d.getMonth() + 1, y = d.getFullYear();
-    return ((m >= 8 ? y : y - 1) - 1911) + ' 學年度' + (m >= 8 || m === 1 ? '上' : '下') + '學期';
+    return ((m >= 8 || m === 1 ? (m === 1 ? y - 1 : y) : y - 1) - 1911) + ' 學年度' + (m >= 8 || m === 1 ? '上' : '下') + '學期';
   }
   function rocDate(iso) {
     const [y, m, d] = iso.split('-').map(Number); if (!y) return '';
@@ -4359,6 +4397,17 @@ function kgApp() {
     return (y - 1911) + ' 年 ' + String(m).padStart(2, '0') + ' 月 ' + String(d).padStart(2, '0') + ' 日（' + WD[w] + '）';
   }
   function emptyPhotos() { photos = Array.from({ length: N }, () => ({ data: '', cap: '', changed: false })); }
+  function setSelect(sel, v, opts) { // 下拉選單：若值不在選項中就臨時加入，避免舊資料消失
+    const all = Array.from(new Set([...(opts || []), ...(v ? [v] : [])]));
+    const keep0 = sel.querySelector('option[value=""]');
+    sel.innerHTML = (keep0 ? keep0.outerHTML : '') + all.map(x => `<option>${esc(x)}</option>`).join('');
+    sel.value = v || (keep0 ? '' : all[0] || '');
+  }
+  function teacherNames() { return ((app && app.teacherRoster) || []).filter(Boolean); }
+  function myName() {
+    const u = fbUser() || {}, names = teacherNames(), dn = (app && app.myName) || u.displayName || '';
+    return names.find(n => n === dn) || names.find(n => dn && (dn.includes(n) || n.includes(dn))) || '';
+  }
 
   /* ---------- 地點：下拉＋自行輸入 ---------- */
   function getPlace() { const s = $('#he-place-sel'); return s.value === '__other' ? $('#he-place-txt').value.trim() : s.value; }
@@ -4388,12 +4437,14 @@ function kgApp() {
       fr.readAsDataURL(f);
     });
   }
+  const ro = () => !!(editing && editing.readOnly);
   function drawPhotos() {
+    const R = ro();
     $('#he-photos').innerHTML = photos.map((p, i) => `<div class="he-ph">
       <div class="he-lb">照片 ${i + 1}</div>
-      <label class="box">${p.data ? `<img src="${p.data}" alt="">` : '＋ 點這裡上傳照片'}<input type="file" accept="image/*" data-hefile="${i}" hidden></label>
-      <div class="row">${p.data ? `<button type="button" class="he-btn" data-herm="${i}">移除</button>` : ''}${i > 0 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="-1">← 往前</button>` : ''}${i < N - 1 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="1">往後 →</button>` : ''}</div>
-      <label class="block"><span class="he-hint">照片說明</span><input class="he-in" data-hecap="${i}" value="${esc(p.cap)}" placeholder="例：利用情緒小怪獸娃娃說故事"></label>
+      <label class="box">${p.data ? `<img src="${p.data}" alt="">` : (R ? '（沒有照片）' : '＋ 點這裡上傳照片')}${R ? '' : `<input type="file" accept="image/*" data-hefile="${i}" hidden>`}</label>
+      ${R ? '' : `<div class="row">${p.data ? `<button type="button" class="he-btn" data-herm="${i}">移除</button>` : ''}${i > 0 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="-1">← 往前</button>` : ''}${i < N - 1 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="1">往後 →</button>` : ''}</div>`}
+      <label class="block"><span class="he-hint">照片說明</span><input class="he-in" data-hecap="${i}" value="${esc(p.cap)}" placeholder="例：利用情緒小怪獸娃娃說故事"${R ? ' disabled' : ''}></label>
     </div>`).join('');
   }
   function onPhotoEvents() {
@@ -4419,36 +4470,64 @@ function kgApp() {
     return o;
   }
   function fill(o) {
-    FIELDS.forEach(k => { form.elements[k].value = o[k] || ''; });
-    if (!o.sem) form.elements.sem.value = semOf();
+    FIELDS.forEach(k => { if (k !== 'sem' && k !== 'organizer') form.elements[k].value = o[k] || ''; });
+    setSelect(form.elements.sem, o.sem || (SEMS.includes(semOf()) ? semOf() : SEMS[0]), SEMS);
+    setSelect(form.elements.organizer, o.organizer != null && o.organizer !== '' ? o.organizer : (o.__new ? myName() : ''), teacherNames());
     setPlace(o.place || ''); $('#he-datepick').value = '';
   }
   function say(t, bad) { const s = $('#he-status'); s.textContent = t; s.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); }
-  let draftT = null;
+  let draftT = null, isDirty = false;
   function dirty() {
-    if (!saving) { const b = $('#he-save'); b.disabled = false; b.textContent = editing ? '💾 更新' : '💾 儲存'; }
+    isDirty = true;
+    if (!saving) { const b = $('#he-save'); b.disabled = ro(); b.textContent = editing ? '💾 更新' : '💾 儲存'; }
+    updateUI();
     clearTimeout(draftT); draftT = setTimeout(() => { if (editing) return; try { localStorage.setItem(DRAFT, JSON.stringify(collect())); } catch (e) {} }, 600);
   }
-  function setEditing(rec) {
-    editing = rec; $('#he-editing').hidden = !rec;
-    if (rec) $('#he-editing-name').textContent = (rec.topic || '未命名') + ' 宣導' + (rec.date ? '｜' + rec.date : '');
+  function current() { return editing ? (list.find(x => x.id === editing.id) || editing.rec || {}) : null; }
+  function updateUI() { // 依狀態與身分切換按鈕
+    const rec = current(), st = stOf(rec), R = ro(), adm = isAdmin();
+    const canOut = adm || st === 'read';
+    $('#he-save').hidden = R;
+    const sb = $('#he-submit'); sb.hidden = R || (st === 'submitted' && !isDirty) || (st === 'read' && !isDirty);
+    sb.textContent = st === 'returned' ? '📨 修改完成，重新送出' : '📨 送出通知管理員';
+    $$('[data-he="print"],[data-he="upload"]').forEach(b => { b.disabled = !canOut || (isDirty && !R); });
+    $('#he-gate').textContent = !canOut ? '管理員「已閱」後才能列印和上傳雲端硬碟。' : (isDirty && !R ? '有尚未儲存的修改，請先按「儲存」再列印或上傳。' : (rec && rec.driveUrl ? '' : ''));
+    if (rec && rec.driveUrl) $('#he-gate').innerHTML = `☁️ 已上傳雲端硬碟：<a href="${esc(rec.driveUrl)}" target="_blank" rel="noopener" style="color:#2F6271;text-decoration:underline">開啟檔案</a>${rec.driveAt ? '（' + new Date(rec.driveAt).toLocaleString('zh-TW', { hour12: false }) + '）' : ''}`;
+    // 編輯列
+    $('#he-editing').hidden = !editing;
+    if (editing) {
+      $('#he-editing-mode').textContent = R ? '👀 檢視' : '✏️ 正在編輯';
+      $('#he-editing-name').textContent = (rec.topic || '未命名') + ' 宣導' + (rec.date ? '｜' + rec.date : '') + (rec.uid !== myUid() ? '｜' + (rec.userName || rec.userEmail || '') : '');
+      $('#he-editing-st').innerHTML = badge(st);
+      const nt = $('#he-note'); nt.hidden = !(st === 'returned' && rec.reviewNote) && !(st === 'read' && rec.reviewNote);
+      if (!nt.hidden) { nt.textContent = (st === 'returned' ? '↩️ 退件說明：' : '✅ 管理員備註：') + rec.reviewNote; nt.style.background = st === 'returned' ? '#FDECEA' : '#E3F3EA'; nt.style.color = st === 'returned' ? '#9b2c22' : '#2f6e4f'; }
+      $('#he-review').hidden = !(adm && editing.id && rec.uid !== undefined && (st === 'submitted' || st === 'read' || st === 'returned'));
+    }
+    // 檢視模式：鎖住欄位
+    Array.from(form.elements).forEach(el => { if (el.closest('#he-review') || el.closest('#he-editing') || el.dataset.he === 'print' || el.dataset.he === 'upload' || el.id === 'he-save') return; el.disabled = R; });
+    $('#he-datepick').disabled = R;
+  }
+  function setEditing(rec, readOnly) {
+    editing = rec ? { id: rec.id, readOnly: !!readOnly, rec } : null; isDirty = false;
     const b = $('#he-save'); b.disabled = false; b.textContent = rec ? '💾 更新' : '💾 儲存';
+    drawPhotos(); updateUI();
   }
   function resetForm(useDraft) {
     let dr = null; if (useDraft) { try { dr = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) {} }
-    form.reset(); emptyPhotos(); fill(dr || {});
+    form.reset(); emptyPhotos(); fill(Object.assign({ __new: true }, dr || {}));
     if (dr && dr.captions) dr.captions.forEach((c, i) => { if (photos[i]) photos[i].cap = c || ''; });
-    drawPhotos(); setEditing(null);
+    $('#he-rv-note').value = '';
+    setEditing(null);
   }
 
   /* ---------- Firestore ---------- */
-  async function save() {
+  async function save(extra) {
     const u = fbUser(); if (!u) throw new Error('尚未登入，無法儲存');
-    const db = firebase.firestore(), data = collect(), TS = firebase.firestore.FieldValue.serverTimestamp();
+    const db = firebase.firestore(), data = { ...collect(), ...(extra || {}) }, TS = firebase.firestore.FieldValue.serverTimestamp();
     data.photoSlots = photos.map(p => !!p.data);
     const ref = editing ? db.collection(COL).doc(editing.id) : db.collection(COL).doc();
     if (editing) await ref.update({ ...data, updatedAt: TS });
-    else await ref.set({ ...data, uid: u.uid, userEmail: u.email || '', userName: u.displayName || '', createdAt: TS, updatedAt: TS });
+    else await ref.set({ status: 'draft', ...data, uid: u.uid, userEmail: (u.email || '').toLowerCase(), userName: myName() || u.displayName || '', createdAt: TS, updatedAt: TS });
     for (let i = 0; i < N; i++) {
       const p = photos[i]; if (!editing || p.changed) {
         const pr = ref.collection('photos').doc('p' + i);
@@ -4457,17 +4536,24 @@ function kgApp() {
       }
       p.changed = false;
     }
-    return { id: ref.id, uid: editing ? editing.uid : u.uid, ...data };
+    const s = await ref.get();
+    return { id: ref.id, ...s.data() };
+  }
+  async function loadPhotos(id) {
+    const ph = Array(N).fill('');
+    (await firebase.firestore().collection(COL).doc(id).collection('photos').get()).forEach(x => { const i = +String(x.id).replace(/\D/g, ''); if (i < N) ph[i] = x.data().data || ''; });
+    return ph;
   }
   async function loadRecord(id) {
     const ref = firebase.firestore().collection(COL).doc(id), s = await ref.get();
     if (!s.exists) throw new Error('找不到這份紀錄');
-    const d = s.data(), ps = await ref.collection('photos').get();
+    const d = { id, ...s.data() }, ph = await loadPhotos(id);
     form.reset(); emptyPhotos(); fill(d);
     (d.captions || []).forEach((c, i) => { if (photos[i]) photos[i].cap = c || ''; });
-    ps.forEach(x => { const v = x.data(), i = +String(x.id).replace(/\D/g, ''); if (photos[i]) photos[i].data = v.data || ''; });
-    drawPhotos(); setEditing({ id, uid: d.uid, topic: d.topic, date: d.date });
-    setTab('fill'); window.scrollTo({ top: page.offsetTop - 80, behavior: 'smooth' });
+    ph.forEach((v, i) => { photos[i].data = v; });
+    $('#he-rv-note').value = d.status === 'returned' ? (d.reviewNote || '') : '';
+    setEditing(d, !(d.uid === myUid() || isAdmin()));
+    say(''); setTab('fill'); window.scrollTo({ top: page.offsetTop - 80, behavior: 'smooth' });
   }
   async function deleteRecord(id) {
     const ref = firebase.firestore().collection(COL).doc(id);
@@ -4479,47 +4565,86 @@ function kgApp() {
   function subscribe() {
     const u = fbUser(), key = u ? u.uid + '|' + isAdmin() : '';
     if (key === unsubKey) return; unsubKey = key;
-    if (unsub) { unsub(); unsub = null; } list = []; renderList();
+    if (unsub) { unsub(); unsub = null; } list = []; firstSnap = true; renderList();
     if (!u) return;
-    const q = isAdmin() ? firebase.firestore().collection(COL) : firebase.firestore().collection(COL).where('uid', '==', u.uid);
-    unsub = q.onSnapshot(s => { list = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); },
-      err => { $('#he-list').innerHTML = `<p class="text-sm text-coral font-bold">讀取失敗：${esc(err.code || err.message)}${err.code === 'permission-denied' ? '<br>（Firebase 資料庫規則尚未開放「healthEducation」集合，請管理者在 Firestore 規則加入，見說明。）' : ''}</p>`; });
+    unsub = firebase.firestore().collection(COL).onSnapshot(s => {
+      firstSnap = false;
+      list = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); if (editing) updateUI();
+    }, err => { $('#he-list').innerHTML = `<p class="text-sm text-coral font-bold">讀取失敗：${esc(err.code || err.message)}${err.code === 'permission-denied' ? '<br>（請管理者確認 Firestore 規則已加入「healthEducation」。）' : ''}</p>`; });
   }
   function renderList() {
     const n = $('#he-n'); if (n) n.textContent = list.length ? '（' + list.length + '）' : '';
-    $('#he-saved-sub').textContent = isAdmin() ? '（管理者：顯示全部老師的紀錄）' : '';
-    const t = x => (x.updatedAt && x.updatedAt.toMillis ? x.updatedAt.toMillis() : 0);
-    const me = (fbUser() || {}).uid;
-    $('#he-list').innerHTML = list.length ? list.slice().sort((a, b) => t(b) - t(a)).map(x => `<div class="he-item">
-      <div><b>${esc(x.topic || '未命名')} 宣導</b> <span class="he-hint">${esc(x.sem || '')}｜${esc(x.date || '未填日期')}｜${esc(x.place || '')}｜照片 ${(x.photoSlots || []).filter(Boolean).length} 張${x.uid !== me ? '｜' + esc(x.userName || x.userEmail || '') : ''}</span></div>
-      <div class="flex gap-2"><button type="button" class="he-btn" data-heopen="${x.id}">開啟編輯</button><button type="button" class="he-btn" data-heprint="${x.id}">🖨️ 列印</button>${x.uid === me || isAdmin() ? `<button type="button" class="he-btn" data-hedel="${x.id}">刪除</button>` : ''}</div>
-    </div>`).join('') : '<p class="he-hint">目前還沒有儲存的衛教宣導紀錄。</p>';
+    const t = x => (x.updatedAt && x.updatedAt.toMillis ? x.updatedAt.toMillis() : Date.now());
+    const me = myUid(), adm = isAdmin();
+    const pend = list.filter(x => stOf(x) === 'submitted').length;
+    $('#he-saved-sub').textContent = adm ? (pend ? `（待審閱 ${pend} 份）` : '') : '';
+    const order = x => (adm && stOf(x) === 'submitted' ? 0 : x.uid === me ? 1 : 2);
+    $('#he-list').innerHTML = list.length ? list.slice().sort((a, b) => order(a) - order(b) || t(b) - t(a)).map(x => {
+      const mine = x.uid === me, can = mine || adm, st = stOf(x);
+      return `<div class="he-item">
+      <div><div>${badge(st)} <b>${esc(x.topic || '未命名')} 宣導</b>${mine ? ' <span class="he-hint">（我的）</span>' : ''}</div>
+        <div class="he-hint">${esc(x.sem || '')}｜${esc(x.date || '未填日期')}｜${esc(x.place || '')}｜承辦人：${esc(x.organizer || '—')}｜照片 ${(x.photoSlots || []).filter(Boolean).length} 張${!mine ? '｜建立者：' + esc(x.userName || x.userEmail || '') : ''}${x.driveUrl ? '｜☁️ 已上傳' : ''}</div>
+        ${st === 'returned' && x.reviewNote ? `<div class="he-hint" style="color:#b03a2e;font-weight:700">↩️ 退件說明：${esc(x.reviewNote)}</div>` : ''}</div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="he-btn" data-heopen="${x.id}">${can ? (adm && st === 'submitted' ? '審閱／編輯' : '開啟編輯') : '👀 檢視'}</button>
+        ${adm || st === 'read' ? `<button type="button" class="he-btn" data-heprint="${x.id}">🖨️ 列印</button>` : ''}
+        ${x.driveUrl ? `<a class="he-btn" href="${esc(x.driveUrl)}" target="_blank" rel="noopener">☁️ 雲端檔案</a>` : ''}
+        ${can ? `<button type="button" class="he-btn" data-hedel="${x.id}">刪除</button>` : ''}
+      </div></div>`;
+    }).join('') : '<p class="he-hint">目前還沒有儲存的衛教宣導紀錄。</p>';
+  }
+
+  /* ---------- 送出、審閱 ---------- */
+  async function submitToAdmin() {
+    if (!form.elements.topic.value.trim()) { say('請先填寫宣導主題再送出。', true); return; }
+    const wasReturned = stOf(current()) === 'returned';
+    if (!confirm(wasReturned ? '確定修改完成，重新送出給管理員嗎？' : '確定要送出給管理員審閱嗎？\n（送出後仍可修改，管理員會看到最新內容）')) return;
+    saving = true; say('送出中…');
+    try {
+      const u = fbUser(), r = await save({ status: 'submitted', submittedAt: Date.now(), submittedByEmail: (u.email || '').toLowerCase(), submittedByName: myName() || u.displayName || '', submitCount: ((current() || {}).submitCount || 0) + 1 });
+      try { localStorage.removeItem(DRAFT); } catch (e) {}
+      setEditing(r, false);
+      say('已送出，管理員會在系統收到通知。');
+    } catch (err) { console.error(err); say('送出失敗：' + (err.code || err.message), true); }
+    finally { saving = false; updateUI(); }
+  }
+  async function review(kind) {
+    if (!editing) return;
+    const note = $('#he-rv-note').value.trim(), rec = current();
+    if (kind === 'returned' && !note) { alert('退件請填寫退件說明，讓老師知道要修改哪裡。'); $('#he-rv-note').focus(); return; }
+    if (isDirty && !confirm('表單有尚未儲存的修改，審閱時會一併儲存。要繼續嗎？')) return;
+    saving = true; say('處理中…');
+    try {
+      const u = fbUser(), r = await save({ status: kind, reviewNote: note, reviewedAt: Date.now(), reviewedBy: (u.email || '').toLowerCase(), reviewedByName: u.displayName || '' });
+      setEditing(r, false);
+      say((kind === 'read' ? '已標示「已閱」' : '已退件') + '，老師會在系統收到通知。');
+    } catch (err) { console.error(err); say('處理失敗：' + (err.code || err.message), true); }
+    finally { saving = false; updateUI(); }
   }
 
   /* ---------- 列印（依範例 PDF 版面，A4 直式） ---------- */
   const lines = s => esc(s).replace(/\n/g, '<br>');
-  function printHtml(o, ph) {
+  function printHtml(o, ph, pdf) {
     const topic = o.topic || '　　　　', purpose = (o.purpose || '').split('\n').map(l => `<div>${esc(l) || '&nbsp;'}</div>`).join('') || '&nbsp;';
     const cell = i => `<td class="pc">${ph[i] ? `<img src="${ph[i]}" alt="">` : ''}</td>`;
     const cap = i => `<td class="cap">照片說明：${esc((o.captions || [])[i] || '')}</td>`;
     const rows = [0, 2, 4].map(i => `<tr>${cell(i)}${cell(i + 1)}</tr><tr>${cap(i)}${cap(i + 1)}</tr>`).join('');
     const css = `@page{size:A4 portrait;margin:14mm 15mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000}
+body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
-.wrap{max-width:176mm;margin:0 auto}@media screen{.wrap{padding:10mm 0}}
+.wrap{max-width:${pdf ? 'none' : '176mm'};margin:0 auto}@media screen{.wrap{padding:${pdf ? '0' : '10mm 0'}}}
 .hd{text-align:center;margin-bottom:10px}.hd div{line-height:1.5}.hd u{padding:0 .3em}
-.info{display:grid;grid-template-columns:auto 1fr;column-gap:0;margin:0 0 10px 1em}.info .k{white-space:nowrap}
+.info{display:grid;grid-template-columns:auto 1fr;margin:0 0 10px 1em}.info .k{white-space:nowrap}
 table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all}
 th{font-weight:normal;text-align:center;vertical-align:middle}
-.flow td{min-height:2em}.flow tr{break-inside:avoid}.flow td.c{white-space:normal}
 .st td{vertical-align:middle}
 .p2{break-before:page;page-break-before:always}.p2h{margin:0 0 4px}
 .ph td{text-align:center}.ph th{padding:6px}.pc{height:64mm;vertical-align:middle;padding:3px}.pc img{max-width:100%;max-height:62mm;object-fit:contain;display:block;margin:auto}
 .ph td.cap{text-align:left;height:9mm;vertical-align:middle}.ph tr{break-inside:avoid}
 .sign{display:flex;justify-content:space-between;margin:14px 2em 0}.sign span{display:inline-block;min-width:40mm;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
-    return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc((o.sem || '') + '_' + topic.trim() + '宣導' + (o.date ? '_' + o.date : ''))}</title><style>${css}</style></head><body>
-<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>
-<div class="wrap">
+    return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(fileName(o).replace(/\.pdf$/, ''))}</title><style>${css}</style></head><body>
+${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
+<div class="wrap"><div class="pg1">
 <div class="hd"><div>桃園市仁德非營利幼兒園</div><div>(委託社團法人臺灣宛靜文教協會辦理)</div><div>${esc(o.sem || '')} <u>${esc(topic)}</u> 宣導</div></div>
 <div class="info">
 <div class="k">一、活動日期：</div><div>${esc(o.date || '')}</div>
@@ -4527,26 +4652,50 @@ th{font-weight:normal;text-align:center;vertical-align:middle}
 <div class="k">三、活動地點：</div><div>桃園市仁德非營利幼兒園${o.place ? '(' + esc(o.place) + ')' : ''}。</div>
 <div class="k">四、活動目的：</div><div>${purpose}</div>
 </div>
-<table class="flow"><colgroup><col style="width:11%"><col style="width:54%"><col style="width:20%"><col style="width:15%"></colgroup>
-<thead><tr><th>時間</th><th>活動內容</th><th>器材/道具</th><th>活動<br>地點</th></tr></thead>
-<tbody><tr><td>${TIME.replace('-', '-<br>')}</td><td class="c">${lines(o.content || '') || '&nbsp;'}</td><td>${lines(o.equip || '')}</td><td>${esc(o.place || '')}</td></tr></tbody></table>
-<table class="st" style="border-top:0"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tr><td style="border-top:0">課程調整策略:</td><td style="border-top:0">${lines(o.strategy || '') || '&nbsp;'}</td></tr></table>
+<table class="flow"><colgroup><col style="width:12%"><col style="width:66%"><col style="width:22%"></colgroup>
+<thead><tr><th>時間</th><th>活動內容</th><th>器材/道具</th></tr></thead>
+<tbody><tr><td>${TIME.replace('-', '-<br>')}</td><td>${lines(o.content || '') || '&nbsp;'}</td><td>${lines(o.equip || '')}</td></tr></tbody></table>
+<table class="st"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tr><td style="border-top:0">課程調整策略:</td><td style="border-top:0">${lines(o.strategy || '') || '&nbsp;'}</td></tr></table>
+</div>
 <div class="p2"><div class="p2h">五、成果展現</div>
 <table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><thead><tr><th colspan="2">衛教宣導－${esc(topic.trim())}宣導</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="sign"><div>承辦人:<span>${esc(o.organizer || '')}</span></div><div>園長:<span></span></div></div></div>
-</div><script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`;
+</div>${pdf ? '' : '<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script>'}</body></html>`;
   }
-  function openPrint(o, ph) {
-    const w = window.open('', '_blank');
-    if (!w) { alert('瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次'); return; }
-    w.document.open(); w.document.write(printHtml(o, ph)); w.document.close();
+  function fileName(o) { return [o.sem, (o.topic || '未命名') + '宣導', o.date, o.organizer].filter(Boolean).join('_').replace(/[\\/:*?"<>|\s]+/g, '') + '.pdf'; }
+  async function getRecAndPhotos(id) {
+    if (!id && editing && !isDirty) id = editing.id;
+    if (!id) return null;
+    const s = await firebase.firestore().collection(COL).doc(id).get(); if (!s.exists) throw new Error('找不到這份紀錄');
+    return { o: { id, ...s.data() }, ph: await loadPhotos(id) };
   }
-  async function printSaved(id) {
-    const ref = firebase.firestore().collection(COL).doc(id), s = await ref.get(); if (!s.exists) return;
+  async function printRec(id) {
     const w = window.open('', '_blank'); if (!w) { alert('瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次'); return; }
-    w.document.write('<p style="font:16px sans-serif;padding:20px">照片載入中…</p>');
-    const ph = Array(N).fill(''); (await ref.collection('photos').get()).forEach(x => { const i = +String(x.id).replace(/\D/g, ''); if (i < N) ph[i] = x.data().data || ''; });
-    w.document.open(); w.document.write(printHtml(s.data(), ph)); w.document.close();
+    w.document.write('<p style="font:16px sans-serif;padding:20px">載入中…</p>');
+    try {
+      const r = await getRecAndPhotos(id); if (!r) { w.close(); alert('請先按「儲存」，再列印。'); return; }
+      if (!isAdmin() && stOf(r.o) !== 'read') { w.close(); alert('管理員「已閱」後才能列印。'); return; }
+      w.document.open(); w.document.write(printHtml(r.o, r.ph, false)); w.document.close();
+    } catch (e) { w.close(); alert('列印失敗：' + (e.code || e.message)); }
+  }
+  async function uploadRec() {
+    if (!editing || isDirty) { alert('請先按「儲存」，再上傳雲端硬碟。'); return; }
+    if (!window.PdfUtil) { alert('上傳元件尚未載入，請重新整理頁面'); return; }
+    const fid = PdfUtil.folderId(DRIVE_FOLDER);
+    const btns = $$('[data-he="upload"]'); btns.forEach(b => { b.disabled = true; b.textContent = '產生 PDF 中…'; }); say('');
+    try {
+      const r = await getRecAndPhotos(editing.id);
+      if (!isAdmin() && stOf(r.o) !== 'read') throw new Error('管理員「已閱」後才能上傳');
+      const po = { landscape: false, margin: 12, units: '.pg1,.p2', keepRows: true };
+      const blob = await PdfUtil.htmlToPdf(printHtml(r.o, r.ph, true), po);
+      btns.forEach(b => { b.textContent = '上傳中…'; });
+      const nm = fileName(r.o), j = await PdfUtil.upload(blob, { filename: nm, subfolder: '', folderId: fid });
+      const url = j.url || j.fileUrl || '';
+      await firebase.firestore().collection(COL).doc(editing.id).update({ driveUrl: url, driveName: nm, driveAt: Date.now() });
+      say('已上傳雲端硬碟 ✅' + (po.missing ? `（有 ${po.missing} 張照片沒放進 PDF）` : ''));
+      if (url && confirm('已上傳到雲端硬碟 ✅\n檔名：' + nm + '\n要現在開啟檔案嗎？')) window.open(url, '_blank');
+    } catch (e) { console.error(e); say('上傳失敗：' + (e.code || e.message), true); alert('上傳失敗：' + (e.code || e.message)); }
+    finally { btns.forEach(b => { b.textContent = '☁️ 上傳雲端硬碟'; }); updateUI(); }
   }
 
   /* ---------- 分頁 ---------- */
@@ -4560,44 +4709,58 @@ th{font-weight:normal;text-align:center;vertical-align:middle}
     if (!form || el.dataset.heReady) return;
     el.dataset.heReady = '1';
     resetForm(true); onPhotoEvents();
-    form.addEventListener('input', dirty); form.addEventListener('change', dirty);
+    form.addEventListener('input', e => { if (!e.target.closest('#he-review')) dirty(); });
+    form.addEventListener('change', e => { if (!e.target.closest('#he-review') && e.target.id !== 'he-datepick') dirty(); });
     $('#he-place-sel').addEventListener('change', e => { const t = $('#he-place-txt'); t.hidden = e.target.value !== '__other'; if (!t.hidden) t.focus(); });
     $('#he-datepick').addEventListener('change', e => {
       if (!e.target.value) return; form.elements.date.value = rocDate(e.target.value);
-      const [y, m, d] = e.target.value.split('-').map(Number); form.elements.sem.value = semOf(new Date(y, m - 1, d)); dirty();
+      const [y, m, d] = e.target.value.split('-').map(Number), sm = semOf(new Date(y, m - 1, d)); if (SEMS.includes(sm)) form.elements.sem.value = sm; dirty();
     });
     $$('[data-hetab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.hetab)));
-    $$('[data-he="print"]').forEach(b => b.addEventListener('click', () => { setTab('fill'); openPrint(collect(), photos.map(p => p.data)); }));
-    $('[data-he="new"]').addEventListener('click', () => { if ((editing || collect().content) && !confirm('要清空表單、新增一份新的衛教宣導嗎？（已儲存的內容不受影響）')) return; try { localStorage.removeItem(DRAFT); } catch (e) {} resetForm(false); setTab('fill'); say(''); });
-    $('[data-he="cancel"]').addEventListener('click', () => { if (!confirm('結束編輯？尚未按「更新」的修改不會保留。')) return; resetForm(false); say(''); });
+    $('[data-he="print"]').addEventListener('click', () => printRec());
+    $('[data-he="upload"]').addEventListener('click', uploadRec);
+    $('[data-he="submit"]').addEventListener('click', submitToAdmin);
+    $('[data-he="approve"]').addEventListener('click', () => review('read'));
+    $('[data-he="return"]').addEventListener('click', () => review('returned'));
+    $('[data-he="new"]').addEventListener('click', () => { if ((isDirty || (!editing && collect().content)) && !confirm('要清空表單、新增一份新的衛教宣導嗎？（已儲存的內容不受影響）')) return; try { localStorage.removeItem(DRAFT); } catch (e) {} resetForm(false); setTab('fill'); say(''); });
+    $('[data-he="cancel"]').addEventListener('click', () => { if (isDirty && !confirm('關閉？尚未按「更新」的修改不會保留。')) return; resetForm(false); say(''); });
     $('#he-list').addEventListener('click', async e => {
       const o = e.target.closest('[data-heopen]'), p = e.target.closest('[data-heprint]'), d = e.target.closest('[data-hedel]');
       try {
-        if (o) await loadRecord(o.dataset.heopen);
-        if (p) await printSaved(p.dataset.heprint);
+        if (o) { if (isDirty && !confirm('目前表單有尚未儲存的修改，確定要開啟另一份嗎？')) return; await loadRecord(o.dataset.heopen); }
+        if (p) await printRec(p.dataset.heprint);
         if (d && confirm('確定要刪除這份衛教宣導紀錄（含照片）嗎？刪除後無法復原。')) await deleteRecord(d.dataset.hedel);
       } catch (err) { alert('操作失敗：' + (err.code || err.message || err)); }
     });
     form.addEventListener('submit', async e => {
-      e.preventDefault(); if (saving) return;
+      e.preventDefault(); if (saving || ro()) return;
       const o = collect(); if (!o.topic && !o.content) { say('請至少填寫宣導主題或活動內容再儲存。', true); return; }
+      const st = stOf(current()), mineEdit = editing && current().uid === myUid();
+      let extra = null;
+      if (editing && st === 'read' && !isAdmin()) { // 老師修改已閱的紀錄 → 回到草稿，需要重新送出
+        if (!confirm('這份紀錄管理員已閱。修改後會變回「草稿」，需要重新送出給管理員，確定要儲存嗎？')) return;
+        extra = { status: 'draft' };
+      }
       saving = true; const b = $('#he-save'); b.disabled = true; b.textContent = '儲存中…'; say('');
       try {
-        const wasEdit = !!editing, r = await save();
+        const wasEdit = !!editing, r = await save(extra);
         try { localStorage.removeItem(DRAFT); } catch (e2) {}
-        setEditing({ id: r.id, uid: r.uid, topic: r.topic, date: r.date });
-        say((wasEdit ? '已更新' : '已儲存') + '（照片 ' + photos.filter(p => p.data).length + ' 張）。');
+        setEditing(r, false);
+        say((wasEdit ? '已更新' : '已儲存') + '（照片 ' + photos.filter(p => p.data).length + ' 張）。' + (stOf(r) === 'draft' || stOf(r) === 'returned' ? (mineEdit || !wasEdit ? '完成後請按「送出通知管理員」。' : '') : ''));
         b.textContent = '✓ 已儲存'; b.disabled = true;
       } catch (err) {
         console.error('儲存衛教宣導失敗', err);
-        say('儲存失敗：' + (err.code === 'permission-denied' ? '沒有權限（Firebase 資料庫規則尚未開放「healthEducation」集合，請通知管理者）' : (err.code || err.message || '請稍後再試')), true);
+        say('儲存失敗：' + (err.code === 'permission-denied' ? '沒有權限（請管理者確認 Firestore 規則已加入「healthEducation」）' : (err.code || err.message || '請稍後再試')), true);
         b.disabled = false; b.textContent = editing ? '💾 更新' : '💾 儲存';
-      } finally { saving = false; }
+      } finally { saving = false; updateUI(); }
     });
   }
+  let rosterSig = '';
   function sync(el, data, active) {
     app = data;
     if (page !== el) mount(el);
+    const sig = teacherNames().join('|');
+    if (sig !== rosterSig && form) { rosterSig = sig; const v = form.elements.organizer.value || (!editing ? myName() : ''); setSelect(form.elements.organizer, v, teacherNames()); }
     if (active) subscribe();
   }
   window.HealthEdu = { mount, sync };
