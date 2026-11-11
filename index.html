@@ -282,6 +282,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='observation' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📷 學習區觀察表
           </button>
+          <button x-show="!restrictedPW" @click="view='health'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='health' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🩺 衛教宣導
+          </button>
           <button x-show="isAdmin" @click="view='admin'"
             x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount)>0 ? `(${adminPendingCount+weeklyPendingCount}) ` : '') + baseTitle"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
@@ -1280,6 +1285,117 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             </div>
           </div>
         </section>
+<!-- ============ 衛教宣導 ============ -->
+<section id="health-edu-page" x-show="view==='health' && currentUser && !restrictedPW" x-effect="window.HealthEdu && HealthEdu.sync($el,$data,view==='health')" class="space-y-4 max-w-4xl mx-auto">
+<style>
+#health-edu-page [hidden]{display:none!important}
+#health-edu-page .he-in{width:100%;box-sizing:border-box;margin-top:.25rem;padding:.5rem .75rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font:inherit;font-size:.9rem;line-height:1.6}
+#health-edu-page textarea.he-in{resize:vertical;min-height:4.5rem}
+#health-edu-page .he-in:read-only{background:#FAF3E6;color:#6b5a45}
+#health-edu-page .he-lb{font-size:.85rem;font-weight:800;color:#5a4632}
+#health-edu-page .he-hint{font-size:11px;color:rgba(90,70,50,.65);font-weight:400}
+#health-edu-page .he-btn{padding:.5rem 1rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font-size:.875rem;font-weight:700;cursor:pointer}
+#health-edu-page .he-btn:hover{background:#FAF3E6}
+#health-edu-page .he-btn:disabled{opacity:.55;cursor:not-allowed}
+#health-edu-page .he-pri{background:#2F6271;border-color:#2F6271;color:#fff}
+#health-edu-page .he-pri:hover{background:#245361}
+#health-edu-page .he-tab{padding:.5rem 1rem;border:2px solid #EEE2CF;border-radius:999px;background:#FFFDF8;font-size:.85rem;font-weight:800;cursor:pointer}
+#health-edu-page .he-tab.on{background:#2F6271;border-color:#2F6271;color:#fff}
+#health-edu-page .he-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+#health-edu-page .he-g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+@media (max-width:640px){#health-edu-page .he-g2,#health-edu-page .he-g3{grid-template-columns:1fr}}
+#health-edu-page .he-ph{border:2px dashed #E3D3BA;border-radius:1rem;padding:.6rem;background:#FFFDF8;display:flex;flex-direction:column;gap:.4rem}
+#health-edu-page .he-ph .box{aspect-ratio:4/3;border-radius:.6rem;background:#FAF3E6;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;color:#a08a6c;font-size:.85rem;font-weight:700;text-align:center}
+#health-edu-page .he-ph .box img{width:100%;height:100%;object-fit:contain;background:#fff}
+#health-edu-page .he-ph .row{display:flex;gap:.4rem;flex-wrap:wrap}
+#health-edu-page .he-ph .row button{padding:.25rem .6rem;font-size:.75rem}
+#health-edu-page .he-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;padding:.6rem .8rem;border:1px solid #EEE2CF;border-radius:.8rem;background:#FFFDF8}
+#health-edu-page .he-fixed{display:inline-block;margin-top:.25rem;padding:.5rem .75rem;border-radius:.75rem;background:#FAF3E6;font-weight:800;color:#2F6271}
+</style>
+  <div class="paper-card rounded-3xl p-6 shadow-card flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="text-xs font-bold text-wood-dark/60">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</p>
+      <h2 class="font-heading font-black text-lg flex items-center gap-2 mt-1"><span class="text-2xl">🩺</span> 衛教宣導紀錄</h2>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="he-btn" data-he="print">🖨️ 列印／存成 PDF</button>
+      <button type="button" class="he-btn" data-he="new">＋ 新增一份</button>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <button type="button" class="he-tab on" data-hetab="fill">📝 填寫表單</button>
+    <button type="button" class="he-tab" data-hetab="saved">🗂️ 已儲存 <span id="he-n"></span></button>
+  </div>
+
+  <div data-hepanel="saved" hidden class="paper-card rounded-3xl p-6 shadow-card">
+    <h3 class="font-heading font-bold text-sm">🗂️ 已儲存的衛教宣導 <span id="he-saved-sub" class="he-hint"></span></h3>
+    <p class="he-hint mt-1">點「開啟編輯」可讀取、修改、換照片，再按「更新」。</p>
+    <div id="he-list" class="mt-3 space-y-2"></div>
+  </div>
+
+  <form id="he-form" data-hepanel="fill" class="space-y-4" novalidate autocomplete="off">
+    <div id="he-editing" hidden class="paper-card rounded-2xl px-5 py-3 shadow-card text-sm font-bold flex flex-wrap items-center justify-between gap-2" style="background:#EAF3F1">
+      <span>✏️ 正在編輯：<span id="he-editing-name"></span></span>
+      <button type="button" class="he-btn" data-he="cancel">結束編輯（改成新增）</button>
+    </div>
+
+    <div class="paper-card rounded-3xl p-6 shadow-card space-y-4">
+      <h3 class="font-heading font-bold text-sm">基本資料</h3>
+      <div class="he-g2">
+        <label class="block"><span class="he-lb">學年度／學期</span>
+          <input class="he-in" name="sem" placeholder="例：115 學年度上學期"></label>
+        <label class="block"><span class="he-lb">宣導主題 <span class="he-hint">（標題顯示為「○○ 宣導」）</span></span>
+          <input class="he-in" name="topic" placeholder="例：表達情緒"></label>
+      </div>
+      <div class="he-g3">
+        <div><span class="he-lb">一、活動日期</span>
+          <input class="he-in" name="date" placeholder="例：115 年 11 月 09 日（一）">
+          <label class="he-hint flex items-center gap-1 mt-1">或從日曆選：<input type="date" id="he-datepick" style="font-size:12px;border:1px solid #E3D3BA;border-radius:6px;padding:1px 4px"></label></div>
+        <div><span class="he-lb">二、活動時間 <span class="he-hint">（固定）</span></span><br>
+          <span class="he-fixed">15:00-15:30</span></div>
+        <div><span class="he-lb">三、活動地點</span>
+          <select class="he-in" id="he-place-sel">
+            <option value="">請選擇地點</option>
+            <option>三樓活動室</option>
+            <option>各班教室</option>
+            <option>一樓穿堂</option>
+            <option>戶外遊戲場</option>
+            <option value="__other">其他（自行輸入）</option>
+          </select>
+          <input class="he-in" id="he-place-txt" placeholder="請輸入活動地點" hidden></div>
+      </div>
+      <label class="block"><span class="he-lb">四、活動目的 <span class="he-hint">（每一點換一行）</span></span>
+        <textarea class="he-in" name="purpose" rows="3" placeholder="1. 增進情緒覺察與辨識能力&#10;2. 建立情緒命名與語言表達&#10;3. 學習安全與適切的調節策略"></textarea></label>
+    </div>
+
+    <div class="paper-card rounded-3xl p-6 shadow-card space-y-4">
+      <h3 class="font-heading font-bold text-sm">活動流程 <span class="he-hint">（時間固定 15:00-15:30；活動地點會自動帶入上面選的地點）</span></h3>
+      <label class="block"><span class="he-lb">活動內容</span>
+        <textarea class="he-in" name="content" rows="10" placeholder="1. …&#10;2. …&#10;3. …"></textarea></label>
+      <label class="block"><span class="he-lb">器材／道具</span>
+        <textarea class="he-in" name="equip" rows="3"></textarea></label>
+      <label class="block"><span class="he-lb">課程調整策略</span>
+        <textarea class="he-in" name="strategy" rows="3"></textarea></label>
+    </div>
+
+    <div class="paper-card rounded-3xl p-6 shadow-card space-y-3">
+      <h3 class="font-heading font-bold text-sm">五、成果展現 <span class="he-hint">（最多 6 張照片，點方框上傳；照片說明請自行輸入）</span></h3>
+      <div class="he-g3" id="he-photos"></div>
+    </div>
+
+    <div class="paper-card rounded-3xl p-6 shadow-card space-y-3">
+      <label class="block" style="max-width:20rem"><span class="he-lb">承辦人 <span class="he-hint">（可留白，列印後簽名）</span></span>
+        <input class="he-in" name="organizer"></label>
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="submit" class="he-btn he-pri" id="he-save">💾 儲存</button>
+        <button type="button" class="he-btn" data-he="print">🖨️ 列印／存成 PDF</button>
+        <span id="he-status" class="text-sm font-bold"></span>
+      </div>
+    </div>
+  </form>
+</section>
+
 <!-- ============ 學習區觀察表 ============ -->
 <section id="learning-observation-page" x-show="view==='observation' && !restrictedPW" x-effect="window.LearningObservation && LearningObservation.sync($el,$data,classes.join('|'),view==='observation')" class="space-y-4 max-w-4xl mx-auto" aria-labelledby="observation-title">
   <div class="obs-block obs-head paper-card rounded-3xl p-6 shadow-card flex flex-wrap items-start justify-between gap-3">
@@ -1395,7 +1511,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </div>
 
 <style>
-#planRoot .pu-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#planRoot .pu-split.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}#planRoot .pu-split.cmp #puCmp{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px}#planRoot .pu-cmpane{border:2px solid #cfc6b4;border-radius:14px;padding:8px;background:#fffdf7}#planRoot .pu-cmpb{max-height:calc((100vh - 190px)/var(--n,1));overflow:auto;margin-top:8px}@media(max-width:900px){#planRoot .pu-split.cmp{display:block}#planRoot .pu-split.cmp #puCmp{position:static;max-height:none;margin-top:12px}#planRoot .pu-cmpb{max-height:70vh}}
+#planRoot .pu-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#planRoot .pu-split.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}#planRoot .pu-split.cmp #puCmp{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px}@media print{#planRoot .pu-area{break-after:page;page-break-after:always}#planRoot .pu-area:last-of-type{break-after:auto;page-break-after:auto}}#planRoot .pu-cmpane{border:2px solid #cfc6b4;border-radius:14px;padding:8px;background:#fffdf7}#planRoot .pu-cmpb{max-height:calc((100vh - 190px)/var(--n,1));overflow:auto;margin-top:8px}@media(max-width:900px){#planRoot .pu-split.cmp{display:block}#planRoot .pu-split.cmp #puCmp{position:static;max-height:none;margin-top:12px}#planRoot .pu-cmpb{max-height:70vh}}
 #planRoot button,#planRoot select,#planRoot input:not([type=checkbox]),#planRoot textarea,.pu-modal button,.pu-modal input,.pu-modal select{font:inherit;border:1px solid #cfc6b4;border-radius:10px;padding:5px 10px;background:#fffdf7;color:inherit}
 #planRoot button,.pu-modal button{cursor:pointer}#planRoot .pu-b.on,#planRoot .pu-p,.pu-modal .pu-p{background:#4C7A3E;color:#fff;border-color:#4C7A3E}
 #planRoot .pu-card{border:1px solid #e0d8c6;border-radius:14px;padding:10px;margin:10px 0}#planRoot .pu-sub{background:#fbf3e6}
@@ -1553,7 +1669,7 @@ function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);const mm=String(plan.s
   $("#introDet").addEventListener("toggle",()=>{introOpen=$("#introDet").open});
   $("#add").onclick=()=>{const nm=$("#ar").value;plan.areas.push({name:nm,tiers:[],diff:[],rows:[]});openMap["a"+(plan.areas.length-1)]=true;if(areaSel)areaSel=nm;drawAreas()};
   $("#imp").onclick=openImport;
-  $("#sv").onclick=()=>save();$("#dp").onclick=deletePlan;if($("#drr")){$("#drr").onclick=()=>{const dr=getDraft();if(dr&&dr.plan){loadPlan(normPlan(dr.plan));snap="";rPlan()}};$("#drd").onclick=()=>{try{localStorage.removeItem(draftKey())}catch(e){}rPlan()}};$("#ex").onclick=()=>exportDoc();$("#exd").onclick=uploadPlanPdf;$("#nw").onclick=()=>{if(dirty()&&!confirm("目前計畫有未儲存的修改，確定要離開？"))return;loadPlan(newPlan());rPlan()};
+  $("#sv").onclick=()=>save();$("#dp").onclick=deletePlan;if($("#drr")){$("#drr").onclick=()=>{const dr=getDraft();if(dr&&dr.plan){loadPlan(normPlan(dr.plan));snap="";rPlan()}};$("#drd").onclick=()=>{try{localStorage.removeItem(draftKey())}catch(e){}rPlan()}};$("#ex").onclick=async()=>{await ppAll(plan);exportDoc()};$("#exd").onclick=uploadPlanPdf;$("#nw").onclick=()=>{if(dirty()&&!confirm("目前計畫有未儲存的修改，確定要離開？"))return;loadPlan(newPlan());rPlan()};
   $("#sa").onclick=()=>{const p=normPlan(JSON.parse(JSON.stringify(plan)));p.id="p"+Date.now();p.name=(p.name||"")+"（副本）";delete p.by;delete p.at;loadPlan(p);snap="";rPlan()};
   $("#ps").onchange=e=>{const v=e.target.value;if(v==="__new"||v===plan.id)return;if(dirty()&&!confirm("目前計畫有未儲存的修改，確定要切換？")){rPlan();return}const f=plans.find(x=>x.id===v);if(f){loadPlan(normPlan(JSON.parse(JSON.stringify(f))));rPlan()}};
   $("#oa").onclick=()=>{plan.areas.forEach((a,i)=>openMap["a"+i]=true);drawAreas()};$("#ca").onclick=()=>{Object.keys(openMap).forEach(k=>openMap[k]=false);drawAreas()};drawAreas();}
@@ -1664,12 +1780,12 @@ function phaseHtml(r,ai,ri,pi){const A=`data-a="${ai}" data-r="${ri}" data-p="${
   ${rtToolbar()}<div class="rte" contenteditable="true" data-f="p" ${A} data-ph="本期教學內容">${rtView(r.p[pi])}</div>
   <div class="pu-lb">教具</div><div>${r.tools[pi].map((t,k)=>toolTag(t,ai,ri,pi,k,r.tpics)).join("")}</div>
   <div class="pu-row"><button class="pt" ${A}>選教具</button><input class="mt" ${A} placeholder="自製／新購，Enter加入" style="width:150px"></div>
-  <div class="pu-lb">參考教學連結</div>${r.links[pi].map((l,k)=>`<div class="pu-lk"><a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t||l.u)}</a> <b class="rml" ${A} data-k="${k}" style="cursor:pointer">×</b></div>`).join("")}
+  <div class="pu-lb">參考教學連結</div>${r.links[pi].map((l,k)=>`<div class="pu-lk"><a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener">${esc(l.t||l.u)}</a> <b class="rml" ${A} data-k="${k}" style="cursor:pointer">×</b></div>`).join("")}
   <div class="pu-row"><input class="lt" ${A} placeholder="標題" style="width:90px"><input class="lu" ${A} placeholder="https://…" style="flex:1;min-width:100px"><button class="al" ${A}>加入</button></div>
-  <div class="pu-lb">照片連結（Google 雲端硬碟等）</div><div class="pu-ph-imgs">${r.photos[pi].map((l,k)=>{const src=photoSrc(l.u,"w300");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(l.u)}" target="_blank" rel="noopener"><img src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div style="word-break:break-all">🖼 <a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t||(src?"照片":l.u))}</a> <b class="rmp" ${A} data-k="${k}" style="cursor:pointer">×</b></div>${src?"":`<div style="color:#c0392b">無法顯示縮圖</div>`}</div>`}).join("")}</div>
-  <div class="pu-row"><input class="pt2" ${A} placeholder="照片說明" style="width:90px"><input class="pu2" ${A} placeholder="貼上照片或相簿連結 https://…" style="flex:1;min-width:100px"><button class="ap" ${A}>加入</button></div></div>`}
-const photoCard=(l,k,ed,A)=>{const src=photoSrc(l.u,"w300");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(l.u)}" target="_blank" rel="noopener"><img src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div style="word-break:break-all">🖼 <a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t||(src?"照片":l.u))}</a>${ed?` <b class="rrp" ${A} data-k="${k}" style="cursor:pointer;color:#c0392b">×</b>`:""}</div>${ed&&!src?`<div style="color:#c0392b">無法顯示縮圖</div>`:""}</div>`};
-function rpHtml(r,ai,ri){const A=`data-a="${ai}" data-r="${ri}"`;return `<div class="pu-card" style="background:#fffdf7"><div class="pu-lb">活動照片連結（整個活動共用，不分期別）</div><div class="pu-ph-imgs">${r.rphotos.map((l,k)=>photoCard(l,k,true,A)).join("")}</div><div class="pu-row"><input class="rpt" ${A} placeholder="照片說明" style="width:110px"><input class="rpu" ${A} placeholder="貼上照片連結 https://…" style="flex:1;min-width:120px"><button class="arp" ${A}>加入照片連結</button></div></div>`}
+  <div class="pu-lb">照片（從電腦上傳）</div><div class="pu-ph-imgs">${r.photos[pi].map((l,k)=>{const src=photoSrc(l.u,"w300");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener"><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div style="word-break:break-all">🖼 <a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener">${esc(l.t||(src?"照片":l.u))}</a> <b class="rmp" ${A} data-k="${k}" style="cursor:pointer">×</b></div>${src?"":`<div style="color:#c0392b">無法顯示縮圖</div>`}</div>`}).join("")}</div>
+  <div class="pu-row"><input class="pt2" ${A} placeholder="照片說明（選填）" style="flex:1;min-width:90px"><label class="pu-bo" style="cursor:pointer;white-space:nowrap">📷 從電腦上傳照片<input type="file" class="pf" ${A} accept="image/*" multiple hidden></label></div></div>`}
+const photoCard=(l,k,ed,A)=>{const src=photoSrc(l.u,"w300");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener"><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div style="word-break:break-all">🖼 <a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener">${esc(l.t||(src?"照片":l.u))}</a>${ed?` <b class="rrp" ${A} data-k="${k}" style="cursor:pointer;color:#c0392b">×</b>`:""}</div>${ed&&!src?`<div style="color:#c0392b">無法顯示縮圖</div>`:""}</div>`};
+function rpHtml(r,ai,ri){const A=`data-a="${ai}" data-r="${ri}"`;return `<div class="pu-card" style="background:#fffdf7"><div class="pu-lb">活動照片（從電腦上傳，整個活動共用，不分期別）</div><div class="pu-ph-imgs">${r.rphotos.map((l,k)=>photoCard(l,k,true,A)).join("")}</div><div class="pu-row"><input class="rpt" ${A} placeholder="照片說明（選填）" style="flex:1;min-width:110px"><label class="pu-bo" style="cursor:pointer;white-space:nowrap">📷 從電腦上傳照片<input type="file" class="rpf" ${A} accept="image/*" multiple hidden></label></div></div>`}
 function areaHtml(a,ai){const col=colorOf(a.name);
   return `<details class="pu-area" data-k="a${ai}" ${openMap["a"+ai]?"open":""} style="border-color:${col}"><summary style="background:${col}"><span>${esc(a.name)}</span><span class="pu-cnt">${a.rows.length} 項活動</span></summary><div style="padding:8px">
   <div class="pu-row"><button data-a="${ai}" class="addr">＋活動</button><button data-a="${ai}" class="dela">刪除此區</button></div>
@@ -1686,7 +1802,7 @@ function drawAreas(){
   $$(".addr").forEach(b=>b.onclick=()=>{plan.areas[b.dataset.a].rows.push(normRow({act:"",age:"",codes:[],p:[[],[],[]]}));openMap["a"+b.dataset.a]=true;drawAreas()});
   $$(".dela").forEach(b=>b.onclick=()=>{if(confirm("刪除此學習區？")){plan.areas.splice(b.dataset.a,1);drawAreas()}});
   $$(".delr").forEach(b=>b.onclick=()=>{plan.areas[b.dataset.a].rows.splice(b.dataset.r,1);drawAreas()});
-  $$(".arp").forEach(b=>b.onclick=()=>{const w=b.parentNode;const u=w.querySelector(".rpu").value.trim(),t=w.querySelector(".rpt").value.trim();if(!/^https?:\/\//i.test(u)){alert("請貼上以 http:// 或 https:// 開頭的照片連結");return}R(b).rphotos.push({t,u});drawAreas()});
+  $$(".rpf").forEach(inp=>inp.onchange=async()=>{const cap=inp.closest(".pu-row").querySelector(".rpt").value.trim(),fs=[...inp.files];inp.value="";await ppAdd(fs,R(inp).rphotos,cap,inp)});$$(".arp").forEach(b=>b.onclick=()=>{const w=b.parentNode;const u=w.querySelector(".rpu").value.trim(),t=w.querySelector(".rpt").value.trim();if(!/^https?:\/\//i.test(u)){alert("請貼上以 http:// 或 https:// 開頭的照片連結");return}R(b).rphotos.push({t,u});drawAreas()});
   $$(".rrp").forEach(b=>b.onclick=()=>{R(b).rphotos.splice(b.dataset.k,1);drawAreas()});
   $$(".insr").forEach(b=>b.onclick=()=>{const a=+b.dataset.a,r=+b.dataset.r;plan.areas[a].rows.splice(r+1,0,normRow({act:"",age:"",codes:[],p:[[],[],[]]}));openMap["a"+a]=true;drawAreas()});
   $$(".cpr").forEach(b=>b.onclick=()=>{const a=+b.dataset.a,r=+b.dataset.r;const c=JSON.parse(JSON.stringify(plan.areas[a].rows[r]));c.act=(c.act||"")+"（複製）";plan.areas[a].rows.splice(r+1,0,normRow(c));openMap["a"+a]=true;drawAreas()});
@@ -1714,7 +1830,7 @@ function drawAreas(){
   $$(".al").forEach(b=>b.onclick=()=>{const w=b.parentNode;const u=w.querySelector(".lu").value.trim(),t=w.querySelector(".lt").value.trim();if(!/^https?:\/\//i.test(u)){alert("請輸入以 http:// 或 https:// 開頭的連結");return}R(b).links[P(b)].push({t,u});drawAreas()});
   $$(".rml").forEach(b=>b.onclick=()=>{R(b).links[P(b)].splice(b.dataset.k,1);drawAreas()});
   $$(".rmp").forEach(b=>b.onclick=()=>{R(b).photos[P(b)].splice(b.dataset.k,1);drawAreas()});
-  $$(".ap").forEach(b=>b.onclick=()=>{const w=b.parentNode;const u=w.querySelector(".pu2").value.trim(),t=w.querySelector(".pt2").value.trim();if(!/^https?:\/\//i.test(u)){alert("請貼上以 http:// 或 https:// 開頭的照片連結");return}R(b).photos[P(b)].push({t,u});drawAreas()});}
+  $$(".pf").forEach(inp=>inp.onchange=async()=>{const cap=inp.closest(".pu-row").querySelector(".pt2").value.trim(),fs=[...inp.files];inp.value="";await ppAdd(fs,R(inp).photos[P(inp)],cap,inp)});$$(".ap").forEach(b=>b.onclick=()=>{const w=b.parentNode;const u=w.querySelector(".pu2").value.trim(),t=w.querySelector(".pt2").value.trim();if(!/^https?:\/\//i.test(u)){alert("請貼上以 http:// 或 https:// 開頭的照片連結");return}R(b).photos[P(b)].push({t,u});drawAreas()});}
 const A3=a=>({0:a[0]||[],1:a[1]||[],2:a[2]||[]});
 function toDb(p){const o=JSON.parse(JSON.stringify(p));delete o.id;(o.areas||[]).forEach(a=>{a.tiers=(a.tiers||[]).map(t=>({n:t[0]||"",i:t[1]||"",a:t[2]||""}));(a.rows||[]).forEach(r=>{["p","tools","links","photos"].forEach(k=>{r[k]=A3(r[k]||[[],[],[]])});r.tpics=r.tpics||[];r.rphotos=r.rphotos||[]})});return o}
 const draftKey=()=>"planDraft_"+((d&&d.currentUser&&d.currentUser.uid)||"");
@@ -1746,39 +1862,53 @@ async function deletePlan(){if(!admin())return;
   if(!plans.some(x=>x.id===plan.id)){if(confirm("這份計畫還沒有儲存過，要清空目前的內容嗎？")){loadPlan(newPlan());rPlan()}return}
   if(!confirm("確定要刪除計畫「"+(plan.name||"（未命名）")+"」嗎？\n刪除後無法復原（修改紀錄會保留刪除的紀錄）。"))return;
   try{const id=plan.id,p=plans.find(x=>x.id===id);await d.db.collection("teachingPlans").doc(id).delete();plans=plans.filter(x=>x.id!==id);if(p)await writeLog("delete",id,p,["刪除計畫「"+p.name+"」（"+p.cls+"・"+p.sem+"，"+(p.areas||[]).length+"個學習區）"]);d.showToast&&d.showToast("已刪除計畫");loadPlan(newPlan());rPlan()}catch(e){alert("刪除失敗（"+(e.code||e.message)+"）")}}
-function photoSrc(u,w){let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||u.match(/drive\.google\.com\/(?:open|uc|thumbnail)\?[^#]*?id=([\w-]+)/);if(m)return "https://drive.google.com/thumbnail?id="+m[1]+"&sz="+(w||"w800");if(/\.(jpe?g|png|gif|webp)(\?|#|$)/i.test(u)||/^https:\/\/lh\d\.googleusercontent\.com\//.test(u))return u;return ""}
+const PPC={},PPQ={},PPPH="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+const ppA=u=>/^pp:/.test(u||"")?` data-ppid="${esc(u.slice(3))}"`:"";
+const hf=u=>/^pp:/.test(u||"")?"#":u;
+const ppo=u=>/^pp:/.test(u||"")?` data-ppo="${esc(u.slice(3))}"`:"";
+function ppSet(id,data){document.querySelectorAll('img[data-ppid="'+id+'"]').forEach(im=>{im.src=data;im.style.display=""})}
+function ppLoad(id){if(PPC[id]||PPQ[id]||!d||!d.db)return PPQ[id];PPQ[id]=d.db.collection("planPhotos").doc(id).get().then(s=>{if(s.exists&&s.data().data){PPC[id]=s.data().data;ppSet(id,PPC[id])}}).catch(()=>{});return PPQ[id]}
+async function ppAll(p){const ids=[];JSON.stringify(p||{}).replace(/"u":"pp:(\w+)"/g,(m,i)=>{ids.push(i);return m});await Promise.all(ids.map(ppLoad))}
+async function ppOpen(id){await ppLoad(id);const data=PPC[id];if(!data)return;const b=await (await fetch(data)).blob();window.open(URL.createObjectURL(b),"_blank")}
+document.addEventListener("click",ev=>{const a=ev.target.closest&&ev.target.closest("a[data-ppo]");if(!a)return;ev.preventDefault();ppOpen(a.dataset.ppo)});
+function ppShrink(f){return new Promise((ok,bad)=>{const fr=new FileReader();fr.onerror=bad;fr.onload=()=>{const im=new Image();im.onerror=()=>bad(new Error("無法讀取照片「"+f.name+"」，請改用 JPG／PNG"));im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);let q=.78,out=c.toDataURL("image/jpeg",q);while(out.length>700000&&q>.4){q-=.1;out=c.toDataURL("image/jpeg",q)}ok(out)};im.src=fr.result};fr.readAsDataURL(f)})}
+async function ppUpload(f){if(!d||!d.db||!d.currentUser)throw new Error("尚未登入");const data=await ppShrink(f);if(data.length>900000)throw new Error("照片太大，請先縮小後再上傳");const id="pp"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);await d.db.collection("planPhotos").doc(id).set({data,name:f.name,uid:d.currentUser.uid,createdAt:Date.now()});PPC[id]=data;return id}
+async function ppAdd(files,arr,cap,el){files=files.filter(f=>/^image\//.test(f.type));if(!files.length){alert("請選擇圖片檔");return}
+  const lab=el.closest("label"),old=lab&&lab.firstChild?lab.firstChild.textContent:"";if(lab&&lab.firstChild)lab.firstChild.textContent="上傳中…";
+  try{for(const f of files){const id=await ppUpload(f);arr.push({t:cap||"",u:"pp:"+id})}drawAreas()}catch(e){alert("上傳失敗："+(e.code||e.message||e))}finally{if(lab&&lab.firstChild)lab.firstChild.textContent=old}}
+function photoSrc(u,w){if(/^pp:/.test(u)){const id=u.slice(3);if(PPC[id])return PPC[id];ppLoad(id);return PPPH}let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||u.match(/drive\.google\.com\/(?:open|uc|thumbnail)\?[^#]*?id=([\w-]+)/);if(m)return "https://drive.google.com/thumbnail?id="+m[1]+"&sz="+(w||"w800");if(/\.(jpe?g|png|gif|webp)(\?|#|$)/i.test(u)||/^https:\/\/lh\d\.googleusercontent\.com\//.test(u))return u;return ""}
 async function uploadPlanPdf(){
  if(!admin())return;
  if(!window.PdfUtil){alert("PDF 工具載入失敗，請重新整理頁面");return}
  if(!window.__driveUrl){alert("尚未設定雲端硬碟上傳。\n請到「管理者後台 → ☁️ 雲端硬碟上傳設定」貼上上傳網址。");return}
  const fid=PdfUtil.folderId(window.__drivePlanFolder);if(!fid){alert("管理員尚未設定「教學計畫」的雲端硬碟資料夾。\n請到「管理者後台 → ☁️ 雲端硬碟上傳設定」貼上資料夾連結。");return}
- const html=exportDoc(true);if(!html)return;
+ await ppAll(plan);const html=exportDoc(true);if(!html)return;
  const btn=$("#exd"),old=btn.textContent;btn.disabled=true;
  try{btn.textContent="產生 PDF 中…請稍候";
-  const blob=await PdfUtil.htmlToPdf(html,{landscape:true,margin:8,units:".intro,.area"});
+  const po={landscape:true,margin:8,units:".intro,.area",keepRows:true};const blob=await PdfUtil.htmlToPdf(html,po);
   btn.textContent="上傳中…";
   const nm=((plan.name||plan.cls+"教學計畫")+"_"+(plan.sem||"")+".pdf").replace(/[\\/:*?"<>|]/g,"_");
   const r=await PdfUtil.upload(blob,{filename:nm,subfolder:"",folderId:fid});
-  if(confirm("已上傳到雲端硬碟 ✅\n要現在開啟檔案嗎？")&&r.url)window.open(r.url,"_blank")}
+  if(confirm("已上傳到雲端硬碟 ✅"+(po.missing?"\n\n⚠️ 有 "+po.missing+" 張照片無法放進 PDF（PDF 中會顯示紅色提示文字）。\n請到雲端硬碟把這些照片的共用設定改成「知道連結的任何人」，再重新上傳一次。":"")+"\n要現在開啟檔案嗎？")&&r.url)window.open(r.url,"_blank")}
  catch(e){alert("上傳失敗："+(e.message||e))}finally{btn.disabled=false;btn.textContent=old}}
 function exportDoc(pdf){if(!admin())return;
   const tl=(a,pics)=>a.map(t=>{const x=findInv(t);const u=x?x[5]:((pics||[]).find(p=>p.n===t)||{}).u;const src=u?(x?u:photoSrc(u,"w800")):"";return `<div class="tool">${src?`<img src="${esc(src)}" referrerpolicy="no-referrer" alt="">`:""}<span>${x?"◎":"△"}${esc(x?x[1]:t.replace(/^(自製|新購|待購)[：:]/,"自製："))}</span></div>`}).join("");
-  const ph=(r,i)=>`${rtView(r.p[i])}${r.tools[i].length?`<div class="lb">教具</div>${tl(r.tools[i],r.tpics)}`:""}${r.links[i].length?`<div class="lb">參考教學連結</div>${r.links[i].map(l=>`<div class="lk">${esc(l.t||"連結")}：${esc(l.u)}</div>`).join("")}`:""}${r.photos[i].length?`<div class="lb">照片</div><div class="ph">${r.photos[i].map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div>`:""}`;
+  const ph=(r,i)=>`${rtView(r.p[i])}${r.tools[i].length?`<div class="lb">教具</div>${tl(r.tools[i],r.tpics)}`:""}${r.links[i].length?`<div class="lb">參考教學連結</div>${r.links[i].map(l=>`<div class="lk">${esc(l.t||"連結")}：${esc(l.u)}</div>`).join("")}`:""}${r.photos[i].length?`<div class="lb">照片</div><div class="ph">${r.photos[i].map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div>`:""}`;
   const css=`@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact;--fs:16pt;--ps:5cm;--ts:3cm}body{font-family:"標楷體","DFKai-SB","Noto Serif CJK TC",serif;font-size:var(--fs);line-height:1.4;margin:0;color:#000}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:14px;align-items:center;flex-wrap:wrap}.bar button,.bar select{font-size:14px;padding:4px 10px}@media print{.bar{display:none}}
-h1{text-align:center;font-size:1.3em;margin:6px 0}h2{color:#fff;padding:4px 10px;font-size:1.1em;margin:8px 0 4px}.area{break-before:page}.area:first-of-type{break-before:auto}
+h1{text-align:center;font-size:1.3em;margin:6px 0}h2{color:#fff;padding:4px 10px;font-size:1.1em;margin:8px 0 4px}.area{break-before:page;page-break-before:always;break-after:page;page-break-after:always}.area:first-of-type{break-before:auto;page-break-before:auto}.area:last-of-type{break-after:auto;page-break-after:auto}
 table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:6px}th,td{border:1px solid #555;padding:3px 5px;vertical-align:top;word-break:break-all}th{background:#d9e2f3;font-size:.9em}thead{display:table-header-group}
-tr{break-inside:auto}td.act{background:#fbe4d5;font-weight:bold}td.ind{font-size:.8em}.lb{font-weight:bold;margin-top:4px;font-size:.85em;color:#333}.lk{font-size:.75em;color:#1a4a8a}
+tbody>tr{break-inside:avoid;page-break-inside:avoid}h2,.in-h,.in-title{break-after:avoid;page-break-after:avoid}.diff{break-before:avoid;page-break-before:avoid}@media screen{body{max-width:281mm;margin:0 auto}}td.act{background:#fbe4d5;font-weight:bold}td.ind{font-size:.8em}.lb{font-weight:bold;margin-top:4px;font-size:.85em;color:#333}.lk{font-size:.75em;color:#1a4a8a}
 .tool{display:flex;flex-direction:column;align-items:center;gap:.2cm;margin:4px 0;break-inside:avoid;text-align:center;line-height:1.2}.tool img{width:var(--ts);height:var(--ts);object-fit:contain;flex:none;display:block;margin:0}
-.ph{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}figure{margin:0;break-inside:avoid;text-align:center;max-width:calc(var(--ps) + 1cm)}figure img{width:var(--ps);height:var(--ps);object-fit:contain;display:block;margin:auto}figcaption{font-size:.6em;margin-top:.2cm;line-height:1.2}.diff{font-size:.85em;margin:2px 0 6px}.intro{break-after:page;page-break-after:always}.in-title{text-align:center;font-size:1.2em;font-weight:bold;margin:6px 0}.in-h{font-weight:bold;margin:10px 0 3px}.in-p{line-height:1.6}.intro th{text-align:center}`;
+.ph{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}figure{margin:0;break-inside:avoid;text-align:center;max-width:calc(var(--ps) + 1cm)}figure img{width:var(--ps);height:var(--ps);max-width:100%;object-fit:contain;display:block;margin:auto}figcaption{font-size:.6em;margin-top:.2cm;line-height:1.2}.diff{font-size:.85em;margin:2px 0 6px}.intro{break-after:page;page-break-after:always}.in-title{text-align:center;font-size:1.2em;font-weight:bold;margin:6px 0}.in-h{font-weight:bold;margin:10px 0 3px}.in-p{line-height:1.6}.intro th{text-align:center}`;
   const body=plan.areas.map((a,i)=>`<section class="area"><h2 style="background:${colorOf(a.name)}">${esc(a.name)}</h2>`+(a.tiers.length?`<table><colgroup><col style="width:8%"><col style="width:24%"><col style="width:34%"><col style="width:34%"></colgroup><thead><tr><th>年段</th><th>學習目標</th><th>教師意圖</th><th>幼兒能力（期末預期）</th></tr></thead><tbody>${a.tiers.map(t=>`<tr><td>${esc(t[0])}</td><td>${esc(t[3]||"")}</td><td>${esc(t[1])}</td><td>${esc(t[2])}</td></tr>`).join("")}</tbody></table>`:"")+
-  `<table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:25.3%"><col style="width:25.3%"><col style="width:25.4%"></colgroup><thead><tr><th>學習區活動／年段</th><th>課程指標</th>${[0,1,2].map(i=>`<th>${phL(i,plan)}</th>`).join("")}</tr></thead><tbody>`+a.rows.map(r=>`<tr><td class="act">${esc(r.act)}${r.age?`<br><span style="font-weight:normal">（${esc(r.age)}）</span>`:""}</td><td class="ind">${(r.codes||[]).map(c=>`<div>${esc(c+" "+(D.ind[c]||""))}</div>`).join("")}</td>${[0,1,2].map(k=>`<td>${ph(r,k)}</td>`).join("")}</tr>${(r.rphotos||[]).length?`<tr><td colspan="5"><div class="lb">活動照片：${esc(r.act)}</div><div class="ph">${r.rphotos.map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div></td></tr>`:""}`).join("")+`</tbody></table>`+(a.diff.length?`<div class="diff"><b>混齡差異化：</b>${a.diff.filter(Boolean).map(esc).join("；")}</div>`:"")+`</section>`).join("");
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(plan.name||"教學計畫")}</title><style>${css}</style></head><body><div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><label>字體大小 <select onchange="document.documentElement.style.setProperty('--fs',this.value+'pt')"><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option></select> pt</label><label>照片大小 <select onchange="document.documentElement.style.setProperty('--ps',this.value+'cm')"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select> 公分</label><label>教具照片 <select onchange="document.documentElement.style.setProperty('--ts',this.value+'cm')"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select> 公分</label><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。照片需等載入完成後再列印。</span></div><h1>${esc(plan.name||plan.cls+"教學計畫")}（${esc(plan.cls)}・${esc(plan.sem)}）</h1>${introHtml("print",plan.intro)}${body}</body></html>`;
+  `<table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:25.3%"><col style="width:25.3%"><col style="width:25.4%"></colgroup><thead><tr><th>學習區活動／年段</th><th>課程指標</th>${[0,1,2].map(i=>`<th>${phL(i,plan)}</th>`).join("")}</tr></thead><tbody>`+a.rows.map(r=>`<tr><td class="act">${esc(r.act)}${r.age?`<br><span style="font-weight:normal">（${esc(r.age)}）</span>`:""}</td><td class="ind">${(r.codes||[]).map(c=>`<div>${esc(c+" "+(D.ind[c]||""))}</div>`).join("")}</td>${[0,1,2].map(k=>`<td>${ph(r,k)}</td>`).join("")}</tr>${(r.rphotos||[]).length?`<tr><td colspan="5"><div class="lb">活動照片：${esc(r.act)}</div><div class="ph">${r.rphotos.map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div></td></tr>`:""}`).join("")+`</tbody></table>`+(a.diff.length?`<div class="diff"><b>混齡差異化：</b>${a.diff.filter(Boolean).map(esc).join("；")}</div>`:"")+`</section>`).join("");
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(plan.name||"教學計畫")}</title><style>${css}</style></head><body><div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><label>字體大小 <select onchange="document.documentElement.style.setProperty('--fs',this.value+'pt')"><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option></select> pt</label><label>照片大小 <select onchange="document.documentElement.style.setProperty('--ps',this.value+'cm')"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select> 公分</label><label>教具照片 <select onchange="document.documentElement.style.setProperty('--ts',this.value+'cm')"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select> 公分</label><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。照片需等載入完成後再列印。</span></div><h1>${esc(plan.name||plan.cls+"教學計畫")}（${esc(plan.cls)}・${esc(plan.sem)}）</h1>${introHtml("print",plan.intro)}${body}<script>(function(){var PH=194*96/25.4;function fit(){document.querySelectorAll("tbody>tr").forEach(function(tr){tr.style.removeProperty("--ps");tr.style.removeProperty("--ts")});document.querySelectorAll("table").forEach(function(tb){var hh=tb.tHead?tb.tHead.offsetHeight:0,pv=tb.previousElementSibling,hx=pv&&/^H[1-6]$/.test(pv.tagName)?pv.offsetHeight+20:0,f1=true;Array.prototype.forEach.call(tb.tBodies,function(bd){Array.prototype.forEach.call(bd.rows,function(tr){var lim=PH-hh-8-(f1?hx:0);f1=false;if(tr.offsetHeight<=lim)return;var cs=getComputedStyle(tr),ps=parseFloat(cs.getPropertyValue("--ps"))||5,ts=parseFloat(cs.getPropertyValue("--ts"))||3,n=0;while(tr.offsetHeight>lim&&(ps>1.5||ts>1.2)&&n++<40){ps=Math.max(1.5,ps*.88);ts=Math.max(1.2,ts*.88);tr.style.setProperty("--ps",ps.toFixed(2)+"cm");tr.style.setProperty("--ts",ts.toFixed(2)+"cm")}})})})}window.addEventListener("load",fit);window.addEventListener("beforeprint",fit);document.querySelectorAll(".bar select").forEach(function(s){s.addEventListener("change",function(){setTimeout(fit,50)})})})()<\/script></body></html>`;
   if(pdf===true)return html.replace(/<div class="bar">[\s\S]*?<\/span><\/div><h1>/,"<h1>");const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"}));const w=window.open(url,"_blank");if(!w)alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次");setTimeout(()=>URL.revokeObjectURL(url),600000)}
 function roHtml(p){p=normPlan(JSON.parse(JSON.stringify(p)));
   return `<div class="pu-ro"><div class="pu-card"><button id="bk">← 返回計畫列表</button> <b style="font-size:18px">${esc(p.name)}</b> <span class="pu-m">${esc(p.cls)}｜${esc(p.sem)}（唯讀）</span> <select id="vs">${byNew().map(x=>`<option value="${x.id}" ${x.id===p.id?"selected":""}>${esc(x.name)}｜${esc(x.cls)}｜${esc(x.sem)}</option>`).join("")}</select></div>`+introHtml("view",p.intro)+p.areas.map(a=>{const col=colorOf(a.name);return `<details class="pu-area" style="border-color:${col}"><summary style="background:${col}"><span>${esc(a.name)}</span><span class="pu-cnt">${a.rows.length} 項活動</span></summary><div style="padding:8px">`+
   (a.tiers.length?`<div class="pu-tbl"><table><tr><th>年段</th><th>學習目標</th><th>教師意圖</th><th>幼兒能力</th></tr>${a.tiers.map(t=>`<tr><td>${esc(t[0])}</td><td>${esc(t[3]||"")}</td><td>${esc(t[1])}</td><td>${esc(t[2])}</td></tr>`).join("")}</table></div>`:"")+(a.diff.length?`<p class="pu-m"><b>混齡差異化：</b>${a.diff.filter(Boolean).map(esc).join("；")}</p>`:"")+
-  a.rows.map(r=>`<details class="pu-card pu-sub" open><summary><b>${esc(r.act)}</b> <span class="pu-m">${esc(r.age||"")}</span></summary><div class="pu-row">${r.codes.map(c=>`<span class="pu-tag">${c} ${esc(D.ind[c]||"")}</span>`).join("")}</div><div class="pu-g3">${[0,1,2].map(i=>`<div class="pu-ph"><div class="pu-phh">${phL(i,p)}</div><div>${rtView(r.p[i])}</div><div class="pu-lb">教具</div><div>${r.tools[i].map(t=>toolTag(t,undefined,0,0,0,r.tpics)).join("")||'<span class="pu-m">—</span>'}</div>${r.links[i].length?`<div class="pu-lb">參考教學連結</div>`+r.links[i].map(l=>`<div class="pu-lk"><a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t||l.u)}</a></div>`).join(""):""}${r.photos[i].length?`<div class="pu-lb">照片連結</div>`+`<div class="pu-ph-imgs">`+r.photos[i].map(l=>{const src=photoSrc(l.u,"w400");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(l.u)}" target="_blank" rel="noopener"><img src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div>🖼 <a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t||"查看照片")}</a></div></div>`}).join("")+`</div>`:""}</div>`).join("")}</div>${(r.rphotos||[]).length?`<div class="pu-lb">活動照片連結</div><div class="pu-ph-imgs">${r.rphotos.map(l=>photoCard(l,0,false,"")).join("")}</div>`:""}</details>`).join("")+`</div></details>`}).join("")+`</div>`}
+  a.rows.map(r=>`<details class="pu-card pu-sub" open><summary><b>${esc(r.act)}</b> <span class="pu-m">${esc(r.age||"")}</span></summary><div class="pu-row">${r.codes.map(c=>`<span class="pu-tag">${c} ${esc(D.ind[c]||"")}</span>`).join("")}</div><div class="pu-g3">${[0,1,2].map(i=>`<div class="pu-ph"><div class="pu-phh">${phL(i,p)}</div><div>${rtView(r.p[i])}</div><div class="pu-lb">教具</div><div>${r.tools[i].map(t=>toolTag(t,undefined,0,0,0,r.tpics)).join("")||'<span class="pu-m">—</span>'}</div>${r.links[i].length?`<div class="pu-lb">參考教學連結</div>`+r.links[i].map(l=>`<div class="pu-lk"><a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener">${esc(l.t||l.u)}</a></div>`).join(""):""}${r.photos[i].length?`<div class="pu-lb">照片連結</div>`+`<div class="pu-ph-imgs">`+r.photos[i].map(l=>{const src=photoSrc(l.u,"w400");return `<div style="max-width:232px;font-size:12px">${src?`<a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener"><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;display:block" onerror="this.style.display='none'"></a>`:""}<div>🖼 <a href="${esc(hf(l.u))}"${ppo(l.u)} target="_blank" rel="noopener">${esc(l.t||"查看照片")}</a></div></div>`}).join("")+`</div>`:""}</div>`).join("")}</div>${(r.rphotos||[]).length?`<div class="pu-lb">活動照片連結</div><div class="pu-ph-imgs">${r.rphotos.map(l=>photoCard(l,0,false,"")).join("")}</div>`:""}</details>`).join("")+`</div></details>`}).join("")+`</div>`}
 /* env */
 function envHtml(name,open){const e=(D.env.items||[]).find(x=>name.startsWith(x.area));const key=e?e.area:["生活自理區","鬆散素材區"].find(k=>name.startsWith(k));const two=(D.env.two||{})[key]||[];
   if(!e&&!two.length)return `<p class="pu-m">此區在參考書中沒有環境規劃章節（可參考兩歲專班指引）。</p>`;
@@ -1860,9 +1990,9 @@ function diffPlan(o,n){const L=[];
       for(let i=0;i<3;i++){const P=w+PHN[i]+" ";
         if(JSON.stringify(r.p[i]||[])!==JSON.stringify(q.p[i]||[]))L.push(P+"教學內容已修改");
         const at=r.tools[i].filter(t=>!q.tools[i].includes(t)),rt=q.tools[i].filter(t=>!r.tools[i].includes(t));if(at.length)L.push(P+"新增教具："+at.join("、"));if(rt.length)L.push(P+"移除教具："+rt.join("、"));
-        const lk=x=>x.u,al=r.links[i].filter(x=>!q.links[i].some(y=>lk(y)===lk(x))),rl=q.links[i].filter(x=>!r.links[i].some(y=>lk(y)===lk(x)));if(al.length)L.push(P+"新增連結："+al.map(x=>x.t||x.u).join("、"));if(rl.length)L.push(P+"移除連結："+rl.map(x=>x.t||x.u).join("、"));
-        const pu=x=>x.u,ap=r.photos[i].filter(x=>!q.photos[i].some(y=>pu(y)===pu(x))),rp=q.photos[i].filter(x=>!r.photos[i].some(y=>pu(y)===pu(x)));if(ap.length)L.push(P+"新增照片連結："+ap.map(x=>x.t||x.u).join("、"));if(rp.length)L.push(P+"移除照片連結："+rp.map(x=>x.t||x.u).join("、"))}
-      {const ra=(r.rphotos||[]).filter(x=>!(q.rphotos||[]).some(y=>y.u===x.u)),rr=(q.rphotos||[]).filter(x=>!(r.rphotos||[]).some(y=>y.u===x.u));if(ra.length)L.push(w+"新增活動照片連結："+ra.map(x=>x.t||x.u).join("、"));if(rr.length)L.push(w+"移除活動照片連結："+rr.map(x=>x.t||x.u).join("、"))}
+        const lk=x=>x.u,al=r.links[i].filter(x=>!q.links[i].some(y=>lk(y)===lk(x))),rl=q.links[i].filter(x=>!r.links[i].some(y=>lk(y)===lk(x)));if(al.length)L.push(P+"新增連結："+al.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"));if(rl.length)L.push(P+"移除連結："+rl.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"));
+        const pu=x=>x.u,ap=r.photos[i].filter(x=>!q.photos[i].some(y=>pu(y)===pu(x))),rp=q.photos[i].filter(x=>!r.photos[i].some(y=>pu(y)===pu(x)));if(ap.length)L.push(P+"新增照片連結："+ap.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"));if(rp.length)L.push(P+"移除照片連結："+rp.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"))}
+      {const ra=(r.rphotos||[]).filter(x=>!(q.rphotos||[]).some(y=>y.u===x.u)),rr=(q.rphotos||[]).filter(x=>!(r.rphotos||[]).some(y=>y.u===x.u));if(ra.length)L.push(w+"新增活動照片連結："+ra.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"));if(rr.length)L.push(w+"移除活動照片連結："+rr.map(x=>x.t||(/^pp:/.test(x.u)?"上傳照片":x.u)).join("、"))}
       if((r.act||"")!==(q.act||"")||(r.age||"")!==(q.age||""))return});});
   if(L.length>60){const m=L.length-60;L.length=60;L.push("…另有 "+m+" 項變更")}return L}
 async function writeLog(action,id,p,changes){try{const u=d.currentUser||{};await d.db.collection("teachingPlanLogs").add({planId:id,planName:p.name||"",cls:p.cls||"",action,changes:changes.slice(0,61),by:u.email||"",byName:u.displayName||"",at:new Date().toISOString(),createdAt:Date.now()})}catch(e){console.error(e);d.showToast&&d.showToast("計畫已儲存，但修改紀錄未能寫入（"+(e.code||e.message)+"），請檢查 Firestore 規則",6000)}}
@@ -1879,6 +2009,48 @@ const H2C="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.
 const loadScript=u=>new Promise((ok,bad)=>{const s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=()=>bad(new Error("無法載入 PDF 工具（"+u.split("/").pop()+"），請檢查網路後再試"));document.head.appendChild(s)});
 async function libs(){if(!window.html2canvas)await loadScript(H2C);if(!(window.jspdf&&window.jspdf.jsPDF))await loadScript(JSP)}
 const MM=96/25.4;
+async function imgData(src){
+ const rd=b=>new Promise((ok,bad)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=bad;f.readAsDataURL(b)});
+ const tf=async u=>{const r=await fetch(u,{mode:"cors",credentials:"omit",referrerPolicy:"no-referrer"});if(!r.ok)throw 0;const b=await r.blob();if(!/^image\//.test(b.type))throw 0;return rd(b)};
+ const ti=u=>new Promise((ok,bad)=>{const im=new Image();im.crossOrigin="anonymous";im.referrerPolicy="no-referrer";const t=setTimeout(bad,15000);im.onload=()=>{clearTimeout(t);try{const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0);ok(c.toDataURL("image/jpeg",.9))}catch(e){bad(e)}};im.onerror=()=>{clearTimeout(t);bad()};im.src=u});
+ const m=/google/.test(src)&&(src.match(/[?&]id=([\w-]+)/)||src.match(/googleusercontent\.com\/d\/([\w-]+)/)||src.match(/\/file\/d\/([\w-]+)/));
+ const c=m?["https://lh3.googleusercontent.com/d/"+m[1]+"=w1600","https://drive.google.com/thumbnail?id="+m[1]+"&sz=w1600",src]:[src];
+ for(const u of c){try{return await tf(u)}catch(e){}try{return await ti(u)}catch(e){}}
+ return ""}
+async function inlineImgs(doc){
+ const ims=Array.from(doc.images).filter(im=>{const v=im.getAttribute("src")||"";return v&&!/^data:/.test(v)});let miss=0;
+ await Promise.all(ims.map(async im=>{const d=await imgData(im.src);
+  if(d){im.removeAttribute("referrerpolicy");await new Promise(r=>{im.onload=im.onerror=r;setTimeout(r,8000);im.src=d});return}
+  miss++;const n=doc.createElement("div");n.textContent="（這張照片無法放進 PDF：請把雲端硬碟檔案的共用設定改成「知道連結的任何人」）";n.style.cssText="font-size:10px;line-height:1.3;color:#a33;border:1px dashed #c99;padding:4px;margin:2px auto;max-width:100%;width:"+Math.max(90,im.offsetWidth||0)+"px";im.replaceWith(n)}));
+ return miss}
+function shrinkRows(u,pageH){
+ u.querySelectorAll("table").forEach(tb=>{const hh=tb.tHead?tb.tHead.offsetHeight:0,pv=tb.previousElementSibling,hx=pv&&/^H[1-6]$/.test(pv.tagName)?pv.offsetHeight+16:0;let fr1=true;
+  Array.from(tb.tBodies).forEach(bd=>Array.from(bd.rows).forEach(tr=>{const lim=pageH-hh-6-(fr1?hx:0);fr1=false;if(tr.offsetHeight<=lim)return;const cs=getComputedStyle(tr);let ps=parseFloat(cs.getPropertyValue("--ps"))||5,ts=parseFloat(cs.getPropertyValue("--ts"))||3,n=0;
+   while(tr.offsetHeight>lim&&(ps>1.5||ts>1.2)&&n++<40){ps=Math.max(1.5,ps*.88);ts=Math.max(1.2,ts*.88);tr.style.setProperty("--ps",ps.toFixed(2)+"cm");tr.style.setProperty("--ts",ts.toFixed(2)+"cm")}}))})}
+function blocksOf(u,top,pageH){
+ const out=[],R=e=>{const b=e.getBoundingClientRect();return[b.top-top,b.bottom-top]};
+ const walk=el=>{for(const c of el.children){const v=c.ownerDocument.defaultView.getComputedStyle(c);if(v.display==="none"||v.position==="absolute"||v.position==="fixed")continue;
+  if(c.tagName==="TABLE"){const hd=c.tHead?R(c.tHead):null;let first=true;
+   for(const bd of c.tBodies)for(const tr of bd.rows){const r=R(tr);out.push({t:first&&hd?hd[0]:r[0],b:r[1],hd:first?null:hd});first=false}
+   if(first){const r=R(c);out.push({t:r[0],b:r[1]})}continue}
+  const r=R(c);if(r[1]-r[0]>pageH&&c.querySelector("table")){walk(c);continue}
+  out.push({t:r[0],b:r[1],keep:/^H[1-6]$/.test(c.tagName)||c.matches(".in-h,.in-title"),kp:c.matches(".diff")})}};
+ walk(u);return out.filter(x=>x.b>x.t)}
+function paginate(bl,pageH){
+ const pages=[];if(!bl.length)return pages;let cur={s:bl[0].t,e:bl[0].t,hd:null};
+ const hh=p=>p.hd?p.hd[1]-p.hd[0]:0,fits=(p,b)=>hh(p)+(b.b-p.s)<=pageH;
+ for(let i=0;i<bl.length;i++){const b=bl[i];
+  if(cur.e<=cur.s&&cur.s>b.t)cur.s=b.t;
+  if(fits(cur,b)){cur.e=b.b;continue}
+  if(cur.e>cur.s){const pv=bl[i-1];let st=b.t,hd=b.hd||null;
+   if(pv&&pv.keep&&pv.t<=cur.s+1){cur.e=b.b;continue}
+   if(b.kp&&hh(cur)+(b.b-cur.s)<=pageH*1.08){cur.e=b.b;continue}
+   if(pv&&pv.keep&&pv.t>cur.s+1){cur.e=pv.t;st=pv.t;hd=null}
+   else if(b.kp&&pv&&pv.t>cur.s+1&&hh(cur)+(b.b-pv.t)+(pv.hd?pv.hd[1]-pv.hd[0]:0)<=pageH){cur.e=pv.t;st=pv.t;hd=pv.hd||null}
+   pages.push(cur);cur={s:st,e:st,hd};
+   if(fits(cur,b)){cur.e=b.b;continue}}
+  cur.e=b.b;pages.push(cur);const nx=bl[i+1];cur=nx?{s:nx.t,e:nx.t,hd:nx.hd||null}:{s:0,e:0,hd:null}}
+ if(cur.e>cur.s)pages.push(cur);return pages}
 async function htmlToPdf(html,o){
  await libs();
  const pw=o.landscape?297:210,ph=o.landscape?210:297,m=o.margin||10,cw=pw-2*m,chmm=ph-2*m,wpx=Math.round(cw*MM);
@@ -1886,8 +2058,9 @@ async function htmlToPdf(html,o){
  try{
   await new Promise(ok=>{fr.onload=ok;fr.srcdoc=html});
   const doc=fr.contentDocument,st=doc.createElement("style");
-  st.textContent="html,body{margin:0!important;padding:0!important;background:#fff!important}.bar{display:none!important}";doc.head.appendChild(st);
+  st.textContent="html,body{margin:0!important;padding:0!important;background:#fff!important;max-width:none!important;width:auto!important}.bar{display:none!important}";doc.head.appendChild(st);
   await Promise.all(Array.from(doc.images).map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;setTimeout(r,15000)})));
+  o.missing=await inlineImgs(doc);
   await new Promise(r=>setTimeout(r,250));
   const units=Array.from(doc.querySelectorAll(o.units));
   if(!units.length)throw new Error("沒有可轉成 PDF 的內容");
@@ -1898,6 +2071,21 @@ async function htmlToPdf(html,o){
    let fitU=!!(o.fit&&u.matches(o.fit));let z=1;
    if(fitU&&u.matches(".gmfit")){u.style.width=wpx+"px";const pgx=chmm*MM,ims=u.querySelectorAll("td.ph img"),pds=u.querySelectorAll("td.ph"),setp=(cm,pad)=>{ims.forEach(im=>{im.style.maxHeight=cm+"cm";im.style.maxWidth="98%"});pds.forEach(td=>{td.style.paddingTop=td.style.paddingBottom=pad+"px"})};let lo=1.2,hi=12;setp(lo,3);const okx=u.offsetHeight<=pgx;if(okx&&ims.length){for(let k=0;k<14;k++){const mid=(lo+hi)/2;setp(mid,mid>3.2?8:3);if(u.offsetHeight<=pgx)lo=mid;else hi=mid}setp(lo,lo>3.2?8:3)}if(!okx){setp(5.6,8);fitU=false}}
    if(fitU){const pg=chmm*MM,vis=zz=>{u.style.width=Math.round(wpx/zz)+"px";return u.offsetHeight*zz};if(vis(1)>pg){let lo=.4,hi=1;for(let k=0;k<9;k++){const mid=(lo+hi)/2;if(vis(mid)<=pg)lo=mid;else hi=mid}z=lo;vis(z)}}else{u.style.width=wpx+"px"}
+   if(!fitU&&o.keepRows){
+    /* 依「列」分頁：同一列（同一欄位）不會被切成兩頁；換頁時自動重複表頭；照片太大時先縮小照片 */
+    const pageHpx=chmm*MM,win=fr.contentWindow;shrinkRows(u,pageHpx);await new Promise(r=>setTimeout(r,60));
+    const rc=u.getBoundingClientRect(),top=rc.top,W=u.offsetWidth,H=u.offsetHeight,ox=rc.left+win.scrollX,oy=top+win.scrollY;
+    const snap=(y0,y1)=>window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:wpx,x:ox,y:oy+y0,width:W,height:Math.max(1,Math.ceil(y1-y0))});
+    const hc={};
+    for(const pg of paginate(blocksOf(u,top,pageHpx),pageHpx)){
+     const segs=[];if(pg.hd)segs.push([pg.hd[0],pg.hd[1]+1,1]);segs.push([pg.s,Math.min(H,pg.e+2),0]);
+     const cvs=[];for(const g of segs){const key=g[0]+"_"+g[1];if(g[2]&&hc[key]){cvs.push(hc[key]);continue}const c=await snap(g[0],g[1]);if(g[2])hc[key]=c;cvs.push(c)}
+     const out=document.createElement("canvas");out.width=cvs[0].width;out.height=cvs.reduce((a,c)=>a+c.height,0);
+     const cx=out.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,out.width,out.height);let yy=0;for(const c of cvs){cx.drawImage(c,0,yy);yy+=c.height}
+     const hcss=segs.reduce((a,g)=>a+(g[1]-g[0]),0),k=Math.min(1,pageHpx/hcss);
+     if(!first)pdf.addPage();first=false;
+     pdf.addImage(out.toDataURL("image/jpeg",0.9),"JPEG",m+(cw-cw*k)/2,m,cw*k,hcss/W*cw*k)}
+    continue}
    const cv=await window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:Math.round(wpx/z)});
    const W=u.offsetWidth,H=u.offsetHeight,sc=cv.width/W,pageHpx=chmm*MM,top=u.getBoundingClientRect().top;
    if(fitU){if(!first)pdf.addPage();first=false;pdf.addImage(cv.toDataURL("image/jpeg",0.92),"JPEG",m,m,cw,H/W*cw);continue}
@@ -1927,7 +2115,7 @@ return{htmlToPdf:htmlToPdf,upload:upload,folderId:folderId}})();
 </script>
 <script>
 window.WeeklyUI=(function(){
-const DATA={"GM": {"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "gates": [{"title": "第一關：森林小橋", "equip": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "abil": "下肢肌力、平衡能力、身體穩定控制"}, {"title": "第二關：彩虹石散步", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "abil": "身體協調能力、跨步能力、平衡能力"}, {"title": "第三關：呼拉圈散步", "equip": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "abil": "下肢控制能力、身體協調、方向感"}, {"title": "第四關：小猴子餵水果", "equip": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。。", "abil": "手眼協調、投擲能力、力道控制"}]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "gates": [{"title": "第一關：勇闖山洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "abil": "鑽爬能力、空間概念、身體控制能力"}, {"title": "第二關：彩虹石小徑", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "abil": "平衡能力、身體協調"}, {"title": "第三關：氣球快遞員", "equip": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "abil": "手眼協調、力道控制、專注力"}, {"title": "第四關：呼拉圈探險路", "equip": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "abil": "身體協調能力、平衡能力"}]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "inds": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "gates": [{"title": "第一關：海底觸覺步道", "equip": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "abil": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"title": "第二關：海豚翻翻樂", "equip": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "abil": "前庭覺發展、動作協調"}, {"title": "第三關：海底小探險", "equip": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "abil": "上肢肌力、四肢協調"}, {"title": "第四關：袋鼠尋寶趣", "equip": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "abil": "下肢肌力、身體協調"}]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["Weplay三輪車", "呼拉圈", "小皮球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全"], "gates": [{"title": "第一關：直線小騎士", "equip": "Weplay三輪車", "play": "幼兒騎乘三輪車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "abil": "踩踏能力、平衡能力"}, {"title": "第二關：小騎士繞彎道", "equip": "三角錐", "play": "幼兒騎乘三輪車，慢慢繞過三角錐，不碰倒三角錐，再騎回起點。", "abil": "方向控制能力、身體控制能力"}, {"title": "第三關：補給站送貨員", "equip": "小布球、呼拉圈", "play": "幼兒將三輪車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "abil": "手眼協調、投擲能力"}, {"title": "第四關：交通號誌散步", "equip": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "abil": "身體控制能力、專注力"}]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "gates": [{"title": "第一關：穿越雪洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "abil": "四肢協調能力"}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "abil": "動作控制、平衡能力"}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "abil": "手眼協調能力"}, {"title": "第四關：雪浪大冒險", "equip": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "gates": [{"title": "第一關：平衡小明星", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：小丑繞圈圈", "equip": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "abil": "方向控制能力、空間概念"}, {"title": "第三關：彩虹小腳印", "equip": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "abil": "平衡能力、空間知覺"}, {"title": "第四關：呼拉圈歡樂派對", "equip": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "abil": "跨步能力、身體協調"}]}}, "WALK": {"c35": {"9": {"theme": "認識我的幼兒園", "goals": ["認識幼兒園各空間及功能。", "建立安全感及歸屬感。", "學習遵守園內生活規範。", "能與同儕共同探索校園。"]}, "10": {"theme": "秋天的仁德公園", "goals": ["觀察秋季自然變化。", "比較植物差異。", "培養愛護自然態度。", "運用五感探索環境。"]}, "11": {"theme": "社區安全小尖兵", "goals": ["認識交通安全。", "學習安全過馬路。", "建立公共安全觀念。", "培養自我保護能力。"]}, "12": {"theme": "探索興豐公園生態", "goals": ["認識公園生態。", "觀察植物及昆蟲。", "培養尊重生命態度。", "建立環境保護觀念。"]}, "1": {"theme": "我是小小建築師", "goals": ["認識社區建築。", "比較建築特色。", "培養空間概念。", "學習觀察建築功能。"]}, "2": {"theme": "冬天的社區", "goals": ["感受冬季氣候。", "觀察冬季植物。", "學習保暖方式。", "建立健康生活概念。"]}, "3": {"theme": "認識社區工作者", "goals": ["認識不同職業。", "尊重工作者。", "培養感恩態度。", "學習人際互動。"]}, "4": {"theme": "春天花草大發現", "goals": ["觀察春季植物。", "認識昆蟲。", "培養自然觀察能力。", "建立愛護環境態度。"]}, "5": {"theme": "我是環保小公民", "goals": ["建立環保概念。", "學習垃圾分類。", "愛護公園環境。", "培養公民責任。"]}, "6": {"theme": "我的社區成果展", "goals": ["回顧一年踏查成果。", "整理探索經驗。", "培養分享能力。", "建立社區認同感。"]}}, "c2": {"9": {"theme": "認識我的幼兒園", "goals": ["認識班級與校園環境。", "建立幼兒安全感。", "練習排隊與牽手。"]}, "10": {"theme": "校園散步趣", "goals": ["認識校園空間。", "練習觀察周遭環境。", "建立基本行走安全。"]}, "11": {"theme": "認識仁德國小", "goals": ["認識國小校園。", "感受不同空間大小。", "練習遵守團體規則。"]}, "12": {"theme": "花草樹木小探索", "goals": ["觀察校園植物。", "運用感官探索自然。", "培養愛護植物態度。"]}, "1": {"theme": "校園建築觀察", "goals": ["認識校園建築。", "觀察形狀與顏色。", "建立空間概念。"]}, "2": {"theme": "冬天的校園", "goals": ["感受冬天天氣。", "認識季節變化。", "建立保暖觀念。"]}, "3": {"theme": "交通安全小寶寶", "goals": ["認識交通安全。", "練習安全行走。", "建立自我保護觀念。"]}, "4": {"theme": "認識社區裡的人", "goals": ["認識社區工作者。", "練習打招呼。", "培養禮貌態度。"]}, "5": {"theme": "春天來了", "goals": ["觀察春天自然變化。", "認識花朵與昆蟲。", "培養觀察能力。"]}, "6": {"theme": "社區商店小發現", "goals": ["認識社區商店。", "學習排隊與等待。", "增加生活經驗。"]}}}},WALK=DATA.WALK,GMS={"中小班":{"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["增進身體平衡感與跨越障礙能力。", "訓練大肌肉發展，強化跳躍及投擲能力。", "培養等待及遵守活動規則的精神。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-小-2-2-1 平穩使用各種素材、工具或器材", "身-中-2-2-1 敏捷使用各種素材、工具或器材"], "warm": ["一、暖身活動（5分鐘）動物律動", "老師帶領幼兒配合音樂模仿動物動作（如猴子抓癢、大象長鼻子）。", "搭配伸展：伸展頭部、手臂、腰部、膝蓋及腳踝。"], "gates": [{"title": "第一關：萬象獨木橋", "equip": "萬象組", "play": "走過萬象組搭建的獨木橋，雙手平舉保持平衡。", "abil": ""}, {"title": "第二關：彩虹跳跳石", "equip": "彩虹河石", "play": "河石間隔擺放，幼兒進行單雙腳交錯跨跳。", "abil": ""}, {"title": "第三關：呼拉圈跳躍", "equip": "呼拉圈", "play": "呼拉圈連續排列，連續雙腳跳躍前進。", "abil": ""}, {"title": "第四關：精準投擲", "equip": "小布球", "play": "站在指定線後，將小布球定點投擲進目標籃。", "abil": ""}], "cool": ["三、收操（5分鐘）叢林深呼吸", "伸展：深呼吸放鬆，進行肢體伸展（大樹伸懶腰）。老師總結回饋，排隊喝水擦汗。"]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "汽球棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["提升幼兒身體平衡、敏捷與空間協調能力。", "訓練大肌肉發展，強化鑽爬、跨步及跳躍能力。", "學習操控器材（汽球棒），增進手眼協調。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "社-小-2-3-2 聽從成人指示，遵守生活規範", "社-中-2-3-2 理解生活規範訂定的理由，並調整自己的行動"], "warm": ["一、暖身活動（5分鐘）動物律動", "老師帶領幼兒配合音樂模仿小兔子跳、大象甩鼻子等。", "搭配伸展：轉轉腰部、活動膝蓋與腳踝，避免運動傷害。"], "gates": [{"title": "第一關：穿越鑽龍", "equip": "鑽龍", "play": "幼兒需手腳並用，壓低身體，迅速且安全地從鑽龍的一端鑽爬至另一端。", "abil": ""}, {"title": "第二關：彩虹河石步道", "equip": "彩虹河石", "play": "地面排列高低不同的「彩虹河石」，幼兒需雙手平舉維持平衡踩踏前進。", "abil": ""}, {"title": "第三關：汽球棒S型繞錐", "equip": "汽球棒、三角錐", "play": "幼兒手持「汽球棒」推動一顆氣球，以S型路線繞過數個「三角錐」。", "abil": ""}, {"title": "第四關：呼拉圈連續跳躍", "equip": "呼拉圈", "play": "將呼拉圈以單、雙交錯方式排列，幼兒進行單腳及雙腳交錯跨跳。", "abil": ""}], "cool": ["三、收操（5分鐘）氣球放氣", "伸展：想像是一顆大氣球，雙手往上伸展吸氣再慢慢吐氣蹲下。輕拍腿部放鬆肌肉。"]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["強化足底觸覺感知及下肢肌耐力。", "提升前庭平衡覺與身體控制力。", "學習同儕合作與輪流等待。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-小、中-3-1-1 在創意想像的情境展現個人肢體動作的組合與變化"], "warm": ["一、暖身活動（5分鐘）海洋生物律動", "老師帶領模仿小魚游、螃蟹橫走、海龜爬。", "搭配伸展：手臂畫大圈，活動全身關節與腳踝。"], "gates": [{"title": "第一關：觸覺大挑戰", "equip": "波浪觸覺步道", "play": "脫下鞋襪赤腳走過波浪觸覺步道，體驗高低起伏。", "abil": ""}, {"title": "第二關：海豚翻滾", "equip": "運動墊組", "play": "在安全運動墊上進行連續前翻滾，訓練前庭覺。", "abil": ""}, {"title": "第三關：海底匍匐", "equip": "滑溜布", "play": "趴在滑溜布底下或上方進行匍匐前進。", "abil": ""}, {"title": "第四關：袋鼠跳跳尋寶", "equip": "數字家族跳袋", "play": "雙腳套入跳袋中，雙手抓住提把，跳躍前進至終點。", "abil": ""}], "cool": ["三、收操（5分鐘）海浪呼吸法", "伸展：配合手部波浪動作進行深呼吸。互相輕輕捏捏肩膀放鬆。"]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["Weplay 三輪車", "三角錐", "小布球", "呼拉圈"], "goals": ["訓練大腿肌力與踩踏協調性。", "增進方向控制及空間感知能力。", "提升手眼協調與丟擲準確度。"], "inds": ["身-小-2-1-2 遵守安全活動的原則", "身-中-2-1-2 在團體活動中，應用身體基本動作安全地完成任務", "社-小-3-3-1 樂於與友伴一起遊戲和活動"], "warm": ["一、暖身活動（5分鐘）交通工具律動", "老師帶領模仿騎摩托車、開汽車、小火車前進。", "搭配伸展：加強大腿及膝蓋、腳踝的伸展活動。"], "gates": [{"title": "第一關：直線衝刺", "equip": "Weplay 三輪車", "play": "騎乘三輪車，雙腳用力踩踏踏板直線前進。", "abil": ""}, {"title": "第二關：S型繞錐賽", "equip": "Weplay 三輪車、三角錐", "play": "騎乘三輪車S型繞過三角錐，控制方向不撞倒錐。", "abil": ""}, {"title": "第三關：精準補給", "equip": "小布球、呼拉圈", "play": "停妥車後，拿小布球準確丟入前方的呼拉圈內。", "abil": ""}, {"title": "第四關：體能考驗", "equip": "無", "play": "離開車子，進行原地開合跳10下，完成拉力賽。", "abil": ""}], "cool": ["三、收操（5分鐘）停車保養", "伸展：坐姿體前彎，雙腳伸直雙手盡量摸腳趾。輕敲大腿小腿放鬆肌肉。"]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["4M 彩虹氣球傘", "汽球棒", "運動墊組", "鑽龍"], "goals": ["培養團隊合作默契與聽從指令反應。", "增進手臂肌力與上下肢協調。", "體驗節慶歡樂氣氛，快樂參與運動。"], "inds": ["身-小-2-1-2 遵守安全活動的原則", "身-中-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "社-小-3-3-1 樂於與友伴一起遊戲和活動"], "warm": ["一、暖身活動（5分鐘）雪花律動", "老師帶領想像雪花飄落，身體跟著音樂高低起伏。", "搭配伸展：全身伸展，搓熱雙手溫暖身體各部位。"], "gates": [{"title": "第一關：穿梭雪洞", "equip": "鑽龍", "play": "快速且安全地通過雪洞（鑽龍）。", "abil": ""}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "連續跨越堆疊高度不同的運動墊。", "abil": ""}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "手持汽球棒連續向上拍擊氣球，盡量不讓氣球落地。", "abil": ""}, {"title": "第四關：製造大雪浪", "equip": "4M 彩虹氣球傘", "play": "小組一起抓著氣球傘邊緣，聽指令上下抖動製造波浪。", "abil": ""}], "cool": ["三、收操（5分鐘）圍爐取暖", "伸展：坐在氣球傘上，大家一起圍成圓圈深呼吸。互相輕拍背部放鬆。"]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["踩高蹺", "呼拉圈", "三角錐", "彩虹河石"], "goals": ["提升幼兒動態平衡與四肢協調能力。", "強化敏捷度與方向改變能力。", "複習一學期來的各項大肌肉技巧。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-小-2-2-1 平穩使用各種素材、工具或器材", "身-中-2-2-1 敏捷使用各種素材、工具或器材"], "warm": ["一、暖身活動（5分鐘）馬戲團進場", "老師帶領跟隨歡樂音樂，高舉雙手踏步走。", "搭配伸展：模仿小丑的滑稽伸展動作，活動全身關節。"], "gates": [{"title": "第一關：小丑踩高蹺", "equip": "踩高蹺", "play": "雙手拉緊繩索，雙腳踩在踩高蹺上直線前進（視能力輔助）。", "abil": ""}, {"title": "第二關：敏捷折返", "equip": "三角錐", "play": "聽指令在兩個三角錐之間進行快速折返跑觸摸目標。", "abil": ""}, {"title": "第三關：金雞獨立", "equip": "彩虹河石", "play": "在彩虹河石上單腳站立維持3秒鐘，再跨步到下一顆。", "abil": ""}, {"title": "第四關：開合跳躍", "equip": "呼拉圈", "play": "呼拉圈排列成「單-雙-單-雙」，進行開合開合跳躍。", "abil": ""}], "cool": ["三、收操（5分鐘）完美謝幕", "伸展：雙手向外打開再緩慢放下，深呼吸。回顧學期表現，給予幼兒鼓勵。"]}},"中大班":{"8": {"name": "森林探險家－勇闖森林障礙賽", "res": ["平衡木", "彩虹河石", "波浪橋", "敏捷訓練梯", "呼拉圈", "沙包"], "goals": ["提升幼兒身體平衡、敏捷、跳躍及協調能力。", "培養身體控制能力及空間概念。", "學習遵守活動規則，培養等待及合作精神。", "增進心肺耐力與肌耐力，達到出汗性運動效果。"], "inds": ["身-中大-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-中大-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）森林動物律動", "老師帶領幼兒模仿：小兔跳、小鴨走、大熊慢慢走、松鼠快速跑、小鹿跨步跳", "搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"], "cool": ["三、收操（5分鐘）森林深呼吸", "伸展：大樹伸懶腰、蝴蝶飛、毛毛蟲縮起來、深呼吸"], "gates": [{"title": "第一關：小溪跳跳樂", "equip": "呼拉圈、三角錐", "play": "將呼拉圈排列成河流。幼兒雙腳跳、單腳跳交替前進。挑戰：不能踩到河裡。", "abil": "雙腳跳、下肢肌力、平衡"}, {"title": "第二關：森林獨木橋", "equip": "平衡木、彩虹河石", "play": "依序擺放(河石→平衡木→河石)雙手張開保持平衡。增加挑戰：頭頂沙包走完全程。", "abil": "核心穩定、身體控制、平衡能力"}, {"title": "第三關：敏捷森林", "equip": "敏捷梯", "play": "依指令完成-兩腳跳、左右跳、剪刀腳、快速跑", "abil": "敏捷、節奏、腳步控制"}, {"title": "第四關：運送松果", "equip": "沙包、波浪橋", "play": "頭頂沙包走過波浪橋，掉落需重新開始。", "abil": "平衡、專注力、核心控制"}]}, "9": {"name": "超級消防員－火線救援大作戰", "res": ["萬象體能組", "空氣棒", "三角錐", "板車", "沙包", "敏捷訓練梯", "呼拉圈"], "goals": ["提升幼兒攀爬、跨越、搬運及敏捷移動能力，發展全身大肌肉動作。", "培養上肢肌力、核心穩定及身體協調能力，增進身體控制技巧。", "學習與同伴合作完成救援任務，培養團隊合作、溝通及遵守活動規則的態度。", "增進心肺耐力、肌耐力及持續運動能力，養成喜愛運動的習慣。"], "inds": ["身-中大-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-中大-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）消防員出任務", "帶領幼兒模仿消防員執行任務：原地慢跑（前往火場）、高抬腿跑（快速集合）、手臂畫圈（拉水管）、深蹲（搬運裝備）、弓箭步（跨越障礙）、左右側跨步（閃避障礙）、全身伸展及深呼吸"], "cool": ["三、收操（5分鐘）消防員回家休息", "伸展：大樹伸展、貓咪伸懶腰、肩膀放鬆、小腿伸展、深呼吸"], "gates": [{"title": "第一關：火場障礙區", "equip": "萬象體能組、空氣棒、三角錐", "play": "鑽過障礙、跨越空氣棒，不可碰倒障礙物。", "abil": "鑽爬能力、空間概念、身體控制"}, {"title": "第二關：救援傷患", "equip": "板車、沙包", "play": "兩人合作，一人拉板車、一人扶住沙包（代表傷患），將傷患安全送回救護站。", "abil": "合作能力、核心肌力、平衡控制"}, {"title": "第三關：消防水帶衝刺", "equip": "敏捷訓練梯、三角錐", "play": "快速跑過敏捷梯，再繞過角錐返回。", "abil": "敏捷、下肢力量、速度控制"}, {"title": "第四關：消防接力", "equip": "呼拉圈", "play": "跳進呼拉圈，再跨越呼拉圈抵達終點。", "abil": "跳躍能力、平衡、心肺耐力"}]}, "10": {"name": "海洋冒險王－尋找海底寶藏", "res": ["彩虹河石", "波浪橋", "海洋球", "小籃子", "飛盤"], "goals": ["提升幼兒平衡、敏捷及反應能力，促進身體靈活運用。", "培養身體協調、方向辨識及空間概念，提高動作控制能力。", "透過探索與闖關活動，培養觀察力、專注力及問題解決能力。", "增進心肺耐力與身體耐力，鼓勵幼兒勇於挑戰並建立運動自信。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全", "身-大-1-3-4 覺察與辨別危險，保護自己及他人的安全"], "warm": ["一、暖身活動（5分鐘）海洋生物律動", "幼兒模仿：小魚游泳、螃蟹橫著走、海馬跳躍、海豚躍起、烏龜慢走"], "cool": ["三、收操（5分鐘）回家休息", "伸展：海浪呼吸、小魚伸展、海龜慢慢爬、深呼吸"], "gates": [{"title": "第一關：珊瑚礁探險", "equip": "彩虹河石", "play": "依指定顏色踩踏河石前進。", "abil": "平衡能力、顏色辨識、身體控制"}, {"title": "第二關：海浪平衡橋", "equip": "波浪橋", "play": "雙手張開慢慢走過波浪橋。", "abil": "平衡、核心穩定"}, {"title": "第三關：珍珠收集", "equip": "海洋球、小籃子", "play": "快速撿拾指定顏色海洋球。", "abil": "反應速度、分類能力、手眼協調"}, {"title": "第四關：救海龜", "equip": "三角錐+橫桿", "play": "幼兒匍匐前進通過障礙物。", "abil": "投擲控制、力量控制"}]}, "11": {"name": "小小運動會－挑戰金牌選手", "res": ["沙包", "呼拉圈", "小皮球", "三角錐", "敏捷梯"], "goals": ["提升幼兒投擲、跑步及敏捷移動能力，增進手眼協調與身體控制能力。", "培養速度、反應及動作協調能力，提升動作的準確性與穩定性。", "學習遵守競賽規則，培養運動家精神、合作態度及自我挑戰的能力。", "增進心肺耐力、肌力及肌耐力，培養規律運動與健康生活的習慣。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全", "身-大-1-3-4 覺察與辨別危險，保護自己及他人的安全"], "warm": ["一、暖身活動（5分鐘）我是體育健將", "原地高抬腿跑", "開合跳", "側併步", "全身伸展"], "cool": ["三、收操（5分鐘）放鬆休息", "伸展：手臂放鬆、腿部伸展、深呼吸、放鬆走"], "gates": [{"title": "第一關：神射手", "equip": "沙包、呼拉圈", "play": "投進不同距離呼拉圈。", "abil": "投擲、手眼協調"}, {"title": "第二關：保齡球王", "equip": "小皮球、三角錐", "play": "滾球擊倒角錐。", "abil": "力量控制、目標瞄準"}, {"title": "第三關：速度挑戰", "equip": "敏捷梯", "play": "快速完成各種腳步。", "abil": "敏捷、協調"}, {"title": "第四關：障礙折返跑", "equip": "三角錐", "play": "S型折返跑。", "abil": "速度、轉向能力"}]}, "12": {"name": "勇者障礙王－終極挑戰賽", "res": ["跳袋", "平衡木", "彩虹河石", "呼拉圈", "木梯"], "goals": ["統整幼兒走、跑、跳、平衡、投擲等大肌肉動作能力，提升整體身體協調性。", "培養身體控制、動作規劃及空間概念，增進完成複合性動作的能力。", "透過多元障礙挑戰，培養勇於嘗試、解決問題及合作互助的態度。", "增進心肺耐力、肌耐力及持續運動能力，建立積極參與體能活動的興趣與自信。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）勇者訓練", "慢跑", "熊爬", "青蛙跳", "側跨步", "全身伸展"], "cool": ["三、收操（5分鐘）勇者放鬆操", "伸展：手腳伸展、深蹲放鬆、呼吸調節"], "gates": [{"title": "第一關：跳袋勇士", "equip": "跳袋", "play": "雙腳跳至終點。", "abil": "下肢肌力、平衡"}, {"title": "第二關：平衡小徑", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "核心穩定、平衡"}, {"title": "第三關：障礙搬運", "equip": "呼拉圈", "play": "搬運呼拉圈至終點。", "abil": "肌耐力"}, {"title": "第四關：木梯攀爬", "equip": "木梯", "play": "四點爬行。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "體能嘉年華－健康小勇士闖關趣", "res": ["平衡木", "彩虹河石", "板車", "沙包", "呼拉圈", "敏捷梯", "三角錐"], "goals": ["統整幼兒前五個月所學的大肌肉動作技能，展現平衡、跳躍、攀爬、投擲、敏捷及合作等綜合能力。", "培養身體控制、動作協調及空間運用能力，提升完成多元闖關活動的表現。", "透過團隊合作與闖關挑戰，培養自信心、責任感及與同儕互助合作的精神。", "增進心肺耐力、肌耐力及整體體適能，養成喜愛運動、樂於挑戰及健康生活的良好習慣。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）歡樂律動暖身", "配合音樂：慢跑、開合跳、高抬腿、全身伸展"], "cool": ["三、收操（5分鐘）健康小勇士放鬆操", "頸部、肩膀、手臂、腰部及腿部伸展。", "搭配深呼吸與緩步行走，讓心跳逐漸恢復。", "最後進行互相擊掌鼓勵，分享最有成就感的關卡，建立運動自信與團隊榮譽感。"], "gates": [{"title": "第一關：森林平衡王", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：消防救援王", "equip": "板車、沙包", "play": "兩人合作，一人拉板車、一人扶住沙包（代表傷患），將傷患安全送回救護站。", "abil": "合作能力、核心肌力、平衡控制"}, {"title": "第三關：運動神射手", "equip": "沙包、呼拉圈", "play": "投進不同距離呼拉圈。", "abil": "投擲、手眼協調"}, {"title": "第四關：勇者障礙王", "equip": "敏捷梯、三角錐", "play": "將三角錐隨意放置在敏捷梯的裡面及外面，每跳一格須將三角錐移置相反位置(裡面或外面)", "abil": "綜合體能、協調、耐力"}]}},"兩歲專班":{"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）森林動物律動", "老師帶領幼兒模仿：模仿猴子走路、大象甩鼻子、大熊慢慢走、小鳥拍拍翅膀", "搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"], "cool": ["三、收操（5分鐘）森林深呼吸", "教師播放柔和音樂，引導幼兒：", "🌳 大樹伸懶腰（雙手向上伸展） 🐦 小鳥飛回家（雙手慢慢放下）", "🌬 深深吸一口氣，再慢慢吐氣", "最後一起拍拍手臂、拍拍大腿、拍拍小腿放鬆肌肉。"], "gates": [{"title": "第一關：森林小橋", "equip": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "abil": "下肢肌力、平衡能力、身體穩定控制"}, {"title": "第二關：彩虹石散步", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "abil": "身體協調能力、跨步能力、平衡能力"}, {"title": "第三關：呼拉圈散步", "equip": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "abil": "下肢控制能力、身體協調、方向感"}, {"title": "第四關：小猴子餵水果", "equip": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。。", "abil": "手眼協調、投擲能力、力道控制"}]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）消防員出任務", "教師帶領幼兒配合音樂模仿探險家的動作。", "小兔子跳跳跳（小步彈跳） --小熊慢慢走 --小鴨搖搖走 --飛機張開翅膀 --火車慢慢開"], "cool": ["三、收操（5分鐘）氣球慢慢放氣", "教師帶領幼兒想像自己是一顆大氣球。", "雙手慢慢向上伸展，吸一口氣--身體慢慢蹲下，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "最後一起喝水、擦汗，分享今天完成探險的心情。"], "gates": [{"title": "第一關：勇闖山洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "abil": "鑽爬能力、空間概念、身體控制能力"}, {"title": "第二關：彩虹石小徑", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "abil": "平衡能力、身體協調"}, {"title": "第三關：氣球快遞員", "equip": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "abil": "手眼協調、力道控制、專注力"}, {"title": "第四關：呼拉圈探險路", "equip": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "abil": "身體協調能力、平衡能力"}]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "inds": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "warm": ["一、暖身活動（5分鐘）海洋生物動一動", "教師播放海洋音樂，引導幼兒模仿海洋生物。", "小魚游來游去 --螃蟹橫著走 --海龜慢慢爬 --海豚跳一跳（小彈跳） --水母飄呀飄"], "cool": ["三、收操（5分鐘）海浪深呼吸伸展", "教師帶領幼兒想像自己躺在沙灘上。", "雙手做海浪擺動。", "深深吸一口氣。", "慢慢吐氣。", "互相拍拍肩膀、手臂及大腿放鬆肌肉。"], "gates": [{"title": "第一關：海底觸覺步道", "equip": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "abil": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"title": "第二關：海豚翻翻樂", "equip": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "abil": "前庭覺發展、動作協調"}, {"title": "第三關：海底小探險", "equip": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "abil": "上肢肌力、四肢協調"}, {"title": "第四關：袋鼠尋寶趣", "equip": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "abil": "下肢肌力、身體協調"}]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["Weplay三輪車", "呼拉圈", "小皮球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全"], "warm": ["一、暖身活動（5分鐘）小小交通工具出發囉", "教師播放輕快音樂，引導幼兒模仿各種交通工具。", "小汽車開呀開--摩托車轉轉方向盤--小火車嗚嗚出發--飛機展開翅膀--腳踏車踩踩踏板"], "cool": ["三、收操（5分鐘）小騎士回車庫", "教師引導幼兒想像今天完成了拉力賽。", "雙手向上伸展，吸一口氣--雙手慢慢放下，吐氣--坐姿向前伸展雙腳--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "喝水、擦汗，分享今天騎車的心情。"], "gates": [{"title": "第一關：直線小騎士", "equip": "Weplay三輪車", "play": "幼兒騎乘三輪車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "abil": "踩踏能力、平衡能力"}, {"title": "第二關：小騎士繞彎道", "equip": "三角錐", "play": "幼兒騎乘三輪車，慢慢繞過三角錐，不碰倒三角錐，再騎回起點。", "abil": "方向控制能力、身體控制能力"}, {"title": "第三關：補給站送貨員", "equip": "小布球、呼拉圈", "play": "幼兒將三輪車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "abil": "手眼協調、投擲能力"}, {"title": "第四關：交通號誌散步", "equip": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "abil": "身體控制能力、專注力"}]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）雪花飄飄真好玩", "教師播放輕快音樂，帶領幼兒模仿雪國情境。", "小雪花飄呀飄（雙手左右擺動）--小企鵝搖搖走--北極熊慢慢走--小兔子輕輕跳（小幅度）--雙手堆雪人"], "cool": ["三、收操（5分鐘）圍爐取暖", "教師帶領幼兒圍坐成圓圈。", "雙手向上伸展，吸一口氣--慢慢放下雙手，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "互相說一句：「你好棒！」"], "gates": [{"title": "第一關：穿越雪洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "abil": "四肢協調能力"}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "abil": "動作控制、平衡能力"}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "abil": "手眼協調能力"}, {"title": "第四關：雪浪大冒險", "equip": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["暖身活動（5分鐘）馬戲團明星登場", "教師播放歡樂音樂，引導幼兒模仿馬戲團角色。", "小丑搖搖走--小熊踏步走--小兔子跳一跳（小幅度）--大象甩鼻子--小鳥拍拍翅膀"], "cool": ["三、收操（5分鐘）完美謝幕", "教師帶領幼兒一起完成馬戲團謝幕。", "雙手向上伸展，深深吸氣--雙手慢慢放下，吐氣--輕拍肩膀、手臂、大腿、小腿放鬆肌肉。", "大家互相拍拍手，給自己一個掌聲。"], "gates": [{"title": "第一關：平衡小明星", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：小丑繞圈圈", "equip": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "abil": "方向控制能力、空間概念"}, {"title": "第三關：彩虹小腳印", "equip": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "abil": "平衡能力、空間知覺"}, {"title": "第四關：呼拉圈歡樂派對", "equip": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "abil": "跨步能力、身體協調"}]}}},GM=GMS["中小班"],gmOf=L=>GMS[(L.gm&&L.gm.src)||"中小班"]||GMS["中小班"];
+const DATA={"GM": {"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "gates": [{"title": "第一關：森林小橋", "equip": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "abil": "下肢肌力、平衡能力、身體穩定控制"}, {"title": "第二關：彩虹石散步", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "abil": "身體協調能力、跨步能力、平衡能力"}, {"title": "第三關：呼拉圈散步", "equip": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "abil": "下肢控制能力、身體協調、方向感"}, {"title": "第四關：小猴子餵水果", "equip": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。。", "abil": "手眼協調、投擲能力、力道控制"}]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "gates": [{"title": "第一關：勇闖山洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "abil": "鑽爬能力、空間概念、身體控制能力"}, {"title": "第二關：彩虹石小徑", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "abil": "平衡能力、身體協調"}, {"title": "第三關：氣球快遞員", "equip": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "abil": "手眼協調、力道控制、專注力"}, {"title": "第四關：呼拉圈探險路", "equip": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "abil": "身體協調能力、平衡能力"}]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "inds": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "gates": [{"title": "第一關：海底觸覺步道", "equip": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "abil": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"title": "第二關：海豚翻翻樂", "equip": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "abil": "前庭覺發展、動作協調"}, {"title": "第三關：海底小探險", "equip": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "abil": "上肢肌力、四肢協調"}, {"title": "第四關：袋鼠尋寶趣", "equip": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "abil": "下肢肌力、身體協調"}]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["滑步車", "呼拉圈", "小布球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "inds": ["身-幼-2-1-1 在穩定性及移動性動作中練習平衡", "身-幼-2-1-2 遵守安全活動的原則"], "gates": [{"title": "第一關：直線小騎士", "equip": "滑步車", "play": "幼兒騎乘滑步車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "abil": "踩踏能力、平衡能力"}, {"title": "第二關：小騎士繞彎道", "equip": "三角錐", "play": "幼兒騎乘滑步車，慢慢繞過滑步車，不碰倒滑步車，再騎回起點。", "abil": "方向控制能力、身體控制能力"}, {"title": "第三關：補給站送貨員", "equip": "小布球、呼拉圈", "play": "幼兒將滑步車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "abil": "手眼協調、投擲能力"}, {"title": "第四關：交通號誌散步", "equip": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "abil": "身體控制能力、專注力"}]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "gates": [{"title": "第一關：穿越雪洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "abil": "四肢協調能力"}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "abil": "動作控制、平衡能力"}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "abil": "手眼協調能力"}, {"title": "第四關：雪浪大冒險", "equip": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "gates": [{"title": "第一關：平衡小明星", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：小丑繞圈圈", "equip": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "abil": "方向控制能力、空間概念"}, {"title": "第三關：彩虹小腳印", "equip": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "abil": "平衡能力、空間知覺"}, {"title": "第四關：呼拉圈歡樂派對", "equip": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "abil": "跨步能力、身體協調"}]}}, "WALK": {"c35": {"9": {"theme": "認識我的幼兒園", "goals": ["認識幼兒園各空間及功能。", "建立安全感及歸屬感。", "學習遵守園內生活規範。", "能與同儕共同探索校園。"]}, "10": {"theme": "秋天的仁德公園", "goals": ["觀察秋季自然變化。", "比較植物差異。", "培養愛護自然態度。", "運用五感探索環境。"]}, "11": {"theme": "社區安全小尖兵", "goals": ["認識交通安全。", "學習安全過馬路。", "建立公共安全觀念。", "培養自我保護能力。"]}, "12": {"theme": "探索興豐公園生態", "goals": ["認識公園生態。", "觀察植物及昆蟲。", "培養尊重生命態度。", "建立環境保護觀念。"]}, "1": {"theme": "我是小小建築師", "goals": ["認識社區建築。", "比較建築特色。", "培養空間概念。", "學習觀察建築功能。"]}, "2": {"theme": "冬天的社區", "goals": ["感受冬季氣候。", "觀察冬季植物。", "學習保暖方式。", "建立健康生活概念。"]}, "3": {"theme": "認識社區工作者", "goals": ["認識不同職業。", "尊重工作者。", "培養感恩態度。", "學習人際互動。"]}, "4": {"theme": "春天花草大發現", "goals": ["觀察春季植物。", "認識昆蟲。", "培養自然觀察能力。", "建立愛護環境態度。"]}, "5": {"theme": "我是環保小公民", "goals": ["建立環保概念。", "學習垃圾分類。", "愛護公園環境。", "培養公民責任。"]}, "6": {"theme": "我的社區成果展", "goals": ["回顧一年踏查成果。", "整理探索經驗。", "培養分享能力。", "建立社區認同感。"]}}, "c2": {"9": {"theme": "認識我的幼兒園", "goals": ["認識班級與校園環境。", "建立幼兒安全感。", "練習排隊與牽手。"]}, "10": {"theme": "校園散步趣", "goals": ["認識校園空間。", "練習觀察周遭環境。", "建立基本行走安全。"]}, "11": {"theme": "認識仁德國小", "goals": ["認識國小校園。", "感受不同空間大小。", "練習遵守團體規則。"]}, "12": {"theme": "花草樹木小探索", "goals": ["觀察校園植物。", "運用感官探索自然。", "培養愛護植物態度。"]}, "1": {"theme": "校園建築觀察", "goals": ["認識校園建築。", "觀察形狀與顏色。", "建立空間概念。"]}, "2": {"theme": "冬天的校園", "goals": ["感受冬天天氣。", "認識季節變化。", "建立保暖觀念。"]}, "3": {"theme": "交通安全小寶寶", "goals": ["認識交通安全。", "練習安全行走。", "建立自我保護觀念。"]}, "4": {"theme": "認識社區裡的人", "goals": ["認識社區工作者。", "練習打招呼。", "培養禮貌態度。"]}, "5": {"theme": "春天來了", "goals": ["觀察春天自然變化。", "認識花朵與昆蟲。", "培養觀察能力。"]}, "6": {"theme": "社區商店小發現", "goals": ["認識社區商店。", "學習排隊與等待。", "增加生活經驗。"]}}}},WALK=DATA.WALK,GMS={"中小班":{"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["增進身體平衡感與跨越障礙能力。", "訓練大肌肉發展，強化跳躍及投擲能力。", "培養等待及遵守活動規則的精神。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-小-2-2-1 平穩使用各種素材、工具或器材", "身-中-2-2-1 敏捷使用各種素材、工具或器材"], "warm": ["一、暖身活動（5分鐘）動物律動", "老師帶領幼兒配合音樂模仿動物動作（如猴子抓癢、大象長鼻子）。", "搭配伸展：伸展頭部、手臂、腰部、膝蓋及腳踝。"], "gates": [{"title": "第一關：萬象獨木橋", "equip": "萬象組", "play": "走過萬象組搭建的獨木橋，雙手平舉保持平衡。", "abil": ""}, {"title": "第二關：彩虹跳跳石", "equip": "彩虹河石", "play": "河石間隔擺放，幼兒進行單雙腳交錯跨跳。", "abil": ""}, {"title": "第三關：呼拉圈跳躍", "equip": "呼拉圈", "play": "呼拉圈連續排列，連續雙腳跳躍前進。", "abil": ""}, {"title": "第四關：精準投擲", "equip": "小布球", "play": "站在指定線後，將小布球定點投擲進目標籃。", "abil": ""}], "cool": ["三、收操（5分鐘）叢林深呼吸", "伸展：深呼吸放鬆，進行肢體伸展（大樹伸懶腰）。老師總結回饋，排隊喝水擦汗。"]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "汽球棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["提升幼兒身體平衡、敏捷與空間協調能力。", "訓練大肌肉發展，強化鑽爬、跨步及跳躍能力。", "學習操控器材（汽球棒），增進手眼協調。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "社-小-2-3-2 聽從成人指示，遵守生活規範", "社-中-2-3-2 理解生活規範訂定的理由，並調整自己的行動"], "warm": ["一、暖身活動（5分鐘）動物律動", "老師帶領幼兒配合音樂模仿小兔子跳、大象甩鼻子等。", "搭配伸展：轉轉腰部、活動膝蓋與腳踝，避免運動傷害。"], "gates": [{"title": "第一關：穿越鑽龍", "equip": "鑽龍", "play": "幼兒需手腳並用，壓低身體，迅速且安全地從鑽龍的一端鑽爬至另一端。", "abil": ""}, {"title": "第二關：彩虹河石步道", "equip": "彩虹河石", "play": "地面排列高低不同的「彩虹河石」，幼兒需雙手平舉維持平衡踩踏前進。", "abil": ""}, {"title": "第三關：汽球棒S型繞錐", "equip": "汽球棒、三角錐", "play": "幼兒手持「汽球棒」推動一顆氣球，以S型路線繞過數個「三角錐」。", "abil": ""}, {"title": "第四關：呼拉圈連續跳躍", "equip": "呼拉圈", "play": "將呼拉圈以單、雙交錯方式排列，幼兒進行單腳及雙腳交錯跨跳。", "abil": ""}], "cool": ["三、收操（5分鐘）氣球放氣", "伸展：想像是一顆大氣球，雙手往上伸展吸氣再慢慢吐氣蹲下。輕拍腿部放鬆肌肉。"]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["強化足底觸覺感知及下肢肌耐力。", "提升前庭平衡覺與身體控制力。", "學習同儕合作與輪流等待。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-小、中-3-1-1 在創意想像的情境展現個人肢體動作的組合與變化"], "warm": ["一、暖身活動（5分鐘）海洋生物律動", "老師帶領模仿小魚游、螃蟹橫走、海龜爬。", "搭配伸展：手臂畫大圈，活動全身關節與腳踝。"], "gates": [{"title": "第一關：觸覺大挑戰", "equip": "波浪觸覺步道", "play": "脫下鞋襪赤腳走過波浪觸覺步道，體驗高低起伏。", "abil": ""}, {"title": "第二關：海豚翻滾", "equip": "運動墊組", "play": "在安全運動墊上進行連續前翻滾，訓練前庭覺。", "abil": ""}, {"title": "第三關：海底匍匐", "equip": "滑溜布", "play": "趴在滑溜布底下或上方進行匍匐前進。", "abil": ""}, {"title": "第四關：袋鼠跳跳尋寶", "equip": "數字家族跳袋", "play": "雙腳套入跳袋中，雙手抓住提把，跳躍前進至終點。", "abil": ""}], "cool": ["三、收操（5分鐘）海浪呼吸法", "伸展：配合手部波浪動作進行深呼吸。互相輕輕捏捏肩膀放鬆。"]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["Weplay 三輪車", "三角錐", "小布球", "呼拉圈"], "goals": ["訓練大腿肌力與踩踏協調性。", "增進方向控制及空間感知能力。", "提升手眼協調與丟擲準確度。"], "inds": ["身-小-2-1-2 遵守安全活動的原則", "身-中-2-1-2 在團體活動中，應用身體基本動作安全地完成任務", "社-小-3-3-1 樂於與友伴一起遊戲和活動"], "warm": ["一、暖身活動（5分鐘）交通工具律動", "老師帶領模仿騎摩托車、開汽車、小火車前進。", "搭配伸展：加強大腿及膝蓋、腳踝的伸展活動。"], "gates": [{"title": "第一關：直線衝刺", "equip": "Weplay 三輪車", "play": "騎乘三輪車，雙腳用力踩踏踏板直線前進。", "abil": ""}, {"title": "第二關：S型繞錐賽", "equip": "Weplay 三輪車、三角錐", "play": "騎乘三輪車S型繞過三角錐，控制方向不撞倒錐。", "abil": ""}, {"title": "第三關：精準補給", "equip": "小布球、呼拉圈", "play": "停妥車後，拿小布球準確丟入前方的呼拉圈內。", "abil": ""}, {"title": "第四關：體能考驗", "equip": "無", "play": "離開車子，進行原地開合跳10下，完成拉力賽。", "abil": ""}], "cool": ["三、收操（5分鐘）停車保養", "伸展：坐姿體前彎，雙腳伸直雙手盡量摸腳趾。輕敲大腿小腿放鬆肌肉。"]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["4M 彩虹氣球傘", "汽球棒", "運動墊組", "鑽龍"], "goals": ["培養團隊合作默契與聽從指令反應。", "增進手臂肌力與上下肢協調。", "體驗節慶歡樂氣氛，快樂參與運動。"], "inds": ["身-小-2-1-2 遵守安全活動的原則", "身-中-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "社-小-3-3-1 樂於與友伴一起遊戲和活動"], "warm": ["一、暖身活動（5分鐘）雪花律動", "老師帶領想像雪花飄落，身體跟著音樂高低起伏。", "搭配伸展：全身伸展，搓熱雙手溫暖身體各部位。"], "gates": [{"title": "第一關：穿梭雪洞", "equip": "鑽龍", "play": "快速且安全地通過雪洞（鑽龍）。", "abil": ""}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "連續跨越堆疊高度不同的運動墊。", "abil": ""}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "手持汽球棒連續向上拍擊氣球，盡量不讓氣球落地。", "abil": ""}, {"title": "第四關：製造大雪浪", "equip": "4M 彩虹氣球傘", "play": "小組一起抓著氣球傘邊緣，聽指令上下抖動製造波浪。", "abil": ""}], "cool": ["三、收操（5分鐘）圍爐取暖", "伸展：坐在氣球傘上，大家一起圍成圓圈深呼吸。互相輕拍背部放鬆。"]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["踩高蹺", "呼拉圈", "三角錐", "彩虹河石"], "goals": ["提升幼兒動態平衡與四肢協調能力。", "強化敏捷度與方向改變能力。", "複習一學期來的各項大肌肉技巧。"], "inds": ["身-小-2-1-1 在穩定性及移動性動作中練習平衡與協調", "身-中-1-1-1 覺察身體在穩定性及移動性動作表現上的協調性", "身-小-2-2-1 平穩使用各種素材、工具或器材", "身-中-2-2-1 敏捷使用各種素材、工具或器材"], "warm": ["一、暖身活動（5分鐘）馬戲團進場", "老師帶領跟隨歡樂音樂，高舉雙手踏步走。", "搭配伸展：模仿小丑的滑稽伸展動作，活動全身關節。"], "gates": [{"title": "第一關：小丑踩高蹺", "equip": "踩高蹺", "play": "雙手拉緊繩索，雙腳踩在踩高蹺上直線前進（視能力輔助）。", "abil": ""}, {"title": "第二關：敏捷折返", "equip": "三角錐", "play": "聽指令在兩個三角錐之間進行快速折返跑觸摸目標。", "abil": ""}, {"title": "第三關：金雞獨立", "equip": "彩虹河石", "play": "在彩虹河石上單腳站立維持3秒鐘，再跨步到下一顆。", "abil": ""}, {"title": "第四關：開合跳躍", "equip": "呼拉圈", "play": "呼拉圈排列成「單-雙-單-雙」，進行開合開合跳躍。", "abil": ""}], "cool": ["三、收操（5分鐘）完美謝幕", "伸展：雙手向外打開再緩慢放下，深呼吸。回顧學期表現，給予幼兒鼓勵。"]}},"中大班":{"8": {"name": "森林探險家－勇闖森林障礙賽", "res": ["平衡木", "彩虹河石", "波浪橋", "敏捷訓練梯", "呼拉圈", "沙包"], "goals": ["提升幼兒身體平衡、敏捷、跳躍及協調能力。", "培養身體控制能力及空間概念。", "學習遵守活動規則，培養等待及合作精神。", "增進心肺耐力與肌耐力，達到出汗性運動效果。"], "inds": ["身-中大-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-中大-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）森林動物律動", "老師帶領幼兒模仿：小兔跳、小鴨走、大熊慢慢走、松鼠快速跑、小鹿跨步跳", "搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"], "cool": ["三、收操（5分鐘）森林深呼吸", "伸展：大樹伸懶腰、蝴蝶飛、毛毛蟲縮起來、深呼吸"], "gates": [{"title": "第一關：小溪跳跳樂", "equip": "呼拉圈、三角錐", "play": "將呼拉圈排列成河流。幼兒雙腳跳、單腳跳交替前進。挑戰：不能踩到河裡。", "abil": "雙腳跳、下肢肌力、平衡"}, {"title": "第二關：森林獨木橋", "equip": "平衡木、彩虹河石", "play": "依序擺放(河石→平衡木→河石)雙手張開保持平衡。增加挑戰：頭頂沙包走完全程。", "abil": "核心穩定、身體控制、平衡能力"}, {"title": "第三關：敏捷森林", "equip": "敏捷梯", "play": "依指令完成-兩腳跳、左右跳、剪刀腳、快速跑", "abil": "敏捷、節奏、腳步控制"}, {"title": "第四關：運送松果", "equip": "沙包、波浪橋", "play": "頭頂沙包走過波浪橋，掉落需重新開始。", "abil": "平衡、專注力、核心控制"}]}, "9": {"name": "超級消防員－火線救援大作戰", "res": ["萬象體能組", "空氣棒", "三角錐", "板車", "沙包", "敏捷訓練梯", "呼拉圈"], "goals": ["提升幼兒攀爬、跨越、搬運及敏捷移動能力，發展全身大肌肉動作。", "培養上肢肌力、核心穩定及身體協調能力，增進身體控制技巧。", "學習與同伴合作完成救援任務，培養團隊合作、溝通及遵守活動規則的態度。", "增進心肺耐力、肌耐力及持續運動能力，養成喜愛運動的習慣。"], "inds": ["身-中大-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-中大-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）消防員出任務", "帶領幼兒模仿消防員執行任務：原地慢跑（前往火場）、高抬腿跑（快速集合）、手臂畫圈（拉水管）、深蹲（搬運裝備）、弓箭步（跨越障礙）、左右側跨步（閃避障礙）、全身伸展及深呼吸"], "cool": ["三、收操（5分鐘）消防員回家休息", "伸展：大樹伸展、貓咪伸懶腰、肩膀放鬆、小腿伸展、深呼吸"], "gates": [{"title": "第一關：火場障礙區", "equip": "萬象體能組、空氣棒、三角錐", "play": "鑽過障礙、跨越空氣棒，不可碰倒障礙物。", "abil": "鑽爬能力、空間概念、身體控制"}, {"title": "第二關：救援傷患", "equip": "板車、沙包", "play": "兩人合作，一人拉板車、一人扶住沙包（代表傷患），將傷患安全送回救護站。", "abil": "合作能力、核心肌力、平衡控制"}, {"title": "第三關：消防水帶衝刺", "equip": "敏捷訓練梯、三角錐", "play": "快速跑過敏捷梯，再繞過角錐返回。", "abil": "敏捷、下肢力量、速度控制"}, {"title": "第四關：消防接力", "equip": "呼拉圈", "play": "跳進呼拉圈，再跨越呼拉圈抵達終點。", "abil": "跳躍能力、平衡、心肺耐力"}]}, "10": {"name": "海洋冒險王－尋找海底寶藏", "res": ["彩虹河石", "波浪橋", "海洋球", "小籃子", "飛盤"], "goals": ["提升幼兒平衡、敏捷及反應能力，促進身體靈活運用。", "培養身體協調、方向辨識及空間概念，提高動作控制能力。", "透過探索與闖關活動，培養觀察力、專注力及問題解決能力。", "增進心肺耐力與身體耐力，鼓勵幼兒勇於挑戰並建立運動自信。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全", "身-大-1-3-4 覺察與辨別危險，保護自己及他人的安全"], "warm": ["一、暖身活動（5分鐘）海洋生物律動", "幼兒模仿：小魚游泳、螃蟹橫著走、海馬跳躍、海豚躍起、烏龜慢走"], "cool": ["三、收操（5分鐘）回家休息", "伸展：海浪呼吸、小魚伸展、海龜慢慢爬、深呼吸"], "gates": [{"title": "第一關：珊瑚礁探險", "equip": "彩虹河石", "play": "依指定顏色踩踏河石前進。", "abil": "平衡能力、顏色辨識、身體控制"}, {"title": "第二關：海浪平衡橋", "equip": "波浪橋", "play": "雙手張開慢慢走過波浪橋。", "abil": "平衡、核心穩定"}, {"title": "第三關：珍珠收集", "equip": "海洋球、小籃子", "play": "快速撿拾指定顏色海洋球。", "abil": "反應速度、分類能力、手眼協調"}, {"title": "第四關：救海龜", "equip": "三角錐+橫桿", "play": "幼兒匍匐前進通過障礙物。", "abil": "投擲控制、力量控制"}]}, "11": {"name": "小小運動會－挑戰金牌選手", "res": ["沙包", "呼拉圈", "小皮球", "三角錐", "敏捷梯"], "goals": ["提升幼兒投擲、跑步及敏捷移動能力，增進手眼協調與身體控制能力。", "培養速度、反應及動作協調能力，提升動作的準確性與穩定性。", "學習遵守競賽規則，培養運動家精神、合作態度及自我挑戰的能力。", "增進心肺耐力、肌力及肌耐力，培養規律運動與健康生活的習慣。"], "inds": ["身-中大-1-3-3 覺察身體活動安全的距離", "身-中-1-3-4 覺察與辨別危險，保護自己的安全", "身-大-1-3-4 覺察與辨別危險，保護自己及他人的安全"], "warm": ["一、暖身活動（5分鐘）我是體育健將", "原地高抬腿跑", "開合跳", "側併步", "全身伸展"], "cool": ["三、收操（5分鐘）放鬆休息", "伸展：手臂放鬆、腿部伸展、深呼吸、放鬆走"], "gates": [{"title": "第一關：神射手", "equip": "沙包、呼拉圈", "play": "投進不同距離呼拉圈。", "abil": "投擲、手眼協調"}, {"title": "第二關：保齡球王", "equip": "小皮球、三角錐", "play": "滾球擊倒角錐。", "abil": "力量控制、目標瞄準"}, {"title": "第三關：速度挑戰", "equip": "敏捷梯", "play": "快速完成各種腳步。", "abil": "敏捷、協調"}, {"title": "第四關：障礙折返跑", "equip": "三角錐", "play": "S型折返跑。", "abil": "速度、轉向能力"}]}, "12": {"name": "勇者障礙王－終極挑戰賽", "res": ["跳袋", "平衡木", "彩虹河石", "呼拉圈", "木梯"], "goals": ["統整幼兒走、跑、跳、平衡、投擲等大肌肉動作能力，提升整體身體協調性。", "培養身體控制、動作規劃及空間概念，增進完成複合性動作的能力。", "透過多元障礙挑戰，培養勇於嘗試、解決問題及合作互助的態度。", "增進心肺耐力、肌耐力及持續運動能力，建立積極參與體能活動的興趣與自信。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）勇者訓練", "慢跑", "熊爬", "青蛙跳", "側跨步", "全身伸展"], "cool": ["三、收操（5分鐘）勇者放鬆操", "伸展：手腳伸展、深蹲放鬆、呼吸調節"], "gates": [{"title": "第一關：跳袋勇士", "equip": "跳袋", "play": "雙腳跳至終點。", "abil": "下肢肌力、平衡"}, {"title": "第二關：平衡小徑", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "核心穩定、平衡"}, {"title": "第三關：障礙搬運", "equip": "呼拉圈", "play": "搬運呼拉圈至終點。", "abil": "肌耐力"}, {"title": "第四關：木梯攀爬", "equip": "木梯", "play": "四點爬行。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "體能嘉年華－健康小勇士闖關趣", "res": ["平衡木", "彩虹河石", "板車", "沙包", "呼拉圈", "敏捷梯", "三角錐"], "goals": ["統整幼兒前五個月所學的大肌肉動作技能，展現平衡、跳躍、攀爬、投擲、敏捷及合作等綜合能力。", "培養身體控制、動作協調及空間運用能力，提升完成多元闖關活動的表現。", "透過團隊合作與闖關挑戰，培養自信心、責任感及與同儕互助合作的精神。", "增進心肺耐力、肌耐力及整體體適能，養成喜愛運動、樂於挑戰及健康生活的良好習慣。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）歡樂律動暖身", "配合音樂：慢跑、開合跳、高抬腿、全身伸展"], "cool": ["三、收操（5分鐘）健康小勇士放鬆操", "頸部、肩膀、手臂、腰部及腿部伸展。", "搭配深呼吸與緩步行走，讓心跳逐漸恢復。", "最後進行互相擊掌鼓勵，分享最有成就感的關卡，建立運動自信與團隊榮譽感。"], "gates": [{"title": "第一關：森林平衡王", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：消防救援王", "equip": "板車、沙包", "play": "兩人合作，一人拉板車、一人扶住沙包（代表傷患），將傷患安全送回救護站。", "abil": "合作能力、核心肌力、平衡控制"}, {"title": "第三關：運動神射手", "equip": "沙包、呼拉圈", "play": "投進不同距離呼拉圈。", "abil": "投擲、手眼協調"}, {"title": "第四關：勇者障礙王", "equip": "敏捷梯、三角錐", "play": "將三角錐隨意放置在敏捷梯的裡面及外面，每跳一格須將三角錐移置相反位置(裡面或外面)", "abil": "綜合體能、協調、耐力"}]}},"兩歲專班":{"8": {"name": "小泰山叢林探險（綜合體能）", "res": ["萬象組", "彩虹河石", "呼拉圈", "小布球"], "goals": ["練習走平衡、跨越障礙。", "增進走、爬、丟的大肌肉能力。", "學習排隊等待。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）森林動物律動", "老師帶領幼兒模仿：模仿猴子走路、大象甩鼻子、大熊慢慢走、小鳥拍拍翅膀", "搭配伸展：頭部、手臂、腰部、膝蓋、腳踝"], "cool": ["三、收操（5分鐘）森林深呼吸", "教師播放柔和音樂，引導幼兒：", "🌳 大樹伸懶腰（雙手向上伸展） 🐦 小鳥飛回家（雙手慢慢放下）", "🌬 深深吸一口氣，再慢慢吐氣", "最後一起拍拍手臂、拍拍大腿、拍拍小腿放鬆肌肉。"], "gates": [{"title": "第一關：森林小橋", "equip": "萬象組", "play": "幼兒雙手平舉，慢慢走過萬象組搭建的小橋，教師於旁協助，鼓勵一步一步向前走。", "abil": "下肢肌力、平衡能力、身體穩定控制"}, {"title": "第二關：彩虹石散步", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，不需跳躍，可依能力跨越不同距離。", "abil": "身體協調能力、跨步能力、平衡能力"}, {"title": "第三關：呼拉圈散步", "equip": "呼拉圈", "play": "將呼拉圈平放地面，幼兒依序走進每一個呼拉圈，再跨步走出，像小火車一樣前進。", "abil": "下肢控制能力、身體協調、方向感"}, {"title": "第四關：小猴子餵水果", "equip": "沙包或小布球", "play": "教師放置水果籃（收納籃），幼兒站在線後，將布球投入水果籃，可依能力調整投擲距離。。", "abil": "手眼協調、投擲能力、力道控制"}]}, "9": {"name": "氣球勇士探險記（綜合障礙闖關）", "res": ["鑽龍", "空氣棒", "三角錐", "彩虹河石", "呼拉圈"], "goals": ["增進幼兒鑽、走、推、跨等基本大肌肉動作能力。", "培養身體平衡、方向控制及空間概念。發展手眼協調及身體控制能力。", "建立遵守活動規則、等待輪流及勇於挑戰的態度。"], "inds": ["身-幼-1-1-1 覺察身體在穩定性及移動性 動作表現上的協調性", "身-幼-1-1-2 模仿身體的動態平衡動作"], "warm": ["一、暖身活動（5分鐘）消防員出任務", "教師帶領幼兒配合音樂模仿探險家的動作。", "小兔子跳跳跳（小步彈跳） --小熊慢慢走 --小鴨搖搖走 --飛機張開翅膀 --火車慢慢開"], "cool": ["三、收操（5分鐘）氣球慢慢放氣", "教師帶領幼兒想像自己是一顆大氣球。", "雙手慢慢向上伸展，吸一口氣--身體慢慢蹲下，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "最後一起喝水、擦汗，分享今天完成探險的心情。"], "gates": [{"title": "第一關：勇闖山洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍一端鑽進去，再從另一端爬出來，過程中保持低姿勢慢慢前進。", "abil": "鑽爬能力、空間概念、身體控制能力"}, {"title": "第二關：彩虹石小徑", "equip": "彩虹河石", "play": "彩虹河石依不同距離排列，幼兒一步一步踩踏前進，雙手平舉保持平衡，不需跳躍。", "abil": "平衡能力、身體協調"}, {"title": "第三關：氣球快遞員", "equip": "汽球棒、三角錐、氣球", "play": "幼兒利用汽球棒慢慢推動氣球，沿著三角錐直線前進，再繞過三角錐回到起點。", "abil": "手眼協調、力道控制、專注力"}, {"title": "第四關：呼拉圈探險路", "equip": "呼拉圈", "play": "將呼拉圈依序排列於地面，幼兒一步一步走進呼拉圈，再跨步走出，直到完成所有呼拉圈。", "abil": "身體協調能力、平衡能力"}]}, "10": {"name": "海洋尋寶大作戰（觸覺與肌力）", "res": ["波浪觸覺步道", "滑溜布", "運動墊組", "數字家族跳袋"], "goals": ["增進幼兒足底觸覺感知及身體平衡能力。", "發展匍匐、翻滾、行走等基本大肌肉動作。", "培養上下肢肌力及身體控制能力。", "樂於探索不同材質，建立自信心及遵守活動規則。"], "inds": ["身-幼-1-3-3 覺察身體活動安全的距離", "身-幼-1-3-4 覺察與辨別危險，保護自己的安全"], "warm": ["一、暖身活動（5分鐘）海洋生物動一動", "教師播放海洋音樂，引導幼兒模仿海洋生物。", "小魚游來游去 --螃蟹橫著走 --海龜慢慢爬 --海豚跳一跳（小彈跳） --水母飄呀飄"], "cool": ["三、收操（5分鐘）海浪深呼吸伸展", "教師帶領幼兒想像自己躺在沙灘上。", "雙手做海浪擺動。", "深深吸一口氣。", "慢慢吐氣。", "互相拍拍肩膀、手臂及大腿放鬆肌肉。"], "gates": [{"title": "第一關：海底觸覺步道", "equip": "波浪觸覺步道", "play": "幼兒脫下鞋襪，赤腳一步一步走過波浪觸覺步道，感受不同的高低及觸感。", "abil": "足底觸覺刺激、平衡能力、身體穩定控制"}, {"title": "第二關：海豚翻翻樂", "equip": "運動墊組", "play": "幼兒在運動墊上進行側滾或身體翻轉（由教師協助），慢慢翻到終點。", "abil": "前庭覺發展、動作協調"}, {"title": "第三關：海底小探險", "equip": "滑溜布", "play": "幼兒以匍匐前進方式，在滑溜布上慢慢爬行至終點，再返回起點。", "abil": "上肢肌力、四肢協調"}, {"title": "第四關：袋鼠尋寶趣", "equip": "數字家族跳袋", "play": "幼兒雙腳站入跳袋中，雙手握住提把，以小步向前走到終點，不需跳躍。", "abil": "下肢肌力、身體協調"}]}, "11": {"name": "小騎士拉力賽（方向控制）", "res": ["滑步車", "呼拉圈", "小布球", "三角錐"], "goals": ["增進幼兒腿部肌力及踩踏能力。", "培養方向控制、身體平衡及空間概念。", "發展手眼協調及投擲能力。", "建立遵守交通規則、等待輪流及愛護器材的態度。"], "inds": ["身-幼-2-1-1 在穩定性及移動性動作中練習平衡", "身-幼-2-1-2 遵守安全活動的原則"], "warm": ["一、暖身活動（5分鐘）小小交通工具出發囉", "教師播放輕快音樂，引導幼兒模仿各種交通工具。", "小汽車開呀開--摩托車轉轉方向盤--小火車嗚嗚出發--飛機展開翅膀--腳踏車踩踩踏板"], "cool": ["三、收操（5分鐘）小騎士回車庫", "教師引導幼兒想像今天完成了拉力賽。", "雙手向上伸展，吸一口氣--雙手慢慢放下，吐氣--坐姿向前伸展雙腳--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "喝水、擦汗，分享今天騎車的心情。"], "gates": [{"title": "第一關：直線小騎士", "equip": "滑步車", "play": "幼兒騎乘滑步車，沿著直線慢慢踩踏前進至終點，教師在旁協助及提醒安全。", "abil": "踩踏能力、平衡能力"}, {"title": "第二關：小騎士繞彎道", "equip": "三角錐", "play": "幼兒騎乘滑步車，慢慢繞過滑步車，不碰倒滑步車，再騎回起點。", "abil": "方向控制能力、身體控制能力"}, {"title": "第三關：補給站送貨員", "equip": "小布球、呼拉圈", "play": "幼兒將滑步車停放好後，拿起小布球站在線後，將布球投入呼拉圈內，再將布球撿回放回籃子。", "abil": "手眼協調、投擲能力"}, {"title": "第四關：交通號誌散步", "equip": "呼拉圈", "play": "教師口令：「紅燈停、綠燈走」，幼兒依照指令走進呼拉圈、走出呼拉圈，再沿著直線走回終點。", "abil": "身體控制能力、專注力"}]}, "12": {"name": "歡樂雪國氣球傘（團隊合作）", "res": ["呼拉圈", "汽球棒", "鑽龍", "運動墊組", "沙包"], "goals": ["培養幼兒與同儕合作完成體能活動。", "增進上下肢肌力、身體協調及平衡能力。", "發展手眼協調及聽從指令的能力。", "體驗節慶歡樂氛圍，建立喜愛運動的態度。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["一、暖身活動（5分鐘）雪花飄飄真好玩", "教師播放輕快音樂，帶領幼兒模仿雪國情境。", "小雪花飄呀飄（雙手左右擺動）--小企鵝搖搖走--北極熊慢慢走--小兔子輕輕跳（小幅度）--雙手堆雪人"], "cool": ["三、收操（5分鐘）圍爐取暖", "教師帶領幼兒圍坐成圓圈。", "雙手向上伸展，吸一口氣--慢慢放下雙手，吐氣--輕拍肩膀、手臂、大腿及小腿放鬆肌肉。", "互相說一句：「你好棒！」"], "gates": [{"title": "第一關：穿越雪洞", "equip": "鑽龍", "play": "幼兒依序從鑽龍的一端慢慢鑽過，到另一端爬出，再回到隊伍後方等待。", "abil": "四肢協調能力"}, {"title": "第二關：跨越雪堆", "equip": "運動墊組", "play": "將運動墊平放或低高度堆疊，幼兒一步一步跨越運動墊，再沿著指定路線走回起點。", "abil": "動作控制、平衡能力"}, {"title": "第三關：拍擊雪球", "equip": "汽球棒、氣球", "play": "幼兒手持汽球棒，將氣球輕輕向上拍擊，不讓氣球掉到地上；若掉落可撿起後繼續遊戲。", "abil": "手眼協調能力"}, {"title": "第四關：雪浪大冒險", "equip": "呼拉圈、沙包", "play": "幼兒拿起小沙包往呼拉圈投擲。", "abil": "上、下肢肌力、協調"}]}, "1": {"name": "歡樂馬戲團（平衡與反應）", "res": ["彩虹河石", "沙包", "呼拉圈", "三角錐"], "goals": ["增進幼兒平衡能力及身體協調性。", "發展走、跨、繞、踩等基本大肌肉動作。", "培養身體控制、方向感及反應能力。", "建立自信心，樂於參與體能活動並遵守遊戲規則。"], "inds": ["身-中大-2-1-1 在合作遊戲的情境中練習動作的協調與敏捷", "身-中大-2-1-2 在團體活動中，應用身體基本動作安全地完成任務"], "warm": ["暖身活動（5分鐘）馬戲團明星登場", "教師播放歡樂音樂，引導幼兒模仿馬戲團角色。", "小丑搖搖走--小熊踏步走--小兔子跳一跳（小幅度）--大象甩鼻子--小鳥拍拍翅膀"], "cool": ["三、收操（5分鐘）完美謝幕", "教師帶領幼兒一起完成馬戲團謝幕。", "雙手向上伸展，深深吸氣--雙手慢慢放下，吐氣--輕拍肩膀、手臂、大腿、小腿放鬆肌肉。", "大家互相拍拍手，給自己一個掌聲。"], "gates": [{"title": "第一關：平衡小明星", "equip": "平衡木、彩虹河石", "play": "依序完成平衡挑戰。", "abil": "平衡、核心控制"}, {"title": "第二關：小丑繞圈圈", "equip": "三角錐", "play": "幼兒依照箭頭方向，慢慢繞過三角錐，再回到起點。", "abil": "方向控制能力、空間概念"}, {"title": "第三關：彩虹小腳印", "equip": "彩虹河石", "play": "幼兒雙腳依序踩踏彩虹河石，一步一步向前走，可依能力調整河石距離。", "abil": "平衡能力、空間知覺"}, {"title": "第四關：呼拉圈歡樂派對", "equip": "呼拉圈", "play": "教師將呼拉圈平放於地面，幼兒依序走進、走出呼拉圈，再沿指定路線走回終點。", "abil": "跨步能力、身體協調"}]}}},GM=GMS["中小班"],gmOf=L=>GMS[(L.gm&&L.gm.src)||"中小班"]||GMS["中小班"];
 let lineBound=null,d=null,root=null,logs=[],logsOwn=[],logsShr=[],sub2=null,impState=null,shareState=null,viewOnly=false,showOld=false,rvNote="",edDirty=false,hist=[],hi=-1,histId=null,dirKey="",cur=null,photos={},sub=null,subKey=null,saveT=null,q="",prefs=null,subP=null,mode="mine",clsSel=null,stF="all",firstSnap=true;const notified=new Set();
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const nl=s=>esc(s).replace(/\n/g,"<br>");
@@ -4144,6 +4332,276 @@ function kgApp() {
   window.LearningObservation = { mount, sync };
 })();
 
+</script>
+<script>
+/* ============ 衛教宣導 ============ */
+(function () {
+  'use strict';
+  const COL = 'healthEducation', N = 6, TIME = '15:00-15:30', DRAFT = 'healthEduDraft';
+  const PLACES = ['三樓活動室', '各班教室', '一樓穿堂', '戶外遊戲場'];
+  const FIELDS = ['sem', 'topic', 'date', 'purpose', 'content', 'equip', 'strategy', 'organizer'];
+  let page = null, form = null, app = null, editing = null, list = [], unsub = null, unsubKey = '', saving = false;
+  let photos = []; // [{data, cap, changed}]
+  const $ = (s, r = page) => (r ? r.querySelector(s) : null);
+  const $$ = (s, r = page) => (r ? Array.from(r.querySelectorAll(s)) : []);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fbUser = () => (window.firebase && firebase.apps && firebase.apps.length ? firebase.auth().currentUser : null);
+  const isAdmin = () => !!(app && app.isAdmin);
+  const WD = '日一二三四五六';
+
+  function semOf(dt) { // 8–1 月為上學期，2–7 月為下學期
+    const d = dt || new Date(), m = d.getMonth() + 1, y = d.getFullYear();
+    return ((m >= 8 ? y : y - 1) - 1911) + ' 學年度' + (m >= 8 || m === 1 ? '上' : '下') + '學期';
+  }
+  function rocDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number); if (!y) return '';
+    const w = new Date(y, m - 1, d).getDay();
+    return (y - 1911) + ' 年 ' + String(m).padStart(2, '0') + ' 月 ' + String(d).padStart(2, '0') + ' 日（' + WD[w] + '）';
+  }
+  function emptyPhotos() { photos = Array.from({ length: N }, () => ({ data: '', cap: '', changed: false })); }
+
+  /* ---------- 地點：下拉＋自行輸入 ---------- */
+  function getPlace() { const s = $('#he-place-sel'); return s.value === '__other' ? $('#he-place-txt').value.trim() : s.value; }
+  function setPlace(v) {
+    const s = $('#he-place-sel'), t = $('#he-place-txt');
+    if (!v) { s.value = ''; t.value = ''; t.hidden = true; return; }
+    if (PLACES.includes(v)) { s.value = v; t.value = ''; t.hidden = true; }
+    else { s.value = '__other'; t.value = v; t.hidden = false; }
+  }
+
+  /* ---------- 照片 ---------- */
+  function shrink(f) {
+    return new Promise((ok, bad) => {
+      const fr = new FileReader(); fr.onerror = bad;
+      fr.onload = () => {
+        const im = new Image(); im.onerror = () => bad(new Error('無法讀取照片「' + f.name + '」，請改用 JPG／PNG'));
+        im.onload = () => {
+          const k = Math.min(1, 1200 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+          c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+          const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+          let q = 0.8, out = c.toDataURL('image/jpeg', q);
+          while (out.length > 700000 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+          ok(out);
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(f);
+    });
+  }
+  function drawPhotos() {
+    $('#he-photos').innerHTML = photos.map((p, i) => `<div class="he-ph">
+      <div class="he-lb">照片 ${i + 1}</div>
+      <label class="box">${p.data ? `<img src="${p.data}" alt="">` : '＋ 點這裡上傳照片'}<input type="file" accept="image/*" data-hefile="${i}" hidden></label>
+      <div class="row">${p.data ? `<button type="button" class="he-btn" data-herm="${i}">移除</button>` : ''}${i > 0 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="-1">← 往前</button>` : ''}${i < N - 1 && p.data ? `<button type="button" class="he-btn" data-hemv="${i}" data-d="1">往後 →</button>` : ''}</div>
+      <label class="block"><span class="he-hint">照片說明</span><input class="he-in" data-hecap="${i}" value="${esc(p.cap)}" placeholder="例：利用情緒小怪獸娃娃說故事"></label>
+    </div>`).join('');
+  }
+  function onPhotoEvents() {
+    const box = $('#he-photos');
+    box.addEventListener('change', async e => {
+      const i = e.target.dataset.hefile; if (i == null) return;
+      const files = Array.from(e.target.files || []).filter(f => /^image\//.test(f.type)); if (!files.length) return;
+      try { photos[i].data = await shrink(files[0]); photos[i].changed = true; drawPhotos(); dirty(); }
+      catch (err) { alert(err.message || err); }
+    });
+    box.addEventListener('input', e => { const i = e.target.dataset.hecap; if (i == null) return; photos[i].cap = e.target.value; dirty(); });
+    box.addEventListener('click', e => {
+      const rm = e.target.closest('[data-herm]'), mv = e.target.closest('[data-hemv]');
+      if (rm) { const i = +rm.dataset.herm; photos[i].data = ''; photos[i].changed = true; drawPhotos(); dirty(); }
+      if (mv) { const i = +mv.dataset.hemv, j = i + +mv.dataset.d; [photos[i], photos[j]] = [photos[j], photos[i]]; photos[i].changed = photos[j].changed = true; drawPhotos(); dirty(); }
+    });
+  }
+
+  /* ---------- 表單資料 ---------- */
+  function collect() {
+    const o = {}; FIELDS.forEach(k => { o[k] = (form.elements[k].value || '').trim(); });
+    o.place = getPlace(); o.time = TIME; o.captions = photos.map(p => p.cap.trim());
+    return o;
+  }
+  function fill(o) {
+    FIELDS.forEach(k => { form.elements[k].value = o[k] || ''; });
+    if (!o.sem) form.elements.sem.value = semOf();
+    setPlace(o.place || ''); $('#he-datepick').value = '';
+  }
+  function say(t, bad) { const s = $('#he-status'); s.textContent = t; s.className = 'text-sm font-bold ' + (bad ? 'text-coral' : 'text-sage-dark'); }
+  let draftT = null;
+  function dirty() {
+    if (!saving) { const b = $('#he-save'); b.disabled = false; b.textContent = editing ? '💾 更新' : '💾 儲存'; }
+    clearTimeout(draftT); draftT = setTimeout(() => { if (editing) return; try { localStorage.setItem(DRAFT, JSON.stringify(collect())); } catch (e) {} }, 600);
+  }
+  function setEditing(rec) {
+    editing = rec; $('#he-editing').hidden = !rec;
+    if (rec) $('#he-editing-name').textContent = (rec.topic || '未命名') + ' 宣導' + (rec.date ? '｜' + rec.date : '');
+    const b = $('#he-save'); b.disabled = false; b.textContent = rec ? '💾 更新' : '💾 儲存';
+  }
+  function resetForm(useDraft) {
+    let dr = null; if (useDraft) { try { dr = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) {} }
+    form.reset(); emptyPhotos(); fill(dr || {});
+    if (dr && dr.captions) dr.captions.forEach((c, i) => { if (photos[i]) photos[i].cap = c || ''; });
+    drawPhotos(); setEditing(null);
+  }
+
+  /* ---------- Firestore ---------- */
+  async function save() {
+    const u = fbUser(); if (!u) throw new Error('尚未登入，無法儲存');
+    const db = firebase.firestore(), data = collect(), TS = firebase.firestore.FieldValue.serverTimestamp();
+    data.photoSlots = photos.map(p => !!p.data);
+    const ref = editing ? db.collection(COL).doc(editing.id) : db.collection(COL).doc();
+    if (editing) await ref.update({ ...data, updatedAt: TS });
+    else await ref.set({ ...data, uid: u.uid, userEmail: u.email || '', userName: u.displayName || '', createdAt: TS, updatedAt: TS });
+    for (let i = 0; i < N; i++) {
+      const p = photos[i]; if (!editing || p.changed) {
+        const pr = ref.collection('photos').doc('p' + i);
+        if (p.data) await pr.set({ data: p.data, slot: i, createdAt: Date.now() });
+        else if (editing) await pr.delete().catch(() => {});
+      }
+      p.changed = false;
+    }
+    return { id: ref.id, uid: editing ? editing.uid : u.uid, ...data };
+  }
+  async function loadRecord(id) {
+    const ref = firebase.firestore().collection(COL).doc(id), s = await ref.get();
+    if (!s.exists) throw new Error('找不到這份紀錄');
+    const d = s.data(), ps = await ref.collection('photos').get();
+    form.reset(); emptyPhotos(); fill(d);
+    (d.captions || []).forEach((c, i) => { if (photos[i]) photos[i].cap = c || ''; });
+    ps.forEach(x => { const v = x.data(), i = +String(x.id).replace(/\D/g, ''); if (photos[i]) photos[i].data = v.data || ''; });
+    drawPhotos(); setEditing({ id, uid: d.uid, topic: d.topic, date: d.date });
+    setTab('fill'); window.scrollTo({ top: page.offsetTop - 80, behavior: 'smooth' });
+  }
+  async function deleteRecord(id) {
+    const ref = firebase.firestore().collection(COL).doc(id);
+    const ps = await ref.collection('photos').get();
+    await Promise.all(ps.docs.map(x => x.ref.delete().catch(() => {})));
+    await ref.delete();
+    if (editing && editing.id === id) resetForm(false);
+  }
+  function subscribe() {
+    const u = fbUser(), key = u ? u.uid + '|' + isAdmin() : '';
+    if (key === unsubKey) return; unsubKey = key;
+    if (unsub) { unsub(); unsub = null; } list = []; renderList();
+    if (!u) return;
+    const q = isAdmin() ? firebase.firestore().collection(COL) : firebase.firestore().collection(COL).where('uid', '==', u.uid);
+    unsub = q.onSnapshot(s => { list = s.docs.map(x => ({ id: x.id, ...x.data() })); renderList(); },
+      err => { $('#he-list').innerHTML = `<p class="text-sm text-coral font-bold">讀取失敗：${esc(err.code || err.message)}${err.code === 'permission-denied' ? '<br>（Firebase 資料庫規則尚未開放「healthEducation」集合，請管理者在 Firestore 規則加入，見說明。）' : ''}</p>`; });
+  }
+  function renderList() {
+    const n = $('#he-n'); if (n) n.textContent = list.length ? '（' + list.length + '）' : '';
+    $('#he-saved-sub').textContent = isAdmin() ? '（管理者：顯示全部老師的紀錄）' : '';
+    const t = x => (x.updatedAt && x.updatedAt.toMillis ? x.updatedAt.toMillis() : 0);
+    const me = (fbUser() || {}).uid;
+    $('#he-list').innerHTML = list.length ? list.slice().sort((a, b) => t(b) - t(a)).map(x => `<div class="he-item">
+      <div><b>${esc(x.topic || '未命名')} 宣導</b> <span class="he-hint">${esc(x.sem || '')}｜${esc(x.date || '未填日期')}｜${esc(x.place || '')}｜照片 ${(x.photoSlots || []).filter(Boolean).length} 張${x.uid !== me ? '｜' + esc(x.userName || x.userEmail || '') : ''}</span></div>
+      <div class="flex gap-2"><button type="button" class="he-btn" data-heopen="${x.id}">開啟編輯</button><button type="button" class="he-btn" data-heprint="${x.id}">🖨️ 列印</button>${x.uid === me || isAdmin() ? `<button type="button" class="he-btn" data-hedel="${x.id}">刪除</button>` : ''}</div>
+    </div>`).join('') : '<p class="he-hint">目前還沒有儲存的衛教宣導紀錄。</p>';
+  }
+
+  /* ---------- 列印（依範例 PDF 版面，A4 直式） ---------- */
+  const lines = s => esc(s).replace(/\n/g, '<br>');
+  function printHtml(o, ph) {
+    const topic = o.topic || '　　　　', purpose = (o.purpose || '').split('\n').map(l => `<div>${esc(l) || '&nbsp;'}</div>`).join('') || '&nbsp;';
+    const cell = i => `<td class="pc">${ph[i] ? `<img src="${ph[i]}" alt="">` : ''}</td>`;
+    const cap = i => `<td class="cap">照片說明：${esc((o.captions || [])[i] || '')}</td>`;
+    const rows = [0, 2, 4].map(i => `<tr>${cell(i)}${cell(i + 1)}</tr><tr>${cap(i)}${cap(i + 1)}</tr>`).join('');
+    const css = `@page{size:A4 portrait;margin:14mm 15mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000}
+.bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
+.wrap{max-width:176mm;margin:0 auto}@media screen{.wrap{padding:10mm 0}}
+.hd{text-align:center;margin-bottom:10px}.hd div{line-height:1.5}.hd u{padding:0 .3em}
+.info{display:grid;grid-template-columns:auto 1fr;column-gap:0;margin:0 0 10px 1em}.info .k{white-space:nowrap}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all}
+th{font-weight:normal;text-align:center;vertical-align:middle}
+.flow td{min-height:2em}.flow tr{break-inside:avoid}.flow td.c{white-space:normal}
+.st td{vertical-align:middle}
+.p2{break-before:page;page-break-before:always}.p2h{margin:0 0 4px}
+.ph td{text-align:center}.ph th{padding:6px}.pc{height:64mm;vertical-align:middle;padding:3px}.pc img{max-width:100%;max-height:62mm;object-fit:contain;display:block;margin:auto}
+.ph td.cap{text-align:left;height:9mm;vertical-align:middle}.ph tr{break-inside:avoid}
+.sign{display:flex;justify-content:space-between;margin:14px 2em 0}.sign span{display:inline-block;min-width:40mm;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
+    return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc((o.sem || '') + '_' + topic.trim() + '宣導' + (o.date ? '_' + o.date : ''))}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>
+<div class="wrap">
+<div class="hd"><div>桃園市仁德非營利幼兒園</div><div>(委託社團法人臺灣宛靜文教協會辦理)</div><div>${esc(o.sem || '')} <u>${esc(topic)}</u> 宣導</div></div>
+<div class="info">
+<div class="k">一、活動日期：</div><div>${esc(o.date || '')}</div>
+<div class="k">二、活動時間：</div><div>${TIME}</div>
+<div class="k">三、活動地點：</div><div>桃園市仁德非營利幼兒園${o.place ? '(' + esc(o.place) + ')' : ''}。</div>
+<div class="k">四、活動目的：</div><div>${purpose}</div>
+</div>
+<table class="flow"><colgroup><col style="width:11%"><col style="width:54%"><col style="width:20%"><col style="width:15%"></colgroup>
+<thead><tr><th>時間</th><th>活動內容</th><th>器材/道具</th><th>活動<br>地點</th></tr></thead>
+<tbody><tr><td>${TIME.replace('-', '-<br>')}</td><td class="c">${lines(o.content || '') || '&nbsp;'}</td><td>${lines(o.equip || '')}</td><td>${esc(o.place || '')}</td></tr></tbody></table>
+<table class="st" style="border-top:0"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tr><td style="border-top:0">課程調整策略:</td><td style="border-top:0">${lines(o.strategy || '') || '&nbsp;'}</td></tr></table>
+<div class="p2"><div class="p2h">五、成果展現</div>
+<table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><thead><tr><th colspan="2">衛教宣導－${esc(topic.trim())}宣導</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="sign"><div>承辦人:<span>${esc(o.organizer || '')}</span></div><div>園長:<span></span></div></div></div>
+</div><script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`;
+  }
+  function openPrint(o, ph) {
+    const w = window.open('', '_blank');
+    if (!w) { alert('瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次'); return; }
+    w.document.open(); w.document.write(printHtml(o, ph)); w.document.close();
+  }
+  async function printSaved(id) {
+    const ref = firebase.firestore().collection(COL).doc(id), s = await ref.get(); if (!s.exists) return;
+    const w = window.open('', '_blank'); if (!w) { alert('瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次'); return; }
+    w.document.write('<p style="font:16px sans-serif;padding:20px">照片載入中…</p>');
+    const ph = Array(N).fill(''); (await ref.collection('photos').get()).forEach(x => { const i = +String(x.id).replace(/\D/g, ''); if (i < N) ph[i] = x.data().data || ''; });
+    w.document.open(); w.document.write(printHtml(s.data(), ph)); w.document.close();
+  }
+
+  /* ---------- 分頁 ---------- */
+  function setTab(k) {
+    $$('[data-hetab]').forEach(b => b.classList.toggle('on', b.dataset.hetab === k));
+    $$('[data-hepanel]').forEach(p => { p.hidden = p.dataset.hepanel !== k; });
+  }
+
+  function mount(el) {
+    page = el; form = $('#he-form');
+    if (!form || el.dataset.heReady) return;
+    el.dataset.heReady = '1';
+    resetForm(true); onPhotoEvents();
+    form.addEventListener('input', dirty); form.addEventListener('change', dirty);
+    $('#he-place-sel').addEventListener('change', e => { const t = $('#he-place-txt'); t.hidden = e.target.value !== '__other'; if (!t.hidden) t.focus(); });
+    $('#he-datepick').addEventListener('change', e => {
+      if (!e.target.value) return; form.elements.date.value = rocDate(e.target.value);
+      const [y, m, d] = e.target.value.split('-').map(Number); form.elements.sem.value = semOf(new Date(y, m - 1, d)); dirty();
+    });
+    $$('[data-hetab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.hetab)));
+    $$('[data-he="print"]').forEach(b => b.addEventListener('click', () => { setTab('fill'); openPrint(collect(), photos.map(p => p.data)); }));
+    $('[data-he="new"]').addEventListener('click', () => { if ((editing || collect().content) && !confirm('要清空表單、新增一份新的衛教宣導嗎？（已儲存的內容不受影響）')) return; try { localStorage.removeItem(DRAFT); } catch (e) {} resetForm(false); setTab('fill'); say(''); });
+    $('[data-he="cancel"]').addEventListener('click', () => { if (!confirm('結束編輯？尚未按「更新」的修改不會保留。')) return; resetForm(false); say(''); });
+    $('#he-list').addEventListener('click', async e => {
+      const o = e.target.closest('[data-heopen]'), p = e.target.closest('[data-heprint]'), d = e.target.closest('[data-hedel]');
+      try {
+        if (o) await loadRecord(o.dataset.heopen);
+        if (p) await printSaved(p.dataset.heprint);
+        if (d && confirm('確定要刪除這份衛教宣導紀錄（含照片）嗎？刪除後無法復原。')) await deleteRecord(d.dataset.hedel);
+      } catch (err) { alert('操作失敗：' + (err.code || err.message || err)); }
+    });
+    form.addEventListener('submit', async e => {
+      e.preventDefault(); if (saving) return;
+      const o = collect(); if (!o.topic && !o.content) { say('請至少填寫宣導主題或活動內容再儲存。', true); return; }
+      saving = true; const b = $('#he-save'); b.disabled = true; b.textContent = '儲存中…'; say('');
+      try {
+        const wasEdit = !!editing, r = await save();
+        try { localStorage.removeItem(DRAFT); } catch (e2) {}
+        setEditing({ id: r.id, uid: r.uid, topic: r.topic, date: r.date });
+        say((wasEdit ? '已更新' : '已儲存') + '（照片 ' + photos.filter(p => p.data).length + ' 張）。');
+        b.textContent = '✓ 已儲存'; b.disabled = true;
+      } catch (err) {
+        console.error('儲存衛教宣導失敗', err);
+        say('儲存失敗：' + (err.code === 'permission-denied' ? '沒有權限（Firebase 資料庫規則尚未開放「healthEducation」集合，請通知管理者）' : (err.code || err.message || '請稍後再試')), true);
+        b.disabled = false; b.textContent = editing ? '💾 更新' : '💾 儲存';
+      } finally { saving = false; }
+    });
+  }
+  function sync(el, data, active) {
+    app = data;
+    if (page !== el) mount(el);
+    if (active) subscribe();
+  }
+  window.HealthEdu = { mount, sync };
+})();
 </script>
 </body>
 </html>
