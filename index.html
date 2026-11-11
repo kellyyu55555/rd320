@@ -86,7 +86,7 @@
 #learning-observation-page .obs-btn{padding:.5rem 1rem;border:1px solid rgba(200,162,122,.5);border-radius:.75rem;background:#FFFDF8;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s}
 #learning-observation-page .obs-btn:hover{background:#FAF3E6}
 #learning-observation-page .obs-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-#learning-observation-page .obs-areas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+#learning-observation-page .obs-areas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.6rem}
 #learning-observation-page .obs-arow{display:contents}
 #learning-observation-page .obs-empty{visibility:hidden}
 #learning-observation-page .obs-area-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:0 0 .75rem}
@@ -174,11 +174,12 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-ch-title{margin:0!important;padding:3px 8px;border-bottom:1pt solid #222}
 #learning-observation-page .obs-areas{display:table;table-layout:fixed;width:100%;border-collapse:collapse}
 #learning-observation-page .obs-arow{display:table-row}
-#learning-observation-page .obs-area{display:table-cell;width:25%;vertical-align:top;padding:2px 4px 3px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
+#learning-observation-page .obs-area{display:table-cell;width:20%;vertical-align:top;padding:2px 4px 3px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
 #learning-observation-page .obs-arow>.obs-area:first-child{border-left:0!important}#learning-observation-page .obs-arow>.obs-area:last-child{border-right:0!important}
 #learning-observation-page .obs-arow:first-child>.obs-area{border-top:0!important}#learning-observation-page .obs-arow:last-child>.obs-area{border-bottom:0!important}
 #learning-observation-page .obs-area .obs-chip span{justify-content:flex-start}
-#learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:2px 4px;border:0;border-radius:0;background:#fff!important;color:#000;font-size:12pt}
+#learning-observation-page .obs-chips{gap:0 10px!important;row-gap:0!important}
+#learning-observation-page .obs-chip span,#learning-observation-page .obs-chip input:checked+span{gap:5px;padding:0 3px;line-height:1.25;border:0;border-radius:0;background:#fff!important;color:#000;font-size:12pt}
 #learning-observation-page .obs-chip span::before,#learning-observation-page .obs-box span::before{content:"";display:inline-block;flex:none;width:11px;height:11px;margin-right:0;border:1px solid #111;border-radius:0;background:#fff;font-size:10px;line-height:11px}
 #learning-observation-page .obs-chip input:checked+span::before,#learning-observation-page .obs-box input:checked+span::before{content:"";background:#111;border-color:#111}
 #learning-observation-page .obs-chips .obs-inline{border:0}
@@ -187,6 +188,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-area .obs-ph{flex:1 1 0;width:auto;min-width:0;height:var(--aph,22mm)}
 #learning-observation-page .obs-area .obs-ph img{display:block;width:100%;height:100%;max-width:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
 #learning-observation-page .obs-area-tools,#learning-observation-page .obs-area-edit{display:none!important}
+#learning-observation-page .obs-area .obs-photos{flex-wrap:nowrap;align-items:flex-start;justify-content:flex-start}
+#learning-observation-page .obs-area .obs-photos .obs-ph{flex:0 1 calc(var(--aph,22mm) * var(--ar,1.33));width:auto;max-width:100%;min-width:0;height:var(--aph,22mm);background:none}
+#learning-observation-page .obs-area .obs-photos .obs-ph img{width:100%;height:100%;object-fit:contain;background:none!important}
 #learning-observation-page .obs-act{display:flex;align-items:stretch;padding:0!important;min-height:42mm;overflow:hidden}
 #learning-observation-page .obs-act-label{white-space:nowrap;writing-mode:vertical-rl;padding:6px 8px;border-right:1px solid #222;text-align:center;letter-spacing:.35em}
 #learning-observation-page .obs-act-label h3{margin:0}
@@ -197,8 +201,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-photos-2 .obs-ph img{position:absolute;top:0;left:0;width:100%;height:100%;aspect-ratio:auto;object-fit:contain;border:0;border-radius:0}
 #learning-observation-page .obs-frame>.obs-act.has-photos{flex:1 1 auto;min-height:42mm}
 #learning-observation-page .obs-act.has-photos~.obs-fb{flex:none}
-#learning-observation-page .obs-sec{margin-top:.8em}
-#learning-observation-page .obs-chips.mt-3{margin-top:2px!important}
+#learning-observation-page .obs-sec{margin-top:.25em}
+#learning-observation-page .obs-sec>p{margin:0!important;line-height:1.3}
+#learning-observation-page .obs-chips.mt-3{margin-top:0!important}
 #learning-observation-page .mb-3,#learning-observation-page .mb-2{margin-bottom:2px!important}#learning-observation-page .mt-1{margin-top:0!important}
 #learning-observation-page .obs-fb{display:flex;flex-direction:column}
 #learning-observation-page .obs-frame>.obs-fb{flex:1 1 auto}
@@ -267,6 +272,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           </div>
         </div>
         <nav class="max-w-6xl mx-auto px-5 flex flex-wrap gap-1.5 pb-2">
+          <button @click="view='home'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='home' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🏠 目錄
+          </button>
           <button @click="view='teacher'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='teacher' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
@@ -315,6 +325,58 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       </header>
 
       <main class="max-w-6xl mx-auto px-5 mt-6">
+
+        <!-- ============ 目錄 ============ -->
+        <section x-show="view==='home'" class="space-y-5">
+<style>.home-card{display:block;width:100%;border:2px solid transparent;transition:transform .15s,border-color .15s,box-shadow .15s;cursor:pointer}.home-card:hover{transform:translateY(-3px);border-color:#C8A27A}.home-card:focus-visible{outline:3px solid #2F6271;outline-offset:2px}</style>
+          <div class="paper-card rounded-3xl p-6 shadow-card">
+            <p class="text-xs font-bold text-wood-dark/55" x-text="todayLabel"></p>
+            <h2 class="font-heading font-black text-xl mt-1" x-text="`👋 ${myName || (currentUser && (currentUser.displayName || currentUser.email)) || ''}${isAdmin ? '（管理者）' : ' 老師'}，您好！`"></h2>
+            <p class="text-sm text-wood-dark/70 mt-1">請選擇要使用的功能；之後也可以隨時點上方的「🏠 目錄」回到這裡。</p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <button type="button" x-show="true" @click="view='teacher'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🧸</span></div>
+            <h3 class="font-heading font-black text-base mt-3">老師借還登記區</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">借用、歸還教具與繪本，查看目前借用狀況</p>
+          </button>
+          <button type="button" x-show="true" @click="view='laminate'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🧷</span></div>
+            <h3 class="font-heading font-black text-base mt-3">護貝膜申請</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">申請護貝膜，查看申請紀錄與剩餘張數</p>
+          </button>
+          <button type="button" x-show="(isAdmin || planOpen) && !restrictedPW" @click="view='plan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📚</span></div>
+            <h3 class="font-heading font-black text-base mt-3">教學計畫</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班學習區教學計畫、照片與匯出 PDF</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='weekly'; weeklyMode='mine'; window.WeeklyUI && WeeklyUI.setMode('mine')" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
+            <h3 class="font-heading font-black text-base mt-3">週誌</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">撰寫、列印與送出每週的週誌</p>
+          </button>
+          <button type="button" x-show="isAdmin && !restrictedPW" @click="view='weekly'; weeklyMode='all'; window.WeeklyUI && WeeklyUI.setMode('all')" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗂️</span><span x-show="weeklyPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待閱 ${weeklyPendingCount}`"></span></div>
+            <h3 class="font-heading font-black text-base mt-3">週誌總覽</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">查看各班週誌，已閱或退件</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='observation'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📷</span></div>
+            <h3 class="font-heading font-black text-base mt-3">學習區觀察表</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">記錄幼兒學習區觀察與照片，查看進度</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='health'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🩺</span><span x-show="(isAdmin ? healthPending.length : 0)>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待審 ${(isAdmin ? healthPending.length : 0)}`"></span></div>
+            <h3 class="font-heading font-black text-base mt-3">衛教宣導</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">填寫衛教宣導紀錄、列印與上傳雲端硬碟</p>
+          </button>
+          <button type="button" x-show="isAdmin" @click="view='admin'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📋</span><span x-show="adminPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待處理 ${adminPendingCount}`"></span></div>
+            <h3 class="font-heading font-black text-base mt-3">管理者後台</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">帳號核准、教具管理、登入紀錄等</p>
+          </button>
+          </div>
+        </section>
 
         <!-- ============ 老師端 ============ -->
         <section x-show="view==='teacher'" class="grid md:grid-cols-5 gap-6">
@@ -2654,7 +2716,7 @@ return{sync,setMode,_viewOnly:()=>viewOnly,_seedUpload:seedUpload,_seedList:seed
 <script>
 function kgApp() {
   return {
-    view: 'teacher', formMode: 'borrow', adminTab: 'todo',
+    view: 'home', formMode: 'borrow', adminTab: 'todo',
     recordFilter: 'all', recordSort: { key: null, dir: 1 }, recordsShowAll: false,
     shareLinkNotice: '', borrowLookupText: '', returnDateLookup: '', browseCategoryFilter: '',
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
@@ -2729,7 +2791,7 @@ function kgApp() {
             console.error('讀取管理員名單失敗', e);
             this.showToast(`無法確認管理員身分（${e.code || e.message}），請檢查 Firestore 規則`, 6000);
           }
-          this.view = 'teacher';
+          this.view = 'home';
           this.accessState = 'ok'; clearInterval(this.pollTimer);
           if (this.isAdmin) setTimeout(() => this.loadLineUsage(true), 1500);
           if (!this.isAdmin) {
@@ -4373,10 +4435,10 @@ function kgApp() {
     const old = new Map($$('.obs-area[data-area]', box).map(c => [c.dataset.area, c]));
     const cells = list.map(a => old.get(a) || mkCell(a));
     box.innerHTML = '';
-    for (let i = 0; i < cells.length; i += 4) {
+    for (let i = 0; i < cells.length; i += 5) { // 每列固定 5 格，超過就往下新增一列
       const row = document.createElement('div'); row.className = 'obs-arow';
-      cells.slice(i, i + 4).forEach(c => row.appendChild(c));
-      while (row.children.length < 4) { const e = document.createElement('div'); e.className = 'obs-area obs-empty'; row.appendChild(e); }
+      cells.slice(i, i + 5).forEach(c => row.appendChild(c));
+      while (row.children.length < 5) { const e = document.createElement('div'); e.className = 'obs-area obs-empty'; row.appendChild(e); }
       box.appendChild(row);
     }
     syncAreas();
@@ -4916,9 +4978,9 @@ table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px so
 th{font-weight:normal;text-align:center;vertical-align:middle}
 .st td{vertical-align:middle}
 .p2{break-before:page;page-break-before:always}.p2h{margin:0 0 4px}
-.ph td{text-align:center}.ph th{padding:6px}.pc{height:64mm;vertical-align:middle;padding:3px}.pc img{max-width:100%;max-height:62mm;object-fit:contain;display:block;margin:auto}
-.ph td.cap{text-align:left;height:9mm;vertical-align:middle}.ph tr{break-inside:avoid}
-.sign{display:flex;justify-content:space-between;margin:14px 2em 0}.sign span{display:inline-block;min-width:40mm;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
+.ph td{text-align:center}.ph th{padding:6px}.pc{vertical-align:bottom;padding:3px 3px 0;line-height:0}.pc img{width:auto;height:auto;max-width:100%;max-height:62mm;display:block;margin:0 auto}
+.ph td.cap{text-align:left;vertical-align:top;padding:2px 6px 3px;line-height:1.45}.ph tr{break-inside:avoid}
+.sign{display:flex;justify-content:space-between;align-items:flex-end;margin:16px 2em 0}.sign>div{display:flex;align-items:flex-end;line-height:1.5}.sign span{display:inline-block;box-sizing:content-box;min-width:42mm;height:1.5em;line-height:1.5em;padding:0 4px 5px;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
     return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(fileName(o).replace(/\.pdf$/, ''))}</title><style>${css}</style></head><body>
 ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
 <div class="wrap"><div class="pg1">
