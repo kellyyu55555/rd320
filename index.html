@@ -1687,7 +1687,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K4</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K5</footer>
     </div>
   </template>
 
@@ -3951,7 +3951,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K4</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K5</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6106,7 +6106,9 @@ function renderSchedule(app){
     h("p",{class:"note"},"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）"),
     h("h1",null,str(cur.title)||str(cur.name)),
     str(cur.note) ? h("p",{class:"note",style:"margin-top:6px"},str(cur.note)) : null,
-    S.isAdmin ? h("button",{class:"btn abs",onclick:()=>editSchedule(cur.id)},"編輯作息表") : null));
+    h("div",{class:"abs",style:"display:flex;gap:8px"},
+      h("button",{class:"btn",onclick:()=>printSchedule(cur)},"🖨 列印"),
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>editSchedule(cur.id)},"編輯作息表") : null)));
   app.append(h("div",{class:"tablewrap"}, h("table",{class:"sched"}, h("thead",null,head), h("tbody",null,body))));
 }
 
@@ -6190,7 +6192,9 @@ function renderCalendar(app){
     h("h1",null,str(cur.title)),
     months.length ? h("div",{class:"subtabs",style:"margin:10px 0 0"}, months.map((m,i)=>
       h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")))) : null,
-    S.isAdmin ? h("button",{class:"btn abs",onclick:()=>editCalendar(cur.id)},"編輯標題") : null));
+    h("div",{class:"abs",style:"display:flex;gap:8px"},
+      h("button",{class:"btn",onclick:()=>printCalendar(cur)},"🖨 列印"),
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>editCalendar(cur.id)},"編輯標題") : null)));
   if (!months.length) app.append(h("div",{class:"notice"},"這份行事曆還沒有月份。"));
   months.forEach((m,i)=>{
     app.append(h("section",{class:"intro calm"+(str(m.month)===nowM?" now":""),id:"kb-m"+i},
@@ -6246,6 +6250,62 @@ function editMonth(calId, idx){
     h("div",{class:"mb f"}, h("div",{class:"f2"},h("label",{class:"fl"},"月份",f.month),h("label",{class:"fl"},"週次／日期",f.weeks)),
       CAL_CATS.map(([k,l])=>h("label",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項）")),tas[k])), err),
     h("div",{class:"mf"},del,up,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+}
+
+/* ---------- 作息表（自動縮成一頁 A4）與行事曆列印 ---------- */
+function openPrint(html){
+  const w = window.open("", "_blank"); if (!w){ alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+const PRINT_BASE = `*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;margin:0;color:#000;background:#fff}
+.bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:3px 5px;word-break:break-all;white-space:pre-wrap}
+.hd{text-align:center;margin-bottom:6px}.hd .t{font-size:1.35em;font-weight:bold}`;
+
+function printSchedule(cur){
+  const rows = (Array.isArray(cur.rows)?cur.rows:[]).filter(r=>r&&typeof r==="object");
+  let body = "";
+  rows.forEach((r,i)=>{
+    const days = DAYS.map((_,k)=>str((Array.isArray(r.days)?r.days:[])[k]));
+    let cells = "", k = 0;
+    while (k<5){ let n=1; while (k+n<5 && days[k+n]===days[k]) n++; cells += `<td colspan="${n}" class="act">${esc(days[k])}</td>`; k+=n; }
+    const first = i===0 || str(rows[i-1].period)!==str(r.period);
+    let span = 0; if (first){ for (let j=i;j<rows.length && str(rows[j].period)===str(r.period);j++) span+=2; }
+    body += `<tr>${first?`<td rowspan="${span}" class="per">${esc(r.period).split("").join("<br>")}</td>`:""}<td class="tm">${esc(r.time)}</td>${cells}<td rowspan="2" class="core">${lines(r.core)}</td></tr>`;
+    body += `<tr class="fc"><td colspan="6">${str(r.focus)?"學習重點："+esc(str(r.focus).replace(/^學習重點[:：]\s*/,"")):"&nbsp;"}</td></tr>`;
+  });
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}
+.wrap{width:190mm;margin:0 auto;font-size:12pt;line-height:1.35}@media screen{.wrap{padding:8mm 0}}
+th{background:#f2f2f2;font-weight:normal;text-align:center}td{text-align:center;vertical-align:middle}
+.per{width:7mm;font-weight:bold}.tm{white-space:nowrap}.act{font-weight:bold}.core{font-size:.85em}
+.fc td{text-align:left;font-size:.85em}`;
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title||cur.name)}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 直式。列印時「縮放」請選「預設」，勾選「背景圖形」。</span></div>
+<div class="wrap" id="w"><div class="hd"><div>桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）</div><div class="t">${esc(cur.title||cur.name)}</div></div>
+<table><colgroup><col style="width:6%"><col style="width:15%"><col span="5" style="width:12.8%"><col style="width:15%"></colgroup>
+<thead><tr><th>時段</th><th>時間</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}<th>核心素養</th></tr></thead><tbody>${body}</tbody></table>
+${str(cur.note)?`<p>${esc(cur.note)}</p>`:""}</div>
+<script>(function(){var w=document.getElementById("w"),pageH=277*96/25.4-4,fs=12;
+function fit(){w.style.fontSize=fs+"pt";while(w.scrollHeight>pageH&&fs>6){fs-=.25;w.style.fontSize=fs+"pt"}while(w.scrollHeight<pageH*.9&&fs<13){fs+=.25;w.style.fontSize=fs+"pt";if(w.scrollHeight>pageH){fs-=.25;w.style.fontSize=fs+"pt";break}}}
+window.addEventListener("load",function(){fit();setTimeout(function(){window.focus();window.print()},400)})})()<\/script></body></html>`);
+}
+
+function printCalendar(cur){
+  const months = (Array.isArray(cur.months)?cur.months:[]).filter(m=>m&&typeof m==="object");
+  const ul = a => arr(a).map(t=>`<div>${esc(t)}</div>`).join("") || "&nbsp;";
+  const css = PRINT_BASE + `@page{size:A4 landscape;margin:10mm}
+.wrap{font-size:10pt;line-height:1.4}@media screen{.wrap{max-width:277mm;margin:0 auto;padding:8mm 0}}
+th{background:#f2f2f2;font-weight:bold;text-align:center;vertical-align:middle}td{vertical-align:top}
+td.m{text-align:center;vertical-align:middle;font-weight:bold}td.m small{display:block;font-weight:normal;font-size:.8em;margin-top:3px}
+tr{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}td div{margin:1px 0}`;
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title)}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。</span></div>
+<div class="wrap"><div class="hd"><div>${esc(cur.note)}</div><div class="t">${esc(cur.title)}</div></div>
+<table><colgroup><col style="width:9%"><col style="width:11%"><col style="width:17%"><col style="width:24%"><col style="width:19%"><col style="width:20%"></colgroup>
+<thead><tr><th>月份</th>${CAL_CATS.map(([,l])=>`<th>${esc(l)}</th>`).join("")}</tr></thead>
+<tbody>${months.map(m=>`<tr><td class="m">${esc(m.month)}<small>${esc(m.weeks)}</small></td>${CAL_CATS.map(([k])=>`<td>${ul(m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`);
 }
 
 /* ---------- boot ---------- */
