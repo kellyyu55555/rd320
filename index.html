@@ -1687,7 +1687,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K8</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K9</footer>
     </div>
   </template>
 
@@ -2795,7 +2795,7 @@ function kgApp() {
     toast: '', submitting: false, uploadingPhoto: false,
     currentUser: null, isAdmin: false, planOpen: false, authError: '',
     auth: null, db: null, storage: null, unsubs: [],
-    idleTimer: null, idleTimeoutMs: 10 * 60 * 1000,
+    idleTimer: null, idleTimeoutMs: 60 * 60 * 1000,
     importing: false, importSummary: '',
     publisherBatchText: '', publisherBatchSummary: '',
     categories: [], items: [], records: [], publishers: [], classes: [], teacherRoster: [], returnRequests: [],
@@ -2851,8 +2851,10 @@ function kgApp() {
             this.isAdmin = !!mail && emails.some(m => String(m).trim().toLowerCase() === mail);
           } catch (e) {
             this.isAdmin = false;
-            console.error('讀取管理員名單失敗', e);
-            this.showToast(`無法確認管理員身分（${e.code || e.message}），請檢查 Firestore 規則`, 6000);
+            if (!e || e.code !== 'permission-denied') {
+              console.error('讀取管理員名單失敗', e);
+              this.showToast(`無法確認管理員身分（${e.code || e.message}），請檢查 Firestore 規則`, 6000);
+            }
           }
           this.view = 'home';
           this.accessState = 'ok'; clearInterval(this.pollTimer);
@@ -2958,13 +2960,13 @@ function kgApp() {
     resetIdleTimer() {
       if (!this.currentUser) return;
       clearTimeout(this.idleTimer);
-      /* 已取消閒置自動登出 */
+      this.idleTimer = setTimeout(() => this.handleIdleLogout(), this.idleTimeoutMs);
     },
     clearIdleTimer() { clearTimeout(this.idleTimer); this.idleTimer = null; },
     async handleIdleLogout() {
       if (!this.currentUser) return;
       await this.signOutUser();
-      this.authError = '因閒置超過 10 分鐘，已自動登出，請重新登入。';
+      this.authError = '因閒置超過 60 分鐘，已自動登出，請重新登入。';
     },
 
     async signIn() {
@@ -3951,7 +3953,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K8</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K9</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
