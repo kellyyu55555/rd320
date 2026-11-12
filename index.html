@@ -292,7 +292,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='plan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📚 教學計畫
           </button>
-          <button x-show="!restrictedPW" @click="view='weekly'; weeklyMode='mine'; window.WeeklyUI && WeeklyUI.setMode('mine')"
+          <button x-show="!isAdmin && !restrictedPW" @click="view='weekly'; weeklyMode='mine'; window.WeeklyUI && WeeklyUI.setMode('mine')"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="(view==='weekly' && weeklyMode!=='all') ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📝 週誌
@@ -381,7 +381,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">教學計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班學習區教學計畫、照片與匯出 PDF</p>
           </button>
-          <button type="button" x-show="!restrictedPW" @click="view='weekly'; weeklyMode='mine'; window.WeeklyUI && WeeklyUI.setMode('mine')" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="!isAdmin && !restrictedPW" @click="view='weekly'; weeklyMode='mine'; window.WeeklyUI && WeeklyUI.setMode('mine')" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
             <h3 class="font-heading font-black text-base mt-3">週誌</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">撰寫、列印與送出每週的週誌</p>
@@ -1687,7 +1687,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K5</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K8</footer>
     </div>
   </template>
 
@@ -2958,7 +2958,7 @@ function kgApp() {
     resetIdleTimer() {
       if (!this.currentUser) return;
       clearTimeout(this.idleTimer);
-      this.idleTimer = setTimeout(() => this.handleIdleLogout(), this.idleTimeoutMs);
+      /* 已取消閒置自動登出 */
     },
     clearIdleTimer() { clearTimeout(this.idleTimer); this.idleTimer = null; },
     async handleIdleLogout() {
@@ -3951,7 +3951,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K5</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K8</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5987,48 +5987,52 @@ async function photosOf(ids){ const out={}; await Promise.all(ids.map(async id=>
 function actPrintHtml(a, pics, pdf){
   const flow = (Array.isArray(a.flow)?a.flow:[]).filter(x=>x&&typeof x==="object");
   const fimgs = idsOf(a.flowImages).filter(id=>pics[id]), photos = idsOf(a.photos).filter(id=>pics[id]);
-  const mon = (list)=> (Array.isArray(list)?list:[]).filter(x=>x&&(x.item||x.amount)).map(x=>`<div>${esc(x.item)}　${amt(x)}</div>`).join("") || "&nbsp;";
+  const mon = list => (Array.isArray(list)?list:[]).filter(x=>x&&(x.item||x.amount)).map(x=>`<div>${esc(x.item)}${x.amount!=null&&x.amount!==""?"　"+num(x.amount).toLocaleString("zh-TW")+" 元":""}</div>`).join("");
   const chk = t => (str(a.planType)===t ? "■" : "□") + t;
-  const row = (k,v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
-  const opt = (k,v) => str(v).trim() ? row(k, lines(v)) : "";
-  const css = `@page{size:A4 portrait;margin:14mm 15mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000;background:#fff}
+  const kv = (k,v) => str(v).trim() ? `<div class="kv"><div class="k">${k}</div><div class="v">${lines(v)}</div></div>` : "";
+  const css = `@page{size:A4 portrait;margin:14mm 16mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:"PMingLiU","新細明體","Noto Serif CJK TC","Noto Serif TC",serif;font-size:12pt;line-height:1.6;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
-.wrap{max-width:${pdf?"none":"180mm"};margin:0 auto}@media screen{.wrap{padding:${pdf?"0":"10mm 0"}}}
-.hd{text-align:center;margin-bottom:6px}.hd .t{font-size:15pt;font-weight:bold;margin-top:2px}.rd{text-align:right;margin-bottom:6px}
-table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:5px 7px;vertical-align:top;word-break:break-all;text-align:left}
-th{font-weight:normal;background:#f2f2f2}
-.fm th{width:38mm}.money td{width:50%}.money .h{text-align:center;background:#f2f2f2}
-.p2,.p3{break-before:page;page-break-before:always}.sec{font-weight:bold;margin:0 0 6px}
-.flow th{text-align:center}.flow td.n{text-align:center}
+.wrap{max-width:${pdf?"none":"178mm"};margin:0 auto}@media screen{.wrap{padding:${pdf?"0":"10mm 0"}}}
+.hd{text-align:center;line-height:1.35}.hd .o{font-size:17pt}.hd .t{font-size:12.5pt;margin-top:4px}.rd{text-align:right;font-size:11pt;margin:2px 0 4px}
+.sec{border-top:1.5px solid #000;padding:5px 2px}.sec.last{border-bottom:1.5px solid #000}
+.sec p{margin:0}.ind{padding-left:1.6em}
+.kvs{border-top:1.5px solid #000}.kv{display:flex;padding:4px 2px;border-bottom:1px solid #000;break-inside:avoid}.kv .k{width:26mm;flex:none;font-weight:bold}.kv .v{flex:1}
+.money{display:flex;border-top:1.5px solid #000;border-bottom:1.5px solid #000;min-height:34mm;break-inside:avoid}
+.money>div{flex:1;padding:4px 6px;display:flex;flex-direction:column}.money>div:first-child{border-right:1px solid #000}
+.money .h{margin-bottom:2px}.money .h u{text-decoration:underline}.money .tot{margin-top:auto;padding-top:8px}
+.chk{padding-left:1.6em;letter-spacing:.02em}
+.sign{display:flex;gap:30mm;margin:10px 4px 0}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all;text-align:left}
+.flow th{text-align:center;font-weight:normal}.flow td.n{text-align:center}
+.p2,.p3{break-before:page;page-break-before:always}.st{font-weight:bold;margin:0 0 6px}
 .fimg{text-align:center;margin-top:8px}.fimg img{max-width:100%;max-height:240mm}
-.ph td{text-align:center;vertical-align:middle;padding:3px;height:70mm}.ph img{max-width:100%;max-height:66mm;display:block;margin:0 auto}.ph tr{break-inside:avoid}
-.sign{display:flex;justify-content:space-between;align-items:flex-end;margin:18px 2em 0}.sign span{display:inline-block;min-width:42mm;border-bottom:1px solid #000;margin-left:4px;padding:0 4px 4px;text-align:center}`;
+.ph td{text-align:center;vertical-align:middle;padding:3px;height:70mm;border:0}.ph img{max-width:100%;max-height:66mm;display:block;margin:0 auto}.ph tr{break-inside:avoid}`;
   const photoRows = [];
   for (let i=0;i<photos.length;i+=2) photoRows.push(`<tr>${[0,1].map(k=>`<td>${photos[i+k]?`<img src="${pics[photos[i+k]]}" alt="">`:""}</td>`).join("")}</tr>`);
-  const sign = `<div class="sign"><div>承辦人：<span>${esc(a.handler)}</span></div><div>園長：<span>${esc(a.director)}</span></div></div>`;
+  const head = `<div class="hd"><div class="o">桃園市仁德非營利幼兒園</div><div class="o">(委託社團法人宛靜文教協會辦理)</div>
+<div class="t">*-${esc(a.semester)}-${esc(a.name)}</div></div><div class="rd">呈報日期:${esc(a.reportDate)}</div>`;
+  const sign = `<div class="sign"><div>承辦人:${esc(a.handler)}</div><div>園長:${esc(a.director)}</div></div>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(actFileName(a).replace(/\.pdf$/,""))}</title><style>${css}</style></head><body>
 ${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」，勾選「背景圖形」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
-<div class="wrap"><div class="pg1">
-<div class="hd"><div>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</div><div class="t">${esc(a.semester)}－${esc(typeOf(a))}－${esc(a.name)}</div></div>
-<div class="rd">呈報日期：${esc(a.reportDate)||"　　　　"}</div>
-<table class="fm"><tbody>
-${row("一、活動名稱",esc(a.name))}${row("二、活動地點",esc(a.location)||"&nbsp;")}${row("三、舉辦時間",esc(a.time)||"&nbsp;")}
-${row("四、舉辦宗旨或目的", arr(a.purpose).map((p,i)=>`<div>${i+1}. ${esc(p)}</div>`).join("")||"&nbsp;")}
-${row("五、服務對象及人數",lines(a.target))}${row("六、活動內容",lines(a.content))}
-${opt("通知對象",a.notify)}${opt("配合單位",a.partner)}${opt("工作人員",a.staff)}${opt("準備物品",a.prep)}${opt("執行與聯絡",a.contact)}${opt("注意事項",a.notes)}
-</tbody></table>
-<table class="money" style="border-top:0"><tbody><tr><td class="h" style="border-top:0">七、經費預算　收入</td><td class="h" style="border-top:0">支出</td></tr>
-<tr><td>${mon(a.income)}<div>總計：${sumOf(a.income).toLocaleString("zh-TW")} 元</div></td><td>${mon(a.expense)}<div>總計：${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></td></tr></tbody></table>
-<table style="border-top:0"><tbody><tr><td style="border-top:0">八、其他說明（是否為年度計畫、協辦單位、社會資源運用情形等）<br>　${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</td></tr></tbody></table>
+<div class="wrap"><div class="pg1">${head}
+<div class="sec"><p>一、活動名稱：${esc(a.name)}</p><p>二、活動地點：${esc(a.location)}</p><p>三、舉辦時間：${esc(a.time)}</p></div>
+<div class="sec"><p>四、舉辦宗旨或目的：</p>${arr(a.purpose).map((x,i)=>`<p class="ind">${i+1}.${esc(x)}</p>`).join("")}</div>
+<div class="sec"><p>五、服務對象及人數：</p><p class="ind">${lines(a.target)}</p></div>
+<div class="sec"><p>六、活動內容（必要時另附檔案說明內容）：</p>${str(a.content).trim()?`<p class="ind">${lines(a.content)}</p>`:"<p>&nbsp;</p>"}</div>
+${[a.notify,a.partner,a.staff,a.prep,a.contact,a.notes].some(v=>str(v).trim()) ? `<div class="kvs">${kv("通知對象",a.notify)}${kv("配合單位",a.partner)}${kv("參加人員",a.staff)}${kv("準備物品",a.prep)}${kv("執行與聯絡",a.contact)}${kv("注意事項",a.notes)}</div>` : ""}
+<div class="money" style="margin-top:${[a.notify,a.partner,a.staff,a.prep,a.contact,a.notes].some(v=>str(v).trim())?"8px":"0"}">
+<div><div class="h">八、經費預算　　<u>收 入</u></div>${mon(a.income)}<div class="tot">總　計:${sumOf(a.income).toLocaleString("zh-TW")} 元</div></div>
+<div><div class="h" style="text-align:center"><u>支 出※</u></div>${mon(a.expense)}<div class="tot" style="text-align:center">總　計: ${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></div></div>
+<div class="sec last" style="border-top:0"><p>九、其他說明（是否為年度計畫、協辦單位、社會資源運用情形、需要本會協助事項等）</p><p class="chk">${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</p></div>
 ${sign}
 </div>
-${flow.length||fimgs.length ? `<div class="p2"><div class="sec">活動流程與道具規劃</div>
-${flow.length?`<table class="flow"><colgroup><col style="width:8%"><col style="width:20%"><col style="width:34%"><col style="width:22%"><col style="width:16%"></colgroup>
+${flow.length||fimgs.length ? `<div class="p2"><p class="st">活動流程與道具規劃</p>
+${flow.length?`<table class="flow"><colgroup><col style="width:7%"><col style="width:20%"><col style="width:35%"><col style="width:22%"><col style="width:16%"></colgroup>
 <thead><tr><th></th><th>活動名稱</th><th>玩法說明</th><th>道具與器材需求</th><th>負責人員</th></tr></thead>
 <tbody>${flow.map((x,i)=>`<tr><td class="n">${i+1}</td><td>${lines(x.name)}</td><td>${lines(x.desc)}</td><td>${lines(x.props)}</td><td>${lines(x.staff)}</td></tr>`).join("")}</tbody></table>`:""}
 ${fimgs.map(id=>`<div class="fimg"><img src="${pics[id]}" alt=""></div>`).join("")}</div>`:""}
-${photos.length ? `<div class="p3"><div class="sec">活動照片</div><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table>${sign}</div>`:""}
+${photos.length ? `<div class="p3"><p class="st">活動照片</p><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table>${sign}</div>`:""}
 </div>${pdf?"":'<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},500)})<\/script>'}</body></html>`;
 }
 
@@ -6068,6 +6072,27 @@ const SCH_COL = "schedules", CAL_COL = "calendars";
 const SCH_GROUPS = [["three5","3-5歲班"],["two","兩歲專班"]];
 const DAYS = ["星期一","星期二","星期三","星期四","星期五"];
 const CAL_CATS = [["festival","節慶"],["admin","行政"],["care","教保暨全園活動"],["health","健康安全"],["community","多元文化暨社區活動／協力服務"]];
+/* 複製一份（例如做下學期的版本）：先問新名稱，複製後直接打開新的那份 */
+function copyDoc(col, cur, field, label, select){
+  const name = h("input",{class:"in",value:str(cur[field])+"（複本）"});
+  const err = h("div",{class:"err"});
+  const go = h("button",{class:"btn primary",onclick:async()=>{
+    const v = name.value.trim(); if (!v){ err.textContent="請填寫名稱。"; return; }
+    go.disabled = true;
+    try{
+      const data = JSON.parse(JSON.stringify(cur)); delete data.id; data[field] = v; delete data.driveUrl; delete data.driveName; delete data.driveAt;
+      if (col===SCH_COL) data.title = v.endsWith("作息表") ? v : v+"作息表";
+      if (col===CAL_COL) data.order = S.cal.list.reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+      if (col===SCH_COL) data.order = S.sch.list.filter(x=>x.group===cur.group).reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+      const ref = S.db.collection(col).doc(); await ref.set(data);
+      select(ref.id); closeModal(); toast("已複製"); render();
+    }catch(e){ go.disabled=false; err.textContent=errText(e); }
+  }},"複製");
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"複製"+label)),
+    h("div",{class:"mb f"}, h("p",{style:"margin:0;color:var(--muted);font-size:14px"},`會完整複製「${str(cur[field])}」的內容，複製後可以再編輯。`),
+      h("label",{class:"fl"},"新的名稱",name), err),
+    h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
+}
 const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar";
 
 function renderSchedule(app){
@@ -6106,9 +6131,13 @@ function renderSchedule(app){
     h("p",{class:"note"},"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）"),
     h("h1",null,str(cur.title)||str(cur.name)),
     str(cur.note) ? h("p",{class:"note",style:"margin-top:6px"},str(cur.note)) : null,
+    driveLink(cur),
     h("div",{class:"abs",style:"display:flex;gap:8px"},
       h("button",{class:"btn",onclick:()=>printSchedule(cur)},"🖨 列印"),
-      S.isAdmin ? h("button",{class:"btn",onclick:()=>editSchedule(cur.id)},"編輯作息表") : null)));
+      uploadBtn(SCH_COL, cur),
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>editSchedule(cur.id)},"編輯") : null,
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(SCH_COL,cur,"name","作息表",id=>{ S.sch.sel[cur.group]=id; })},"複製") : null,
+      S.isAdmin ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份作息表？",`「${str(cur.name)}」刪除後無法復原。`,"刪除",()=>S.db.doc(SCH_COL+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除") : null)));
   app.append(h("div",{class:"tablewrap"}, h("table",{class:"sched"}, h("thead",null,head), h("tbody",null,body))));
 }
 
@@ -6155,6 +6184,7 @@ function editSchedule(id){
     if (!f.name.value.trim()){ err.textContent="請填寫班級／作息表名稱。"; return; }
     const data = { group:f.group.value, name:f.name.value.trim(), title:f.title.value.trim()||f.name.value.trim()+"作息表",
       order:num(f.order.value)||1, note:f.note.value.trim(), rows:[...box.children].map(r=>r._read()).filter(r=>r.time||r.days.some(Boolean)) };
+    if (cur && cur.driveUrl){ data.driveUrl = cur.driveUrl; data.driveName = str(cur.driveName); data.driveAt = num(cur.driveAt); }
     save.disabled=true; err.textContent="";
     try{ const ref = id ? S.db.doc(SCH_COL+"/"+id) : S.db.collection(SCH_COL).doc(); await ref.set(data);
       sc.group = data.group; sc.sel[data.group] = ref.id; closeModal(); toast("已儲存"); render(); }
@@ -6190,11 +6220,15 @@ function renderCalendar(app){
   app.append(h("section",{class:"intro"},
     str(cur.note) ? h("p",{class:"note"},str(cur.note)) : null,
     h("h1",null,str(cur.title)),
+    driveLink(cur),
     months.length ? h("div",{class:"subtabs",style:"margin:10px 0 0"}, months.map((m,i)=>
       h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")))) : null,
     h("div",{class:"abs",style:"display:flex;gap:8px"},
       h("button",{class:"btn",onclick:()=>printCalendar(cur)},"🖨 列印"),
-      S.isAdmin ? h("button",{class:"btn",onclick:()=>editCalendar(cur.id)},"編輯標題") : null)));
+      uploadBtn(CAL_COL, cur),
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>editCalendar(cur.id)},"編輯標題") : null,
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(CAL_COL,cur,"title","行事曆",id=>{ S.cal.sel=id; })},"複製") : null,
+      S.isAdmin ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(CAL_COL+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除") : null)));
   if (!months.length) app.append(h("div",{class:"notice"},"這份行事曆還沒有月份。"));
   months.forEach((m,i)=>{
     app.append(h("section",{class:"intro calm"+(str(m.month)===nowM?" now":""),id:"kb-m"+i},
@@ -6263,7 +6297,7 @@ body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;marg
 table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:3px 5px;word-break:break-all;white-space:pre-wrap}
 .hd{text-align:center;margin-bottom:6px}.hd .t{font-size:1.35em;font-weight:bold}`;
 
-function printSchedule(cur){
+function scheduleHtml(cur, pdf){
   const rows = (Array.isArray(cur.rows)?cur.rows:[]).filter(r=>r&&typeof r==="object");
   let body = "";
   rows.forEach((r,i)=>{
@@ -6280,18 +6314,19 @@ function printSchedule(cur){
 th{background:#f2f2f2;font-weight:normal;text-align:center}td{text-align:center;vertical-align:middle}
 .per{width:7mm;font-weight:bold}.tm{white-space:nowrap}.act{font-weight:bold}.core{font-size:.85em}
 .fc td{text-align:left;font-size:.85em}`;
-  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title||cur.name)}</title><style>${css}</style></head><body>
-<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 直式。列印時「縮放」請選「預設」，勾選「背景圖形」。</span></div>
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title||cur.name)}</title><style>${css}${pdf?".wrap{width:auto!important;padding:0!important}":""}</style></head><body>
+${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 直式。列印時「縮放」請選「預設」，勾選「背景圖形」。</span></div>'}
 <div class="wrap" id="w"><div class="hd"><div>桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）</div><div class="t">${esc(cur.title||cur.name)}</div></div>
 <table><colgroup><col style="width:6%"><col style="width:15%"><col span="5" style="width:12.8%"><col style="width:15%"></colgroup>
 <thead><tr><th>時段</th><th>時間</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}<th>核心素養</th></tr></thead><tbody>${body}</tbody></table>
 ${str(cur.note)?`<p>${esc(cur.note)}</p>`:""}</div>
-<script>(function(){var w=document.getElementById("w"),pageH=277*96/25.4-4,fs=12;
+${pdf?"":`<script>(function(){var w=document.getElementById("w"),pageH=277*96/25.4-4,fs=12;
 function fit(){w.style.fontSize=fs+"pt";while(w.scrollHeight>pageH&&fs>6){fs-=.25;w.style.fontSize=fs+"pt"}while(w.scrollHeight<pageH*.9&&fs<13){fs+=.25;w.style.fontSize=fs+"pt";if(w.scrollHeight>pageH){fs-=.25;w.style.fontSize=fs+"pt";break}}}
-window.addEventListener("load",function(){fit();setTimeout(function(){window.focus();window.print()},400)})})()<\/script></body></html>`);
+window.addEventListener("load",function(){fit();setTimeout(function(){window.focus();window.print()},400)})})()<\/script>`}</body></html>`;
 }
+function printSchedule(cur){ openPrint(scheduleHtml(cur, false)); }
 
-function printCalendar(cur){
+function calendarHtml(cur, pdf){
   const months = (Array.isArray(cur.months)?cur.months:[]).filter(m=>m&&typeof m==="object");
   const ul = a => arr(a).map(t=>`<div>${esc(t)}</div>`).join("") || "&nbsp;";
   const css = PRINT_BASE + `@page{size:A4 landscape;margin:10mm}
@@ -6299,13 +6334,48 @@ function printCalendar(cur){
 th{background:#f2f2f2;font-weight:bold;text-align:center;vertical-align:middle}td{vertical-align:top}
 td.m{text-align:center;vertical-align:middle;font-weight:bold}td.m small{display:block;font-weight:normal;font-size:.8em;margin-top:3px}
 tr{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}td div{margin:1px 0}`;
-  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title)}</title><style>${css}</style></head><body>
-<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。</span></div>
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(cur.title)}</title><style>${css}${pdf?".wrap{max-width:none!important;padding:0!important}":""}</style></head><body>
+${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。</span></div>'}
 <div class="wrap"><div class="hd"><div>${esc(cur.note)}</div><div class="t">${esc(cur.title)}</div></div>
 <table><colgroup><col style="width:9%"><col style="width:11%"><col style="width:17%"><col style="width:24%"><col style="width:19%"><col style="width:20%"></colgroup>
 <thead><tr><th>月份</th>${CAL_CATS.map(([,l])=>`<th>${esc(l)}</th>`).join("")}</tr></thead>
 <tbody>${months.map(m=>`<tr><td class="m">${esc(m.month)}<small>${esc(m.weeks)}</small></td>${CAL_CATS.map(([k])=>`<td>${ul(m[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`);
+${pdf?"":'<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script>'}</body></html>`;
+}
+function printCalendar(cur){ openPrint(calendarHtml(cur, false)); }
+
+/* 上傳雲端硬碟（沿用系統的 PdfUtil 與管理者後台設定的上傳網址） */
+const BOARD_FOLDERS = {
+  schedules: "https://drive.google.com/drive/folders/1OSiLEkUF4MjgM2uFYskzUaOMB8nlWoeX",
+  calendars: "https://drive.google.com/drive/folders/1s_vvb7mWlbpP3OaZ-TcccxeF7uJ1EPVw"
+};
+async function uploadBoard(col, cur, btn, status){
+  if (!window.PdfUtil){ alert("上傳元件尚未載入，請重新整理頁面"); return; }
+  if (!window.__driveUrl){ alert("尚未設定雲端硬碟上傳。\n請到「管理者後台 → ☁️ 雲端硬碟上傳設定」貼上上傳網址。"); return; }
+  const fid = PdfUtil.folderId(BOARD_FOLDERS[col]); if (!fid){ alert("找不到雲端硬碟資料夾"); return; }
+  const isS = col===SCH_COL, label = btn.textContent; btn.disabled = true; btn.textContent = "產生 PDF 中…"; status.textContent = "";
+  try{
+    const html = isS ? scheduleHtml(cur, true) : calendarHtml(cur, true);
+    const po = isS ? { landscape:false, margin:10, units:".wrap", fit:".wrap" } : { landscape:true, margin:10, units:".wrap", keepRows:true };
+    const blob = await PdfUtil.htmlToPdf(html, po);
+    btn.textContent = "上傳中…";
+    const nm = (str(isS ? (cur.title||cur.name) : cur.title) || (isS?"作息表":"行事曆")).replace(/[\\/:*?"<>|]/g,"_") + ".pdf";
+    const j = await PdfUtil.upload(blob, { filename:nm, subfolder:"", folderId:fid });
+    const url = j.url || j.fileUrl || "";
+    await S.db.doc(col+"/"+cur.id).update({ driveUrl:url, driveName:nm, driveAt:Date.now() });
+    toast("已上傳雲端硬碟 ✅");
+    if (url && confirm("已上傳到雲端硬碟 ✅\n檔名：" + nm + "\n要現在開啟檔案嗎？")) window.open(url, "_blank");
+  }catch(e){ console.error(e); status.textContent = "上傳失敗：" + (e.code || e.message); }
+  finally{ btn.disabled = false; btn.textContent = label; }
+}
+function uploadBtn(col, cur){
+  if (!S.isAdmin) return null;
+  const st = h("span",{class:"err",style:"align-self:center"});
+  const b = h("button",{class:"btn",onclick:()=>uploadBoard(col,cur,b,st)},"☁️ 上傳雲端");
+  return [st, b];
+}
+function driveLink(cur){
+  return cur.driveUrl ? h("p",{class:"note",style:"margin-top:6px"}, h("a",{href:str(cur.driveUrl),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},"☁️ 已上傳雲端："+(str(cur.driveName)||"開啟檔案"))) : null;
 }
 
 /* ---------- boot ---------- */
