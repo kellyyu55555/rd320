@@ -1697,7 +1697,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K18</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K19</footer>
     </div>
   </template>
 
@@ -3998,7 +3998,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K18</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K19</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5627,9 +5627,9 @@ function confirmBox(title, msg, okLabel, onOk){
 function errText(e){
   const c = e && e.code;
   if (c==="permission-denied") return "沒有權限儲存（請確認 Firestore 規則已開放這個功能給管理員寫入）。";
-  if (c==="invalid_argument") return "沒有權限，或資料格式不正確，無法儲存。";
+  if (c==="invalid_argument"||c==="invalid-argument") return "沒有權限，或資料格式不正確，無法儲存。";
   if (c==="quota_exceeded") return "資料空間已滿，請先刪除一些舊資料。";
-  if (c==="resource_exhausted") return "操作太頻繁，請稍等幾秒再試。";
+  if (c==="resource_exhausted"||c==="resource-exhausted") return "操作太頻繁，請稍等幾秒再試。";
   return "儲存失敗，請稍後再試。";
 }
 
@@ -6701,7 +6701,7 @@ function pDays(from){ const t=pd(from); if(!t) return []; return [0,1,2,3,4].map
 function pNorm(r){
   const classes = arr(r.classes).length ? arr(r.classes) : PATROL_CLASSES.slice();
   const days = (Array.isArray(r.days)?r.days:[]).slice(0,5).map(d=>({ date:str(d&&d.date), time:str(d&&d.time), note:str(d&&d.note),
-    scores: PATROL_ITEMS.map((_,i)=>classes.map((_,k)=>str(((d&&Array.isArray(d.scores)?d.scores[i]:null)||[])[k]))) }));
+    scores: PATROL_ITEMS.map((_,i)=>{ let row=(d&&Array.isArray(d.scores)?d.scores[i]:null)||[]; if(typeof row==="string") row=row.split(","); return classes.map((_,k)=>str(row[k])); }) }));
   while (days.length<5) days.push({ date:"", time:"10:00~11:50", note:"", scores:PATROL_ITEMS.map(()=>classes.map(()=>"")) });
   return { id:r.id, semester:str(r.semester), dateFrom:str(r.dateFrom), dateTo:str(r.dateTo), recorder:str(r.recorder), classes, days };
 }
@@ -6718,7 +6718,7 @@ function renderPatrol(app){
     h("div",{class:"abs"},h("button",{class:"btn primary",onclick:()=>patrolNew()},"＋ 新增巡堂紀錄"))));
   if (!list.length){
     app.append(h("div",{class:"notice"},"還沒有巡堂紀錄。",
-      h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:async()=>{ try{ await S.db.doc(PATROL_COL+"/pt-115-1-0907").set(PATROL_SEED); toast("已匯入 09/07～09/11 的巡堂紀錄"); }catch(e){ toast(errText(e)); } }},"匯入 115/09/07～09/11 原始紀錄"))));
+      h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:async()=>{ try{ await S.db.doc(PATROL_COL+"/pt-115-1-0907").set({...PATROL_SEED, days:PATROL_SEED.days.map(d=>({...d,scores:d.scores.map(r=>r.join(","))})), updatedAt:Date.now()}); toast("已匯入 09/07～09/11 的巡堂紀錄"); }catch(e){ toast(errText(e)); } }},"匯入 115/09/07～09/11 原始紀錄"))));
     return;
   }
   app.append(h("div",{class:"list"}, list.map(r0=>{ const r=pNorm(r0);
@@ -6787,7 +6787,7 @@ function renderPatrolSheet(app){
       const miss = r.days.map((d,i)=>d.scores.flat().includes("4") && !d.note.trim() ? pMd(d.date)||`第${i+1}天` : "").filter(Boolean);
       if (miss.length && !confirm("以下日期有填 4（待改進），但還沒寫補充說明：\n"+miss.join("、")+"\n\n仍要儲存嗎？")) return;
       const data = { semester:r.semester, dateFrom:r.dateFrom, dateTo:r.dateTo, recorder:r.recorder, classes:r.classes,
-        days:r.days.map(d=>({date:d.date,time:d.time,note:d.note,scores:d.scores})), updatedAt:Date.now() };
+        days:r.days.map(d=>({date:d.date,time:d.time,note:d.note,scores:d.scores.map(row=>row.join(","))})), updatedAt:Date.now() };
       e.target.disabled = true;
       try{ const ref = P.open==="__new" ? S.db.collection(PATROL_COL).doc() : S.db.doc(PATROL_COL+"/"+P.open); await ref.set(data);
         P.list = P.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...data}]);
