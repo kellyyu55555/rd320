@@ -1687,7 +1687,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K14</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K16</footer>
     </div>
   </template>
 
@@ -1763,7 +1763,7 @@ function sync(data){
   const cats={};(d.categories||[]).forEach(c=>cats[c.id]=c.name);
   inv=(d.items||[]).map(i=>[cats[i.categoryId]||"未分類",i.name,i.total,i.remaining,i.id,i.photo||""]);
   const uid=d.currentUser&&d.currentUser.uid;
-  if(d.db&&uid&&subUid!==uid){if(sub)sub();subUid=uid;sub=d.db.collection("teachingPlans").onSnapshot(s=>{plans=s.docs.map(x=>({...x.data(),id:x.id}));if(tab==="list"||tab==="view")render();else if(tab==="plan"&&root.querySelector("#ps"))root.querySelector("#ps").innerHTML=selOpts();else if(tab==="plan"&&admin()&&root.querySelector("#ps")&&!document.activeElement.matches("#ps")){const el=$("#ps");if(el)el.innerHTML=selOpts()}},e=>{plans=[];root.dataset.err=e.code||e.message;if(!root._ea){root._ea=1;alert("無法讀取已存的教學計畫（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合給登入者讀取。")}if(tab==="list")render()})}
+  if(d.db&&uid&&subUid!==uid){if(sub)sub();subUid=uid;sub=d.db.collection("teachingPlans").onSnapshot(s=>{plans=s.docs.map(x=>({...x.data(),id:x.id}));try{if(tab==="plan"&&plan&&plan.id){const me=(d.currentUser&&d.currentUser.email)||"",c=s.docChanges().find(x=>x.doc.id===plan.id&&x.type==="modified"&&!x.doc.metadata.hasPendingWrites),rec=c&&plans.find(x=>x.id===plan.id);if(rec&&rec.by&&rec.by!==me&&(rec.at||"")>(plan.at||"")){if(!dirty()){loadPlan(normPlan(JSON.parse(JSON.stringify(rec))));setTimeout(()=>{rPlan();d.showToast&&d.showToast("「"+rec.by+"」剛更新了這份計畫，已載入最新內容",5000)},0)}else{d.showToast&&d.showToast("⚠️「"+rec.by+"」剛儲存了這份計畫，你也有尚未儲存的修改。存檔會蓋掉對方剛改的內容，請先確認或重新開啟這份計畫。",10000)}}}}catch(e0){}if(tab==="list"||tab==="view")render();else if(tab==="plan"&&root.querySelector("#ps"))root.querySelector("#ps").innerHTML=selOpts();else if(tab==="plan"&&admin()&&root.querySelector("#ps")&&!document.activeElement.matches("#ps")){const el=$("#ps");if(el)el.innerHTML=selOpts()}},e=>{plans=[];root.dataset.err=e.code||e.message;if(!root._ea){root._ea=1;alert("無法讀取已存的教學計畫（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合給登入者讀取。")}if(tab==="list")render()})}
   const lu=(d.isAdmin&&uid)?uid:null;if(lu!==subLogUid){if(subLog){subLog();subLog=null}subLogUid=lu;logs=[];delete root.dataset.logErr;if(lu&&d.db)subLog=d.db.collection("teachingPlanLogs").orderBy("createdAt","desc").limit(300).onSnapshot(s=>{logs=s.docs.map(x=>({...x.data(),id:x.id}));if(tab==="logs")render()},e=>{root.dataset.logErr=e.code||e.message;if(tab==="logs")render()})}
   if(!root._lv){root._lv=1;["input","change","keydown"].forEach(ev=>root.addEventListener(ev,()=>{lastEdit=Date.now()},true));setInterval(liveTick,2000);document.addEventListener("visibilitychange",()=>{if(document.hidden&&admin()&&dirty()&&!liveBusy)liveSave()});window.addEventListener("pagehide",()=>{if(admin()&&dirty()&&!liveBusy)liveSave()})}
   if(!root._tm){root._tm=1;["input","click","keydown","change","mousemove"].forEach(ev=>root.addEventListener(ev,touch,true))}
@@ -3988,7 +3988,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K14</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K16</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5455,6 +5455,9 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb table.sched.co tr.co-d td{text-align:left;vertical-align:top;font-size:13px;line-height:1.6;white-space:normal}
 #kb .duty .role{color:var(--gold);font-weight:700}
 #kb .duty .num{font-weight:700;color:var(--muted);margin-top:4px}
+#kb .pubbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#e8f3ec;border:1px solid #bcd8c6;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-weight:600;color:var(--accent)}
+#kb .pubbar.draft{background:#fff4e0;border-color:#efd9a6;color:#8a5f14}
+#kb .pubbar .sp{flex:1}
 
 </style>
 <script>
@@ -6134,7 +6137,29 @@ async function uploadAct(id, btn, status){
 }
 
 /* ---------- 作息表（3-5歲班／兩歲專班）與行事曆：老師檢視、管理者編輯 ---------- */
-const SCH_COL = "schedules", CAL_COL = "calendars";
+const SCH_COL = "schedules", CAL_COL = "calendars", CALD_COL = "calendarDrafts";
+/* 行事曆：calendars＝已開放老師檢視；calendarDrafts＝草稿（只有管理員、編輯者看得到） */
+const calAll = () => S.cal.list.map(x=>Object.assign({},x,{_col:CAL_COL})).concat(S.isAdmin ? (S.cal.drafts||[]).map(x=>Object.assign({},x,{_col:CALD_COL})) : []);
+const calFind = id => calAll().find(x=>x.id===id);
+const calMaxOrder = () => calAll().reduce((m,x)=>Math.max(m,num(x.order)),0);
+const calClean = x => { const o = JSON.parse(JSON.stringify(x)); delete o.id; delete o._col; return o; };
+async function calPublish(cur, on){
+  const to = on ? CAL_COL : CALD_COL; if (cur._col===to) return;
+  await S.db.doc(to+"/"+cur.id).set(calClean(cur));
+  await S.db.doc(cur._col+"/"+cur.id).delete();
+  toast(on ? "已開放老師檢視" : "已改回草稿，老師看不到了");
+}
+function semester2Btn(){
+  if (!S.isAdmin || calAll().some(x=>/115.*第二學期/.test(str(x.title)))) return null;
+  return h("button",{class:"kchip",onclick:async()=>{
+    try{ const ref = S.db.collection(CALD_COL).doc("cal-115-2");
+      await ref.set({ title:"115學年度第二學期行事曆", note:"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會）", order:calMaxOrder()+1,
+        months:["2月","3月","4月","5月","6月","7月"].map(m=>({month:m,weeks:"",festival:[],admin:[],care:[],health:[],community:[]})) });
+      S.cal.sel = ref.id; toast("已建立第二學期行事曆（草稿）"); render(); }
+    catch(e){ toast(errText(e)); }
+  }},"＋ 建立115學年度第二學期行事曆（草稿）");
+}
+
 const SCH_GROUPS = [["three5","3-5歲班"],["two","兩歲專班"],["coteach","協同教學"]];
 const DAYS = ["星期一","星期二","星期三","星期四","星期五"];
 const CAL_CATS = [["festival","節慶"],["admin","行政"],["care","教保暨全園活動"],["health","健康安全"],["community","多元文化暨社區活動／協力服務"]];
@@ -6146,9 +6171,9 @@ function copyDoc(col, cur, field, label, select){
     const v = name.value.trim(); if (!v){ err.textContent="請填寫名稱。"; return; }
     go.disabled = true;
     try{
-      const data = JSON.parse(JSON.stringify(cur)); delete data.id; data[field] = v; delete data.driveUrl; delete data.driveName; delete data.driveAt;
+      const data = JSON.parse(JSON.stringify(cur)); delete data.id; delete data._col; data[field] = v; delete data.driveUrl; delete data.driveName; delete data.driveAt;
       if (col===SCH_COL) data.title = cur.group==="coteach" ? (v.endsWith("協同教學") ? v : v+" 協同教學") : (v.endsWith("作息表") ? v : v+"作息表");
-      if (col===CAL_COL) data.order = S.cal.list.reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+      if (col===CAL_COL || col===CALD_COL) data.order = calMaxOrder()+1;
       if (col===SCH_COL) data.order = S.sch.list.filter(x=>x.group===cur.group).reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
       const ref = S.db.collection(col).doc(); await ref.set(data);
       select(ref.id); closeModal(); toast("已複製"); render();
@@ -6270,18 +6295,23 @@ function editSchedule(id){
 
 function renderCalendar(app){
   const cc = S.cal;
-  if (!cc.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "行事曆載入中…")); return; }
-  const list = [...cc.list].sort((a,b)=>num(b.order)-num(a.order));
+  if (!cc.got || (S.isAdmin && !cc.gotD)){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "行事曆載入中…")); return; }
+  const list = calAll().sort((a,b)=>num(b.order)-num(a.order));
   if (!list.length){
     app.append(h("div",{class:"notice"},"還沒有行事曆。",
-      S.isAdmin ? h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:()=>editCalendar(null)},"＋ 新增行事曆")) : null, seedButton()));
+      S.isAdmin ? h("div",{style:"margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"},h("button",{class:"btn",onclick:()=>editCalendar(null)},"＋ 新增行事曆"),semester2Btn()) : null, seedButton()));
     return;
   }
   if (!list.some(x=>x.id===cc.sel)) cc.sel = list[0].id;
   const cur = list.find(x=>x.id===cc.sel);
   if (list.length>1 || S.isAdmin) app.append(h("div",{class:"subtabs"}, list.map(x =>
-    h("button",{class:"kchip","aria-pressed":String(x.id===cur.id), onclick:()=>{ cc.sel=x.id; render(); }}, str(x.title)||"行事曆")),
-    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editCalendar(null)},"＋ 新增行事曆") : null));
+    h("button",{class:"kchip","aria-pressed":String(x.id===cur.id), onclick:()=>{ cc.sel=x.id; render(); }}, (str(x.title)||"行事曆")+(x._col===CALD_COL?"（草稿）":""))),
+    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editCalendar(null)},"＋ 新增行事曆") : null, semester2Btn()));
+  if (S.isAdmin) app.append(cur._col===CALD_COL
+    ? h("div",{class:"pubbar draft"},h("span",null,"🔒 草稿：目前只有管理員和編輯者看得到，老師看不到。"),h("span",{class:"sp"}),
+        h("button",{class:"btn primary",onclick:()=>confirmBox("開放老師檢視？",`開放後，所有老師都能看到「${str(cur.title)}」。`,"開放",()=>calPublish(cur,true))},"✅ 開放老師檢視"))
+    : h("div",{class:"pubbar"},h("span",null,"✅ 已開放：老師都看得到這份行事曆。"),h("span",{class:"sp"}),
+        h("button",{class:"btn",onclick:()=>confirmBox("改回草稿？",`改回草稿後，老師就看不到「${str(cur.title)}」了。`,"改回草稿",()=>calPublish(cur,false))},"🔒 改回草稿")));
   const months = (Array.isArray(cur.months)?cur.months:[]).filter(m=>m&&typeof m==="object");
   const nowM = (new Date().getMonth()+1)+"月";
   app.append(h("section",{class:"intro"},
@@ -6292,10 +6322,10 @@ function renderCalendar(app){
       h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")))) : null,
     h("div",{class:"abs",style:"display:flex;gap:8px"},
       h("button",{class:"btn",onclick:()=>printCalendar(cur)},"🖨 列印"),
-      uploadBtn(CAL_COL, cur),
+      uploadBtn(cur._col, cur),
       S.isAdmin ? h("button",{class:"btn",onclick:()=>editCalendar(cur.id)},"編輯標題") : null,
-      S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(CAL_COL,cur,"title","行事曆",id=>{ S.cal.sel=id; })},"複製") : null,
-      S.isAdmin ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(CAL_COL+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除") : null)));
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(CALD_COL,cur,"title","行事曆（複製後是草稿）",id=>{ S.cal.sel=id; })},"複製") : null,
+      S.isAdmin ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(cur._col+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除") : null)));
   if (!months.length) app.append(h("div",{class:"notice"},"這份行事曆還沒有月份。"));
   months.forEach((m,i)=>{
     app.append(h("section",{class:"intro calm"+(str(m.month)===nowM?" now":""),id:"kb-m"+i},
@@ -6311,34 +6341,34 @@ function renderCalendar(app){
 }
 
 function editCalendar(id){
-  const cur = id ? S.cal.list.find(x=>x.id===id) : null;
+  const cur = id ? calFind(id) : null;
   const f = { title:h("input",{class:"in",value:cur?str(cur.title):"",placeholder:"例如：115學年度第二學期行事曆"}),
     note:h("input",{class:"in",value:cur?str(cur.note):"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會）"}),
-    order:h("input",{class:"in",type:"number",value:String(cur?num(cur.order):(S.cal.list.reduce((m,x)=>Math.max(m,num(x.order)),0)+1))}) };
+    order:h("input",{class:"in",type:"number",value:String(cur?num(cur.order):(calMaxOrder()+1))}) };
   const err = h("div",{class:"err"});
   const save = h("button",{class:"btn primary",onclick:async()=>{
     if(!f.title.value.trim()){ err.textContent="請填寫標題。"; return; }
     save.disabled=true;
-    try{ const ref = id ? S.db.doc(CAL_COL+"/"+id) : S.db.collection(CAL_COL).doc();
+    try{ const ref = id ? S.db.doc(cur._col+"/"+id) : S.db.collection(CALD_COL).doc();
       if (id) await ref.update({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value)});
       else await ref.set({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value),months:[]});
       S.cal.sel = ref.id; closeModal(); toast("已儲存"); render(); }
     catch(e){ save.disabled=false; err.textContent=errText(e); }
   }},"儲存");
-  const del = id ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(CAL_COL+"/"+id).delete().then(()=>toast("已刪除")))},"刪除整份") : null;
-  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,id?"編輯行事曆":"新增行事曆")),
+  const del = id ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(cur._col+"/"+id).delete().then(()=>toast("已刪除")))},"刪除整份") : null;
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,id?"編輯行事曆":"新增行事曆（草稿）")),
     h("div",{class:"mb f"}, h("label",{class:"fl"},"標題",f.title), h("label",{class:"fl"},"上方說明",f.note), h("label",{class:"fl"},"排序（數字大的排前面）",f.order), err),
     h("div",{class:"mf"},del,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)), true);
 }
 
 function editMonth(calId, idx){
-  const cal = S.cal.list.find(x=>x.id===calId); if(!cal) return;
+  const cal = calFind(calId); if(!cal) return;
   const months = (Array.isArray(cal.months)?cal.months:[]).map(m=>Object.assign({},m));
   const m = idx>=0 ? months[idx] : {};
   const f = { month:h("input",{class:"in",value:str(m.month),placeholder:"例如：2月"}), weeks:h("input",{class:"in",value:str(m.weeks),placeholder:"例如：第1–4週（02/01–02/28）"}) };
   const tas = {}; CAL_CATS.forEach(([k])=>{ tas[k]=h("textarea",{class:"in"}); tas[k].value = arr(m[k]).join("\n"); });
   const err = h("div",{class:"err"});
-  const write = async next => S.db.doc(CAL_COL+"/"+calId).update({ months: next });
+  const write = async next => S.db.doc(cal._col+"/"+calId).update({ months: next });
   const save = h("button",{class:"btn primary",onclick:async()=>{
     if(!f.month.value.trim()){ err.textContent="請填寫月份。"; return; }
     const data = { month:f.month.value.trim(), weeks:f.weeks.value.trim() }; CAL_CATS.forEach(([k])=>data[k]=linesOf(tas[k].value));
@@ -6414,7 +6444,8 @@ function printCalendar(cur){ openPrint(calendarHtml(cur, false)); }
 /* 上傳雲端硬碟（沿用系統的 PdfUtil 與管理者後台設定的上傳網址） */
 const BOARD_FOLDERS = {
   schedules: "https://drive.google.com/drive/folders/1OSiLEkUF4MjgM2uFYskzUaOMB8nlWoeX",
-  calendars: "https://drive.google.com/drive/folders/1s_vvb7mWlbpP3OaZ-TcccxeF7uJ1EPVw"
+  calendars: "https://drive.google.com/drive/folders/1s_vvb7mWlbpP3OaZ-TcccxeF7uJ1EPVw",
+  calendarDrafts: "https://drive.google.com/drive/folders/1s_vvb7mWlbpP3OaZ-TcccxeF7uJ1EPVw"
 };
 async function uploadBoard(col, cur, btn, status){
   if (!window.PdfUtil){ alert("上傳元件尚未載入，請重新整理頁面"); return; }
@@ -6661,6 +6692,9 @@ function sync(d, view){
     S.sch.got = false; S.cal.got = false;
     unsubs.push(subscribe(d.db.collection(SCH_COL),S.sch,"got",snap=>{ S.sch.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
     unsubs.push(subscribe(d.db.collection(CAL_COL),S.cal,"got",snap=>{ S.cal.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    S.cal.drafts = []; S.cal.gotD = false;
+    if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(CALD_COL),S.cal,"gotD",snap=>{ S.cal.drafts=snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    else S.cal.gotD = true;
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
