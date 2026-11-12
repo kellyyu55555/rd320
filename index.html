@@ -339,6 +339,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
           </button>
+          <button x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" @click="view='patrol'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='patrol' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📝 巡堂紀錄
+          </button>
           <button x-show="isAdmin" @click="view='admin'"
             x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount+healthPending.length)>0 ? `(${adminPendingCount+weeklyPendingCount+healthPending.length}) ` : '') + baseTitle"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
@@ -425,6 +430,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
             <h3 class="font-heading font-black text-base mt-3">活動計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德活動計畫（僅管理者）</p>
+          </button>
+          <button type="button" x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" @click="view='patrol'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
+            <h3 class="font-heading font-black text-base mt-3">班級巡堂紀錄表</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每週巡堂觀察紀錄（僅限本人使用）</p>
           </button>
           <button type="button" x-show="isAdmin" @click="view='admin'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📋</span><span x-show="adminPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待處理 ${adminPendingCount}`"></span></div>
@@ -768,7 +778,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1687,7 +1697,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K16</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K18</footer>
     </div>
   </template>
 
@@ -2683,11 +2693,11 @@ function allHtml(){const DD=dedupLogs(),logs=DD.arr,subN=l=>["submitted","review
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
  ${folderBar(Object.keys(FD()))}<p style="font-size:13px;font-weight:700;margin:4px 0">點選班級，查看該班已閱的週誌：</p><div class="wkbar">${chip("*","全部班級",logs)}${names.map(n=>chip(n,n,by[n])).join("")}</div>
  <p style="font-size:14px;font-weight:700;margin:10px 0 6px">${clsSel==null?"📥 最新送出的週誌（最多 10 份）":clsSel==="*"?"📁 全部班級的已閱週誌":`📁 ${esc(clsSel)} 的已閱週誌`}（${rows.length}）</p>
- ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${badge(l)}${extBadge(l)}${subN(l)>1?` <span style="background:#e8f0fb;color:#1f3d7a;border:1px solid #9db8e0;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700">🔁 第${subN(l)}次送出</span>`:""}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　送出者：<b style="color:#2f5597">${esc(who(l))}</b>${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}<button class="wkb" data-rm="${l.id}" style="color:#c0392b">🗑 刪除</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">${clsSel==null?"沒有符合條件的週誌":"這個班級還沒有「標記已閱」的週誌"}</p>`}</div>`}
+ ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>${(()=>{const w=calcWeeks(l.dateFrom,l.dateTo)||l.weeks||"";return w?` <span style="background:#fff1d6;color:#8a5a00;border:1px solid #e8c36a;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700">📅 ${esc(w)}${l.kind==="ext"?" 班刊":" 週誌"}</span>`:""})()}　${badge(l)}${extBadge(l)}${subN(l)>1?` <span style="background:#e8f0fb;color:#1f3d7a;border:1px solid #9db8e0;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700">🔁 第${subN(l)}次送出</span>`:""}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}　｜　送出者：<b style="color:#2f5597">${esc(who(l))}</b>${l.submittedAt?`　｜　送出：${tm(l.submittedAt)}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${l.status==='submitted'||l.status==='reviewed'?`<button class="wkb" data-return="${l.id}" style="color:#d35400">↩ 退件</button>`:""}${l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">檢視／編輯</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}<button class="wkb" data-rm="${l.id}" style="color:#c0392b">🗑 刪除</button></div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">${clsSel==null?"沒有符合條件的週誌":"這個班級還沒有「標記已閱」的週誌"}</p>`}</div>`}
 function mineHtml(){const adm=false,kw=q.trim();const rows=logs.filter(l=>l.uid===(d.currentUser||{}).uid||(l.sharedWith||[]).includes(myEmail())).filter(l=>!kw||[l.cls,l.teachers,l.ownerName,l.dateFrom].some(v=>String(v||"").includes(kw))).sort((a,b)=>String(b.dateFrom).localeCompare(String(a.dateFrom)));
  return `<div class="wk" style="font-family:inherit">${tabs()}${sharePanel()}${folderBar(myClasses())}<div class="wkbar"><b style="font-size:18px">📝 每週教學活動與幼兒學習觀察紀錄（週誌）</b><button class="wkb on" data-new="1">＋ 新增週誌</button><button class="wkb" data-newext="1" title="把做好的班刊（Canva 連結或 PDF）交給管理員">📰 新增 PDF班刊</button><input type="text" id="wkq" value="${esc(q)}" placeholder="搜尋班級、老師、日期" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 10px;font-size:13px"></div>
  ${root.dataset.err?`<p style="color:#c0392b;font-weight:700;font-size:13px">無法讀取週誌（${esc(root.dataset.err)}）。請確認 Firestore 規則已加入 weeklyLogs。</p>`:""}
- ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>　${esc(l.sem||"")}${badge(l)}${extBadge(l)}${l.uid!==(d.currentUser||{}).uid?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">👥 ${esc(l.ownerName||l.ownerEmail||"")} 分享</span>`:((l.sharedWith||[]).length?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">已分享給 ${(l.sharedWith||[]).length} 位</span>`:"")}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}${adm?`　｜　${esc(l.ownerName||l.ownerEmail||"")}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${adm&&l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">${adm?"查看／編輯":(l.uid!==(d.currentUser||{}).uid?"查看":"編輯")}</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}${l.uid===(d.currentUser||{}).uid?`<button class="wkb" data-dup="${l.id}">複製</button><button class="wkb" data-share="${l.id}">👥 分享</button><button class="wkb" data-rm="${l.id}" style="color:#c0392b">刪除</button>`:`<button class="wkb" data-unshare="${l.id}" style="color:#c0392b" title="從我的清單移除（不會刪除對方的原始週誌）">移除</button>`}</div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">還沒有週誌，按「＋ 新增週誌」開始填寫</p>`}</div>`}
+ ${rows.map(l=>`<div class="wkcard"><div><b>${esc(l.cls||"（未填班級）")}</b>${(()=>{const w=calcWeeks(l.dateFrom,l.dateTo)||l.weeks||"";return w?` <span style="background:#fff1d6;color:#8a5a00;border:1px solid #e8c36a;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700">📅 ${esc(w)}${l.kind==="ext"?" 班刊":" 週誌"}</span>`:""})()}　${esc(l.sem||"")}${badge(l)}${extBadge(l)}${l.uid!==(d.currentUser||{}).uid?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">👥 ${esc(l.ownerName||l.ownerEmail||"")} 分享</span>`:((l.sharedWith||[]).length?` <span style="background:#e3ecf9;color:#2f5597;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">已分享給 ${(l.sharedWith||[]).length} 位</span>`:"")}<br><span style="font-size:12px;color:#7a6f57">${roc(l.dateFrom)}－${roc(l.dateTo)}${adm?`　｜　${esc(l.ownerName||l.ownerEmail||"")}`:""}</span>${reasonLine2(l)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${adm&&l.status==='submitted'?`<button class="wkb on" data-reviewed="${l.id}">✔ 標記已閱</button>`:""}<button class="wkb" data-open="${l.id}">${adm?"查看／編輯":(l.uid!==(d.currentUser||{}).uid?"查看":"編輯")}</button>${l.kind==="ext"?extBtns(l):`<button class="wkb" data-updf="${l.id}">☁️ 上傳PDF</button><button class="wkb" data-print="${l.id}">🖨️ 列印</button>`}${l.uid===(d.currentUser||{}).uid?`<button class="wkb" data-dup="${l.id}">複製</button><button class="wkb" data-share="${l.id}">👥 分享</button><button class="wkb" data-rm="${l.id}" style="color:#c0392b">刪除</button>`:`<button class="wkb" data-unshare="${l.id}" style="color:#c0392b" title="從我的清單移除（不會刪除對方的原始週誌）">移除</button>`}</div></div>`).join("")||`<p style="color:#9a917a;text-align:center;padding:24px 0">還沒有週誌，按「＋ 新增週誌」開始填寫</p>`}</div>`}
 function viewerHtml(){const L=cur;if(L.kind==="ext")return extViewerHtml();
  if(d.isAdmin){const sent=["submitted","reviewed","returned"].includes(L.status);
   return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button></div>
@@ -3988,7 +3998,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K16</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K18</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5458,6 +5468,21 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .pubbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#e8f3ec;border:1px solid #bcd8c6;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-weight:600;color:var(--accent)}
 #kb .pubbar.draft{background:#fff4e0;border-color:#efd9a6;color:#8a5f14}
 #kb .pubbar .sp{flex:1}
+#kb table.patrol{border-collapse:collapse;min-width:1250px;width:100%;background:var(--paper);font-size:13px}
+#kb table.patrol th,#kb table.patrol td{border:1px solid var(--line);padding:4px 3px;text-align:center;vertical-align:middle}
+#kb table.patrol th{background:#f6f1e4;color:var(--muted);font-weight:500}
+#kb table.patrol .pg{width:46px;font-weight:700;color:var(--accent);background:#fbf8f0;font-size:12px}
+#kb table.patrol .pi{width:120px;text-align:left;font-size:12px}
+#kb table.patrol th.pd{color:var(--ink);font-weight:700}
+#kb table.patrol th.pd .tm{font-weight:400;font-size:12px;color:var(--muted)}
+#kb table.patrol th.pc{font-size:11px;line-height:1.2;width:36px}
+#kb table.patrol .dl{border-left:2px solid #b8ad92}
+#kb table.patrol td.sc{font-size:14px;font-weight:600}
+#kb table.patrol td.s4{background:#fde3dc;color:var(--warn)}
+#kb table.patrol td.pn{text-align:left;vertical-align:top;white-space:pre-wrap;font-size:13px;min-height:60px}
+#kb table.patrol .pt-sel{border:1px solid var(--line);border-radius:6px;padding:1px;font-size:13px;background:#fff;width:36px}
+#kb table.patrol .pt-time{width:100%;border:1px solid var(--line);border-radius:6px;padding:2px 4px;font-size:12px;margin:3px 0}
+#kb table.patrol .pt-fill{width:100%;border:1px solid var(--line);border-radius:6px;font-size:12px;padding:1px}
 
 </style>
 <script>
@@ -5525,6 +5550,7 @@ function render(){
   if (S.view==="activities") return renderActivities(app);
   if (S.view==="schedule") return renderSchedule(app);
   if (S.view==="calendar") return renderCalendar(app);
+  if (S.view==="patrol") return renderPatrol(app);
   renderCourses(app);
 }
 
@@ -6184,7 +6210,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -6656,6 +6682,167 @@ function editCoteach(id){
     h("div",{class:"mf"},h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
 }
 
+/* ---------- 巡堂紀錄表：僅限 kellyyu1209@gmail.com 個人使用（Firestore 規則同樣只允許這個帳號） ---------- */
+const PATROL_COL = "patrolRecords", PATROL_OWNER = "kellyyu1209@gmail.com";
+const PATROL_GROUPS = [
+  { g:"一、課程實施", items:["教學內容合乎幼兒發展","教學方法運用得宜","幼兒積極參與活動","師生互動氛圍良好","老師態度溫和"] },
+  { g:"二、常規管理", items:["訂定班級作息表、班級常規","幼兒活動井然有序","教/玩具歸位整齊","幼兒負向行為老師以正向行為改變技術調整","師生用餐時間氛圍愉悅","午睡時間幼兒安穩入睡無異常"] }
+];
+const PATROL_ITEMS = PATROL_GROUPS.flatMap(g=>g.items);
+const PATROL_CLASSES = ["梔子花班","風鈴草班","山茶花班","幸運草班","仙草花班"];
+const PATROL_SEED = {"semester": "115學年度第一學期", "dateFrom": "2026-09-07", "dateTo": "2026-09-11", "recorder": "游雅真", "classes": ["梔子花班", "風鈴草班", "山茶花班", "幸運草班", "仙草花班"], "days": [{"date": "2026-09-07", "time": "10:00~11:50", "scores": [["2", "2", "2", "2", "2"], ["3", "3", "2", "2", "2"], ["3", "3", "2", "2", "2"], ["3", "2", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["3", "2", "3", "2", "3"], ["3", "3", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["3", "3", "3", "3", "3"], ["3", "3", "3", "3", "3"], ["2", "2", "2", "2", "2"]], "note": ""}, {"date": "2026-09-08", "time": "10:00~11:50", "scores": [["2", "2", "2", "2", "2"], ["3", "2", "2", "2", "3"], ["2", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["2", "2", "2", "2", "2"], ["3", "2", "2", "3", "3"], ["2", "2", "2", "3", "3"], ["2", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "2", "2", "2", "3"]], "note": ""}, {"date": "2026-09-09", "time": "10:00~11:50", "scores": [["2", "2", "2", "2", "2"], ["2", "2", "2", "3", "2"], ["2", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["3", "2", "3", "2", "2"], ["2", "2", "2", "3", "2"], ["3", "3", "3", "2", "3"], ["4", "3", "3", "2", "3"], ["3", "3", "3", "2", "3"], ["2", "2", "2", "3", "2"]], "note": "馬翊心因前一晚被魏子淞回家跟媽媽投訴被捏，故今天有稍微將兩人隔離。"}, {"date": "2026-09-10", "time": "10:00~11:50", "scores": [["2", "2", "2", "2", "2"], ["2", "3", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "2", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["2", "2", "2", "2", "2"], ["3", "3", "2", "2", "3"], ["3", "2", "2", "2", "3"], ["3", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "2", "2", "2", "3"]], "note": ""}, {"date": "2026-09-11", "time": "10:00~11:50", "scores": [["2", "2", "2", "2", "2"], ["3", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["2", "2", "2", "2", "2"], ["3", "3", "3", "3", "3"], ["2", "2", "2", "2", "2"], ["3", "2", "2", "3", "3"], ["2", "2", "2", "3", "3"], ["2", "2", "2", "2", "2"], ["3", "3", "3", "2", "2"], ["2", "2", "2", "3", "3"]], "note": ""}]};
+const WD = ["日","一","二","三","四","五","六"];
+const isPatrolOwner = () => !!(S.d && S.d.currentUser && String(S.d.currentUser.email||"").toLowerCase()===PATROL_OWNER);
+const pd = s => { const t=new Date(String(s)+"T00:00:00"); return isNaN(t) ? null : t; };
+const pIso = t => t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+const pRoc = s => { const t=pd(s); return t ? `${t.getFullYear()-1911}/${String(t.getMonth()+1).padStart(2,"0")}/${String(t.getDate()).padStart(2,"0")}` : ""; };
+const pMd = s => { const t=pd(s); return t ? `${t.getMonth()+1}/${t.getDate()}（${WD[t.getDay()]}）` : ""; };
+function pDays(from){ const t=pd(from); if(!t) return []; return [0,1,2,3,4].map(i=>{ const x=new Date(t); x.setDate(t.getDate()+i); return pIso(x); }); }
+function pNorm(r){
+  const classes = arr(r.classes).length ? arr(r.classes) : PATROL_CLASSES.slice();
+  const days = (Array.isArray(r.days)?r.days:[]).slice(0,5).map(d=>({ date:str(d&&d.date), time:str(d&&d.time), note:str(d&&d.note),
+    scores: PATROL_ITEMS.map((_,i)=>classes.map((_,k)=>str(((d&&Array.isArray(d.scores)?d.scores[i]:null)||[])[k]))) }));
+  while (days.length<5) days.push({ date:"", time:"10:00~11:50", note:"", scores:PATROL_ITEMS.map(()=>classes.map(()=>"")) });
+  return { id:r.id, semester:str(r.semester), dateFrom:str(r.dateFrom), dateTo:str(r.dateTo), recorder:str(r.recorder), classes, days };
+}
+function renderPatrol(app){
+  if (!isPatrolOwner()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  const P = S.patrol;
+  if (!P.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "巡堂紀錄載入中…")); return; }
+  if (P.open) return renderPatrolSheet(app);
+  const list = [...P.list].sort((a,b)=>str(b.dateFrom).localeCompare(str(a.dateFrom)));
+  app.append(h("section",{class:"intro"},
+    h("p",{class:"note"},"🔒 僅限 "+PATROL_OWNER+" 個人使用，其他人（包含其他管理員）都看不到"),
+    h("h1",null,"班級巡堂紀錄表"),
+    h("p",{class:"note",style:"margin-top:6px"},"巡堂觀察結果：1.優 2.良 3.可 4.待改進；填 4 請在當天的「其他事項或特殊狀況」補充說明。"),
+    h("div",{class:"abs"},h("button",{class:"btn primary",onclick:()=>patrolNew()},"＋ 新增巡堂紀錄"))));
+  if (!list.length){
+    app.append(h("div",{class:"notice"},"還沒有巡堂紀錄。",
+      h("div",{style:"margin-top:12px"},h("button",{class:"btn",onclick:async()=>{ try{ await S.db.doc(PATROL_COL+"/pt-115-1-0907").set(PATROL_SEED); toast("已匯入 09/07～09/11 的巡堂紀錄"); }catch(e){ toast(errText(e)); } }},"匯入 115/09/07～09/11 原始紀錄"))));
+    return;
+  }
+  app.append(h("div",{class:"list"}, list.map(r0=>{ const r=pNorm(r0);
+    const all = r.days.flatMap(d=>d.scores.flat()).filter(Boolean), n4 = all.filter(v=>v==="4").length;
+    return h("div",{class:"card row",style:"cursor:default"},
+      h("span",null,h("span",{class:"m"},r.semester),h("br"),h("span",{class:"t"},`${pRoc(r.dateFrom)}～${pRoc(r.dateTo)}`),
+        h("span",{style:"font-size:13px;color:var(--muted);margin-left:10px"},`巡堂紀錄者：${r.recorder||"—"}｜已填 ${all.length}／${PATROL_ITEMS.length*25} 格`+(n4?`｜待改進 ${n4} 格`:""))),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>{ P.open=r.id; P.edit=false; render(); }},"檢視"),
+        h("button",{class:"btn",onclick:()=>{ P.open=r.id; P.edit=true; P.draft=pNorm(r0); render(); }},"編輯"),
+        h("button",{class:"btn",onclick:()=>printPatrol(r)},"🖨 列印"),
+        h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份巡堂紀錄？",`${pRoc(r.dateFrom)}～${pRoc(r.dateTo)} 刪除後無法復原。`,"刪除",()=>S.db.doc(PATROL_COL+"/"+r.id).delete().then(()=>toast("已刪除")))},"刪除")),
+      h("span"));
+  })));
+}
+function patrolNew(){
+  const P = S.patrol, last = [...P.list].sort((a,b)=>str(b.dateFrom).localeCompare(str(a.dateFrom)))[0];
+  let mon = new Date(); mon.setHours(0,0,0,0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  if (last && pd(last.dateFrom)){ const t=pd(last.dateFrom); t.setDate(t.getDate()+7); if (t>mon) mon=t; }
+  const days = pDays(pIso(mon));
+  const lastN = last ? pNorm(last) : null;
+  P.draft = pNorm({ semester: lastN ? lastN.semester : "115學年度第一學期", dateFrom:days[0], dateTo:days[4], recorder: lastN ? lastN.recorder : "",
+    classes: lastN ? lastN.classes : PATROL_CLASSES, days: days.map((d,i)=>({ date:d, time: lastN ? lastN.days[i].time : "10:00~11:50", note:"", scores:[] })) });
+  P.open = "__new"; P.edit = true; render();
+}
+function patrolTable(r, edit){
+  const C = r.classes, nC = C.length;
+  const head1 = h("tr",null, h("th",{rowspan:"2",class:"pg"},"面向"), h("th",{rowspan:"2",class:"pi"},"巡堂觀察項目"),
+    r.days.map((d,di)=>h("th",{colspan:String(nC),class:"pd"+(di?" dl":"")},
+      h("div",null, pMd(d.date)||`第${di+1}天`),
+      edit ? h("input",{class:"pt-time",value:d.time,placeholder:"時間",oninput:e=>{ d.time=e.target.value; }}) : h("div",{class:"tm"},"時間："+(d.time||"")),
+      edit ? h("select",{class:"pt-fill",onchange:e=>{ const v=e.target.value; if(v!==""){ d.scores.forEach(row=>row.forEach((_,k)=>{ if(!row[k]||v==="clear") row[k]= v==="clear" ? "" : v; })); render(); } }},
+        h("option",{value:""},"快速填入…"), h("option",{value:"2"},"空白格填 2"), h("option",{value:"3"},"空白格填 3"), h("option",{value:"1"},"空白格填 1"), h("option",{value:"clear"},"清除這天")) : null)));
+  const head2 = h("tr",null, r.days.flatMap((d,di)=>C.map((c,k)=>h("th",{class:"pc"+(di&&!k?" dl":"")},c))));
+  const body = [];
+  let idx = 0;
+  PATROL_GROUPS.forEach(g=>{
+    g.items.forEach((it,gi)=>{
+      const i = idx++;
+      body.push(h("tr",null,
+        gi===0 ? h("td",{rowspan:String(g.items.length),class:"pg"},g.g) : null,
+        h("td",{class:"pi"},it),
+        r.days.flatMap((d,di)=>C.map((c,k)=>{ const v=d.scores[i][k];
+          return h("td",{class:"sc"+(di&&!k?" dl":"")+(v==="4"?" s4":"")}, edit
+            ? h("select",{class:"pt-sel",onchange:e=>{ d.scores[i][k]=e.target.value; e.target.parentNode.classList.toggle("s4",e.target.value==="4"); }},["","1","2","3","4"].map(o=>h("option",{value:o,selected:v===o},o)))
+            : v); }))));
+    });
+  });
+  body.push(h("tr",null, h("td",{class:"pg"},"三、其他事項或特殊狀況"), h("td",{class:"pi"}," "),
+    r.days.map((d,di)=>h("td",{colspan:String(nC),class:"pn"+(di?" dl":"")}, edit
+      ? h("textarea",{class:"in",rows:"4",oninput:e=>{ d.note=e.target.value; }}, d.note)
+      : d.note))));
+  return h("div",{class:"tablewrap"}, h("table",{class:"patrol"}, h("thead",null,head1,head2), h("tbody",null,body)));
+}
+function renderPatrolSheet(app){
+  const P = S.patrol;
+  const src = P.open==="__new" ? null : P.list.find(x=>x.id===P.open);
+  if (P.open!=="__new" && !src){ P.open=null; return renderPatrol(app); }
+  const r = P.edit ? P.draft : pNorm(src);
+  const back = () => { P.open=null; P.edit=false; P.draft=null; render(); };
+  const bar = h("div",{class:"toolbar"},
+    h("button",{class:"btn",onclick:()=>{ if(P.edit && !confirm("要放棄這次的修改嗎？")) return; back(); }},"← 返回清單"), h("span",{class:"sp"}),
+    !P.edit ? h("button",{class:"btn",onclick:()=>{ P.draft=pNorm(src); P.edit=true; render(); }},"編輯") : null,
+    h("button",{class:"btn",onclick:()=>printPatrol(r)},"🖨 列印"),
+    P.edit ? h("button",{class:"btn primary",onclick:async(e)=>{
+      const miss = r.days.map((d,i)=>d.scores.flat().includes("4") && !d.note.trim() ? pMd(d.date)||`第${i+1}天` : "").filter(Boolean);
+      if (miss.length && !confirm("以下日期有填 4（待改進），但還沒寫補充說明：\n"+miss.join("、")+"\n\n仍要儲存嗎？")) return;
+      const data = { semester:r.semester, dateFrom:r.dateFrom, dateTo:r.dateTo, recorder:r.recorder, classes:r.classes,
+        days:r.days.map(d=>({date:d.date,time:d.time,note:d.note,scores:d.scores})), updatedAt:Date.now() };
+      e.target.disabled = true;
+      try{ const ref = P.open==="__new" ? S.db.collection(PATROL_COL).doc() : S.db.doc(PATROL_COL+"/"+P.open); await ref.set(data);
+        P.list = P.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...data}]);
+        P.open = ref.id; P.edit=false; P.draft=null; toast("已儲存"); render(); }
+      catch(err){ e.target.disabled=false; toast(errText(err)); }
+    }},"💾 儲存") : null);
+  app.append(bar);
+  const head = h("section",{class:"intro"},
+    h("p",{class:"note"},"桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)"),
+    P.edit ? h("div",{class:"f"},
+        h("div",{class:"f2"},
+          h("label",{class:"fl"},"學期",h("input",{class:"in",value:r.semester,oninput:e=>{ r.semester=e.target.value; }})),
+          h("label",{class:"fl"},"巡堂紀錄者",h("input",{class:"in",value:r.recorder,oninput:e=>{ r.recorder=e.target.value; }}))),
+        h("div",{class:"f2"},
+          h("label",{class:"fl"},"巡堂紀錄週期：起（星期一）",h("input",{class:"in",type:"date",value:r.dateFrom,onchange:e=>{ r.dateFrom=e.target.value; const ds=pDays(r.dateFrom); if(ds.length){ r.dateTo=ds[4]; r.days.forEach((d,i)=>d.date=ds[i]); } render(); }})),
+          h("label",{class:"fl"},"迄",h("input",{class:"in",type:"date",value:r.dateTo,onchange:e=>{ r.dateTo=e.target.value; }}))),
+        h("label",{class:"fl"},h("span",null,"班級 ",h("small",null,"（用、分隔；改了之後分數格會跟著調整）")),
+          h("input",{class:"in",value:r.classes.join("、"),onchange:e=>{ const nc=e.target.value.split(/[、,，\s]+/).map(x=>x.trim()).filter(Boolean); if(!nc.length) return;
+            r.days.forEach(d=>{ d.scores=d.scores.map(row=>nc.map(c=>{ const k=r.classes.indexOf(c); return k>=0 ? row[k] : ""; })); }); r.classes=nc; render(); }})))
+      : [h("h1",null,`${r.semester}班級巡堂紀錄表`),
+         h("div",{class:"meta"},h("span",null,"巡堂紀錄週期：",h("b",null,`${pRoc(r.dateFrom)}～${pRoc(r.dateTo)}`)),h("span",null,"巡堂紀錄者：",h("b",null,r.recorder||"—")))]);
+  app.append(head);
+  app.append(patrolTable(r, P.edit));
+  app.append(h("p",{class:"note",style:"margin-top:8px;font-size:13px;color:var(--muted)"},"◎ 巡堂觀察結果：以 1.優 2.良 3.可 4.待改進 等代號紀錄填寫，若填寫 4 請加以補充說明。"));
+}
+function printPatrol(r0){
+  const r = r0.days && r0.days[0] && Array.isArray(r0.days[0].scores) && r0.days[0].scores.length===PATROL_ITEMS.length ? r0 : pNorm(r0);
+  const C = r.classes, nC = C.length, D = r.days;
+  const ymd = s => { const t=pd(s); return t ? [t.getFullYear()-1911, String(t.getMonth()+1).padStart(2,"0"), String(t.getDate()).padStart(2,"0")] : ["　","　","　"]; };
+  const [y1,m1,d1] = ymd(r.dateFrom), [y2,m2,d2] = ymd(r.dateTo);
+  let rows = "", idx = 0;
+  PATROL_GROUPS.forEach(g=>g.items.forEach((it,gi)=>{ const i=idx++;
+    rows += `<tr>${gi===0?`<td rowspan="${g.items.length}" class="g">${esc(g.g).split("").join("<br>")}</td>`:""}<td class="it">${esc(it)}</td>${D.map((d,di)=>C.map((c,k)=>`<td class="s${di&&!k?" dl":""}">${esc(d.scores[i][k]||"")}</td>`).join("")).join("")}</tr>`; }));
+  rows += `<tr class="nt"><td class="g">${"三、其他事項或特殊狀況".split("").join("<br>")}</td><td class="it"></td>${D.map((d,di)=>`<td colspan="${nC}" class="n${di?" dl":""}">${lines(d.note)}</td>`).join("")}</tr>`;
+  const css = PRINT_BASE + `@page{size:A4 landscape;margin:8mm}
+body{font-family:"Noto Sans TC","微軟正黑體","Microsoft JhengHei",sans-serif}
+.wrap{width:281mm;margin:0 auto;font-size:10pt;line-height:1.3}@media screen{.wrap{padding:6mm 0}}
+.hd .t{font-size:1.25em;font-weight:bold;text-align:center}.sub{margin:4px 0 6px}.sub u{text-decoration:none;border-bottom:1px solid #000;padding:0 .8em}
+th,td{text-align:center;vertical-align:middle;padding:2px}th{font-weight:normal}
+td.g{width:7mm;font-size:.95em}td.it{text-align:left;width:22mm;font-size:.92em}th.pd{font-size:.92em}th.pc{font-size:.78em;line-height:1.15}
+td.s{font-size:1em}.dl{border-left:2px solid #000!important}td.n{text-align:left;vertical-align:top;height:24mm;font-size:.9em}
+.legend{margin-top:5px;font-size:.92em}`;
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(r.semester)}班級巡堂紀錄表 ${esc(pRoc(r.dateFrom))}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 橫式。列印時「縮放」請選「預設」。</span></div>
+<div class="wrap" id="w"><div class="hd"><div class="t">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理) ${esc(r.semester)}班級巡堂紀錄表</div></div>
+<div class="sub">巡堂紀錄週期：<u>${y1}</u>年<u>${m1}</u>月<u>${d1}</u>日至<u>${y2}</u>年<u>${m2}</u>月<u>${d2}</u>日　　　巡堂紀錄者：<u>${esc(r.recorder)||"　　　　"}</u></div>
+<table><colgroup><col style="width:7mm"><col style="width:22mm">${D.map(()=>C.map(()=>"<col>").join("")).join("")}</colgroup>
+<thead><tr><th rowspan="2">面<br>向</th><th rowspan="2">巡堂觀察<br>項目</th>${D.map((d,di)=>`<th colspan="${nC}" class="pd${di?" dl":""}">${esc(pMd(d.date))}　時間：${esc(d.time)}</th>`).join("")}</tr>
+<tr>${D.map((d,di)=>C.map((c,k)=>`<th class="pc${di&&!k?" dl":""}">${esc(c).replace(/(..)(.*)/,"$1<br>$2")}</th>`).join("")).join("")}</tr></thead>
+<tbody>${rows}</tbody></table>
+<div class="legend">◎ 巡堂觀察結果：以 1.優 2.良 3.可 4.待改進 等代號紀錄填寫，若填寫 4 請加以補充說明。</div></div>
+<script>(function(){var w=document.getElementById("w"),pageH=194*96/25.4-4,fs=10;function fit(){w.style.fontSize=fs+"pt";while(w.scrollHeight>pageH&&fs>6){fs-=.25;w.style.fontSize=fs+"pt"}while(w.scrollHeight<pageH*.92&&fs<12){fs+=.25;w.style.fontSize=fs+"pt";if(w.scrollHeight>pageH){fs-=.25;w.style.fontSize=fs+"pt";break}}}
+window.addEventListener("load",function(){fit();setTimeout(function(){window.focus();window.print()},400)})})()<\/script></body></html>`);
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -6695,6 +6882,9 @@ function sync(d, view){
     S.cal.drafts = []; S.cal.gotD = false;
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(CALD_COL),S.cal,"gotD",snap=>{ S.cal.drafts=snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.cal.gotD = true;
+    S.patrol = { list:[], got:false, open:null, edit:false, draft:null };
+    if (String(d.currentUser.email||"").toLowerCase()==="kellyyu1209@gmail.com") unsubs.push(subscribe(d.db.collection("patrolRecords"),S.patrol,"got",snap=>{ S.patrol.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    else S.patrol.got = true;
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
