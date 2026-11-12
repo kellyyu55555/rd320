@@ -1697,7 +1697,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K19</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K22</footer>
     </div>
   </template>
 
@@ -2554,10 +2554,11 @@ function extEditorHtml(){const L=cur,E=L.ext=L.ext||{url:"",pdfUrl:"",pdfName:""
  <div style="font-size:12px;color:#7a6f57">在 Canva 按右上角「分享」→ 把權限設為「任何知道連結的人都能查看」→「複製連結」，貼在這裡，管理員才打得開。${E.url&&!ok?'<b style="color:#c0392b">　連結要以 https:// 開頭</b>':""}</div>
  ${ok?`<div style="margin-top:4px"><a class="wkb" href="${esc(safeUrl(E.url))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">🔗 測試開啟連結</a></div>`:""}
  ${pdfBox(1,E.pdfUrl,E.pdfName)}${pdfBox(2,E.pdf2Url,E.pdf2Name)}
- <label style="${lab}">備註（選填）</label><textarea data-k="ext.note" rows="3" placeholder="想跟管理員說明的事" style="${inp}">${esc(E.note||"")}</textarea></div>`}
+ <label style="${lab}">備註（選填）</label><textarea data-k="ext.note" rows="3" placeholder="想跟管理員說明的事" style="${inp}${String(E.note||"").trim()?";background:#fff8d6;border:2px solid #e0a800;font-weight:700;color:#6b4e00":""}">${esc(E.note||"")}</textarea></div>`}
 async function extUpload(f,slot){slot=slot===2?2:1;if(!cur)return;if(!/\.pdf$/i.test(f.name)&&f.type!=="application/pdf"){alert("請選擇 PDF 檔案");return}if(f.size>15*1024*1024){alert("PDF 檔案超過 15MB，請先在 Canva 選較低的品質或減少頁數後再下載");return}
  if(!window.PdfUtil||!window.__driveUrl){alert("管理員還沒有設定「雲端硬碟上傳」。\n您可以改貼 Canva 連結，或請管理員到「管理者後台 → 帳號與系統 → ☁️ 雲端硬碟上傳設定」設定。");return}
- const fid=PdfUtil.folderId(FD()[cur.cls]);if(!fid){alert("管理員還沒有設定「"+(cur.cls||"（未填班級）")+"」的雲端硬碟資料夾。\n請先確認班級名稱，或改貼 Canva 連結。");return}
+ const cn=String(cur.cls||"").replace(/\s+/g,""),fm=FD(),fk=Object.keys(fm).find(k=>k.replace(/\s+/g,"")===cn)||(cn?Object.keys(fm).find(k=>{const kk=k.replace(/\s+/g,"");return kk&&(kk.includes(cn)||cn.includes(kk))}):null);let fid=fk?PdfUtil.folderId(fm[fk]):"";
+ if(!fid){const gen=PdfUtil.folderId(window.__drivePlanFolder||"");if(gen&&confirm((cn?"「"+cur.cls+"」":"這份班刊（還沒填班級）")+"沒有對應的班級雲端資料夾。\n要改存到共用資料夾的「班刊」裡嗎？"))fid=gen;else{alert(cn?"找不到「"+cur.cls+"」的班級雲端硬碟資料夾。\n請確認班級名稱和「管理者後台 → ☁️ 雲端硬碟上傳設定」裡的班級名稱一致，或改貼 Canva 連結。":"請先在上方「班級」欄填入班級名稱，再上傳 PDF。");return}}
  try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${myNm()?"_"+myNm():""}${slot===2?"_2":""}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
 async function flushCur(){if(d.isAdmin&&cur&&cur.uid!==(d.currentUser||{}).uid&&!edDirty)return true;return saveCur()}
 async function saveCur(){if(viewOnly)return true;if(!cur)return;try{status("儲存中…");const p=JSON.parse(JSON.stringify(cur));p.updatedAt=Date.now();await col().doc(cur.id).set(p);status("已儲存 ✓");edDirty=false;histPush();return true}catch(e){status("儲存失敗："+(e.code||e.message));return false}}
@@ -2582,7 +2583,7 @@ async function printLog(L){if(L.kind==="ext"){openExt(L);return}const w=window.o
 const STAT={draft:['草稿','#9a917a'],submitted:['已送出・待管理員查看','#c0392b'],reviewed:['管理員已閱','#5b7a4a'],returned:['被退回・請修改','#d35400']};
 const reasonLine=l=>l.status==='returned'&&l.returnReason?`<div style="color:#d35400;font-size:12px;font-weight:700;margin-top:2px">↩ 已退回給：${esc(l.returnedToName||who(l))}${l.returnedBy?`　｜　退回者：${esc(l.returnedBy)}`:""}${l.returnedAt?`　｜　${tm(l.returnedAt)}`:""}<br>退回原因：${esc(l.returnReason)}</div>`:'';
 const reasonLine0=reasonLine;
-const reasonLine2=l=>reasonLine0(l)+(l.status==='reviewed'&&l.reviewNote?`<div style="color:#375623;font-size:12px;font-weight:700;margin-top:2px">✅ 管理員說明：${esc(l.reviewNote)}${l.reviewedBy?`　｜　${esc(l.reviewedBy)}`:""}${l.reviewedAt?`　｜　${tm(l.reviewedAt)}`:""}</div>`:'');
+const reasonLine2=l=>(l.kind==="ext"&&l.ext&&String(l.ext.note||"").trim()?`<div style="background:#fff4c2;border:2px solid #e0a800;color:#6b4e00;border-radius:8px;padding:4px 10px;margin-top:4px;font-size:13px;font-weight:700;white-space:pre-wrap">💬 老師備註：${esc(String(l.ext.note).trim())}</div>`:"")+reasonLine0(l)+(l.status==='reviewed'&&l.reviewNote?`<div style="color:#375623;font-size:12px;font-weight:700;margin-top:2px">✅ 管理員說明：${esc(l.reviewNote)}${l.reviewedBy?`　｜　${esc(l.reviewedBy)}`:""}${l.reviewedAt?`　｜　${tm(l.reviewedAt)}`:""}</div>`:'');
 const badge=l=>{const s=STAT[l.status||'draft']||STAT.draft;return `<span style="font-size:12px;font-weight:700;color:${s[1]};border:1px solid ${s[1]};border-radius:999px;padding:0 8px;margin-left:6px">${s[0]}</span>`};
 const FD=()=>window.__driveFolders||{};
 const folderLink=c=>FD()[c]?`<a class="wkb" href="${esc(FD()[c])}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">📂 開啟「${esc(c)}」雲端硬碟</a>`:"";
@@ -2779,7 +2780,7 @@ function bind(){
   if(ds.submit){if(!String(cur.cls||"").trim()){alert("請先填寫班級再送出");return}if(cur.kind==="ext"&&!safeUrl(cur.ext&&cur.ext.url)&&!safeUrl(cur.ext&&cur.ext.pdfUrl)&&!safeUrl(cur.ext&&cur.ext.pdf2Url)){alert("請先貼上 Canva 連結（要以 https 開頭），或上傳 PDF，再送出");return}if(!confirm(`確定要送出「${cur.cls} ${roc(cur.dateFrom)}－${roc(cur.dateTo)}」這份週誌給管理員嗎？\n送出後管理員會收到通知；之後仍可修改，修改完再按「重新送出」即可。`))return;
    clearTimeout(saveT);const su=d.currentUser||{};if(cur.uid===su.uid){if(!cur.ownerName)cur.ownerName=su.displayName||"";if(!cur.ownerEmail)cur.ownerEmail=su.email||""}const old=[cur.status,cur.submittedAt,cur.submittedByName,cur.submittedByEmail,cur.submitCount];cur.submitCount=(cur.submitCount||(cur.submittedAt?1:0))+1;const lineNow=!(cur.lineNotifiedAt&&Date.now()-cur.lineNotifiedAt<LINE_COOLDOWN),oldLN=cur.lineNotifiedAt;if(lineNow)cur.lineNotifiedAt=Date.now();cur.status="submitted";cur.submittedAt=Date.now();cur.returnReason="";cur.teachers=tch(cur);cur.submittedByName=(d.myName||su.displayName||cur.ownerName||"");cur.submittedByEmail=(su.email||cur.ownerEmail||"");if(!(await saveCur())){cur.status=old[0];cur.submittedAt=old[1];cur.submittedByName=old[2];cur.submittedByEmail=old[3];cur.submitCount=old[4];cur.lineNotifiedAt=oldLN;alert("送出失敗，請確認網路與 Firestore 規則後再試一次");return}
    const parts=[cur.inc.walk?"社區踏查":"",cur.inc.gm?"出汗性大肌肉":"",cur.inc.lz?"學習區觀察紀錄":""].filter(Boolean).join("、");
-   if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF"+(safeUrl(cur.ext.pdf2Url)?" 1":"")+"：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}${safeUrl(cur.ext.pdf2Url)?"PDF 2：\n"+safeUrl(cur.ext.pdf2Url)+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
+   if(lineNow&&d.notifyLine)d.notifyLine(cur.kind==="ext"?`📰 PDF班刊已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n${safeUrl(cur.ext.url)?"Canva 連結：\n"+safeUrl(cur.ext.url)+"\n":""}${safeUrl(cur.ext.pdfUrl)?"PDF"+(safeUrl(cur.ext.pdf2Url)?" 1":"")+"：\n"+safeUrl(cur.ext.pdfUrl)+"\n":""}${safeUrl(cur.ext.pdf2Url)?"PDF 2：\n"+safeUrl(cur.ext.pdf2Url)+"\n":""}${String(cur.ext.note||"").trim()?"💬 老師備註："+String(cur.ext.note).trim()+"\n":""}請至「🗂️ 週誌總覽」查看`:`📝 週誌已送出${cur.submitCount>1?"（第"+cur.submitCount+"次送出）":""}\n送出者：${who(cur)}\n班級：${cur.cls}\n${roc(cur.dateFrom)}－${roc(cur.dateTo)}\n內容：${parts}\n請至「🗂️ 週誌總覽」查看`);
    alert(lineNow?"已送出！管理員會收到通知。":"已送出！（1 小時內您已經通知過管理員，這次不再重複傳 LINE，管理員在系統裡會看到最新的版本。）");render();return}
   if(ds.sgen!==undefined&&b.hasAttribute("data-sgen")){if(!cur)return;const r=genStrat(cur.lz.strategy),say=t=>{const e=root.querySelector("#sgenst");if(e)e.textContent=t};
    if(!String(r.text).trim()){say("請先在上方「課程調整策略」欄輸入內容，再按這個按鈕。");return}
@@ -3998,7 +3999,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K19</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K22</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6824,14 +6825,15 @@ function printPatrol(r0){
   rows += `<tr class="nt"><td class="g">${"三、其他事項或特殊狀況".split("").join("<br>")}</td><td class="it"></td>${D.map((d,di)=>`<td colspan="${nC}" class="n${di?" dl":""}">${lines(d.note)}</td>`).join("")}</tr>`;
   const css = PRINT_BASE + `@page{size:A4 landscape;margin:8mm}
 body{font-family:"Noto Sans TC","微軟正黑體","Microsoft JhengHei",sans-serif}
-.wrap{width:281mm;margin:0 auto;font-size:10pt;line-height:1.3}@media screen{.wrap{padding:6mm 0}}
+.wrap{width:100%;margin:0 auto;padding:0 1.5mm;font-size:10pt;line-height:1.3}@media screen{.wrap{width:281mm;padding:6mm 1.5mm}}
+table{border:1.5px solid #000}th,td{border:1px solid #000!important}
 .hd .t{font-size:1.25em;font-weight:bold;text-align:center}.sub{margin:4px 0 6px}.sub u{text-decoration:none;border-bottom:1px solid #000;padding:0 .8em}
 th,td{text-align:center;vertical-align:middle;padding:2px}th{font-weight:normal}
 td.g{width:7mm;font-size:.95em}td.it{text-align:left;width:22mm;font-size:.92em}th.pd{font-size:.92em}th.pc{font-size:.78em;line-height:1.15}
-td.s{font-size:1em}.dl{border-left:2px solid #000!important}td.n{text-align:left;vertical-align:top;height:24mm;font-size:.9em}
+td.s{font-size:1em}th.dl,td.dl{border-left:2px solid #000!important}td.n{text-align:left;vertical-align:top;height:24mm;font-size:.9em}
 .legend{margin-top:5px;font-size:.92em}`;
   openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(r.semester)}班級巡堂紀錄表 ${esc(pRoc(r.dateFrom))}</title><style>${css}</style></head><body>
-<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 橫式。列印時「縮放」請選「預設」。</span></div>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>已自動縮放成一頁 A4 橫式。列印時「版面配置」選「橫向」，「縮放」選「預設」或「符合頁面」。</span></div>
 <div class="wrap" id="w"><div class="hd"><div class="t">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理) ${esc(r.semester)}班級巡堂紀錄表</div></div>
 <div class="sub">巡堂紀錄週期：<u>${y1}</u>年<u>${m1}</u>月<u>${d1}</u>日至<u>${y2}</u>年<u>${m2}</u>月<u>${d2}</u>日　　　巡堂紀錄者：<u>${esc(r.recorder)||"　　　　"}</u></div>
 <table><colgroup><col style="width:7mm"><col style="width:22mm">${D.map(()=>C.map(()=>"<col>").join("")).join("")}</colgroup>
