@@ -1571,7 +1571,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     <div class="no-print flex gap-2"><button type="button" class="obs-btn" data-action="print-observation">🖨️ 列印 A4</button><button type="button" class="obs-btn" data-action="reset-observation">清除本頁</button></div>
   </div>
   <form id="learning-observation-form" novalidate class="space-y-4">
-    <div class="no-print obs-tabs" role="tablist"><button type="button" class="obs-tab on" data-obstab="fill">📝 填寫表單</button><button type="button" class="obs-tab" data-obstab="saved">🗂️ 已儲存／分享給我 <span id="obs-tab-n"></span></button><button type="button" class="obs-tab" data-obstab="share">👥 分享設定</button></div>
+    <div class="no-print obs-tabs" role="tablist"><button type="button" class="obs-tab on" data-obstab="fill">📝 填寫表單</button><button type="button" class="obs-tab" data-obstab="saved">🗂️ 已儲存／分享給我 <span id="obs-tab-n"></span></button><button type="button" class="obs-tab" data-obstab="share">👥 分享設定</button><button type="button" class="obs-tab" data-obstab="admin" x-show="isAdmin">🏫 各班完成情形（管理員）</button></div>
     <div data-obspanel="saved" hidden>
     <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-saved">
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1582,7 +1582,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <h4 class="font-heading font-bold text-sm mt-5">👥 分享給我的紀錄 <span class="text-[11px] font-normal text-wood-dark/60">可開啟並共同編輯</span></h4>
       <div id="obs-shared-list" class="mt-2 space-y-2"></div>
     </div>
-    <div class="no-print paper-card rounded-3xl p-6 shadow-card mt-4" id="obs-admin" hidden>
+    </div>
+    <div data-obspanel="admin" hidden>
+    <div class="no-print paper-card rounded-3xl p-6 shadow-card" id="obs-admin" hidden>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h3 class="font-heading font-bold text-sm">🏫 各班觀察紀錄（管理員） <span id="obs-adm-sum" class="text-[11px] font-normal text-wood-dark/60"></span></h3>
         <div class="flex flex-wrap gap-2 items-center">
@@ -1592,7 +1594,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </div>
       </div>
       <p class="text-[11px] text-wood-dark/60 mt-1">依班級、幼兒列出全部老師已儲存的觀察紀錄，每筆都標示儲存人。點日期即可開啟檢視／編輯。</p>
-      <div id="obs-adm-list" class="mt-3"></div>
+      <div id="obs-adm-prog" class="mt-3"></div><h4 class="font-heading font-bold text-sm mt-5">🗂️ 各班已完成的觀察紀錄</h4><div id="obs-adm-list" class="mt-2"></div>
     </div>
     </div>
     <div data-obspanel="share" hidden>
@@ -1624,11 +1626,12 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <div><label for="observation-child" class="text-sm font-bold text-wood-dark/80">姓名：</label><select id="observation-child" name="childName" required class="obs-input"><option value="">請先選擇班級</option></select><input id="observation-child-manual" name="childNameManual" type="text" placeholder="請輸入幼兒姓名" hidden class="obs-input"></div>
         <div><label for="observation-date" class="text-sm font-bold text-wood-dark/80">日期：</label><input id="observation-date" name="observationDate" type="date" required class="obs-input"></div>
       </div>
-      <div x-show="isAdmin" class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
-        <button type="button" class="obs-btn" data-action="copy-pickup">🚌 從接送系統複製全園名單</button>
+      <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
+        <button type="button" class="obs-btn" data-action="roster-edit">👧 新增／刪除幼兒名單</button>
+        <button type="button" class="obs-btn" data-action="copy-pickup" x-show="isAdmin">🚌 從接送系統複製全園名單</button>
         <button type="button" class="obs-btn" data-action="import-children">📋 匯入幼兒名單檔</button>
-        <button type="button" class="obs-btn" data-action="import-old">📂 匯入舊紀錄檔</button>
-        <button type="button" class="obs-btn" data-action="old-sample">⬇️ 舊紀錄範例檔</button>
+        <button type="button" class="obs-btn" data-action="import-old" x-show="isAdmin">📂 匯入舊紀錄檔</button>
+        <button type="button" class="obs-btn" data-action="old-sample" x-show="isAdmin">⬇️ 舊紀錄範例檔</button>
         <input id="old-records-file" type="file" accept=".csv,.json,text/csv,application/json" hidden>
         <input id="children-roster-file" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json" hidden>
         <p class="text-[11px] text-wood-dark/60 flex-1 min-w-[12rem]">CSV／TXT：每行「班級,幼兒姓名」；若已選班級，也可每行只放幼兒姓名。舊紀錄檔（CSV／JSON）必填：班級、幼兒姓名、日期，其餘欄位可省略；照片不會匯入，匯入後歸在管理員帳號下，可再分享給老師。</p>
@@ -1697,7 +1700,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1113-L02</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1113-L03</footer>
     </div>
   </template>
 
@@ -2581,9 +2584,9 @@ async function extWeekCheck(f){const exp=new Set();const src=cur.dateFrom?calcWe
 async function extUpload(f,slot){slot=slot===2?2:1;if(!cur)return;if(!/\.pdf$/i.test(f.name)&&f.type!=="application/pdf"){alert("請選擇 PDF 檔案");return}if(f.size>15*1024*1024){alert("PDF 檔案超過 15MB，請先在 Canva 選較低的品質或減少頁數後再下載");return}
  {const wc=await extWeekCheck(f);if(wc){status("已儲存 ✓");alert(wc);return}}
  if(!window.PdfUtil||!window.__driveUrl){alert("管理員還沒有設定「雲端硬碟上傳」。\n您可以改貼 Canva 連結，或請管理員到「管理者後台 → 帳號與系統 → ☁️ 雲端硬碟上傳設定」設定。");return}
- const cn=String(cur.cls||"").replace(/\s+/g,""),fm=FD(),fk=Object.keys(fm).find(k=>k.replace(/\s+/g,"")===cn)||(cn?Object.keys(fm).find(k=>{const kk=k.replace(/\s+/g,"");return kk&&(kk.includes(cn)||cn.includes(kk))}):null);let fid=fk?PdfUtil.folderId(fm[fk]):"";
+ const newsFid=({"幸運草班":"1QxnqFppqyVbuOGly3lwHukm_OPojbB42","仙草花班":"1AYUtgyP3x4rF_RmWocDo6o3xaNrpOUWm","山茶花班":"1rZzKf4X2SBGbNb_1_olWZHq_QwUnK1zI","梔子花班":"1kHgoNP6x_FBTWQaHOU1xCi0siCDi9TU7","風鈴草班":"1F9CXzIF-9TMEqPkpVU_10KL2PCk8TLiM"})[String(cur.cls||"").replace(/\s+/g,"").replace(/斑$/,"班")]||"";const cn=String(cur.cls||"").replace(/\s+/g,""),fm=FD(),fk=Object.keys(fm).find(k=>k.replace(/\s+/g,"")===cn)||(cn?Object.keys(fm).find(k=>{const kk=k.replace(/\s+/g,"");return kk&&(kk.includes(cn)||cn.includes(kk))}):null);let fid=newsFid||(fk?PdfUtil.folderId(fm[fk]):"");
  if(!fid){const gen=PdfUtil.folderId(window.__drivePlanFolder||"");if(gen&&confirm((cn?"「"+cur.cls+"」":"這份班刊（還沒填班級）")+"沒有對應的班級雲端資料夾。\n要改存到共用資料夾的「班刊」裡嗎？"))fid=gen;else{alert(cn?"找不到「"+cur.cls+"」的班級雲端硬碟資料夾。\n請確認班級名稱和「管理者後台 → ☁️ 雲端硬碟上傳設定」裡的班級名稱一致，或改貼 Canva 連結。":"請先在上方「班級」欄填入班級名稱，再上傳 PDF。");return}}
- try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${(()=>{const n=cur.uid&&cur.uid!==(d.currentUser||{}).uid?String(cur.ownerName||"").trim():myNm();return n?"_"+n:""})()}_${slot===2?2:1}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
+ try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${(()=>{const n=cur.uid&&cur.uid!==(d.currentUser||{}).uid?String(cur.ownerName||"").trim():myNm();return n?"_"+n:""})()}_${slot===2?2:1}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:newsFid?"":"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
 async function flushCur(){if(d.isAdmin&&cur&&cur.uid!==(d.currentUser||{}).uid&&!edDirty)return true;return saveCur()}
 async function saveCur(){if(viewOnly)return true;if(!cur)return;try{status("儲存中…");const p=JSON.parse(JSON.stringify(cur));p.updatedAt=Date.now();await col().doc(cur.id).set(p);status("已儲存 ✓");edDirty=false;histPush();return true}catch(e){status("儲存失敗："+(e.code||e.message));return false}}
 function later(){edDirty=true;status("尚未儲存…");clearTimeout(saveT);saveT=setTimeout(saveCur,1200)}
@@ -4033,7 +4036,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1113-L02</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1113-L03</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -4143,7 +4146,6 @@ function kgApp() {
     await firebase.firestore().collection('roster').doc('children').set({ list: roster, updatedAt: Date.now(), updatedBy: u.uid }, { merge: true });
   }
   async function importFile(file) {
-    if (!isAdm()) throw new Error('只有管理員可以匯入');
     const text = await readText(file), cs = $('#observation-class');
     const def = cs && cs.value !== '__manual__' ? cs.value : '';
     const imp = file.name.toLowerCase().endsWith('.json') ? fromJson(JSON.parse(text), def) : parseRoster(text, def);
@@ -4152,7 +4154,7 @@ function kgApp() {
     if (!n) throw new Error('找不到可匯入的幼兒資料');
     localStorage.setItem(LS, JSON.stringify(roster)); refreshRoster(true);
     let msg = '已匯入 ' + n + ' 位幼兒。';
-    try { await saveRoster(); } catch (e) { msg += '（雲端同步失敗：' + (e.code || e.message) + '，目前只存在這台裝置）'; }
+    try { const u0 = fbUser(); if (!u0) throw new Error('尚未登入'); const part = {}; Object.keys(imp).forEach(c => { part[c] = roster[c]; }); await firebase.firestore().collection('roster').doc('children').set({ list: part, updatedAt: Date.now(), updatedBy: u0.uid }, { merge: true }); } catch (e) { msg += '（雲端同步失敗：' + (e.code || e.message) + '，目前只存在這台裝置）'; }
     rosterMsg(msg);
   }
   /* ---- 從接送系統複製全園幼兒名單（讀 pickup/allkids，依座號排序）---- */
@@ -4382,8 +4384,80 @@ function kgApp() {
     unAll = firebase.firestore().collection('learningObservations').onSnapshot(s => { allObs = s.docs.map(d => ({ id: d.id, ...d.data() })); renderAdmin(); },
       e => { const el = $('#obs-adm-list'); if (el) el.textContent = '讀取失敗：' + (e.code || e.message); });
   }
+  /* ---- 老師管理幼兒名單：手動新增、刪除已不在班上的幼兒（只改目前選的班級；已儲存的觀察紀錄不受影響）---- */
+  function rosterEdit() {
+    const cs = $('#observation-class'), cls = cs && cs.value !== '__manual__' ? cs.value : '';
+    if (!cls) { rosterMsg('請先在上方選擇班級，再編輯幼兒名單。', true); return; }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,20,.45);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto';
+    let list = [...(roster[cls] || [])];
+    const draw = () => {
+      ov.innerHTML = `<div style="background:#fffdf8;border-radius:18px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-size:14px">
+        <div style="padding:18px 22px 8px;border-bottom:1px solid #eee5d3"><b style="font-size:18px">👧 ${escP(cls)} 幼兒名單（${list.length} 位）</b>
+        <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">可以新增幼兒，或刪除已經沒有讀的幼兒。刪除只會從名單拿掉，已儲存的觀察紀錄不會被刪除。改完按「儲存名單」。</p></div>
+        <div style="padding:12px 22px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><input data-rnew placeholder="輸入幼兒姓名（可一次貼多位，用頓號、逗號或換行分開）" style="flex:1;min-width:220px;border:1px solid #cdbf9e;border-radius:10px;padding:6px 10px"><button type="button" data-radd style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:10px;padding:6px 14px;cursor:pointer">＋ 新增</button></div>
+          <div style="margin-top:10px;max-height:50vh;overflow:auto;display:flex;flex-wrap:wrap;gap:6px">${list.length ? list.map((n, i) => `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid #e3d9c2;background:#fff;border-radius:999px;padding:3px 6px 3px 12px">${escP(n)}<button type="button" data-rdel="${i}" title="從名單刪除" style="border:0;background:#f6e3dd;color:#b4472f;border-radius:999px;width:22px;height:22px;cursor:pointer;font-weight:700">✕</button></span>`).join('') : '<span style="color:#9a917a">名單是空的，請在上面輸入幼兒姓名。</span>'}</div>
+        </div>
+        <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #eee5d3"><span data-rst style="flex:1;color:#b4472f;font-weight:700;align-self:center"></span>
+        <button type="button" data-rcancel style="border:1px solid #cdbf9e;background:#fff;border-radius:10px;padding:6px 14px;cursor:pointer">取消</button><button type="button" data-rsave style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:10px;padding:6px 14px;cursor:pointer">儲存名單</button></div></div>`;
+      const inp = ov.querySelector('[data-rnew]');
+      const add = () => { const nm = inp.value.split(/[、,，;；\n\r\t]+/).map(x => x.trim()).filter(Boolean); if (!nm.length) return; list = [...new Set([...list, ...nm])]; draw(); ov.querySelector('[data-rnew]').focus(); };
+      ov.querySelector('[data-radd]').onclick = add;
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+      ov.querySelectorAll('[data-rdel]').forEach(b => b.onclick = () => { const n = list[+b.dataset.rdel]; if (!confirm('把「' + n + '」從 ' + cls + ' 的名單刪除嗎？\n（已儲存的觀察紀錄不會被刪除）')) return; list.splice(+b.dataset.rdel, 1); draw(); });
+      ov.querySelector('[data-rcancel]').onclick = () => ov.remove();
+      ov.querySelector('[data-rsave]').onclick = async (e) => {
+        const pend = inp.value.trim(); if (pend) { add(); }
+        const btn = e.currentTarget, st = ov.querySelector('[data-rst]'); btn.disabled = true; btn.textContent = '儲存中…';
+        roster[cls] = list; localStorage.setItem(LS, JSON.stringify(roster)); refreshRoster(true);
+        try {
+          const u = fbUser(); if (!u) throw new Error('尚未登入');
+          await firebase.firestore().collection('roster').doc('children').set({ list: { [cls]: list }, updatedAt: Date.now(), updatedBy: u.uid }, { merge: true });
+          ov.remove(); rosterMsg('已儲存 ' + cls + ' 的幼兒名單（' + list.length + ' 位）。');
+        } catch (err) { btn.disabled = false; btn.textContent = '儲存名單'; st.textContent = '儲存失敗：' + (err.code || err.message) + '（目前只存在這台裝置）'; }
+      };
+    };
+    draw(); document.body.appendChild(ov); setTimeout(() => { const i = ov.querySelector('[data-rnew]'); if (i) i.focus(); }, 50);
+  }
+  /* ---- 管理員：各班完成情形（依本學期進度標示計算）---- */
+  let admMarks = [], unAdmM = null, admMKey = '', admOpen = {};
+  function syncAdmMarks() {
+    const sem = admSem && admSem !== '*' ? admSem : curSem();
+    if (sem === admMKey && unAdmM) return;
+    if (unAdmM) unAdmM(); admMKey = sem; admMarks = [];
+    unAdmM = firebase.firestore().collection('observationMarks').where('semester', '==', sem)
+      .onSnapshot(s => { admMarks = s.docs.map(d => ({ id: d.id, ...d.data() })); renderAdmProg(); }, e => { const el = $('#obs-adm-prog'); if (el) el.textContent = '讀取進度失敗：' + (e.code || e.message); });
+  }
+  function renderAdmProg() {
+    const el = $('#obs-adm-prog'); if (!el || !isAdm()) return;
+    const sem = admMKey || curSem();
+    const classes = [...new Set([...((app && app.classes) || []), ...Object.keys(roster)])].filter(c => (roster[c] || []).length).sort(zh);
+    if (!classes.length) { el.innerHTML = '<p class="text-xs" style="color:#a08a6c">還沒有幼兒名單，無法計算完成情形。</p>'; return; }
+    const bar = (n, t, col) => `<div style="background:#efe8d8;border-radius:999px;height:8px;overflow:hidden;min-width:70px"><div style="width:${t ? Math.round(n / t * 100) : 0}%;background:${col};height:100%"></div></div>`;
+    let tot = { k: 0, f: 0, ns: 0, no: 0, two: 0 };
+    const rows = classes.map(c => {
+      const names = roster[c] || [], ms = admMarks.filter(m => m.className === c);
+      let f = 0, two = 0; const nosign = [], none = [], one = [];
+      names.forEach(n => { const mm = ms.filter(m => m.childName === n).sort(byTime), st = firstState(mm); if (st === 'done') f++; else if (st === 'nosign') nosign.push(n); else none.push(n); if (mm.length >= GOAL) two++; else if (mm.length) one.push(n); });
+      tot.k += names.length; tot.f += f; tot.ns += nosign.length; tot.no += none.length; tot.two += two;
+      const open = !!admOpen[c];
+      const det = open ? `<tr><td colspan="6" style="background:#fbf8f0;padding:6px 10px;font-size:12px;line-height:1.7">${none.length ? `<div><b style="color:#b4472f">⬜ 尚未寫第一份（${none.length}）：</b>${none.map(escP).join('、')}</div>` : ''}${nosign.length ? `<div><b style="color:#b8860b">✍️ 第一份缺家長簽名（${nosign.length}）：</b>${nosign.map(escP).join('、')}</div>` : ''}${one.length ? `<div><b style="color:#2f5597">只寫 1 次（${one.length}）：</b>${one.map(escP).join('、')}</div>` : ''}${!none.length && !nosign.length && !one.length ? '<div style="color:#2f6b4f;font-weight:700">🎉 全部完成</div>' : ''}</td></tr>` : '';
+      return `<tr data-admcls="${escP(c)}" style="cursor:pointer;border-top:1px solid #eee5d3" title="點一下看還沒完成的幼兒"><td style="padding:6px 8px;font-weight:700">${open ? '▾' : '▸'} ${escP(c)}</td><td style="padding:6px 8px;text-align:center">${names.length}</td>
+        <td style="padding:6px 8px"><div style="display:flex;align-items:center;gap:6px"><b style="color:#2f6b4f;min-width:44px">${f}/${names.length}</b>${bar(f, names.length, '#4f9a6f')}</div></td>
+        <td style="padding:6px 8px;text-align:center;color:${nosign.length ? '#b8860b' : '#9a917a'}">${nosign.length}</td><td style="padding:6px 8px;text-align:center;color:${none.length ? '#b4472f' : '#9a917a'}">${none.length}</td>
+        <td style="padding:6px 8px"><div style="display:flex;align-items:center;gap:6px"><b style="color:#2f5597;min-width:44px">${two}/${names.length}</b>${bar(two, names.length, '#5b7fc4')}</div></td></tr>${det}`;
+    }).join('');
+    el.innerHTML = `<h4 class="font-heading font-bold text-sm" style="margin:0 0 4px">📊 各班完成情形｜${escP(semLabel(sem))}</h4>
+      <p class="text-[11px]" style="color:#8a7f66;margin:0 0 6px">每位幼兒每學期 ${GOAL} 次；第一份要有家長簽名才算完成。點班級可以看還沒完成的幼兒。</p>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #e3d9c2;border-radius:10px">
+      <thead><tr style="background:#f6f1e4;color:#6f6a5e;font-size:12px;text-align:left"><th style="padding:6px 8px">班級</th><th style="padding:6px 8px;text-align:center">幼兒</th><th style="padding:6px 8px">第一份完成</th><th style="padding:6px 8px;text-align:center">缺家長簽名</th><th style="padding:6px 8px;text-align:center">尚未寫</th><th style="padding:6px 8px">${GOAL} 次都寫完</th></tr></thead>
+      <tbody>${rows}<tr style="border-top:2px solid #d8ccb0;font-weight:700;background:#fbf8f0"><td style="padding:6px 8px">全園</td><td style="padding:6px 8px;text-align:center">${tot.k}</td><td style="padding:6px 8px">${tot.f}/${tot.k}</td><td style="padding:6px 8px;text-align:center">${tot.ns}</td><td style="padding:6px 8px;text-align:center">${tot.no}</td><td style="padding:6px 8px">${tot.two}/${tot.k}</td></tr></tbody></table></div>`;
+    el.querySelectorAll('[data-admcls]').forEach(tr => tr.onclick = () => { const c = tr.dataset.admcls; admOpen[c] = !admOpen[c]; renderAdmProg(); });
+  }
   function renderAdmin() {
     const box = $('#obs-adm-list'); if (!box || !isAdm()) return;
+    try { syncAdmMarks(); renderAdmProg(); } catch (e) { console.error(e); }
     const by = x => x.userName || (x.userEmail || '').split('@')[0] || '（未知）';
     const sems = Array.from(new Set(allObs.map(x => x.semester).filter(Boolean))).sort().reverse();
     if (!admSem && sems.length) admSem = sems[0];
@@ -4600,6 +4674,7 @@ function kgApp() {
     $('input[name="observationDate"]').addEventListener('change', syncMarks);
     const of = $('#old-records-file');
     $('[data-action="import-old"]').addEventListener('click', () => of.click());
+    { const rb = $('[data-action="roster-edit"]'); if (rb) rb.addEventListener('click', rosterEdit); }
     $('[data-action="old-sample"]').addEventListener('click', downloadOldSample);
     const pf = $('#obs-pdf-file');
     $('[data-action="import-pdf"]').addEventListener('click', () => pf.click());
@@ -4875,7 +4950,8 @@ function kgApp() {
     form.addEventListener('input', unlock); form.addEventListener('change', unlock);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (saving || !form.reportValidity()) return;
+      if (saving) return;
+      if (!form.checkValidity()) { const bad = form.querySelector(':invalid'); setTab('fill'); const lab = bad && (bad.id && form.querySelector('label[for="' + bad.id + '"]')); const nm = lab ? lab.textContent.replace(/[：:]\s*$/, '') : (bad && bad.name === 'indicatorAge' ? '學習指標（年齡層）' : bad && bad.name === 'indicatorCategory' ? '學習指標（分類）' : bad && bad.name === 'indicatorItem' ? '學習指標' : '必填欄位'); say('還沒填「' + nm + '」，請填好後再按儲存。', true); if (bad) { bad.scrollIntoView({ block: 'center', behavior: 'smooth' }); try { bad.focus({ preventScroll: true }); } catch (e) {} setTimeout(() => form.reportValidity(), 350); } return; }
       const payload = collectFormData(form);
       if (!editing && payload.className && payload.childName && marksKey === payload.semester + '|' + payload.className
         && marks.filter(m => m.childName === payload.childName).length >= GOAL
@@ -4890,7 +4966,7 @@ function kgApp() {
         }
         say(r.mode === 'firebase' ? (wasEdit ? '觀察紀錄已更新' : '觀察紀錄已儲存') + (r.photoCount ? '（照片 ' + r.photoCount + ' 張）' : '') + '。' + extra : 'Firebase 尚未登入，觀察紀錄已暫存於本機（照片不會暫存）。');
         if (r.mode === 'firebase') { try { await loadRecord(r.id); } catch (e) { console.error(e); } } // 存檔後直接進入編輯狀態，之後可繼續修改
-        btn.textContent = '✓ 已儲存'; btn.disabled = true;
+        btn.textContent = '✓ 已儲存（可再修改後按此更新）'; btn.disabled = false;
       } catch (err) {
         console.error('儲存觀察紀錄失敗', err);
         say('儲存失敗：' + (err.code || err.message || '請稍後再試'), true);
