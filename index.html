@@ -1697,7 +1697,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K34</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1112-K35</footer>
     </div>
   </template>
 
@@ -1802,7 +1802,7 @@ const body=h=>{$("#puBody").innerHTML=h};
 function picker(title,items,sel,cb,defG2){const md=document.createElement("div");md.className="pu-modal";let q="",g="",g2=defG2||"";const S=new Set(sel);const AGE=["幼幼班（2–3歲）","小班（3–4歲）","中班（4–5歲）","大班（5–6歲）"];const grps2=AGE.filter(a=>items.some(i=>i.g2===a));const grps=[...new Set(items.map(i=>i.grp).filter(Boolean))];
   md.innerHTML=`<div class="pu-mb"><div class="pu-row"><b>${esc(title)}</b><input id="pq" placeholder="搜尋" style="flex:1">${grps.length?'<select id="pg"><option value="">全部分類</option>'+grps.map(x=>`<option>${esc(x)}</option>`).join("")+"</select>":""}${grps2.length?'<select id="pg2"><option value="">全部年齡層</option>'+grps2.map(x=>`<option ${x===g2?"selected":""}>${esc(x)}</option>`).join("")+"</select>":""}<button class="pu-p" id="pok">完成</button></div><div class="pu-ml" id="pl"></div></div>`;
   document.body.appendChild(md);const q$=s=>md.querySelector(s);
-  const draw=()=>{q$("#pl").innerHTML=items.filter(i=>(!g||i.grp===g)&&(!g2||i.g2===g2)&&(!q||(i.label+i.sub).includes(q))).slice(0,300).map(i=>`<div class="pu-it ${S.has(i.k)?"s":""}" data-k="${esc(i.k)}"><span>${S.has(i.k)?"✓ ":""}${esc(i.label)}</span><span class="pu-m">${esc(i.sub||"")}</span></div>`).join("")||'<p class="pu-m">沒有符合的項目</p>';
+  const draw=()=>{q$("#pl").innerHTML=items.filter(i=>(!g||i.grp===g)&&(!g2||i.g2===g2)&&(!q||(i.label+i.sub).includes(q))).slice(0,300).map(i=>`<div class="pu-it ${S.has(i.k)?"s":""}" data-k="${esc(i.k)}"${i.img!==undefined?' style="align-items:center;gap:10px"':""}><span${i.img!==undefined?' style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"':""}>${i.img!==undefined?`<span style="width:2cm;height:2cm;flex:none;display:flex;align-items:center;justify-content:center;background:#f6f1e4;border:1px solid #e3d9c2;border-radius:6px;overflow:hidden">${i.img?`<img src="${esc(i.img)}" loading="lazy" referrerpolicy="no-referrer" alt="" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'無圖\',style:\'font-size:11px;color:#b3a78c\'}))">`:'<span style="font-size:11px;color:#b3a78c">無圖</span>'}</span>`:""}<span>${S.has(i.k)?"✓ ":""}${esc(i.label)}</span></span><span class="pu-m">${esc(i.sub||"")}</span></div>`).join("")||'<p class="pu-m">沒有符合的項目</p>';
     md.querySelectorAll(".pu-it").forEach(e=>e.onclick=()=>{const k=e.dataset.k;S.has(k)?S.delete(k):S.add(k);draw()})};
   q$("#pq").oninput=e=>{q=e.target.value;draw()};const gs=q$("#pg");if(gs)gs.onchange=e=>{g=e.target.value;draw()};const gs2=q$("#pg2");if(gs2)gs2.onchange=e=>{g2=e.target.value;draw()};
   q$("#pok").onclick=()=>{md.remove();cb([...S])};draw();}
@@ -1810,7 +1810,7 @@ const DOM={認:"認知",語:"語文",身:"身體動作與健康",社:"社會",�
 const AGEN={"幼":"幼幼班（2–3歲）","小":"小班（3–4歲）","中":"中班（4–5歲）","大":"大班（5–6歲）"};
 const goalOf=c=>{const m=c.match(/^(.)-.-(\d+)-(\d+)-\d+$/);return m?m[1]+"-"+m[2]+"-"+m[3]:""};
 const indItems=()=>Object.entries(D.ind).map(([c,t])=>({k:c,label:c+" "+t+((D.inh||[]).includes(c)?"（沿用）":""),sub:(D.goal||{})[goalOf(c)]?"課程目標："+D.goal[goalOf(c)]:"",grp:DOM[c[0]],g2:AGEN[c.split("-")[1]]}));
-const toolItems=()=>inv.map(r=>({k:r[1],label:r[1],sub:`${r[0]}｜剩${r[3]}/${r[2]}`,grp:r[0]}));
+const toolItems=()=>inv.map(r=>({k:r[1],label:r[1],sub:`${r[0]}｜剩${r[3]}/${r[2]}`,grp:r[0],img:r[5]||""}));
 /* plan editor */
 const COLOR={"語文區":"#2F6FB5","數學區":"#D9822B","積木區":"#8B5E3C","組合建構區":"#7A4FB5","美勞區":"#CF3F78","生活自理區":"#2E8B5E","鬆散素材區":"#B8921A","扮演區":"#C0503A"};
 const colorOf=n=>{const k=Object.keys(COLOR).find(k=>n.startsWith(k));return COLOR[k]||"#666"};
@@ -4033,7 +4033,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K34</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1112-K35</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
