@@ -1701,7 +1701,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L06</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L07</footer>
     </div>
   </template>
 
@@ -2538,7 +2538,7 @@ async function unshareMe(id){const o=logs.find(l=>l.id===id);if(!o)return;
 function safeUrl(u){u=String(u||"").trim();return/^https?:\/\//i.test(u)?u:""}
 function openExt(L){const e=L.ext||{},u=safeUrl(e.url)||safeUrl(e.pdfUrl);if(u)window.open(u,"_blank","noopener");else alert("這份班刊還沒有附上連結或 PDF")}
 function extBadge(l){return l.kind==="ext"?' <span style="background:#f3e8ff;color:#6b21a8;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700">📰 PDF班刊</span>':""}
-function extBtns(l){if(d&&d.isAdmin)return `<button class="wkb" data-extup="${l.id}" title="選 1～2 個 PDF（可一次選兩個），存到這個班級雲端硬碟的「班刊」資料夾，檔名後面加 _1、_2，並附在這份班刊的 PDF 1、PDF 2">☁️ 上傳雲端${(l.ext||{}).pdfUrl?" ✓":""}</button>`;const e=l.ext||{},a=safeUrl(e.url),b=safeUrl(e.pdfUrl),b2=safeUrl(e.pdf2Url),st="text-decoration:none;display:inline-block";
+function extBtns(l){if(d&&d.isAdmin)return `<button class="wkb" data-extup="${l.id}" title="把這份班刊附的 PDF 1、PDF 2 直接上傳到該班的班刊雲端資料夾（檔名加 _1、_2）">☁️ 上傳雲端${(l.ext||{}).pdfUrl?" ✓":""}</button>`;const e=l.ext||{},a=safeUrl(e.url),b=safeUrl(e.pdfUrl),b2=safeUrl(e.pdf2Url),st="text-decoration:none;display:inline-block";
  return(a?`<a class="wkb" href="${esc(a)}" target="_blank" rel="noopener" style="${st}">🎨 開啟 Canva</a>`:"")+(b?`<a class="wkb" href="${esc(b)}" target="_blank" rel="noopener" style="${st}">📄 開啟 PDF${b2?" 1":""}</a>`:"")+(b2?`<a class="wkb" href="${esc(b2)}" target="_blank" rel="noopener" style="${st}">📄 開啟 PDF 2</a>`:"")||`<span style="font-size:12px;color:#9a917a">（尚未附連結或 PDF）</span>`}
 function extInfoHtml(L){const e=L.ext||{};return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px"><div><b style="font-size:16px">📰 ${esc(L.sem||"")} ${esc(L.cls||"（未填班級）")}</b>${badge(L)}${extBadge(L)}</div><div style="font-size:13px;color:#7a6f57">${roc(L.dateFrom)}－${roc(L.dateTo)}　｜　送出者：${esc(who(L))}${L.submittedAt?"　｜　送出："+tm(L.submittedAt):""}</div>${reasonLine2(L)}<div style="display:flex;gap:8px;flex-wrap:wrap">${extBtns(L)}</div>${e.note?`<div style="font-size:13px;white-space:pre-wrap">備註：${esc(e.note)}</div>`:""}</div>`}
 function extViewerHtml(){const L=cur;const share=(L.uid!==(d.currentUser||{}).uid&&!d.isAdmin)?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(L.ownerName||L.ownerEmail||"")} ${(L.sharedWith||[]).includes(myEmail())?"分享給您的":"的（同班老師）"}，僅供檢視，不能修改。</div>`:"";
@@ -2587,7 +2587,7 @@ async function extUpload(f,slot){slot=slot===2?2:1;if(!cur)return;if(!/\.pdf$/i.
  if(!window.PdfUtil||!window.__driveUrl){alert("管理員還沒有設定「雲端硬碟上傳」。\n您可以改貼 Canva 連結，或請管理員到「管理者後台 → 帳號與系統 → ☁️ 雲端硬碟上傳設定」設定。");return}
  const newsFid=({"幸運草班":"1QxnqFppqyVbuOGly3lwHukm_OPojbB42","仙草花班":"1AYUtgyP3x4rF_RmWocDo6o3xaNrpOUWm","山茶花班":"1rZzKf4X2SBGbNb_1_olWZHq_QwUnK1zI","梔子花班":"1kHgoNP6x_FBTWQaHOU1xCi0siCDi9TU7","風鈴草班":"1F9CXzIF-9TMEqPkpVU_10KL2PCk8TLiM"})[String(cur.cls||"").replace(/\s+/g,"").replace(/斑$/,"班")]||"";const cn=String(cur.cls||"").replace(/\s+/g,""),fm=FD(),fk=Object.keys(fm).find(k=>k.replace(/\s+/g,"")===cn)||(cn?Object.keys(fm).find(k=>{const kk=k.replace(/\s+/g,"");return kk&&(kk.includes(cn)||cn.includes(kk))}):null);let fid=newsFid||(fk?PdfUtil.folderId(fm[fk]):"");
  if(!fid){const gen=PdfUtil.folderId(window.__drivePlanFolder||"");if(gen&&confirm((cn?"「"+cur.cls+"」":"這份班刊（還沒填班級）")+"沒有對應的班級雲端資料夾。\n要改存到共用資料夾的「班刊」裡嗎？"))fid=gen;else{alert(cn?"找不到「"+cur.cls+"」的班級雲端硬碟資料夾。\n請確認班級名稱和「管理者後台 → ☁️ 雲端硬碟上傳設定」裡的班級名稱一致，或改貼 Canva 連結。":"請先在上方「班級」欄填入班級名稱，再上傳 PDF。");return}}
- try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${(()=>{const n=cur.uid&&cur.uid!==(d.currentUser||{}).uid?String(cur.ownerName||"").trim():myNm();return n?"_"+n:""})()}_${slot===2?2:1}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:newsFid?"":"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
+ try{status("上傳 PDF 中…");const nm=`${cur.sem||""}${cur.cls}_班刊_${weekText(cur)}${(()=>{const n=cur.uid&&cur.uid!==(d.currentUser||{}).uid?String(cur.ownerName||"").trim():myNm();return n?"_"+n:""})()}_${slot===2?2:1}.pdf`;const r=await PdfUtil.upload(f,{filename:nm,subfolder:newsFid?"":"班刊",folderId:fid});if(slot===2){cur.ext.pdf2Url=r.url||"";cur.ext.pdf2Name=f.name;cur.ext.pdf2Folder=fid}else{cur.ext.pdfUrl=r.url||"";cur.ext.pdfName=f.name;cur.ext.pdfFolder=fid}await saveCur();render();status("PDF "+slot+" 已上傳 ✓")}catch(e){status("上傳失敗");alert("上傳失敗："+(e.message||e))}}
 async function flushCur(){if(d.isAdmin&&cur&&cur.uid!==(d.currentUser||{}).uid&&!edDirty)return true;return saveCur()}
 async function saveCur(){if(viewOnly)return true;if(!cur)return;try{status("儲存中…");const p=JSON.parse(JSON.stringify(cur));p.updatedAt=Date.now();await col().doc(cur.id).set(p);status("已儲存 ✓");edDirty=false;histPush();return true}catch(e){status("儲存失敗："+(e.code||e.message));return false}}
 function later(){edDirty=true;status("尚未儲存…");clearTimeout(saveT);saveT=setTimeout(saveCur,1200)}
@@ -2790,14 +2790,33 @@ function bind(){
    later()}});
  root.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-new],[data-open],[data-print],[data-dup],[data-rm],[data-back],[data-printcur],[data-fillwalk],[data-fillgm],[data-ev],[data-xp],[data-fillteach],[data-saveprefs],[data-useprefs],[data-submit],[data-reviewed],[data-mode],[data-cls],[data-sex],[data-impseed],[data-return],[data-updf],[data-lbind],[data-xws],[data-sgen],[data-sgenok],[data-sgenno],[data-share],[data-shsave],[data-shcancel],[data-impall],[data-impnone],[data-impgo],[data-impcancel],[data-rvok],[data-rvret],[data-unshare],[data-undo],[data-redo],[data-newext],[data-extrm],[data-extup]");if(!b)return;const ds=b.dataset;if(ds.xws!==undefined){const i=+ds.xws,sl=cur&&cur.ws&&cur.ws.slots[i];if(!sl||!sl.id||!confirm("確定要刪除這張學習單掃描檔嗎？"))return;col().doc(cur.id).collection("photos").doc(sl.id).delete().catch(()=>{});sl.id="";await saveCur();render();return}
   if((ds.new||(ds.newext!==undefined&&b.hasAttribute("data-newext")))&&!d.isAdmin&&!pairCls().length){askClass();return}
-   if(ds.extup!==undefined&&b.hasAttribute("data-extup")){const L0=logs.find(l=>l.id===ds.extup);if(!L0)return;
- const inp=document.createElement("input");inp.type="file";inp.accept="application/pdf,.pdf";inp.multiple=true;inp.onchange=async()=>{let fs=[...(inp.files||[])].sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant",{numeric:true}));if(!fs.length)return;
-  if(fs.length>2){alert("一份班刊最多 2 個 PDF，這次只會上傳前 2 個：\n"+fs.slice(0,2).map(f=>f.name).join("\n"));fs=fs.slice(0,2)}
-  const big=fs.find(f=>f.size>15*1024*1024);if(big){alert("「"+big.name+"」超過 15MB，請先壓縮再上傳");return}
+   if(ds.extup!==undefined&&b.hasAttribute("data-extup")){const L0=logs.find(l=>l.id===ds.extup);if(!L0)return;const e0=L0.ext||{};
+ const NEWSF={"幸運草班":"1QxnqFppqyVbuOGly3lwHukm_OPojbB42","仙草花班":"1AYUtgyP3x4rF_RmWocDo6o3xaNrpOUWm","山茶花班":"1rZzKf4X2SBGbNb_1_olWZHq_QwUnK1zI","梔子花班":"1kHgoNP6x_FBTWQaHOU1xCi0siCDi9TU7","風鈴草班":"1F9CXzIF-9TMEqPkpVU_10KL2PCk8TLiM"};
+ const cn=String(L0.cls||"").replace(/\s+/g,"").replace(/斑$/,"班"),nf=NEWSF[cn];
+ if(!nf){alert("找不到「"+(L0.cls||"（未填班級）")+"」的班刊雲端資料夾。");return}
+ if(!window.PdfUtil||!window.__driveUrl){alert("管理員還沒有設定「雲端硬碟上傳」網址。");return}
+ const fileId=u=>{const m=String(u||"").match(/\/d\/([\w-]{20,})/)||String(u||"").match(/[?&]id=([\w-]{20,})/);return m?m[1]:""};
+ const slots=[1,2].map(n=>({n,url:n===2?e0.pdf2Url:e0.pdfUrl,inNews:(n===2?e0.pdf2Folder:e0.pdfFolder)===nf})).filter(x=>x.url);
+ const pickFiles=()=>{const inp=document.createElement("input");inp.type="file";inp.accept="application/pdf,.pdf";inp.multiple=true;inp.onchange=async()=>{let fs=[...(inp.files||[])].sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant",{numeric:true}));if(!fs.length)return;
+  if(fs.length>2){alert("一份班刊最多 2 個 PDF，這次只會上傳前 2 個。");fs=fs.slice(0,2)}
   const keep=cur,keepV=viewOnly;cur=JSON.parse(JSON.stringify(L0));delete cur._cls;cur.ext=Object.assign({url:"",pdfUrl:"",pdfName:"",note:""},cur.ext||{});viewOnly=false;const done=[];
   try{for(let i=0;i<fs.length;i++){const slot=i+1,K=()=>slot===2?(cur.ext.pdf2Url||"")+"|"+(cur.ext.pdf2Name||""):(cur.ext.pdfUrl||"")+"|"+(cur.ext.pdfName||""),before=K();await extUpload(fs[i],slot);if(K()!==before&&!K().startsWith("|"))done.push("PDF "+slot+"："+fs[i].name);else break}}
-  finally{cur=keep;viewOnly=keepV;render();if(done.length)alert("已上傳到雲端硬碟「班刊」資料夾：\n"+done.join("\n"))}};
- inp.click();return}
+  finally{cur=keep;viewOnly=keepV;render();if(done.length)alert("已上傳到「"+cn+"」班刊資料夾：\n"+done.join("\n"))}};inp.click()};
+ if(!slots.length){if(confirm("這份班刊還沒有附 PDF（可能只有 Canva 連結）。\n要從電腦選 PDF 上傳到「"+cn+"」班刊資料夾嗎？"))pickFiles();return}
+ const todo=slots.filter(x=>!x.inNews);
+ if(!todo.length){if(confirm("這份班刊的 PDF 已經在「"+cn+"」班刊資料夾裡了。\n要打開資料夾看看嗎？"))window.open("https://drive.google.com/drive/folders/"+nf,"_blank");return}
+ b.disabled=true;const old=b.innerHTML;const ok=[],bad=[];
+ const L1=JSON.parse(JSON.stringify(L0));delete L1._cls;L1.ext=Object.assign({},L1.ext||{});
+ const base=`${L0.sem||""}${L0.cls||""}_班刊_${weekText(L0)}${String(L0.ownerName||"").trim()?"_"+String(L0.ownerName).trim():""}`.replace(/[\\\/:*?"<>|]/g,"_");
+ for(const x of todo){b.innerHTML="上傳中… PDF "+x.n;const id=fileId(x.url);let blob=null;
+  for(const u of id?["https://drive.usercontent.google.com/download?id="+id+"&export=download&confirm=t","https://drive.google.com/uc?export=download&id="+id]:[x.url]){try{const r=await fetch(u,{credentials:"omit"});if(!r.ok)continue;const bl=await r.blob();const head=new Uint8Array(await bl.slice(0,5).arrayBuffer());if(String.fromCharCode(...head)==="%PDF-"){blob=bl;break}}catch(e){}}
+  if(!blob){bad.push(x.n);continue}
+  try{const r=await PdfUtil.upload(blob,{filename:base+"_"+x.n+".pdf",subfolder:"",folderId:nf});if(x.n===2){L1.ext.pdf2Url=r.url||L1.ext.pdf2Url;L1.ext.pdf2Folder=nf}else{L1.ext.pdfUrl=r.url||L1.ext.pdfUrl;L1.ext.pdfFolder=nf}ok.push(x.n)}catch(e){bad.push(x.n+"（"+(e.message||e)+"）")}}
+ if(ok.length){try{L1.updatedAt=Date.now();const id0=L1.id;delete L1.id;await col().doc(id0).set(L1)}catch(e){}}
+ b.disabled=false;b.innerHTML=old;render();
+ if(bad.length){const msg=(ok.length?"PDF "+ok.join("、")+" 已上傳到「"+cn+"」班刊資料夾。\n\n":"")+"PDF "+bad.join("、")+" 沒辦法直接從雲端硬碟讀取原檔（可能是共用權限不開放）。\n要從電腦選這份班刊的 PDF 上傳嗎？";if(confirm(msg))pickFiles()}
+ else alert("已上傳到「"+cn+"」班刊資料夾：PDF "+ok.join("、"));
+ return}
    if(ds.new){viewOnly=false;cur=newLog();photos=photos;await saveCur();render();return}
   if(ds.newext!==undefined&&b.hasAttribute("data-newext")){viewOnly=false;cur=newLog();cur.kind="ext";cur.ext={url:"",pdfUrl:"",pdfName:"",note:""};await saveCur();render();return}
   if(ds.extrm!==undefined&&b.hasAttribute("data-extrm")){{const sl=+ds.extrm===2?2:1;if(cur&&cur.ext&&confirm("要移除已附上的 PDF "+sl+" 嗎？（雲端硬碟裡的檔案不會被刪除）")){if(sl===2){cur.ext.pdf2Url="";cur.ext.pdf2Name=""}else{cur.ext.pdfUrl="";cur.ext.pdfName=""}await saveCur();render()}}return}
@@ -4055,7 +4074,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L06</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L07</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
