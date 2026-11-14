@@ -1725,7 +1725,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L17</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L18</footer>
     </div>
   </template>
 
@@ -4098,7 +4098,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L17</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L18</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7591,6 +7591,7 @@ function renderMeeting(app){
   if (M.edit) return renderMeetingEditor(app);
   if (M.view) return renderMeetingView(app);
   const can = mtCan();
+  { const seen = new Set(); M.list = M.list.filter(x=>{ if (seen.has(x.id)) return false; seen.add(x.id); return true; }); }
   const kw = str(M.q).trim().toLowerCase(), kws = kw ? kw.split(/\s+/).filter(Boolean) : [];
   const textOf = m => { const n=mtNorm(m); return [mtTitle(n), n.type, mtRocDate(n.date), n.date, n.place, n.chair, n.recorder, n.attendees, ...n.reports.flatMap(r=>[r.title,r.body]), ...n.issues.flatMap(r=>[r.title,r.content,r.resolution]), ...n.photos.map(p=>p.cap)].join("\n"); };
   const list = M.list.filter(x=>M.type==="all"||x.type===M.type).filter(x=>{ if (!kws.length) return true; const t=textOf(x).toLowerCase(); return kws.every(k=>t.includes(k)); }).sort((a,b)=>str(b.date).localeCompare(str(a.date))||((+b.no||0)-(+a.no||0)));
@@ -7757,7 +7758,7 @@ function mtImport(){
         }
         const body = mtNorm(Object.assign({}, m0, { photos:[] })); delete body.id; body.photos = photos; body.no = +body.no||1; if (body.autoTitle) body.title="";
         body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||""; body.importedFrom = f.name;
-        const ref = S.db.collection(MT_COL).doc(); await ref.set(body); S.mt.list = S.mt.list.concat([{id:ref.id,...body}]); ok++;
+        const ref = S.db.collection(MT_COL).doc(); await ref.set(body); S.mt.list = S.mt.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); ok++;
       }catch(e){ bad.push(mtTitle(mtNorm(m0))+"（"+errText(e)+"）"); }
     }
     render(); alert(bad.length ? `匯入 ${ok} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已匯入 ${ok} 份會議紀錄 ✅`);
