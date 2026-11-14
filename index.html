@@ -378,11 +378,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h2 class="font-heading font-black text-xl mt-1" x-text="`👋 ${myName || (currentUser && (currentUser.displayName || currentUser.email)) || ''}${isAdmin ? '（管理者）' : ' 老師'}，您好！`"></h2>
             <p class="text-sm text-wood-dark/70 mt-1">請選擇要使用的功能；之後也可以隨時點上方的「🏠 目錄」回到這裡。</p>
           </div>
-          <div x-show="currentUser && !restrictedPW" x-effect="if(currentUser && !restrictedPW && !homeLineAsked){ homeLineAsked=true; lineBindStatus().then(r=>{ homeLineBound=!!(r&&r.bound) }).catch(()=>{}) }" class="paper-card rounded-3xl px-6 py-4 shadow-card flex flex-wrap items-center gap-3" style="background:#f2f8ee">
-            <span class="font-heading font-bold text-sm">🔔 綁定 LINE 通知</span>
-            <span x-show="homeLineBound===true" class="text-sm font-bold text-sage-dark">✅ 已綁定（週誌被退回時會傳 LINE 給您）</span>
-            <span x-show="homeLineBound!==true" class="text-sm text-wood-dark/70">綁定後，週誌被管理員退回時會直接傳 LINE 通知您</span>
-            <button type="button" @click="homeBindLine()" class="ml-auto px-4 py-1.5 rounded-full bg-paper border border-wood-light/50 text-sm font-bold hover:bg-cream" x-text="homeLineBound===true ? '重新綁定' : '取得綁定碼'"></button>
+          <div x-show="currentUser && !restrictedPW" x-effect="if(currentUser && !restrictedPW && !homeLineAsked){ homeLineAsked=true; lineBindStatus().then(r=>{ homeLineBound=!!(r&&r.bound) }).catch(()=>{}) }" style="position:fixed;right:14px;bottom:14px;z-index:45">
+            <button type="button" @click="homeBindLine()" :title="homeLineBound===true ? '已綁定 LINE 通知（週誌被退回時會傳 LINE 給您）。點一下可以重新綁定' : '綁定後，週誌被管理員退回時會直接傳 LINE 通知您。點一下取得綁定碼'"
+              style="display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer"
+              :style="homeLineBound===true ? 'background:#eaf5ea;color:#2f6b4f;border:1px solid #b9dcc3' : 'background:#fff;color:#7a5a12;border:1px solid #e0b84a'"
+              x-text="homeLineBound===true ? '✅ LINE 已綁定' : '🔔 綁定 LINE'"></button>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <button type="button" x-show="true" @click="view='teacher'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
@@ -1725,7 +1725,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L15</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L17</footer>
     </div>
   </template>
 
@@ -4098,7 +4098,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L15</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L17</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7606,7 +7606,7 @@ function renderMeeting(app){
     h("p",{class:"note",style:"margin-top:4px"},"教保會議、園務會議、課發會、勞資會議。"),
     h("div",{class:"mt-search"},h("span",null,"🔍"),(()=>{ const i=h("input",{class:"in",type:"search",value:M.q||"",placeholder:"搜尋關鍵字（例如：地震、任務卡、陳泳鉌）。可輸入多個字詞，用空白隔開",oninput:e=>{ M.q=e.target.value; clearTimeout(M._qt); M._qt=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$("#kb-app .mt-search input"); if (n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },250); }}); return i; })(), M.q ? h("button",{class:"btn sm",onclick:()=>{ M.q=""; render(); }},"清除") : null),
     h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
-    can ? h("div",{class:"abs"},h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
+    can ? h("div",{class:"abs",style:"display:flex;gap:6px"},h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
   if (kws.length) app.append(h("p",{class:"note",style:"margin:6px 2px"},`找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄`));
   if (!list.length){ app.append(h("div",{class:"notice"}, kws.length ? "沒有符合的會議紀錄，換個關鍵字試試看。" : "還沒有會議紀錄，按「＋ 新增會議紀錄」開始。")); return; }
   app.append(h("div",{class:"list"}, list.map(m0=>{ const m=mtNorm(m0), ti=MT_TYPES.find(x=>x[0]===m.type);
@@ -7732,12 +7732,38 @@ async function printMeeting(m){
   m = mtNorm(m);
   await Promise.all(m.photos.map(p=>mtLoad(p.id)));
   const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"Noto Serif TC","標楷體","DFKai-SB","Microsoft JhengHei",serif;color:#000;font-size:12pt;line-height:1.6}
-.wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:10mm 0}}table.pt tr,.sub,.txt{page-break-inside:avoid}` + MT_CSS;
+.wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:10mm 0}}table.pt tr,.sub{page-break-inside:avoid}.sub{page-break-after:avoid;break-after:avoid}table.pt,table.sgt{width:calc(100% - 2px)}` + MT_CSS;
   openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(mtTitle(m))}</title><style>${css}</style></head><body>
 <div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 直式</span></div><div class="wrap">${mtBodyHtml(m, true)}</div>
 <script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},500)})<\/script></body></html>`);
 }
 
+function mtImport(){
+  const inp = h("input",{type:"file",accept:".json,application/json",style:"display:none"});
+  inp.addEventListener("change", async ()=>{
+    const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+    let j; try{ j = JSON.parse(await f.text()); }catch(e){ alert("這個檔案不是正確的會議紀錄匯入檔（JSON 格式錯誤）。"); return; }
+    const list = Array.isArray(j) ? j : Array.isArray(j.meetings) ? j.meetings : (j && j.type ? [j] : []);
+    if (!list.length){ alert("檔案裡沒有會議紀錄。"); return; }
+    const dup = list.filter(m=>S.mt.list.some(x=>str(x.date)===str(m.date) && mtTitle(mtNorm(x))===mtTitle(mtNorm(m))));
+    if (!confirm(`要匯入 ${list.length} 份會議紀錄嗎？\n`+list.map(m=>"・"+mtTitle(mtNorm(m))+"（"+mtRocDate(m.date)+"）").join("\n")+(dup.length?`\n\n其中 ${dup.length} 份看起來已經匯入過，會再新增一份。`:""))) return;
+    let ok = 0; const bad = [];
+    for (const m0 of list){
+      try{
+        const photos = [];
+        for (const p of (Array.isArray(m0.photos)?m0.photos:[])){
+          if (p && p.data && /^data:image\//.test(p.data)){ const ref = S.db.collection(MT_PH).doc(); await ref.set({ data:p.data, name:"匯入", createdAt:Date.now() }); MTC[ref.id]=p.data; photos.push({id:ref.id,cap:str(p.cap)}); }
+          else if (p && p.id) photos.push({id:str(p.id),cap:str(p.cap)});
+        }
+        const body = mtNorm(Object.assign({}, m0, { photos:[] })); delete body.id; body.photos = photos; body.no = +body.no||1; if (body.autoTitle) body.title="";
+        body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||""; body.importedFrom = f.name;
+        const ref = S.db.collection(MT_COL).doc(); await ref.set(body); S.mt.list = S.mt.list.concat([{id:ref.id,...body}]); ok++;
+      }catch(e){ bad.push(mtTitle(mtNorm(m0))+"（"+errText(e)+"）"); }
+    }
+    render(); alert(bad.length ? `匯入 ${ok} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已匯入 ${ok} 份會議紀錄 ✅`);
+  });
+  document.body.append(inp); inp.click();
+}
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
