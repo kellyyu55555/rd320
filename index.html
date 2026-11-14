@@ -271,7 +271,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <button @click="signOutUser" class="text-xs font-bold bg-brand-dark/40 hover:bg-brand-dark/60 rounded-full px-3 py-1">登出</button>
           </div>
         </div>
-        <nav class="max-w-6xl mx-auto px-5 flex flex-wrap gap-1.5 pb-2">
+        <nav id="mainNav" class="max-w-6xl mx-auto px-5 flex flex-wrap gap-1.5 pb-2">
           <button @click="view='home'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='home' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
@@ -344,8 +344,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
           
         
-          <div x-show="(isAdmin || isEditor || (currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com')) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
-          <span x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'"
+          <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com')) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
+          <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
@@ -356,7 +356,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             📋 管理者後台
             <span x-show="adminPendingCount>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="adminPendingCount"></span>
           </button>
-          <span x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" style="align-self:center;font-size:12px;font-weight:700;color:#e3c6f5;padding:0 4px;margin-left:10px">🔒 本人專用</span><button style="outline:2px dashed #8e4fb8;outline-offset:-2px;" x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" @click="view='patrol'"
+          <span class="nav-lab" x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" style="align-self:center;font-size:12px;font-weight:700;color:#e3c6f5;padding:0 4px;margin-left:10px">🔒 本人專用</span><button style="outline:2px dashed #8e4fb8;outline-offset:-2px;" x-show="currentUser && (currentUser.email||'').toLowerCase()==='kellyyu1209@gmail.com'" @click="view='patrol'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='patrol' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📝 巡堂紀錄
@@ -384,7 +384,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
               :style="homeLineBound===true ? 'background:#eaf5ea;color:#2f6b4f;border:1px solid #b9dcc3' : 'background:#fff;color:#7a5a12;border:1px solid #e0b84a'"
               x-text="homeLineBound===true ? '✅ LINE 已綁定' : '🔔 綁定 LINE'"></button>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div id="homeGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <button type="button" x-show="true" @click="view='teacher'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🧸</span></div>
             <h3 class="font-heading font-black text-base mt-3">老師借還登記區</h3>
@@ -1725,7 +1725,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L19</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L20</footer>
     </div>
   </template>
 
@@ -4098,7 +4098,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L19</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L20</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5451,7 +5451,20 @@ th{font-weight:normal;text-align:center;vertical-align:middle}
 .ph td{text-align:center}.ph th{padding:6px}.pc{vertical-align:bottom;padding:3px 3px 0;line-height:0}.pc img{width:auto;height:auto;max-width:100%;max-height:62mm;display:block;margin:0 auto}
 .ph td.cap{text-align:left;vertical-align:top;padding:2px 6px 3px;line-height:1.45}.ph tr{break-inside:avoid}
 .sign{display:flex;justify-content:space-between;align-items:flex-end;margin:16px 2em 0}.sign>div{display:flex;align-items:flex-end;line-height:1.5}.sign span{display:inline-block;box-sizing:content-box;min-width:42mm;height:1.5em;line-height:1.5em;padding:0 4px 5px;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
-    return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(fileName(o).replace(/\.pdf$/, ''))}</title><style>${css}</style></head><body>
+    return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(fileName(o).replace(/\.pdf$/, ''))}</title><style>${css}</style><style id="mobile-layout">
+@media (max-width:640px){
+  #mainNav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important;padding:2px 10px 10px!important}
+  #mainNav>button{width:100%;min-height:38px;padding:6px 4px!important;font-size:12.5px!important;line-height:1.25!important;border-radius:12px!important;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;overflow:hidden}
+  #mainNav>.nav-sep{grid-column:1/-1;margin:2px 0!important}
+  #mainNav>.nav-lab{grid-column:1/-1;margin:0!important;padding:2px 2px 0!important}
+  #homeGrid{gap:10px!important}
+  #homeGrid>.home-card{padding:14px 12px!important;border-radius:18px!important;display:flex!important;flex-direction:column;min-height:128px}
+  #homeGrid>.home-card .text-4xl{font-size:28px!important;line-height:1.1}
+  #homeGrid>.home-card h3{font-size:14.5px!important;margin-top:8px!important;line-height:1.3}
+  #homeGrid>.home-card p{font-size:11.5px!important;margin-top:4px!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
+@media (max-width:360px){ #mainNav{grid-template-columns:repeat(2,minmax(0,1fr))} }
+</style></head><body>
 ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
 <div class="wrap"><div class="pg1">
 <div class="hd"><div>桃園市仁德非營利幼兒園</div><div>(委託社團法人臺灣宛靜文教協會辦理)</div><div>${esc(o.sem || '')} <u>${esc(topic)}</u> 宣導</div></div>
@@ -5839,6 +5852,8 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-qa{border-left:3px solid #b9dcc3;padding-left:8px;margin:6px 0 10px}
 #kb .mt-view table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}#kb .mt-view table.pt.in img{max-height:200px}
 #kb .mt-view .txt.cls{font-weight:700;margin-top:8px}
+#kb .mt-sortbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 2px;font-size:14px;color:var(--muted)}
+#kb .mt-sortbar select.in{width:auto;display:inline-block;font-weight:700}
 
 </style>
 <script>
@@ -7620,7 +7635,18 @@ function renderMeeting(app){
   { const seen = new Set(); M.list = M.list.filter(x=>{ if (seen.has(x.id)) return false; seen.add(x.id); return true; }); }
   const kw = str(M.q).trim().toLowerCase(), kws = kw ? kw.split(/\s+/).filter(Boolean) : [];
   const textOf = m => { const n=mtNorm(m); return [mtTitle(n), n.type, mtRocDate(n.date), n.date, n.place, n.chair, n.recorder, n.attendees, ...n.reports.flatMap(r=>[r.title,r.body]), ...n.issues.flatMap(r=>[r.title,r.content,r.resolution,...r.classes.flatMap(c=>c.items.length?[c.cls,...c.items.flatMap(it=>[it.q,it.by,it.a])]:[]),...r.photos.map(p=>p.cap),...r.resPhotos.map(p=>p.cap)]), ...n.reports.flatMap(r=>r.photos.map(p=>p.cap)), ...n.photos.map(p=>p.cap)].join("\n"); };
-  const list = M.list.filter(x=>M.type==="all"||x.type===M.type).filter(x=>{ if (!kws.length) return true; const t=textOf(x).toLowerCase(); return kws.every(k=>t.includes(k)); }).sort((a,b)=>str(b.date).localeCompare(str(a.date))||((+b.no||0)-(+a.no||0)));
+  const list = M.list.filter(x=>M.type==="all"||x.type===M.type).filter(x=>{ if (!kws.length) return true; const t=textOf(x).toLowerCase(); return kws.every(k=>t.includes(k)); });
+  const semK = x => `${String(+x.year||0).padStart(4,"0")}-${x.sem==="二"?2:1}-${String(+x.no||0).padStart(3,"0")}`;
+  const dK = x => str(x.date) || "";
+  const SORTS = {
+    dateDesc: (a,b)=> (dK(a)?0:1)-(dK(b)?0:1) || dK(b).localeCompare(dK(a)) || semK(b).localeCompare(semK(a)),
+    dateAsc:  (a,b)=> (dK(a)?0:1)-(dK(b)?0:1) || dK(a).localeCompare(dK(b)) || semK(a).localeCompare(semK(b)),
+    noDesc:   (a,b)=> semK(b).localeCompare(semK(a)) || dK(b).localeCompare(dK(a)),
+    noAsc:    (a,b)=> semK(a).localeCompare(semK(b)) || dK(a).localeCompare(dK(b)),
+    type:     (a,b)=> MT_TYPES.findIndex(t=>t[0]===a.type)-MT_TYPES.findIndex(t=>t[0]===b.type) || semK(b).localeCompare(semK(a)),
+    title:    (a,b)=> mtTitle(mtNorm(a)).localeCompare(mtTitle(mtNorm(b)),"zh-Hant",{numeric:true})
+  };
+  list.sort(SORTS[M.sort] || SORTS.dateDesc);
   const snip = m => { if (!kws.length) return null; const t=textOf(m), lo=t.toLowerCase(), out=[]; let pos=0;
     for (const k of kws){ const i=lo.indexOf(k); if (i<0) continue; const a=Math.max(0,i-18), b=Math.min(t.length,i+k.length+30); out.push([a,b]); }
     const seen=new Set(); return h("div",{class:"mt-snip"}, out.slice(0,3).map(([a,b])=>{ const piece=t.slice(a,b).replace(/\n/g," "); if (seen.has(piece)) return null; seen.add(piece);
@@ -7634,14 +7660,17 @@ function renderMeeting(app){
     h("div",{class:"mt-search"},h("span",null,"🔍"),(()=>{ const i=h("input",{class:"in",type:"search",value:M.q||"",placeholder:"搜尋關鍵字（例如：地震、任務卡、陳泳鉌）。可輸入多個字詞，用空白隔開",oninput:e=>{ M.q=e.target.value; clearTimeout(M._qt); M._qt=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$("#kb-app .mt-search input"); if (n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },250); }}); return i; })(), M.q ? h("button",{class:"btn sm",onclick:()=>{ M.q=""; render(); }},"清除") : null),
     h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
     can ? h("div",{class:"abs",style:"display:flex;gap:6px"},h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
-  if (kws.length) app.append(h("p",{class:"note",style:"margin:6px 2px"},`找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄`));
+  app.append(h("div",{class:"mt-sortbar"},
+    h("span",null, kws.length ? `找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄` : `共 ${list.length} 份`),
+    h("label",null,"排序：",h("select",{class:"in",onchange:e=>{ M.sort=e.target.value; try{ localStorage.setItem("mtSort",M.sort); }catch(_){} render(); }},
+      [["dateDesc","開會日期（新→舊）"],["dateAsc","開會日期（舊→新）"],["noDesc","學期與次數（新→舊）"],["noAsc","學期與次數（舊→新）"],["type","會議類別"],["title","標題"]].map(([v,l])=>h("option",{value:v,selected:(M.sort||"dateDesc")===v},l))))));
   if (!list.length){ app.append(h("div",{class:"notice"}, kws.length ? "沒有符合的會議紀錄，換個關鍵字試試看。" : "還沒有會議紀錄，按「＋ 新增會議紀錄」開始。")); return; }
   app.append(h("div",{class:"list"}, list.map(m0=>{ const m=mtNorm(m0), ti=MT_TYPES.find(x=>x[0]===m.type);
     return h("div",{class:"card row",style:"cursor:default"},
       h("span",{style:"flex:1;min-width:240px"},
         h("span",{class:"mt-badge mt-"+(ti?ti[1]:"t0")},m.type),
         h("div",{style:"font-size:17px;font-weight:700;margin-top:4px"},mtTitle(m)),
-        h("div",{style:"font-size:13px;color:var(--muted);margin-top:2px"},[mtRocDate(m.date), m.place?"地點："+m.place:"", m.chair?"主席："+m.chair:"", m.recorder?"記錄："+m.recorder:""].filter(Boolean).join("｜")), snip(m0)),
+        h("div",{style:"font-size:13px;color:var(--muted);margin-top:2px"},[mtRocDate(m.date)||"⚠️ 未填日期", m.place?"地點："+m.place:"", m.chair?"主席："+m.chair:"", m.recorder?"記錄："+m.recorder:""].filter(Boolean).join("｜")), snip(m0)),
       h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
         h("button",{class:"btn",onclick:()=>{ M.view=m.id; render(); window.scrollTo(0,0); }},"檢視"),
         h("button",{class:"btn",onclick:()=>printMeeting(m)},"🖨 列印"),
@@ -7865,7 +7894,7 @@ function sync(d, view){
     if (S.as && S.as.unsub) { try{S.as.unsub();}catch(_){} } if (S.as && S.as.unsubA) { try{S.as.unsubA();}catch(_){} } if (S.as && S.as.unsubAll) { try{S.as.unsubAll();}catch(_){} }
     S.as = { tab:"routine", year0:asYear0(), year:String(asYear0()), cls:"", roster:{}, gotR:false, list:[], got:false, assign:{}, open:null, draft:null, mine:false, all:[], gotAll:false, admOpen:{} };
     unsubs.push(d.db.doc("roster/children").onSnapshot(x=>{ const l=(x.exists&&(x.data()||{}).list)||{}; const o={}; Object.keys(l).forEach(k=>{ if (Array.isArray(l[k])) o[k]=l[k].filter(v=>typeof v==="string"); }); S.as.roster=o; S.as.gotR=true; if (!S.as.open) render(); }, ()=>{ S.as.gotR=true; render(); }));
-    S.mt = { list:[], got:false, q:"", type:"all", view:null, edit:null, draft:null, dirty:false };
+    S.mt = { list:[], got:false, q:"", sort:(()=>{ try{ return localStorage.getItem("mtSort")||"dateDesc"; }catch(_){ return "dateDesc"; } })(), type:"all", view:null, edit:null, draft:null, dirty:false };
     if (String(d.currentUser.email||"").toLowerCase()==="kellyyu1209@gmail.com") unsubs.push(subscribe(d.db.collection("meetingMinutes"), S.mt, "got", snap=>{ S.mt.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.mt.got = true;
     S.got.activities = false; S.activities = [];
