@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
+<head><script>(function(){try{var ua=navigator.userAgent||"";if(/ Line\//i.test(ua)&&!/[?&]openExternalBrowser=1/.test(location.search)){var u=new URL(location.href);u.searchParams.set("openExternalBrowser","1");location.replace(u.toString());}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>仁德非營利幼兒園 教具與繪本借還系統</title>
@@ -242,6 +242,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           使用 Google 帳號登入
         </button>
         <p x-show="authError" x-text="authError" class="text-coral text-xs font-bold mt-3"></p>
+        <button type="button" @click="signInRedirect()" class="w-full mt-3 py-2 rounded-xl border border-wood-light/60 text-sm font-bold text-wood-dark/80 hover:bg-cream">登入沒反應？改用整頁登入</button>
+        <p class="text-[11px] text-wood-dark/55 mt-2 leading-relaxed">從手機主畫面圖示開啟時，登入一次後會保持登入（閒置 60 分鐘仍會自動登出）。</p>
       </div>
     </div>
   </template>
@@ -1725,7 +1727,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L20</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L21</footer>
     </div>
   </template>
 
@@ -2958,8 +2960,12 @@ function kgApp() {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       this.auth = firebase.auth();
       // 登入狀態只保存在「這個分頁」：關閉分頁或視窗就立刻登出（重新整理不受影響）
-      try { await this.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION); }
+      const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+      this.isStandalone = standalone;
+      try { await this.auth.setPersistence(standalone ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION); }
       catch (e) { console.error('設定登入保存方式失敗', e); }
+      try { const rr = await this.auth.getRedirectResult(); if (rr && rr.user) sessionStorage.removeItem('authRedirecting'); }
+      catch (e) { sessionStorage.removeItem('authRedirecting'); console.error('跳轉登入失敗', e); this.authError = `登入失敗（${e.code || e.message}），請再試一次`; }
       this.db = firebase.firestore();
       this.storage = firebase.storage();
       try { this.storage.setMaxUploadRetryTime(20000); this.storage.setMaxOperationRetryTime(20000); } catch (e) {}
@@ -3096,10 +3102,18 @@ function kgApp() {
       this.authError = '因閒置超過 60 分鐘，已自動登出，請重新登入。';
     },
 
+    async signInRedirect() {
+      this.authError = '';
+      try { sessionStorage.setItem('authRedirecting', '1'); await this.auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }
+      catch (e) { sessionStorage.removeItem('authRedirecting'); this.authError = `登入失敗（${e.code || e.message}），請再試一次`; }
+    },
     async signIn() {
       this.authError = '';
+      const ua = navigator.userAgent || '';
+      if (/FBAN|FBAV|Instagram|MicroMessenger/i.test(ua)) { this.authError = 'Google 不允許在這個 App 的內建瀏覽器登入，請按右上角「⋯」選「用瀏覽器開啟」（Safari 或 Chrome）後再登入。'; return; }
       try { await this.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
       catch (e) {
+        if (['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/web-storage-unsupported','auth/internal-error','auth/popup-closed-by-user'].includes(e.code) && (this.isStandalone || /iPhone|iPad|Android/i.test(ua)) && e.code !== 'auth/popup-closed-by-user') { return this.signInRedirect(); }
         console.error('登入失敗', e);
         const map = {
           'auth/popup-closed-by-user': '登入視窗被關閉，請再試一次',
@@ -4098,7 +4112,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L20</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L21</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
