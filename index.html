@@ -314,6 +314,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             🩺 衛教宣導
             <span x-show="isAdmin && healthPending.length>0" class="ml-1 px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-num" x-text="healthPending.length"></span>
           </button>
+          <button x-show="!restrictedPW" @click="view='assess'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='assess' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📊 教學評量
+          </button>
           <button x-show="!restrictedPW" @click="view='walk'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='walk' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
@@ -405,6 +410,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🩺</span><span x-show="(isAdmin ? healthPending.length : 0)>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待審 ${(isAdmin ? healthPending.length : 0)}`"></span></div>
             <h3 class="font-heading font-black text-base mt-3">衛教宣導</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">填寫衛教宣導紀錄、列印與上傳雲端硬碟</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='assess'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📊</span></div>
+            <h3 class="font-heading font-black text-base mt-3">教學評量</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">例行性評量、總結性評量；同班老師分配幼兒協同完成，看得到每位幼兒的進度</p>
           </button>
           <button type="button" x-show="!restrictedPW" @click="view='walk'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🌿</span></div>
@@ -778,7 +788,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1701,7 +1711,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L07</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L10</footer>
     </div>
   </template>
 
@@ -4074,7 +4084,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L07</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L10</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5733,6 +5743,38 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb table.patrol .pt-sel{border:1px solid var(--line);border-radius:6px;padding:1px;font-size:13px;background:#fff;width:36px}
 #kb table.patrol .pt-time{width:100%;border:1px solid var(--line);border-radius:6px;padding:2px 4px;font-size:12px;margin:3px 0}
 #kb table.patrol .pt-fill{width:100%;border:1px solid var(--line);border-radius:6px;font-size:12px;padding:1px}
+#kb .as-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px}
+#kb .as-bar .in{width:auto;display:inline-block}
+#kb .as-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+#kb .as-sum{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:10px 0}
+#kb .as-sumi{background:#f6f1e4;border-radius:999px;padding:3px 10px;font-size:13px}
+#kb .as-chip{font-size:12.5px;border-radius:999px;padding:2px 9px;background:#f2eee4;color:var(--muted);border:1px solid var(--line)}
+#kb .as-chip.ok{background:#e3f1e6;color:#2f6b4f;border-color:#b9dcc3}
+#kb .as-chip.part{background:#fff4c2;color:#8a6a00;border-color:#ecd98a}
+#kb .as-who{font-size:12.5px;margin-left:8px;color:var(--muted);background:#f6f1e4;border-radius:999px;padding:2px 9px}
+#kb .as-who.me{background:#e3ecf8;color:#2f5597;font-weight:700}
+#kb .as-form{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+#kb .as-fill{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px}
+#kb .as-fill .in{width:auto}
+#kb table.as-t{border-collapse:collapse;width:100%;background:var(--paper);font-size:14px;min-width:760px}
+#kb table.as-t th,#kb table.as-t td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
+#kb table.as-t th{background:#f6f1e4;color:var(--muted);font-weight:500;font-size:13px}
+#kb table.as-t th.pp{color:var(--ink);font-weight:700}
+#kb table.as-t td.g{width:64px;text-align:center;font-weight:700;color:var(--accent);background:#fbf8f0;font-size:13px}
+#kb table.as-t td.ck{width:62px;text-align:center;cursor:pointer;font-size:18px;color:#2f6b4f;user-select:none}
+#kb table.as-t td.ck:hover{background:#f3efe2}
+#kb table.as-t td.ck.on{background:#e3f1e6;font-weight:700}
+#kb table.as-t td.ac{width:44px;text-align:center;color:var(--muted)}
+#kb table.as-t td.lv{width:92px;text-align:center}
+#kb table.as-t td.lv.on{background:#e3ecf8}
+#kb table.as-t td.lv select{width:100%;border:1px solid var(--line);border-radius:6px;padding:2px;font-size:13px;background:#fff}
+#kb table.as-adm{border-collapse:collapse;width:100%;background:var(--paper);font-size:14px;min-width:760px}
+#kb table.as-adm th,#kb table.as-adm td{border:1px solid var(--line);padding:6px 8px}
+#kb table.as-adm th{background:#f6f1e4;color:var(--muted);font-weight:500}
+#kb tr.as-adm-r{cursor:pointer}#kb tr.as-adm-r:hover{background:#fbf8f0}
+#kb td.as-adm-d{background:#fbf8f0;font-size:13px;line-height:1.8}
+#kb .as-bar2{background:#efe8d8;border-radius:999px;height:8px;overflow:hidden;min-width:60px;flex:1}
+#kb .as-bar2>div{background:#4f9a6f;height:100%}
 
 </style>
 <script>
@@ -5801,6 +5843,7 @@ function render(){
   if (S.view==="schedule") return renderSchedule(app);
   if (S.view==="calendar") return renderCalendar(app);
   if (S.view==="patrol") return renderPatrol(app);
+  if (S.view==="assess") return renderAssess(app);
   renderCourses(app);
 }
 
@@ -6460,7 +6503,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -7094,6 +7137,332 @@ td.s{font-size:1em}th.dl,td.dl{border-left:2px solid #000!important}td.n{text-al
 window.addEventListener("load",function(){fit();setTimeout(function(){window.focus();window.print()},400)})})()<\/script></body></html>`);
 }
 
+/* ---------- 教學評量：例行性評量、總結性評量（同班老師分配協同完成） ---------- */
+const AS_COL = "assessments", AS_ASSIGN = "assessAssign";
+const RT_GROUPS = [
+  { g:"幼兒入園", items:["上學時能勇敢跟家長說再見。","會跟老師打招呼。","能自己換穿鞋子，放在自己班級的鞋櫃裡。","進教室能找到自己的座位。"] },
+  { g:"整理物品", items:["會將物品(如：書包、餐袋、水壺)放在自己的櫃子。","能自己穿脫圍兜。","能將髒衣物放進髒衣袋裡。","能在學習區活動結束將教玩具收拾歸位。","能將屬於自己的物品收進自己的書包中。"] },
+  { g:"出汗性大肌肉時間", items:["願意參與大肌肉運動。","經老師引導，能嘗試使用器材。","會聽從指令並遵守遊戲規則。","活動中會保護自己並注意安全。","經口頭引導後能完成活動。"] },
+  { g:"學習區", items:["團體或小組課程願意參與。","能主動操作相關教玩具。","能遵守規範、完成學習工作。"] },
+  { g:"用餐時間", items:["能自己坐好用餐。","能正確使用湯匙用餐。","能用餐巾紙將碗擦拭乾淨。","能自已將碗放入餐袋。","能將掉落在桌上的飯粒撿起維持桌面整潔。"] },
+  { g:"午休時間", items:["能自己躺好入睡","會自己鋪好被子。","午睡能自行入睡。","能自己起床並完成收拾被褥。"] },
+  { g:"離園", items:["能夠自己收拾書包(聯絡簿、餐袋、水壺等)。","放學回家時會說再見(含肢體語言)。"] }
+];
+const RT_ITEMS = RT_GROUPS.flatMap(g=>g.items);
+const RT_FORMS = {
+  "幼": RT_GROUPS,
+  "小": [
+    { g:"幼兒入園", items:["上學時能勇敢跟家長說再見。","上學看見老師、小朋友會打招呼。","能自己脫鞋，且依圖示找到自己的鞋櫃擺放。"] },
+    { g:"整理物品", items:["進入班級能試著自己完成進班五件事。","能嘗試將自己的物品櫃位整理乾淨。","能自行換下的髒衣服，整理好後放入髒衣袋內。","離園前能將屬於自己的物品收進自己的書包中","能自己拉好書包拉鍊，並放置在正確的位置"] },
+    { g:"同儕互動", items:["經老師帶領後願意與小朋友一起分享教玩具。","與小朋友互動時，會調整情緒與合作方式。","多數時間能專注於自行操作教玩具。","在老師提醒下，能完成收拾教玩具並歸位。"] },
+    { g:"出汗性大肌肉時間", items:["能正確排隊並與小朋友一起進行活動。","經引導後會聽從指令了解遊戲進行方式。","經老師引導，能正確使用器材。","能雙腳向上跳躍，並穩定落地。","能保持適當距離進行活動。"] },
+    { g:"如廁", items:["能模仿上廁所步驟圖正確小便。","尿溼褲子會換上乾淨的褲子。","能有良好衛生習慣，如廁後會沖水及洗手。","能依照圖解完成洗手步驟。"] },
+    { g:"用餐時間", items:["能主動拿出該餐使用的餐碗。","可以依序排隊取餐。","取餐後，能小心並穩定地把裝有食物的餐碗帶回座位。","能有良好的用餐習慣，能扶碗並使用湯匙穩定進食。","能注意到桌面整潔，並將掉落的飯粒或菜渣撿起維持桌面整潔。"] },
+    { g:"潔牙時間", items:["經口頭引導後願意自己練習刷牙和漱口。","能自己依照圖示，將牙刷與漱口杯放回正確位置。"] },
+    { g:"午休時間", items:["能找到正確位置，並自己鋪排棉被。","午睡能保持安靜。","能判斷溫差，調整自己蓋被子情況。","起床後能自己將摺好的睡袋放進棉被櫃裡"] },
+    { g:"離園", items:["能夠自己收拾書包(聯絡簿、餐袋、水壺等)。","放學回家時會說再見(含肢體語言)。"] }
+  ],
+  "大": [
+    { g:"幼兒入園", items:["上學時能跟家長說再見。","早上看見老師、同學會打招呼。","能依自己的座號將鞋子放在正確的位置。"] },
+    { g:"整理物品", items:["能確實執行入班五件事。","能將自己的物品櫃位保持乾淨。","能將換下的髒衣服整理好放入髒衣袋內，確實放入書包，且隔天會帶乾淨衣物來。","離園前能將書包內物品整理整齊，自行確認沒有遺落。","能將書包拉鍊拉好，整齊擺放在正確的位置"] },
+    { g:"出汗性大肌肉時間", items:["專心聆聽活動指令並遵守遊戲規則。","知道活動器材正確使用方式。","能敏捷使用呼拉圈，將腰部轉圓來回擺動。","能敏捷使用籃球拍球。","能敏捷使用跳繩。","活動結束後能協助收拾活動器材到正確位置。"] },
+    { g:"如廁", items:["能正確做出及說出洗手五步驟。","上廁所時能安靜排隊等待上廁所。","能正確使用衛生紙擦拭屁股。","大便後能將用過的衛生紙/濕紙巾丟入垃圾筒。","大便後能將馬桶沖乾淨。"] },
+    { g:"用餐時間", items:["能將菜湯用湯勺從湯桶中舀到自己的碗裡而不溢出。","能正確表達不喜歡吃的食物。","能用餐巾紙將碗擦拭乾淨。","用餐後能將自己用餐的桌面整理乾淨。","能將掉落在地板上的菜渣撿起，將地板擦拭乾淨。"] },
+    { g:"潔牙時間", items:["能正確使用牙刷潔牙。","會將漱口杯的水瀝乾，放回指定位置。"] },
+    { g:"午休時間", items:["能安全開啟棉被櫃門。","能從棉被櫃中取出睡袋不掉地上。","能因為溫度變冷蓋好睡袋。","午睡能保持安靜。","能將睡袋整齊的摺好，放回棉被櫃。"] },
+    { g:"離園", items:["會將外套的拉鍊拉好。","能自己整理服裝儀容，並穿戴整齊。","放學回家時會跟師長同儕說再見(含肢體語言)。"] }
+  ]
+};
+RT_FORMS["中"] = RT_FORMS["小"].map((g,i)=> i===1 ? { g:g.g, items:["進入班級知道做進班五件事。","能將脫下的外套放到指定的位置。"].concat(g.items.slice(2)) } : g);
+const AGES = ["大","中","小","幼"];
+const rtGroups = f => RT_FORMS[f] || null;
+const rtItems = f => (RT_FORMS[f] || []).flatMap(g=>g.items);
+const asN = (type, age) => type==="routine" ? rtItems(age).length : SM_ITEMS.length;
+const asDefAge = (cls, child) => (S.as.ages||{})[child] || (cls==="兩歲專班" ? "幼" : "");
+
+const RT_VALS = [["A","主動完成"],["B","提醒完成"],["C","尚未發展"]];
+const RT_PER = [["start","學年初"],["end","學年末"]];
+const SM_ACTS = ["學習區","出汗性","例行性","全園性","社區踏查"];
+const SM_GROUPS = [
+  { g:"覺知辨識", items:[["能察覺自己及他人特徵及興趣，並能比較異同",[0,2,3,4]],["能覺察自己及他人的想法或情感，並能比較異同",[0,2,3,4]],["能知道生活規範及活動規則的理由",[0,1,2,3,4]],["能注意且理解周遭的文化訊息",[3,4]],["能理解口語的意義",[0,1,2,3,4]],["能辨識音韻的特性",[0]],["能理解敘事文本及訊息類文本的意義，並能依目的使用訊息類文本",[0,4]],["能注意且理解周遭的自然現象訊息",[0,3,4]]] },
+  { g:"表達溝通", items:[["能運用視覺藝術素材表達想法或情感",[0]],["能運用圖像符號表達想法或情感",[0,2,4]],["能運用口語表達或情感",[0,1,2,3,4]],["能在對話情境中相互表達、傾聽、協商，並調整自己想法或情感",[0,2]]] },
+  { g:"關懷合作", items:[["能理解他人之需求，表現利社會的行為",[2,4]],["能表現對動植物及自然環境的關懷",[0,2,4]],["能理解社區與自己的關係，並正向回應",[0,4]],["能與他人合作完成工作或解決問題",[0,1,2,3]]] },
+  { g:"推理賞析", items:[["能依據特徵整理生活環境中的訊息，並找出特徵間的關係",[0,4]],["能分析已知的訊息，找出形成特定現象的原因",[0,4]],["能欣賞及回應自己及他人表現",[0,1,3,4]]] },
+  { g:"想像創作", items:[["能透過視覺藝術素材進行想像創作",[0]],["能透過音樂進行想像創作",[0,1,2,3]],["能透過戲劇扮演進行想像創作",[0]],["能運用肢體進行想像創作",[0,1,2,3]],["能進行敘事文本的想像創作",[0]]] },
+  { g:"自主管理", items:[["能協調及控制大肌肉，完成肢體動作活動",[1]],["能協調及控制小肌肉，完成肢體動作活動",[0]],["能覺察危險，維護安全",[0,1,2,3,4]],["有良好健康習慣，能進行個人自理及環境清潔",[0,2,3]],["能調整自己的想法、情緒或行為，以符合規範",[0,1,2,3,4]]] }
+];
+const SM_ITEMS = SM_GROUPS.flatMap(g=>g.items);
+const SM_PER = [["start","學年初"],["mid","學年中"],["end","學年末"]];
+const SM_LV = [["1","多練習"],["2","有進步"],["3","表現佳"],["4","表現優"]];
+const AS_T = { routine:{ label:"例行性評量", pers:RT_PER }, summative:{ label:"總結性評量", pers:SM_PER } };
+const asYear0 = () => { const t=new Date(); return t.getFullYear()-1911-(t.getMonth()<7?1:0); };
+const asNm = x => { const t=str(x).replace(/\s+/g,"").replace(/老師$/,""); return (S.d&&S.d.fixName&&S.d.fixName(t))||t; };
+const asMe = () => asNm((S.d&&S.d.myName)||((S.d&&S.d.currentUser)||{}).displayName||"");
+const asSame = (a,b) => { a=asNm(a); b=asNm(b); return !!a && !!b && (a===b || (a.length>=2&&b.length>=2&&(a.includes(b)||b.includes(a)))); };
+const asPairs = () => (S.d&&Array.isArray(S.d.pairObjs)) ? S.d.pairObjs : [];
+const asAllCls = () => [...new Set([...((S.d&&S.d.classes)||[]), ...Object.keys(S.as.roster||{}), ...asPairs().map(p=>p.c)].map(x=>str(x).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+const asMyCls = () => S.realAdmin ? asAllCls() : [...new Set(asPairs().filter(p=>asSame(p.t,asMe())).map(p=>str(p.c).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+const asClsTeachers = cls => [...new Set(asPairs().filter(p=>str(p.c).trim()===cls).map(p=>str(p.t).trim()).filter(Boolean))];
+const asDocId = (y,type,cls,child) => `${y}_${type}_${cls}_${child}`.replace(/[\/#?\[\]]/g,"_");
+const asKids = cls => arr((S.as.roster||{})[cls]);
+function asProg(type, doc, age){
+  const t = AS_T[type], o = {}, N = asN(type, (doc && doc.age) || age); o._n = N;
+  t.pers.forEach(([k])=>{ const a = (doc && doc.data && Array.isArray(doc.data[k])) ? doc.data[k] : []; let n=0; for (let i=0;i<N;i++) if (str(a[i])) n++; o[k] = N ? n : 0; });
+  return o;
+}
+const asDone = (type, doc, age, k) => { const p = asProg(type, doc, age); return p._n > 0 && p[k] >= p._n; };
+function asChip(n, total, label){
+  const done = n>=total, part = n>0 && !done;
+  return h("span",{class:"as-chip"+(done?" ok":part?" part":""),title:label+"："+n+"／"+total},(done?"✅ ":part?"🟡 ":"⬜ ")+label+(part?` ${n}/${total}`:""));
+}
+function asSubscribe(){
+  const A = S.as, key = A.year+"|"+A.cls;
+  if (A.subKey===key) return;
+  if (A.unsub) { try{A.unsub();}catch(_){} } if (A.unsubA) { try{A.unsubA();}catch(_){} }
+  A.subKey = key; A.list = []; A.got = false; A.assign = {}; A.ages = {};
+  if (!A.cls) { A.got = true; return; }
+  A.unsub = S.db.collection(AS_COL).where("year","==",A.year).where("cls","==",A.cls).onSnapshot(s=>{ A.list=s.docs.map(x=>({id:x.id,...x.data()})); A.got=true; if (!A.open) render(); }, e=>{ A.got=true; A.err=errText(e); render(); });
+  A.unsubA = S.db.doc(AS_ASSIGN+"/"+(A.year+"_"+A.cls).replace(/[\/#?\[\]]/g,"_")).onSnapshot(x=>{ const v = x.exists ? (x.data()||{}) : {}; A.assign = v.map||{}; A.ages = v.ages||{}; if (!A.open) render(); }, ()=>{});
+}
+function asSubscribeAll(){
+  const A = S.as;
+  if (A.allKey===A.year) return;
+  if (A.unsubAll) { try{A.unsubAll();}catch(_){} }
+  A.allKey = A.year; A.all = []; A.gotAll = false;
+  A.unsubAll = S.db.collection(AS_COL).where("year","==",A.year).onSnapshot(s=>{ A.all=s.docs.map(x=>({id:x.id,...x.data()})); A.gotAll=true; if (S.view==="assess"&&A.tab==="admin") render(); }, e=>{ A.gotAll=true; A.err=errText(e); render(); });
+}
+function renderAssess(app){
+  const A = S.as;
+  if (!A.gotR){ app.append(h("div",{class:"notice"},"幼兒名單載入中…")); return; }
+  const myCls = asMyCls();
+  if (!A.cls || !myCls.includes(A.cls)) A.cls = myCls[0] || "";
+  if (A.open) return renderAssessEditor(app);
+  const tabs = [["routine","🧸 例行性評量"],["summative","📋 總結性評量"],["roster","👧 幼兒名單與分配"]].concat(S.realAdmin?[["admin","🏫 各班完成情形"]]:[]);
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"教學評量"),
+    h("p",{class:"note",style:"margin-top:4px"},"例行性評量（學年初、學年末）與總結性評量（學年初、學年中、學年末）。幼兒名單和學習區觀察紀錄共用；同班老師可以分配負責的幼兒，一起完成全班的評量。"),
+    h("div",{class:"as-bar"},
+      h("label",null,"學年度 ",h("select",{class:"in",onchange:e=>{ A.year=e.target.value; render(); }},[A.year0-1,A.year0,A.year0+1].map(y=>h("option",{value:String(y),selected:String(y)===A.year},y+" 學年度")))),
+      A.tab!=="admin" ? h("label",null,"班級 ",myCls.length ? h("select",{class:"in",onchange:e=>{ A.cls=e.target.value; render(); }},myCls.map(c=>h("option",{value:c,selected:c===A.cls},c))) : h("b",{style:"color:var(--warn)"},"（管理員還沒設定您的班級）")) : null),
+    h("div",{class:"as-tabs"},tabs.map(([k,l])=>h("button",{class:"btn"+(A.tab===k?" primary":""),onclick:()=>{ A.tab=k; render(); }},l)))));
+  if (A.tab==="admin") return renderAssessAdmin(app);
+  if (!A.cls){ app.append(h("div",{class:"notice"},S.realAdmin?"還沒有任何班級的幼兒名單。":"管理員還沒在「管理者後台 → 班級老師 → 老師／班級組合」設定您帶的班級，設定好後就能使用教學評量。")); return; }
+  asSubscribe();
+  if (A.tab==="roster") return renderAssessRoster(app);
+  if (!A.got){ app.append(h("div",{class:"notice"},"評量資料載入中…")); return; }
+  const type = A.tab, T = AS_T[type], kids = asKids(A.cls), me = asMe();
+  const docOf = c => A.list.find(x=>x.type===type && x.child===c);
+  const rows = kids.filter(c=>!A.mine || asSame(A.assign[c],me));
+  const tot = {}; T.pers.forEach(([k])=>tot[k]=0);
+  kids.forEach(c=>{ T.pers.forEach(([k])=>{ if (asDone(type,docOf(c),asDefAge(A.cls,c),k)) tot[k]++; }); });
+  app.append(h("div",{class:"as-sum"},
+    h("b",null,`${A.cls}｜${T.label}完成進度：`),
+    T.pers.map(([k,l])=>h("span",{class:"as-sumi"},`${l} ${tot[k]}／${kids.length}`)),
+    h("label",{style:"margin-left:auto;font-size:14px"},h("input",{type:"checkbox",checked:A.mine,onchange:e=>{ A.mine=e.target.checked; render(); }})," 只看分配給我的"),
+    kids.length ? h("button",{class:"btn",onclick:()=>printAssessMany(type, kids.filter(c=>docOf(c)).map(c=>docOf(c)))},"🖨 列印全班已填的") : null));
+  if (!kids.length){ app.append(h("div",{class:"notice"},"這個班級還沒有幼兒名單，請到「👧 幼兒名單與分配」新增。")); return; }
+  if (!rows.length){ app.append(h("div",{class:"notice"},"沒有分配給您的幼兒。可以到「👧 幼兒名單與分配」分配，或取消「只看分配給我的」。")); return; }
+  app.append(h("div",{class:"list"}, rows.map(c=>{ const dc=docOf(c), ag=(dc&&dc.age)||asDefAge(A.cls,c), p=asProg(type,dc,ag), who=A.assign[c];
+    return h("div",{class:"card row as-row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:220px"},
+        h("b",{style:"font-size:17px"},c),
+        h("span",{class:"as-who"+(asSame(who,me)?" me":"")},who?("負責："+who):"未分配"), h("span",{class:"as-who"},ag?(ag==="幼"?"幼幼／兩歲":ag+"班"):"未設定年齡層"),
+        h("div",{style:"margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"}, p._n ? T.pers.map(([k,l])=>asChip(p[k],p._n,l)) : h("span",{class:"as-chip part"},"請先到「幼兒名單與分配」設定年齡層")),
+        dc && dc.updatedByName ? h("div",{style:"font-size:12px;color:var(--muted);margin-top:4px"},`最後修改：${dc.updatedByName}　${new Date(dc.updatedAt||0).toLocaleString("zh-TW",{hour12:false})}`) : null),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn primary",onclick:()=>asOpen(type,c)},dc?"編輯":"＋ 新增評量"),
+        dc ? h("button",{class:"btn",onclick:()=>printAssessMany(type,[dc])},"🖨 列印") : null,
+        dc ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份評量？",`${A.cls} ${c} 的${T.label}會整份刪除，無法復原。`,"刪除",()=>S.db.doc(AS_COL+"/"+dc.id).delete().then(()=>toast("已刪除")))},"刪除") : null));
+  })));
+}
+function asBlank(type, cls, child){
+  const T = AS_T[type], age = asDefAge(cls, child), N = asN(type, age), data = {}; T.pers.forEach(([k])=>data[k]=Array(N).fill(""));
+  const who = S.as.assign[child] || asMe();
+  return { year:S.as.year, type, cls, child, data, dates:{}, comment:"", age, teacher: type==="summative" ? who : "", _new:true };
+}
+function asOpen(type, child){
+  const A = S.as, dc = A.list.find(x=>x.type===type && x.child===child);
+  const d0 = dc ? JSON.parse(JSON.stringify(dc)) : asBlank(type, A.cls, child);
+  const T = AS_T[type], N = asN(type, d0.age); d0.data = d0.data || {}; T.pers.forEach(([k])=>{ const a = Array.isArray(d0.data[k]) ? d0.data[k].map(str) : []; while (a.length<N) a.push(""); d0.data[k]=a; });
+  d0.dates = d0.dates || {};
+  A.open = { type, child }; A.draft = d0; A.dirty = false; render(); window.scrollTo(0,0);
+}
+async function asSave(btn){
+  const A = S.as, d = A.draft; if (!d) return;
+  const id = asDocId(d.year, d.type, d.cls, d.child), u = S.d.currentUser || {};
+  const body = { year:d.year, type:d.type, cls:d.cls, child:d.child, data:d.data, dates:d.dates||{}, comment:str(d.comment), age:str(d.age), teacher:str(d.teacher),
+    updatedAt:Date.now(), updatedBy:u.uid||"", updatedByName:asMe()||u.email||"" };
+  if (btn) btn.disabled = true;
+  try{ await S.db.doc(AS_COL+"/"+id).set(body); d._new=false; d.id=id; A.dirty=false; toast("已儲存"); render(); }
+  catch(e){ toast("儲存失敗："+errText(e)); }
+  finally{ if (btn) btn.disabled=false; }
+}
+function renderAssessEditor(app){
+  const A = S.as, d = A.draft, type = A.open.type, T = AS_T[type];
+  const mark = () => { A.dirty = true; };
+  const back = () => { if (A.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; A.open=null; A.draft=null; render(); };
+  const N = asN(type, d.age), filled = N ? T.pers.map(([k,l])=>{ const n=d.data[k].filter(Boolean).length; return `${l} ${n}/${N}`; }).join("　") : "";
+  const setAge = v => { const n2 = asN(type, v), had = T.pers.some(([k])=>d.data[k].some(Boolean));
+    if (type==="routine" && had && v!==d.age && !confirm("不同年齡層的例行性評量題目不一樣，改年齡層會清除已勾選的項目。要繼續嗎？")) { render(); return; }
+    d.age = v; if (type==="routine" || !had) T.pers.forEach(([k])=>{ d.data[k] = Array(n2).fill(""); }); mark(); render(); };
+  app.append(h("div",{class:"toolbar"},
+    h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
+    h("span",{style:"font-size:13px;color:var(--muted)"},filled),
+    h("button",{class:"btn",onclick:()=>printAssessMany(type,[d])},"🖨 列印"),
+    h("button",{class:"btn primary",onclick:e=>asSave(e.currentTarget)},"💾 儲存")));
+  app.append(h("section",{class:"intro"},
+    h("p",{class:"note"},"桃園市仁德非營利幼兒園"),
+    h("h1",null,`${d.year} 學年度幼兒${type==="routine"?"例行性活動學習觀察紀錄":"總結性評量"}`),
+    h("div",{class:"meta"},h("span",null,"班級：",h("b",null,d.cls)),h("span",null,"幼兒姓名：",h("b",null,d.child)),A.assign[d.child]?h("span",null,"負責老師：",h("b",null,A.assign[d.child])):null)));
+  const f = h("div",{class:"as-form"});
+  const dateIn = (k,l) => h("label",{class:"fl"},l+"日期",h("input",{class:"in",type:"date",value:d.dates[k]||"",onchange:e=>{ d.dates[k]=e.target.value; mark(); }}));
+  const ageSel = h("label",{class:"fl"},type==="routine"?"幼兒年齡層（決定題目版本）":"幼兒年齡層",h("select",{class:"in",onchange:e=>setAge(e.target.value)},["",...AGES].map(v=>h("option",{value:v,selected:d.age===v},v===""?"（請選擇）":v==="幼"?"幼（兩歲專班）":v+"班"))));
+  f.append(h("div",{class:"f2"}, ageSel, type==="summative" ? h("label",{class:"fl"},"教學者",h("input",{class:"in",value:d.teacher||"",oninput:e=>{ d.teacher=e.target.value; mark(); }})) : h("span")));
+  f.append(h("div",{class:"f2"},T.pers.map(([k,l])=>dateIn(k,l))));
+  f.append(h("div",{class:"as-fill"},h("span",null,"快速填入："),T.pers.map(([k,l])=>h("select",{class:"in",onchange:e=>{ const v=e.target.value; if(!v) return; d.data[k]=d.data[k].map(x=> v==="clear" ? "" : (x||v)); mark(); render(); }},
+    h("option",{value:""},l+"…"), (type==="routine"?RT_VALS:SM_LV).map(([v,t])=>h("option",{value:v},`空白格填「${type==="routine"?t:v+" "+t}」`)), h("option",{value:"clear"},"清除"+l)))));
+  app.append(f);
+  if (type==="routine" && !rtGroups(d.age)) { app.append(h("div",{class:"notice"},"請先在上方選擇幼兒年齡層，系統會帶出對應的例行性評量題目（兩歲、小班、中班、大班的題目不一樣）。")); return; }
+  app.append(type==="routine" ? asRoutineTable(d, mark) : asSummTable(d, mark));
+  app.append(h("label",{class:"fl",style:"margin-top:12px;display:block"},type==="routine"?"老師愛的鼓勵與分享":"教師總評語",
+    h("textarea",{class:"in",rows:"6",oninput:e=>{ d.comment=e.target.value; mark(); }},d.comment||"")));
+  app.append(h("div",{class:"toolbar",style:"margin-top:12px"},h("span",{class:"sp"}),h("button",{class:"btn primary",onclick:e=>asSave(e.currentTarget)},"💾 儲存")));
+}
+function asRoutineTable(d, mark){
+  const head = h("thead",null,
+    h("tr",null,h("th",{rowspan:"2",class:"g"},"作息時段"),h("th",{rowspan:"2"},"主要活動"),RT_PER.map(([k,l])=>h("th",{colspan:"3",class:"pp"},l))),
+    h("tr",null,RT_PER.flatMap(()=>RT_VALS.map(([v,t])=>h("th",{class:"vv"},t)))));
+  const body = []; let i = 0;
+  rtGroups(d.age).forEach(g=>g.items.forEach((it,gi)=>{ const ix=i++;
+    body.push(h("tr",null, gi===0?h("td",{rowspan:String(g.items.length),class:"g"},g.g):null, h("td",{class:"it"},it),
+      RT_PER.flatMap(([k])=>RT_VALS.map(([v])=>{ const on=d.data[k][ix]===v;
+        return h("td",{class:"ck"+(on?" on":""),title:"點一下選擇／再點一下取消",onclick:e=>{ d.data[k][ix] = d.data[k][ix]===v ? "" : v; mark();
+          const tr=e.currentTarget.parentNode; const cells=[...tr.querySelectorAll("td.ck")]; const off=k==="start"?0:3; cells.slice(off,off+3).forEach((c,j)=>{ const o=d.data[k][ix]===RT_VALS[j][0]; c.classList.toggle("on",o); c.textContent=o?"✔":""; }); }}, on?"✔":""); }))));
+  }));
+  return h("div",{class:"tablewrap"},h("table",{class:"as-t"},head,h("tbody",null,body)));
+}
+function asSummTable(d, mark){
+  const head = h("thead",null,
+    h("tr",null,h("th",{rowspan:"2",class:"g"},"核心素養"),h("th",{rowspan:"2"},"幼兒學習評量指標"),h("th",{colspan:"5",class:"pp"},"活動類別"),h("th",{colspan:"3",class:"pp"},"個別幼兒表現等級")),
+    h("tr",null,SM_ACTS.map(a=>h("th",{class:"vv"},a)),SM_PER.map(([k,l])=>h("th",{class:"vv"},l))));
+  const body = []; let i = 0;
+  SM_GROUPS.forEach(g=>g.items.forEach(([it,acts],gi)=>{ const ix=i++;
+    body.push(h("tr",null, gi===0?h("td",{rowspan:String(g.items.length),class:"g"},g.g):null, h("td",{class:"it"},it),
+      SM_ACTS.map((_,a)=>h("td",{class:"ac"},acts.includes(a)?"✓":"")),
+      SM_PER.map(([k])=>h("td",{class:"lv"+(d.data[k][ix]?" on":"")},h("select",{onchange:e=>{ d.data[k][ix]=e.target.value; mark(); e.target.parentNode.classList.toggle("on",!!e.target.value); }},
+        h("option",{value:""},""), SM_LV.map(([v,t])=>h("option",{value:v,selected:d.data[k][ix]===v},v+" "+t)))))));
+  }));
+  return h("div",{class:"tablewrap"},h("table",{class:"as-t sm"},head,h("tbody",null,body)),
+    h("p",{class:"note",style:"font-size:13px;margin-top:6px"},"幼兒評量準則：層級 1-多練習、層級 2-有進步、層級 3-表現佳、層級 4-表現優"));
+}
+function renderAssessRoster(app){
+  const A = S.as, cls = A.cls, kids = asKids(cls), teachers = asClsTeachers(cls), me = asMe();
+  const saveRoster = async list => { try{ await S.db.doc("roster/children").set({ list:{ [cls]:list }, updatedAt:Date.now(), updatedBy:(S.d.currentUser||{}).uid||"" },{merge:true}); toast("已更新 "+cls+" 的幼兒名單"); }catch(e){ toast("儲存失敗："+errText(e)); } };
+  const saveAssign = async (map, ages) => { try{ await S.db.doc(AS_ASSIGN+"/"+(A.year+"_"+cls).replace(/[\/#?\[\]]/g,"_")).set({ year:A.year, cls, map, ages: ages || A.ages || {}, updatedAt:Date.now() }); }catch(e){ toast("儲存失敗："+errText(e)); } };
+  let addIn;
+  const addKids = () => { const nm = addIn.value.split(/[、,，;；\n\r\t]+/).map(x=>x.trim()).filter(Boolean); if (!nm.length) return; addIn.value=""; saveRoster([...new Set([...kids, ...nm])]); };
+  const cnt = {}; teachers.forEach(t=>cnt[t]=0); kids.forEach(c=>{ const w=A.assign[c]; if (w) cnt[w]=(cnt[w]||0)+1; });
+  app.append(h("div",{class:"as-sum",style:"flex-direction:column;align-items:stretch"},
+    h("b",null,`👧 ${cls} 幼兒名單（${kids.length} 位）`),
+    h("p",{class:"note",style:"font-size:13px;margin:2px 0 8px"},"和學習區觀察紀錄共用同一份名單。刪除只會從名單拿掉，已填的評量不會被刪除。每位幼兒請設定年齡層（大班／中班／小班／幼），例行性評量會依年齡層帶出對應的題目。"),
+    h("div",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+      addIn = h("input",{class:"in",style:"flex:1;min-width:240px",placeholder:"輸入幼兒姓名（可一次貼多位，用頓號、逗號或換行分開）",onkeydown:e=>{ if(e.key==="Enter"){ e.preventDefault(); addKids(); } }}),
+      h("button",{class:"btn primary",onclick:addKids},"＋ 新增幼兒"))));
+  app.append(h("div",{class:"as-sum",style:"flex-wrap:wrap"},
+    h("b",null,"分配負責老師："),
+    teachers.length ? teachers.map(t=>h("span",{class:"as-sumi"},`${t} ${cnt[t]||0} 位`)) : h("span",{style:"color:var(--warn)"},"「老師／班級組合」裡沒有這班的老師"),
+    h("span",{class:"as-sumi"},`未分配 ${kids.filter(c=>!A.assign[c]).length} 位`),
+    h("span",{style:"margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"},
+      teachers.length ? h("button",{class:"btn",onclick:()=>confirmBox("平均分配？",`把 ${kids.length} 位幼兒依名單順序平均分給 ${teachers.join("、")}（會取代目前的分配）。`,"平均分配",()=>{ const m={}; kids.forEach((c,i)=>m[c]=teachers[i%teachers.length]); return saveAssign(m); })},"⚖️ 平均分配") : null,
+      h("button",{class:"btn",onclick:()=>confirmBox("清除分配？","所有幼兒都會變成「未分配」。","清除",()=>saveAssign({}))},"清除分配"))));
+  if (!kids.length){ app.append(h("div",{class:"notice"},"名單是空的，請在上面輸入幼兒姓名。")); return; }
+  const opts = [...new Set([...teachers, ...Object.values(A.assign).filter(Boolean)])];
+  app.append(h("div",{class:"list"},kids.map((c,i)=>h("div",{class:"card row",style:"cursor:default;padding:10px 14px"},
+    h("span",{style:"flex:1"},h("span",{style:"color:var(--muted);margin-right:8px"},i+1),h("b",null,c)),
+    h("select",{class:"in",style:"width:auto"+(asDefAge(cls,c)?"":";background:#fff4c2"),title:"年齡層：決定例行性評量用哪一版題目",onchange:e=>{ const g={...A.ages}; if (e.target.value) g[c]=e.target.value; else delete g[c]; saveAssign({...A.assign}, g); }},
+      h("option",{value:""},"年齡層…"), AGES.map(v=>h("option",{value:v,selected:asDefAge(cls,c)===v},v==="幼"?"幼（兩歲）":v+"班"))),
+    h("select",{class:"in",style:"width:auto",onchange:e=>{ const m={...A.assign}; if (e.target.value) m[c]=e.target.value; else delete m[c]; saveAssign(m); }},
+      h("option",{value:""},"（未分配）"), opts.map(t=>h("option",{value:t,selected:A.assign[c]===t},t+(asSame(t,me)?"（我）":"")))),
+    h("button",{class:"btn danger",onclick:()=>confirmBox("從名單刪除？",`把「${c}」從 ${cls} 的名單刪除（已填的評量不會被刪除）。`,"刪除",()=>{ const m={...A.assign}, g={...A.ages}; delete m[c]; delete g[c]; saveAssign(m, g); return saveRoster(kids.filter(x=>x!==c)); })},"✕ 刪除")))));
+}
+function renderAssessAdmin(app){
+  const A = S.as; asSubscribeAll();
+  if (!A.gotAll){ app.append(h("div",{class:"notice"},"載入各班評量中…")); return; }
+  const classes = asAllCls().filter(c=>asKids(c).length);
+  if (!classes.length){ app.append(h("div",{class:"notice"},"還沒有任何班級的幼兒名單。")); return; }
+  const cols = [["routine","start"],["routine","end"],["summative","start"],["summative","mid"],["summative","end"]];
+  const perL = (t,k) => AS_T[t].pers.find(p=>p[0]===k)[1];
+  const bar = (n,t) => h("div",{class:"as-bar2"},h("div",{style:`width:${t?Math.round(n/t*100):0}%`}));
+  const tot = cols.map(()=>0); let totK = 0;
+  const body = [];
+  classes.forEach(c=>{
+    const kids = asKids(c); totK += kids.length;
+    const res = cols.map(([t,k],ci)=>{ const miss=[]; let n=0; kids.forEach(ch=>{ const dc=A.all.find(x=>x.cls===c&&x.type===t&&x.child===ch); if (dc && asDone(t,dc,dc.age,k)) n++; else miss.push(ch); }); tot[ci]+=n; return {n,miss}; });
+    const open = !!A.admOpen[c];
+    body.push(h("tr",{class:"as-adm-r",onclick:()=>{ A.admOpen[c]=!open; render(); }},h("td",null,(open?"▾ ":"▸ ")+c),h("td",{style:"text-align:center"},kids.length),
+      res.map(r=>h("td",null,h("div",{style:"display:flex;align-items:center;gap:6px"},h("b",{style:"min-width:42px"},`${r.n}/${kids.length}`),bar(r.n,kids.length))))));
+    if (open) body.push(h("tr",null,h("td",{colspan:String(2+cols.length),class:"as-adm-d"},
+      cols.map(([t,k],ci)=>res[ci].miss.length ? h("div",null,h("b",null,`${AS_T[t].label}・${perL(t,k)} 未完成（${res[ci].miss.length}）：`),res[ci].miss.join("、")) : h("div",{style:"color:var(--accent)"},`${AS_T[t].label}・${perL(t,k)}：全部完成 🎉`)))));
+  });
+  body.push(h("tr",{style:"font-weight:700;background:#fbf8f0"},h("td",null,"全園"),h("td",{style:"text-align:center"},totK),tot.map(n=>h("td",null,`${n}/${totK}`))));
+  app.append(h("p",{class:"note",style:"font-size:13px"},`${A.year} 學年度｜每一欄是「所有項目都填完」的幼兒人數。點班級可以看還沒完成的幼兒。`));
+  app.append(h("div",{class:"tablewrap"},h("table",{class:"as-adm"},
+    h("thead",null,h("tr",null,h("th",{rowspan:"2"},"班級"),h("th",{rowspan:"2"},"幼兒"),h("th",{colspan:"2"},"例行性評量"),h("th",{colspan:"3"},"總結性評量")),
+      h("tr",null,cols.map(([t,k])=>h("th",null,perL(t,k))))),
+    h("tbody",null,body))));
+}
+function asRoutineHtml(d){
+  const D = d.dates||{}, roc = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}.${m[2]}.${m[3]}` : ""; };
+  let rows = "", i = 0;
+  (rtGroups(d.age) || RT_GROUPS).forEach(g=>g.items.forEach((it,gi)=>{ const ix=i++;
+    rows += `<tr>${gi===0?`<td rowspan="${g.items.length}" class="g">${esc(g.g).split("").join("<br>")}</td>`:""}<td class="it">${esc(it)}</td>${RT_PER.map(([k])=>RT_VALS.map(([v])=>`<td class="c">${(d.data[k]||[])[ix]===v?"V":""}</td>`).join("")).join("")}</tr>`; }));
+  return `<div class="sheet"><div class="t1">桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會)</div><div class="t2">${esc(d.year)} 學年度幼兒例行性活動學習觀察紀錄</div>
+  <div class="inf"><span>班級：${esc(d.cls)}</span><span>姓名：${esc(d.child)}</span></div>
+  <div class="inf"><span>學年:學年初/學年末</span><span>紀錄日期：${roc(D.start)||"　　　"} /${roc(D.end)||"　　　"}</span></div>
+  <table class="rt"><colgroup><col style="width:9mm"><col><col span="6" style="width:12mm"></colgroup>
+  <thead><tr><th rowspan="2">作<br>息<br>時<br>段</th><th rowspan="2">主要活動</th><th colspan="3">學年初</th><th colspan="3">學年末</th></tr>
+  <tr>${RT_PER.map(()=>RT_VALS.map(([,t])=>`<th class="s">${t.slice(0,2)}<br>${t.slice(2)}</th>`).join("")).join("")}</tr></thead><tbody>${rows}</tbody></table>
+  <div class="box"><div class="bh">老師愛的鼓勵與分享</div><div class="bb">${lines(d.comment||"")}</div></div>
+  <div class="box"><div class="bh">爸爸媽媽給寶貝的鼓勵與肯定</div><div class="bb tall"></div></div>
+  <div class="sig">家長簽名：＿＿＿＿＿＿＿＿</div></div>`;
+}
+function asSummHtml(d){
+  const D = d.dates||{}, roc = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}.${+m[2]}.${+m[3]}` : ""; };
+  let rows = "", i = 0;
+  SM_GROUPS.forEach(g=>g.items.forEach(([it,acts],gi)=>{ const ix=i++;
+    rows += `<tr>${gi===0?`<td rowspan="${g.items.length}" class="g">${esc(g.g).replace(/(..)(..)/,"$1<br>$2")}</td>`:""}<td class="it">${esc(it)}</td>${SM_ACTS.map((_,a)=>`<td class="c">${acts.includes(a)?"✓":""}</td>`).join("")}${SM_PER.map(([k])=>`<td class="c lv">${esc((d.data[k]||[])[ix]||"")}</td>`).join("")}</tr>`; }));
+  const box = v => `<span class="bx">${d.age===v?"■":"□"}</span>${v}`;
+  return `<div class="sheet sm"><div class="t2">桃 園 市 仁 德 非 營 利 幼 兒 園</div><div class="t2">${esc(d.year)} 學 年 度 幼 兒 總 結 性 評 量</div>
+  <table class="st"><colgroup><col style="width:14mm"><col><col span="5" style="width:10mm"><col span="3" style="width:15mm"></colgroup>
+  <tr class="hd"><td colspan="2">幼兒姓名：${esc(d.child)}　　　班級：${esc(d.cls)}</td><td colspan="5">教學者：${esc(d.teacher||"")}</td><td colspan="3" class="sh">評 量 日 期</td></tr>
+  <tr class="hd"><td colspan="2" style="text-align:center">幼 兒 年 齡 層　${box("大")}　${box("中")}　${box("小")}　${box("幼")}</td><td colspan="5" class="sh">活　動　類　別</td>${SM_PER.map(([k,l])=>`<td class="sh dt">${l}<br>${roc(D[k])}</td>`).join("")}</tr>
+  <tr class="sh"><th>核心<br>素養</th><th>幼 兒 學 習 評 量 指 標</th>${SM_ACTS.map(a=>`<th class="ac">${a==="社區踏查"?"社區<br>踏查":a}</th>`).join("")}<th colspan="3">個別幼兒表現等級</th></tr>
+  ${rows}
+  <tr class="sh"><td colspan="10" style="text-align:center;letter-spacing:1em">教師總評語</td></tr>
+  <tr><td colspan="10" class="cm">${lines(d.comment||"")}</td></tr></table>
+  <div class="sig">家長簽名：＿＿＿＿＿＿＿＿</div>
+  <div class="nt">備註：1.評量內容說明：每一個活動類別之學習指標的觀察<br>　　　2.幼兒評量準則：層級 1-多練習、層級 2-有進步、層級 3-表現佳、層級 4-表現優</div></div>`;
+}
+function printAssessMany(type, docs){
+  docs = docs.filter(Boolean); if (!docs.length){ toast("沒有可以列印的評量"); return; }
+  const T = AS_T[type];
+  const norm = d => { const o = JSON.parse(JSON.stringify(d)); o.data = o.data || {}; T.pers.forEach(([k])=>{ if (!Array.isArray(o.data[k])) o.data[k]=[]; }); return o; };
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}body{font-family:"Noto Serif TC","Noto Sans TC","標楷體","DFKai-SB","Microsoft JhengHei",serif;color:#000}
+.sheet{width:190mm;margin:0 auto;font-size:10.5pt;line-height:1.35;page-break-after:always}.sheet:last-child{page-break-after:auto}@media screen{.sheet{border-bottom:2px dashed #bbb;margin-bottom:8mm}}
+.t1{text-align:center;font-weight:bold;font-size:12.5pt}.t2{text-align:center;font-weight:bold;font-size:12.5pt;margin:2px 0 6px}
+.inf{display:flex;justify-content:space-between;font-weight:bold;margin:4px 8mm}
+table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #000;padding:2px 4px;vertical-align:middle}th{font-weight:normal}
+td.g{text-align:center;width:9mm}td.it{text-align:left}td.c{text-align:center}th.s{font-size:9pt;line-height:1.2}
+.rt tr{page-break-inside:avoid}.box{border:1px solid #000;margin-top:8px;page-break-inside:avoid}.bh{text-align:center;font-weight:bold;border-bottom:1px solid #000;padding:3px}.bb{min-height:30mm;padding:6px 8px}.bb.tall{min-height:34mm}
+.sig{text-align:right;margin:10px 10mm 0;font-weight:bold}
+.sheet.sm{font-size:9.5pt;line-height:1.25}.st td,.st th{padding:2px 3px}.st .hd td{font-weight:bold}.st .sh,.st tr.sh th,.st tr.sh td{background:#dce6f2;text-align:center;font-weight:bold}
+.st td.dt{font-size:7.5pt;font-weight:normal;white-space:nowrap}.st th.ac{font-size:8.5pt}.st td.lv{font-weight:bold;font-size:11pt}.st td.cm{height:30mm;vertical-align:top}.nt{color:#c00;font-size:9pt;margin-top:8px}.bx{font-size:11pt}`;
+  const body = docs.map(d=>type==="routine"?asRoutineHtml(norm(d)):asSummHtml(norm(d))).join("");
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(T.label)}${docs.length===1?" "+esc(docs[0].cls)+" "+esc(docs[0].child):""}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>共 ${docs.length} 份，每位幼兒一份（A4 直式）。</span></div>${body}
+<script>window.addEventListener("load",function(){var H=277*96/25.4-6;document.querySelectorAll(".sheet.sm").forEach(function(el){var fs=9.5;el.style.fontSize=fs+"pt";while(el.scrollHeight>H&&fs>6.5){fs-=.25;el.style.fontSize=fs+"pt";el.querySelectorAll("td.cm").forEach(function(c){c.style.height=Math.max(16,30-(9.5-fs)*6)+"mm"})}});setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`);
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -7136,6 +7505,9 @@ function sync(d, view){
     S.patrol = { list:[], got:false, open:null, edit:false, draft:null };
     if (String(d.currentUser.email||"").toLowerCase()==="kellyyu1209@gmail.com") unsubs.push(subscribe(d.db.collection("patrolRecords"),S.patrol,"got",snap=>{ S.patrol.list=snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.patrol.got = true;
+    if (S.as && S.as.unsub) { try{S.as.unsub();}catch(_){} } if (S.as && S.as.unsubA) { try{S.as.unsubA();}catch(_){} } if (S.as && S.as.unsubAll) { try{S.as.unsubAll();}catch(_){} }
+    S.as = { tab:"routine", year0:asYear0(), year:String(asYear0()), cls:"", roster:{}, gotR:false, list:[], got:false, assign:{}, open:null, draft:null, mine:false, all:[], gotAll:false, admOpen:{} };
+    unsubs.push(d.db.doc("roster/children").onSnapshot(x=>{ const l=(x.exists&&(x.data()||{}).list)||{}; const o={}; Object.keys(l).forEach(k=>{ if (Array.isArray(l[k])) o[k]=l[k].filter(v=>typeof v==="string"); }); S.as.roster=o; S.as.gotR=true; if (!S.as.open) render(); }, ()=>{ S.as.gotR=true; render(); }));
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
