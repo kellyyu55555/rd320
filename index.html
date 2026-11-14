@@ -1725,7 +1725,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L18</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L19</footer>
     </div>
   </template>
 
@@ -4098,7 +4098,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L18</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L19</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5828,6 +5828,17 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-search input{border:0;flex:1;font-size:16px;background:transparent;outline:none;box-shadow:none}
 #kb .mt-snip{margin-top:6px;font-size:13px;color:#4a4232;background:#fffbea;border-left:3px solid #e0b84a;padding:4px 8px;border-radius:4px;line-height:1.6}
 #kb .mt-snip mark{background:#ffe066;padding:0 1px;border-radius:2px}
+#kb .mt-item.fixed{border:2px solid #e0b84a;background:#fffaf0}
+#kb .mt-fix{font-size:12px;font-weight:700;color:#8a6a00;background:#fff1c2;border-radius:999px;padding:1px 8px;margin-left:6px}
+#kb .mt-fixt{padding:7px 10px;background:#f6f1e4;border-radius:8px;font-weight:700}
+#kb .mt-inph{margin:4px 0 10px}
+#kb .mt-cls{border:1px solid #d8cba8;border-radius:10px;padding:8px 10px;margin:8px 0;background:#fff}
+#kb .mt-clsh{font-weight:700;color:var(--accent);margin-bottom:6px}
+#kb .mt-clsb{border-top:1px dashed var(--line);padding:6px 0}
+#kb .mt-clsb.has{background:#f5faf6;border-radius:8px;padding:6px 8px}
+#kb .mt-qa{border-left:3px solid #b9dcc3;padding-left:8px;margin:6px 0 10px}
+#kb .mt-view table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}#kb .mt-view table.pt.in img{max-height:200px}
+#kb .mt-view .txt.cls{font-weight:700;margin-top:8px}
 
 </style>
 <script>
@@ -7566,6 +7577,14 @@ const MT_COL = "meetingMinutes", MT_PH = "meetingPhotos";
 const MT_TYPES = [["教保會議","t1"],["園務會議","t2"],["課發會","t3"],["勞資會議","t4"]];
 const MT_NUM = ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"];
 const mtNum = n => MT_NUM[n-1] || String(n);
+const MT_FIXED = {
+  "教保會議": { issues:[ { title:"對於教保或園務問題提問", mode:"ask" }, { title:"班上需要協助的幼兒學習情形，各班老師給予策略與建議。", mode:"help" } ] },
+  "園務會議": { reports:[ { title:"特教業務" } ] }
+};
+const mtKey = t => str(t).replace(/[\s。．.，,、：:]/g,"");
+const fw = n => String(n).replace(/[0-9]/g, c=>String.fromCharCode(c.charCodeAt(0)+65248));
+const mtCls = () => { try{ const c = asAllCls(); if (c.length) return c; }catch(_){} return ["幸運草班","仙草花班","山茶花班","梔子花班","風鈴草班"]; };
+const mtPh = a => (Array.isArray(a)?a:[]).filter(p=>p&&p.id).map(p=>({id:str(p.id), cap:str(p.cap)}));
 const MTC = {}, MTQ = {};
 const MT_OWNER = "kellyyu1209@gmail.com";
 const mtCan = () => !!(S.d && S.d.currentUser && str(S.d.currentUser.email).toLowerCase()===MT_OWNER);
@@ -7579,8 +7598,15 @@ const mtRocDate = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); retu
 const mtTime = t => { const m=str(t).match(/^(\d{1,2}):(\d{2})/); return m ? `${+m[1]}時${m[2]}分` : ""; };
 function mtNorm(m){
   const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：" }, JSON.parse(JSON.stringify(m||{})));
-  o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body)}));
-  o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), resolution:str(r&&r.resolution)}));
+  o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body), photos:mtPh(r&&r.photos), fixed:!!(r&&r.fixed)}));
+  o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), resolution:str(r&&r.resolution), photos:mtPh(r&&r.photos), resPhotos:mtPh(r&&r.resPhotos), fixed:str(r&&r.fixed),
+    classes:(Array.isArray(r&&r.classes)?r.classes:[]).map(c=>({cls:str(c&&c.cls), items:(Array.isArray(c&&c.items)?c.items:[]).map(it=>({q:str(it&&it.q), by:str(it&&it.by), a:str(it&&it.a)}))}))}));
+  const F = MT_FIXED[o.type] || {};
+  (F.reports||[]).forEach(fx=>{ const r = o.reports.find(x=>mtKey(x.title)===mtKey(fx.title)); if (r){ r.fixed = true; r.title = fx.title; } else o.reports.push({title:fx.title, body:"", photos:[], fixed:true}); });
+  o.reports.forEach(r=>{ if (r.fixed && !(F.reports||[]).some(fx=>mtKey(fx.title)===mtKey(r.title))) r.fixed = false; });
+  (F.issues||[]).forEach(fx=>{ const r = o.issues.find(x=>mtKey(x.title)===mtKey(fx.title)); if (r){ r.fixed = fx.mode; r.title = fx.title; } else o.issues.push({title:fx.title, content:"", resolution:"", photos:[], resPhotos:[], fixed:fx.mode, classes:[]}); });
+  o.issues.forEach(r=>{ if (r.fixed && !(F.issues||[]).some(fx=>mtKey(fx.title)===mtKey(r.title))) r.fixed = ""; });
+  o.issues.forEach(r=>{ if (r.fixed){ const have = new Set(r.classes.map(c=>c.cls)); mtCls().forEach(c=>{ if (!have.has(c)) r.classes.push({cls:c, items:[]}); }); } });
   o.photos = (Array.isArray(o.photos)?o.photos:[]).filter(p=>p&&p.id).map(p=>({id:str(p.id), cap:str(p.cap)}));
   return o;
 }
@@ -7593,7 +7619,7 @@ function renderMeeting(app){
   const can = mtCan();
   { const seen = new Set(); M.list = M.list.filter(x=>{ if (seen.has(x.id)) return false; seen.add(x.id); return true; }); }
   const kw = str(M.q).trim().toLowerCase(), kws = kw ? kw.split(/\s+/).filter(Boolean) : [];
-  const textOf = m => { const n=mtNorm(m); return [mtTitle(n), n.type, mtRocDate(n.date), n.date, n.place, n.chair, n.recorder, n.attendees, ...n.reports.flatMap(r=>[r.title,r.body]), ...n.issues.flatMap(r=>[r.title,r.content,r.resolution]), ...n.photos.map(p=>p.cap)].join("\n"); };
+  const textOf = m => { const n=mtNorm(m); return [mtTitle(n), n.type, mtRocDate(n.date), n.date, n.place, n.chair, n.recorder, n.attendees, ...n.reports.flatMap(r=>[r.title,r.body]), ...n.issues.flatMap(r=>[r.title,r.content,r.resolution,...r.classes.flatMap(c=>c.items.length?[c.cls,...c.items.flatMap(it=>[it.q,it.by,it.a])]:[]),...r.photos.map(p=>p.cap),...r.resPhotos.map(p=>p.cap)]), ...n.reports.flatMap(r=>r.photos.map(p=>p.cap)), ...n.photos.map(p=>p.cap)].join("\n"); };
   const list = M.list.filter(x=>M.type==="all"||x.type===M.type).filter(x=>{ if (!kws.length) return true; const t=textOf(x).toLowerCase(); return kws.every(k=>t.includes(k)); }).sort((a,b)=>str(b.date).localeCompare(str(a.date))||((+b.no||0)-(+a.no||0)));
   const snip = m => { if (!kws.length) return null; const t=textOf(m), lo=t.toLowerCase(), out=[]; let pos=0;
     for (const k of kws){ const i=lo.indexOf(k); if (i<0) continue; const a=Math.max(0,i-18), b=Math.min(t.length,i+k.length+30); out.push([a,b]); }
@@ -7630,10 +7656,12 @@ function mtNew(){
   const last = [...M.list].filter(x=>x.type===type).sort((a,b)=>str(b.date).localeCompare(str(a.date)))[0];
   M.draft = mtNorm({ type, year:y, sem:s, no:mtNextNo(type,y,s), place:last?last.place:"", chair:last?last.chair:"", recorder:last?last.recorder:"", ampm:last?last.ampm:"下午", from:last?last.from:"", to:last?last.to:"",
     reports:[{title:"",body:""}], issues:[{title:"",content:"",resolution:""}] });
+  if (MT_FIXED[type] && (MT_FIXED[type].reports||[]).length) M.draft.reports = M.draft.reports.filter(r=>r.fixed||r.title||r.body).concat([]);
   M.edit = "__new"; M.dirty = false; render(); window.scrollTo(0,0);
 }
 function mtCopy(m){
   const M = S.mt, d = mtNorm(m); delete d.id; d.no = mtNextNo(d.type,d.year,d.sem); d.date=""; d.photos=[]; d.title = d.autoTitle ? "" : d.title;
+  d.reports.forEach(r=>{ r.photos=[]; }); d.issues.forEach(r=>{ r.photos=[]; r.resPhotos=[]; r.classes.forEach(c=>{ c.items=[]; }); });
   M.draft = d; M.edit = "__new"; M.dirty = true; render(); window.scrollTo(0,0); toast("已複製內容（照片不會複製），改好日期後按儲存");
 }
 async function mtSave(btn){
@@ -7658,7 +7686,7 @@ function renderMeetingEditor(app){
   app.append(tb());
   app.append(h("section",{class:"as-form mt-form"},
     h("div",{class:"f2"},
-      fld("會議類別",h("select",{class:"in",onchange:e=>{ d.type=e.target.value; if (M.edit==="__new") d.no=mtNextNo(d.type,d.year,d.sem); mark(); render(); }},MT_TYPES.map(([t])=>h("option",{value:t,selected:d.type===t},t)))),
+      fld("會議類別",h("select",{class:"in",onchange:e=>{ d.type=e.target.value; if (M.edit==="__new") d.no=mtNextNo(d.type,d.year,d.sem); M.draft = Object.assign(mtNorm(d), {id:d.id}); mark(); render(); }},MT_TYPES.map(([t])=>h("option",{value:t,selected:d.type===t},t)))),
       h("span")),
     h("div",{class:"f4"},
       fld("學年度",inp("year","115")), fld("學期",h("select",{class:"in",onchange:e=>{ d.sem=e.target.value; mark(); upd(); }},["一","二"].map(v=>h("option",{value:v,selected:d.sem===v},"第"+v+"學期")))),
@@ -7669,22 +7697,39 @@ function renderMeetingEditor(app){
       fld("上午／下午",h("select",{class:"in",onchange:e=>{ d.ampm=e.target.value; mark(); }},["上午","下午"].map(v=>h("option",{value:v,selected:d.ampm===v},v)))),
       fld("開始",inp("from","","time")), fld("結束",inp("to","","time"))),
     h("div",{class:"f4"}, fld("二、地點",inp("place")), fld("三、主席",inp("chair","例如：林佳靜園長")), fld("記錄",inp("recorder")), fld("四、出（列）席人員",inp("attendees","(詳簽到表)")))));
-  const listEd = (title, key, mk, fields) => {
+  const phEd = (arr, label) => { const st = h("span",{class:"err",style:"margin-left:6px"});
+    return h("div",{class:"mt-inph"}, arr.length ? h("div",{class:"mt-photos"}, arr.map((p,i)=>h("div",{class:"mt-ph"}, mtImg(p.id), h("input",{class:"in",value:p.cap,placeholder:"照片說明（選填）",oninput:e=>{ p.cap=e.target.value; mark(); }}),
+        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("移除這張照片？")) return; const [x]=arr.splice(i,1); mark(); S.db.collection(MT_PH).doc(x.id).delete().catch(()=>{}); render(); }},"移除")))) : null,
+      h("div",null,h("button",{class:"btn sm",onclick:()=>pickImages(true, async fs=>{ for (let i=0;i<fs.length;i++){ st.textContent=`上傳中… ${i+1}/${fs.length}`; try{ const data=await shrinkToDataUrl(fs[i]); const ref=S.db.collection(MT_PH).doc(); await ref.set({ data, name:str(fs[i].name), createdAt:Date.now() }); MTC[ref.id]=data; arr.push({id:ref.id,cap:""}); mark(); }catch(e){ st.textContent="上傳失敗："+errText(e); return; } } st.textContent=""; render(); })},"📷 "+label),st)); };
+  const ta = (o, f, l, rows) => h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows),oninput:e=>{ o[f]=e.target.value; mark(); }},o[f]));
+  const clsEd = it => { const ask = it.fixed==="ask";
+    return h("div",{class:"mt-cls"}, h("div",{class:"mt-clsh"}, ask ? "各班提問（沒有提問的班級不會印出）" : "各班需要協助的幼兒（沒有填寫的班級不會印出）"),
+      it.classes.map(c=>h("div",{class:"mt-clsb"+(c.items.length?" has":"")},
+        h("div",{class:"mt-ih"},h("b",null,"【"+c.cls+"】"),h("span",{class:"sp"}),h("button",{class:"btn sm",onclick:()=>{ c.items.push({q:"",by:"",a:""}); mark(); render(); }},ask?"＋ 新增提問":"＋ 新增幼兒")),
+        c.items.map((x,j)=>h("div",{class:"mt-qa"},
+          h("div",{class:"mt-ih"},h("b",null,ask?`提問 ${j+1}`:`Ｑ${fw(j+1)}`),h("span",{class:"sp"}),h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這一則？")) return; c.items.splice(j,1); mark(); render(); }},"刪除")),
+          ta(x,"q", ask?"提問內容":"幼兒姓名與學習情形", ask?2:3),
+          ask ? null : h("label",{class:"fl"},"給予策略與建議的老師",h("input",{class:"in",value:x.by,placeholder:"例如：Amber",oninput:e=>{ x.by=e.target.value; mark(); }})),
+          ta(x,"a", ask?"回覆（選填）":"策略與建議", ask?2:4))))));
+  };
+  const listEd = (title, key, mk) => {
     const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},title));
     d[key].forEach((it,i)=>{ const lab = key==="reports" ? `報告${mtNum(i+1)}` : `議題${mtNum(i+1)}`;
-      sec.append(h("div",{class:"mt-item"},
-        h("div",{class:"mt-ih"},h("b",null,lab),h("span",{class:"sp"}),
+      sec.append(h("div",{class:"mt-item"+(it.fixed?" fixed":"")},
+        h("div",{class:"mt-ih"},h("b",null,lab),it.fixed?h("span",{class:"mt-fix"},"📌 固定項目"):null,h("span",{class:"sp"}),
           i>0 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i-1],d[key][i]]=[d[key][i],d[key][i-1]]; mark(); render(); }},"↑") : null,
           i<d[key].length-1 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i+1],d[key][i]]=[d[key][i],d[key][i+1]]; mark(); render(); }},"↓") : null,
-          h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除「"+lab+"」？")) return; d[key].splice(i,1); mark(); render(); }},"刪除")),
-        fields.map(([f,l,rows])=> rows ? h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows),oninput:e=>{ it[f]=e.target.value; mark(); }},it[f])) : h("label",{class:"fl"},l,h("input",{class:"in",value:it[f],oninput:e=>{ it[f]=e.target.value; mark(); }})))));
+          it.fixed ? null : h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除「"+lab+"」？")) return; d[key].splice(i,1); mark(); render(); }},"刪除")),
+        it.fixed ? h("div",{class:"fl"},key==="reports"?"標題":"議題",h("div",{class:"mt-fixt"},it.title)) : h("label",{class:"fl"},key==="reports"?"標題（例如：地震演練時程）":"議題（例如：十月分學習區任務卡的執行計畫）",h("input",{class:"in",value:it.title,oninput:e=>{ it.title=e.target.value; mark(); }})),
+        key==="reports" ? [ta(it,"body","內容（可分行）",5), phEd(it.photos,"內容加照片")]
+          : [ta(it,"content", it.fixed?"內容／補充說明（選填，可分行）":"內容／討論（可分行）", it.fixed?3:6), phEd(it.photos,"內容加照片"), it.fixed ? clsEd(it) : null, ta(it,"resolution","決議（可分行）",4), phEd(it.resPhotos,"決議加照片")]));
     });
-    sec.append(h("button",{class:"btn",onclick:()=>{ d[key].push(mk()); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
+    sec.append(h("button",{class:"btn",onclick:()=>{ const n = mk(); const fi = d[key].findIndex(x=>x.fixed); if (fi>=0) d[key].splice(fi,0,n); else d[key].push(n); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
     return sec;
   };
-  app.append(listEd("五、報告事項","reports",()=>({title:"",body:""}),[["title","標題（例如：地震演練時程）"],["body","內容（可分行）",5]]));
-  app.append(listEd("六、議題討論","issues",()=>({title:"",content:"",resolution:""}),[["title","議題（例如：十月分學習區任務卡的執行計畫）"],["content","內容／討論（可分行）",6],["resolution","決議（可分行）",4]]));
-  const ps = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"會議照片"),
+  app.append(listEd("五、報告事項","reports",()=>({title:"",body:"",photos:[]})));
+  app.append(listEd("六、議題討論","issues",()=>({title:"",content:"",resolution:"",photos:[],resPhotos:[],fixed:"",classes:[]})));
+  const ps = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"會議照片（開會現場）"),
     h("p",{class:"note",style:"font-size:13px;margin:0 0 8px"},"可以一次選多張，列印時每列兩張。"),
     h("div",{class:"mt-photos"}, d.photos.map((p,i)=>h("div",{class:"mt-ph"}, mtImg(p.id), h("input",{class:"in",value:p.cap,placeholder:"說明（選填）",oninput:e=>{ p.cap=e.target.value; mark(); }}),
       h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("移除這張照片？")) return; const [x]=d.photos.splice(i,1); mark(); S.db.collection(MT_PH).doc(x.id).delete().catch(()=>{}); render(); }},"移除")))));
@@ -7716,9 +7761,19 @@ function mtBodyHtml(m, withImgs){
   body += `<div class="row"><span class="no">三、</span>主席：${esc(m.chair)}<span class="rec">記錄：${esc(m.recorder)}</span></div>`;
   body += `<div class="row"><span class="no">四、</span>出（列）席人員：${esc(m.attendees)}</div>`;
   body += `<div class="row"><span class="no">五、</span>報告事項</div>`;
-  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>`; });
+  const pg = arr => { if (!arr || !arr.length) return ""; let t = `<table class="pt in">`; for (let i=0;i<arr.length;i+=2){ t += "<tr>"+[arr[i],arr[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:(arr.length>1?"<td></td>":"")).join("")+"</tr>"; } return t+"</table>"; };
+  m.reports = m.reports.filter(r=>r.fixed||r.title.trim()||r.body.trim()||r.photos.length);
+  m.issues = m.issues.filter(r=>r.fixed||r.title.trim()||r.content.trim()||r.resolution.trim()||r.photos.length||r.resPhotos.length);
+  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>${pg(r.photos)}`; });
   body += `<div class="row">六、議題討論：</div>`;
-  m.issues.forEach((r,i)=>{ body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>${r.content.trim()?`<div class="txt">${r.content.trim().startsWith("內容")?"":"內容："}${ind(r.content)}</div>`:""}<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>`; });
+  m.issues.forEach((r,i)=>{
+    body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>`;
+    if (r.content.trim()) body += `<div class="txt">${r.fixed||r.content.trim().startsWith("內容")?"":"內容："}${ind(r.content)}</div>`;
+    body += pg(r.photos);
+    if (r.fixed==="ask"){ let n=0; r.classes.forEach(c=>c.items.filter(x=>x.q.trim()||x.a.trim()).forEach(x=>{ n++; body += `<div class="txt">${n}. ${esc(c.cls.replace(/班$/,""))}：${ind(x.q)}${x.a.trim()?`<br>回覆：${ind(x.a)}`:""}</div>`; })); }
+    if (r.fixed==="help"){ r.classes.forEach(c=>{ const its=c.items.filter(x=>x.q.trim()||x.a.trim()); if (!its.length) return; body += `<div class="txt cls">【${esc(c.cls)}】</div>`;
+      its.forEach((x,j)=>{ body += `<div class="txt qa"><b>Ｑ${fw(j+1)}：</b>${ind(x.q)}</div><div class="txt qa"><b>Ａ${fw(j+1)}${esc(x.by)}：</b>${ind(x.a)}</div>`; }); }); }
+    body += `<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>${pg(r.resPhotos)}`; });
   if (m.photos.length){ body += `<table class="pt">`; for (let i=0;i<m.photos.length;i+=2){ body += "<tr>"+[m.photos[i],m.photos[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:"<td></td>").join("")+"</tr>"; } body += `</table>`; }
   if (+m.signRows>0){ body += `<div class="sg">與會人員簽到表</div><table class="sgt">`+Array.from({length:+m.signRows},()=>"<tr>"+Array.from({length:Math.max(1,+m.signCols||3)},()=>"<td></td>").join("")+"</tr>").join("")+`</table>`; }
   body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
@@ -7728,7 +7783,7 @@ const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;f
 .row{margin:8px 0;font-size:1.05em}.row .no{display:inline-block;width:2.4em}.row .rec{margin-left:6em}.row span.on{border:1.5px solid #000;padding:0 3px}
 .sub{margin:10px 0 2px;font-weight:bold}.txt{margin:2px 0 4px 2.4em;white-space:normal;line-height:1.75}
 table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
-.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
+table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
 async function printMeeting(m){
   m = mtNorm(m);
   await Promise.all(m.photos.map(p=>mtLoad(p.id)));
