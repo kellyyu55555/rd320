@@ -319,6 +319,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             :class="view==='assess' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📊 教學評量
           </button>
+          <button x-show="!restrictedPW" @click="view='meeting'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='meeting' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📝 會議紀錄
+          </button>
           <button x-show="!restrictedPW" @click="view='walk'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='walk' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
@@ -415,6 +420,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📊</span></div>
             <h3 class="font-heading font-black text-base mt-3">教學評量</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">例行性評量、總結性評量；同班老師分配幼兒協同完成，看得到每位幼兒的進度</p>
+          </button>
+          <button type="button" x-show="!restrictedPW" @click="view='meeting'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
+            <h3 class="font-heading font-black text-base mt-3">會議紀錄</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">教保會議、園務會議、課發會、勞資會議的紀錄與列印</p>
           </button>
           <button type="button" x-show="!restrictedPW" @click="view='walk'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🌿</span></div>
@@ -788,7 +798,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1711,7 +1721,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L12</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L13</footer>
     </div>
   </template>
 
@@ -4084,7 +4094,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L12</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L13</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5787,6 +5797,29 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .as-tab.t-summative{--tc:#2f6b4f;--tb:#e9f5ee}
 #kb .as-tab.t-roster{--tc:#2f5597;--tb:#eaf0fb}
 #kb .as-tab.t-admin{--tc:#7a3e9d;--tb:#f4ebfa}
+#kb .as-tab.mt-t0{--tc:#6b5a3a;--tb:#f7f1e3}
+#kb .as-tab.mt-t1{--tc:#2f6b4f;--tb:#e9f5ee}
+#kb .as-tab.mt-t2{--tc:#2f5597;--tb:#eaf0fb}
+#kb .as-tab.mt-t3{--tc:#c26a1b;--tb:#fff3e6}
+#kb .as-tab.mt-t4{--tc:#7a3e9d;--tb:#f4ebfa}
+#kb .mt-badge{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin-right:6px;color:#fff;background:#6b5a3a}
+#kb .mt-badge.mt-t1{background:#2f6b4f}#kb .mt-badge.mt-t2{background:#2f5597}#kb .mt-badge.mt-t3{background:#c26a1b}#kb .mt-badge.mt-t4{background:#7a3e9d}
+#kb .mt-form .f4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:760px){#kb .mt-form .f4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#kb .mt-sh{font-weight:700;font-size:17px;color:var(--accent);margin-bottom:8px}
+#kb .mt-item{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fffdf8}
+#kb .mt-ih{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+#kb .mt-ih .sp,#kb .toolbar .sp{flex:1}
+#kb .btn.sm{padding:3px 10px;font-size:13px}
+#kb .mt-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:8px}
+#kb .mt-ph{border:1px solid var(--line);border-radius:10px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:4px}
+#kb .mt-ph img{width:100%;height:140px;object-fit:contain;background:#f6f1e4;border-radius:6px}
+#kb .mt-view{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;font-family:"Noto Serif TC",serif;line-height:1.7;max-width:820px;margin:10px auto}
+#kb .mt-view .hd1{text-align:center}#kb .mt-view .hd2{text-align:center;font-size:1.25em;font-weight:700;margin:4px 0 14px}
+#kb .mt-view .row{margin:8px 0}#kb .mt-view .row .no{display:inline-block;width:2.4em}#kb .mt-view .row .rec{margin-left:4em}#kb .mt-view .row span.on{border:1.5px solid #333;padding:0 3px}
+#kb .mt-view .sub{margin:10px 0 2px;font-weight:700}#kb .mt-view .txt{margin:2px 0 4px 2.4em}
+#kb .mt-view table.pt{width:100%;border-collapse:collapse;margin-top:12px}#kb .mt-view table.pt td{border:1px solid #999;width:50%;text-align:center;padding:6px}#kb .mt-view table.pt img{max-width:100%;max-height:260px;object-fit:contain}
+#kb .mt-view .sg{margin-top:10px}#kb .mt-view table.sgt{width:100%;border-collapse:collapse}#kb .mt-view table.sgt td{border:1px solid #999;height:34px}#kb .mt-view .seal{text-align:center;margin:16px 0 0 30%}
 
 </style>
 <script>
@@ -5856,6 +5889,7 @@ function render(){
   if (S.view==="calendar") return renderCalendar(app);
   if (S.view==="patrol") return renderPatrol(app);
   if (S.view==="assess") return renderAssess(app);
+  if (S.view==="meeting") return renderMeeting(app);
   renderCourses(app);
 }
 
@@ -6515,7 +6549,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -7519,6 +7553,170 @@ async function asUploadAll(btn, type, docs){
   alert(bad.length ? `上傳完成 ${done.length-bad.length} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已上傳 ${done.length} 份到「${S.as.cls}／${AS_T[type].label}」資料夾 ✅`);
 }
 
+/* ---------- 會議紀錄：教保會議、園務會議、課發會、勞資會議 ---------- */
+const MT_COL = "meetingMinutes", MT_PH = "meetingPhotos";
+const MT_TYPES = [["教保會議","t1"],["園務會議","t2"],["課發會","t3"],["勞資會議","t4"]];
+const MT_NUM = ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"];
+const mtNum = n => MT_NUM[n-1] || String(n);
+const MTC = {}, MTQ = {};
+const mtCan = () => !!(S.realAdmin || S.isEditor);
+function mtLoad(id){ if (MTC[id]) return Promise.resolve(MTC[id]); if (!MTQ[id]) MTQ[id] = S.db.collection(MT_PH).doc(id).get().then(x=>{ const d=x.exists?x.data():null; if (d&&d.data) MTC[id]=d.data; return MTC[id]||null; }).catch(()=>null); return MTQ[id]; }
+function mtImg(id, attrs){ const im = h("img", Object.assign({src:MTC[id]||PH_IMG,alt:""}, attrs||{})); if (!MTC[id]) mtLoad(id).then(u=>{ if (u) im.src=u; }); return im; }
+const mtYear0 = () => { const t=new Date(); return t.getFullYear()-1911-(t.getMonth()<7?1:0); };
+const mtSem0 = () => { const m=new Date().getMonth()+1; return (m>=8||m===1) ? "一" : "二"; };
+const mtTitle = m => str(m.title).trim() || `${m.year||""}學年度第${m.sem||"一"}學期第${mtNum(+m.no||1)}次${m.type||"會議"}紀錄`;
+const mtWd = s => { const t=new Date(str(s)+"T00:00:00"); return isNaN(t) ? "" : "日一二三四五六"[t.getDay()]; };
+const mtRocDate = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}年${+m[2]}月${+m[3]}日(${mtWd(s)})` : ""; };
+const mtTime = t => { const m=str(t).match(/^(\d{1,2}):(\d{2})/); return m ? `${+m[1]}時${m[2]}分` : ""; };
+function mtNorm(m){
+  const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：", shared:true }, JSON.parse(JSON.stringify(m||{})));
+  o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body)}));
+  o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), resolution:str(r&&r.resolution)}));
+  o.photos = (Array.isArray(o.photos)?o.photos:[]).filter(p=>p&&p.id).map(p=>({id:str(p.id), cap:str(p.cap)}));
+  return o;
+}
+function renderMeeting(app){
+  const M = S.mt;
+  if (!M.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "會議紀錄載入中…")); return; }
+  if (M.edit) return renderMeetingEditor(app);
+  if (M.view) return renderMeetingView(app);
+  const can = mtCan();
+  const list = M.list.filter(x=>M.type==="all"||x.type===M.type).sort((a,b)=>str(b.date).localeCompare(str(a.date))||((+b.no||0)-(+a.no||0)));
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"會議紀錄"),
+    h("p",{class:"note",style:"margin-top:4px"}, can ? "教保會議、園務會議、課發會、勞資會議。每份紀錄可以設定是否開放老師檢視。" : "這裡是開放給老師檢視的會議紀錄。"),
+    h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
+    can ? h("div",{class:"abs"},h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
+  if (!list.length){ app.append(h("div",{class:"notice"}, can ? "還沒有會議紀錄，按「＋ 新增會議紀錄」開始。" : "目前沒有開放檢視的會議紀錄。")); return; }
+  app.append(h("div",{class:"list"}, list.map(m0=>{ const m=mtNorm(m0), ti=MT_TYPES.find(x=>x[0]===m.type);
+    return h("div",{class:"card row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:240px"},
+        h("span",{class:"mt-badge mt-"+(ti?ti[1]:"t0")},m.type), can && !m.shared ? h("span",{class:"mt-badge",style:"background:#eee;color:#666"},"🔒 未開放老師") : null,
+        h("div",{style:"font-size:17px;font-weight:700;margin-top:4px"},mtTitle(m)),
+        h("div",{style:"font-size:13px;color:var(--muted);margin-top:2px"},[mtRocDate(m.date), m.place?"地點："+m.place:"", m.chair?"主席："+m.chair:"", m.recorder?"記錄："+m.recorder:""].filter(Boolean).join("｜"))),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>{ M.view=m.id; render(); window.scrollTo(0,0); }},"檢視"),
+        h("button",{class:"btn",onclick:()=>printMeeting(m)},"🖨 列印"),
+        can ? h("button",{class:"btn",onclick:()=>{ M.edit=m.id; M.draft=mtNorm(m0); M.dirty=false; render(); window.scrollTo(0,0); }},"編輯") : null,
+        can ? h("button",{class:"btn",onclick:()=>mtCopy(m)},"複製") : null,
+        can ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份會議紀錄？",mtTitle(m)+" 刪除後無法復原。","刪除",async()=>{ await S.db.doc(MT_COL+"/"+m.id).delete(); for (const p of m.photos){ try{ await S.db.collection(MT_PH).doc(p.id).delete(); }catch(_){} } toast("已刪除"); })},"刪除") : null));
+  })));
+}
+function mtNextNo(type, year, sem){ return S.mt.list.filter(x=>x.type===type&&str(x.year)===str(year)&&str(x.sem)===str(sem)).reduce((a,x)=>Math.max(a,+x.no||0),0)+1; }
+function mtNew(){
+  const M = S.mt, type = M.type!=="all" ? M.type : "教保會議", y=String(mtYear0()), s=mtSem0();
+  const last = [...M.list].filter(x=>x.type===type).sort((a,b)=>str(b.date).localeCompare(str(a.date)))[0];
+  M.draft = mtNorm({ type, year:y, sem:s, no:mtNextNo(type,y,s), place:last?last.place:"", chair:last?last.chair:"", recorder:last?last.recorder:"", ampm:last?last.ampm:"下午", from:last?last.from:"", to:last?last.to:"", shared:type!=="勞資會議",
+    reports:[{title:"",body:""}], issues:[{title:"",content:"",resolution:""}] });
+  M.edit = "__new"; M.dirty = false; render(); window.scrollTo(0,0);
+}
+function mtCopy(m){
+  const M = S.mt, d = mtNorm(m); delete d.id; d.no = mtNextNo(d.type,d.year,d.sem); d.date=""; d.photos=[]; d.title = d.autoTitle ? "" : d.title;
+  M.draft = d; M.edit = "__new"; M.dirty = true; render(); window.scrollTo(0,0); toast("已複製內容（照片不會複製），改好日期後按儲存");
+}
+async function mtSave(btn){
+  const M = S.mt, d = M.draft; if (!d) return;
+  const body = JSON.parse(JSON.stringify(d)); delete body.id; body.no = +body.no || 1; body.signRows = Math.max(0,Math.min(40,+body.signRows||0)); body.signCols = Math.max(1,Math.min(6,+body.signCols||3));
+  if (body.autoTitle) body.title = ""; body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
+  if (btn) btn.disabled = true;
+  try{ const ref = M.edit==="__new" ? S.db.collection(MT_COL).doc() : S.db.doc(MT_COL+"/"+M.edit); await ref.set(body);
+    M.list = M.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); M.edit = ref.id; d.id = ref.id; M.dirty=false; toast("已儲存"); render(); }
+  catch(e){ toast("儲存失敗："+errText(e)); }
+  finally{ if (btn) btn.disabled=false; }
+}
+function renderMeetingEditor(app){
+  const M = S.mt, d = M.draft, mark = () => { M.dirty = true; };
+  const back = () => { if (M.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; M.edit=null; M.draft=null; render(); };
+  const fld = (label, el, cls) => h("label",{class:"fl"+(cls?" "+cls:"")},label,el);
+  const inp = (k, ph, type) => h("input",{class:"in",type:type||"text",value:d[k]==null?"":String(d[k]),placeholder:ph||"",oninput:e=>{ d[k]=e.target.value; mark(); if (k==="year"||k==="sem"||k==="no"||k==="type") upd(); }});
+  const titleIn = h("input",{class:"in",value:mtTitle(d),disabled:d.autoTitle?true:null,oninput:e=>{ d.title=e.target.value; mark(); }});
+  const upd = () => { if (d.autoTitle) titleIn.value = mtTitle(Object.assign({},d,{title:""})); };
+  const tb = () => h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>printMeeting(d)},"🖨 列印"), h("button",{class:"btn primary",onclick:e=>mtSave(e.currentTarget)},"💾 儲存"));
+  app.append(tb());
+  app.append(h("section",{class:"as-form mt-form"},
+    h("div",{class:"f2"},
+      fld("會議類別",h("select",{class:"in",onchange:e=>{ d.type=e.target.value; if (M.edit==="__new") d.no=mtNextNo(d.type,d.year,d.sem); mark(); render(); }},MT_TYPES.map(([t])=>h("option",{value:t,selected:d.type===t},t)))),
+      fld("開放老師檢視",h("label",{style:"display:flex;align-items:center;gap:6px;font-weight:400;padding:8px 0"},h("input",{type:"checkbox",checked:d.shared,onchange:e=>{ d.shared=e.target.checked; mark(); }}),"老師可以在「會議紀錄」看到這份"))),
+    h("div",{class:"f4"},
+      fld("學年度",inp("year","115")), fld("學期",h("select",{class:"in",onchange:e=>{ d.sem=e.target.value; mark(); upd(); }},["一","二"].map(v=>h("option",{value:v,selected:d.sem===v},"第"+v+"學期")))),
+      fld("第幾次",inp("no","1","number")),
+      fld("標題",h("div",null,titleIn,h("label",{style:"font-size:12px;font-weight:400;display:flex;gap:4px;align-items:center;margin-top:2px"},h("input",{type:"checkbox",checked:d.autoTitle,onchange:e=>{ d.autoTitle=e.target.checked; titleIn.disabled=d.autoTitle; if (!d.autoTitle) d.title=titleIn.value; upd(); mark(); }}),"自動產生標題")))),
+    h("div",{class:"f4"},
+      fld("一、時間（日期）",inp("date","","date")),
+      fld("上午／下午",h("select",{class:"in",onchange:e=>{ d.ampm=e.target.value; mark(); }},["上午","下午"].map(v=>h("option",{value:v,selected:d.ampm===v},v)))),
+      fld("開始",inp("from","","time")), fld("結束",inp("to","","time"))),
+    h("div",{class:"f4"}, fld("二、地點",inp("place")), fld("三、主席",inp("chair","例如：林佳靜園長")), fld("記錄",inp("recorder")), fld("四、出（列）席人員",inp("attendees","(詳簽到表)")))));
+  const listEd = (title, key, mk, fields) => {
+    const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},title));
+    d[key].forEach((it,i)=>{ const lab = key==="reports" ? `報告${mtNum(i+1)}` : `議題${mtNum(i+1)}`;
+      sec.append(h("div",{class:"mt-item"},
+        h("div",{class:"mt-ih"},h("b",null,lab),h("span",{class:"sp"}),
+          i>0 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i-1],d[key][i]]=[d[key][i],d[key][i-1]]; mark(); render(); }},"↑") : null,
+          i<d[key].length-1 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i+1],d[key][i]]=[d[key][i],d[key][i+1]]; mark(); render(); }},"↓") : null,
+          h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除「"+lab+"」？")) return; d[key].splice(i,1); mark(); render(); }},"刪除")),
+        fields.map(([f,l,rows])=> rows ? h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows),oninput:e=>{ it[f]=e.target.value; mark(); }},it[f])) : h("label",{class:"fl"},l,h("input",{class:"in",value:it[f],oninput:e=>{ it[f]=e.target.value; mark(); }})))));
+    });
+    sec.append(h("button",{class:"btn",onclick:()=>{ d[key].push(mk()); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
+    return sec;
+  };
+  app.append(listEd("五、報告事項","reports",()=>({title:"",body:""}),[["title","標題（例如：地震演練時程）"],["body","內容（可分行）",5]]));
+  app.append(listEd("六、議題討論","issues",()=>({title:"",content:"",resolution:""}),[["title","議題（例如：十月分學習區任務卡的執行計畫）"],["content","內容／討論（可分行）",6],["resolution","決議（可分行）",4]]));
+  const ps = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"會議照片"),
+    h("p",{class:"note",style:"font-size:13px;margin:0 0 8px"},"可以一次選多張，列印時每列兩張。"),
+    h("div",{class:"mt-photos"}, d.photos.map((p,i)=>h("div",{class:"mt-ph"}, mtImg(p.id), h("input",{class:"in",value:p.cap,placeholder:"說明（選填）",oninput:e=>{ p.cap=e.target.value; mark(); }}),
+      h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("移除這張照片？")) return; const [x]=d.photos.splice(i,1); mark(); S.db.collection(MT_PH).doc(x.id).delete().catch(()=>{}); render(); }},"移除")))));
+  const st = h("span",{class:"err",style:"margin-left:8px"});
+  ps.append(h("div",null,h("button",{class:"btn",onclick:()=>pickImages(true, async fs=>{ for (let i=0;i<fs.length;i++){ st.textContent=`上傳中… ${i+1}/${fs.length}`; try{ const data=await shrinkToDataUrl(fs[i]); const ref=S.db.collection(MT_PH).doc(); await ref.set({ data, name:str(fs[i].name), createdAt:Date.now() }); MTC[ref.id]=data; d.photos.push({id:ref.id,cap:""}); mark(); }catch(e){ st.textContent="上傳失敗："+errText(e); return; } } st.textContent=""; render(); })},"📷 從電腦上傳照片"),st));
+  app.append(ps);
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"與會人員簽到表"),
+    h("div",{class:"f4"}, fld("列數",inp("signRows","5","number")), fld("欄數",inp("signCols","3","number")), fld("簽章欄文字",inp("signLabel","園長簽章：")), h("span"))));
+  app.append(tb());
+}
+function renderMeetingView(app){
+  const M = S.mt, m0 = M.list.find(x=>x.id===M.view); if (!m0){ M.view=null; return renderMeeting(app); }
+  const m = mtNorm(m0);
+  app.append(h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:()=>{ M.view=null; render(); }},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>printMeeting(m)},"🖨 列印"),
+    mtCan() ? h("button",{class:"btn primary",onclick:()=>{ M.view=null; M.edit=m.id; M.draft=mtNorm(m0); M.dirty=false; render(); }},"編輯") : null));
+  const box = h("div",{class:"mt-view"});
+  box.innerHTML = mtBodyHtml(m, false);
+  box.querySelectorAll("img[data-mtph]").forEach(im=>{ const id=im.getAttribute("data-mtph"); mtLoad(id).then(u=>{ if (u) im.src=u; }); });
+  app.append(box);
+}
+function mtBodyHtml(m, withImgs){
+  const ind = t => lines(t||"");
+  let n = 0, body = "";
+  body += `<div class="hd1">桃園市仁德非營利幼兒園 (委託社團法人臺灣宛靜文教協會辦理)</div><div class="hd2">${esc(mtTitle(m))}</div>`;
+  const tm = `${mtRocDate(m.date)||"　年　月　日(　)"}　<span class="${m.ampm==="上午"?"on":""}">上午</span>/<span class="${m.ampm==="下午"?"on":""}">下午</span>　${mtTime(m.from)||"　時　分"}-${mtTime(m.to)||"　時　分"}`;
+  body += `<div class="row"><span class="no">一、</span>時間：${tm}</div>`;
+  body += `<div class="row"><span class="no">二、</span>地點：${esc(m.place)}</div>`;
+  body += `<div class="row"><span class="no">三、</span>主席：${esc(m.chair)}<span class="rec">記錄：${esc(m.recorder)}</span></div>`;
+  body += `<div class="row"><span class="no">四、</span>出（列）席人員：${esc(m.attendees)}</div>`;
+  body += `<div class="row"><span class="no">五、</span>報告事項</div>`;
+  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>`; });
+  body += `<div class="row">六、議題討論：</div>`;
+  m.issues.forEach((r,i)=>{ body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>${r.content.trim()?`<div class="txt">${r.content.trim().startsWith("內容")?"":"內容："}${ind(r.content)}</div>`:""}<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>`; });
+  if (m.photos.length){ body += `<table class="pt">`; for (let i=0;i<m.photos.length;i+=2){ body += "<tr>"+[m.photos[i],m.photos[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:"<td></td>").join("")+"</tr>"; } body += `</table>`; }
+  if (+m.signRows>0){ body += `<div class="sg">與會人員簽到表</div><table class="sgt">`+Array.from({length:+m.signRows},()=>"<tr>"+Array.from({length:Math.max(1,+m.signCols||3)},()=>"<td></td>").join("")+"</tr>").join("")+`</table>`; }
+  body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
+  return body;
+}
+const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;font-size:1.25em;font-weight:bold;margin:4px 0 14px}
+.row{margin:8px 0;font-size:1.05em}.row .no{display:inline-block;width:2.4em}.row .rec{margin-left:6em}.row span.on{border:1.5px solid #000;padding:0 3px}
+.sub{margin:10px 0 2px;font-weight:bold}.txt{margin:2px 0 4px 2.4em;white-space:normal;line-height:1.75}
+table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
+.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
+async function printMeeting(m){
+  m = mtNorm(m);
+  await Promise.all(m.photos.map(p=>mtLoad(p.id)));
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"Noto Serif TC","標楷體","DFKai-SB","Microsoft JhengHei",serif;color:#000;font-size:12pt;line-height:1.6}
+.wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:10mm 0}}table.pt tr,.sub,.txt{page-break-inside:avoid}` + MT_CSS;
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(mtTitle(m))}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 直式</span></div><div class="wrap">${mtBodyHtml(m, true)}</div>
+<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},500)})<\/script></body></html>`);
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -7564,6 +7762,8 @@ function sync(d, view){
     if (S.as && S.as.unsub) { try{S.as.unsub();}catch(_){} } if (S.as && S.as.unsubA) { try{S.as.unsubA();}catch(_){} } if (S.as && S.as.unsubAll) { try{S.as.unsubAll();}catch(_){} }
     S.as = { tab:"routine", year0:asYear0(), year:String(asYear0()), cls:"", roster:{}, gotR:false, list:[], got:false, assign:{}, open:null, draft:null, mine:false, all:[], gotAll:false, admOpen:{} };
     unsubs.push(d.db.doc("roster/children").onSnapshot(x=>{ const l=(x.exists&&(x.data()||{}).list)||{}; const o={}; Object.keys(l).forEach(k=>{ if (Array.isArray(l[k])) o[k]=l[k].filter(v=>typeof v==="string"); }); S.as.roster=o; S.as.gotR=true; if (!S.as.open) render(); }, ()=>{ S.as.gotR=true; render(); }));
+    S.mt = { list:[], got:false, type:"all", view:null, edit:null, draft:null, dirty:false };
+    unsubs.push(subscribe((S.realAdmin||S.isEditor) ? d.db.collection("meetingMinutes") : d.db.collection("meetingMinutes").where("shared","==",true), S.mt, "got", snap=>{ S.mt.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
