@@ -1711,7 +1711,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L11</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L12</footer>
     </div>
   </template>
 
@@ -4084,7 +4084,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L11</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L12</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5775,6 +5775,18 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb td.as-adm-d{background:#fbf8f0;font-size:13px;line-height:1.8}
 #kb .as-bar2{background:#efe8d8;border-radius:999px;height:8px;overflow:hidden;min-width:60px;flex:1}
 #kb .as-bar2>div{background:#4f9a6f;height:100%}
+#kb .as-sel{background:#fff8e6;border:2px solid #e0b84a;border-radius:14px;padding:10px 14px}
+#kb .as-sel label{font-weight:700;color:#7a5a12;font-size:15px}
+#kb .as-sel select.in{border:2px solid #c99a2e;background:#fff;font-weight:700;color:#4a3a12;font-size:16px;padding:6px 12px;border-radius:10px}
+#kb .as-sel select.in:focus{outline:3px solid #f3d27a}
+#kb .as-tabs{gap:8px}
+#kb .as-tab{border:2px solid var(--tc,#8a7a55);background:var(--tb,#fff);color:var(--tc,#5a4a2a);font-weight:700;font-size:15px;border-radius:999px;padding:8px 18px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+#kb .as-tab:hover{filter:brightness(.97);transform:translateY(-1px)}
+#kb .as-tab.on{background:var(--tc);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+#kb .as-tab.t-routine{--tc:#c26a1b;--tb:#fff3e6}
+#kb .as-tab.t-summative{--tc:#2f6b4f;--tb:#e9f5ee}
+#kb .as-tab.t-roster{--tc:#2f5597;--tb:#eaf0fb}
+#kb .as-tab.t-admin{--tc:#7a3e9d;--tb:#f4ebfa}
 
 </style>
 <script>
@@ -7241,10 +7253,10 @@ function renderAssess(app){
   app.append(h("section",{class:"intro"},
     h("h1",null,"教學評量"),
     h("p",{class:"note",style:"margin-top:4px"},"例行性評量（學年初、學年末）與總結性評量（學年初、學年中、學年末）。幼兒名單和學習區觀察紀錄共用；同班老師可以分配負責的幼兒，一起完成全班的評量。"),
-    h("div",{class:"as-bar"},
+    h("div",{class:"as-bar as-sel"},
       h("label",null,"學年度 ",h("select",{class:"in",onchange:e=>{ A.year=e.target.value; render(); }},[A.year0-1,A.year0,A.year0+1].map(y=>h("option",{value:String(y),selected:String(y)===A.year},y+" 學年度")))),
       A.tab!=="admin" ? h("label",null,"班級 ",myCls.length ? h("select",{class:"in",onchange:e=>{ A.cls=e.target.value; render(); }},myCls.map(c=>h("option",{value:c,selected:c===A.cls},c))) : h("b",{style:"color:var(--warn)"},"（管理員還沒設定您的班級）")) : null),
-    h("div",{class:"as-tabs"},tabs.map(([k,l])=>h("button",{class:"btn"+(A.tab===k?" primary":""),onclick:()=>{ A.tab=k; render(); }},l)))));
+    h("div",{class:"as-tabs"},tabs.map(([k,l])=>h("button",{class:"as-tab t-"+k+(A.tab===k?" on":""),onclick:()=>{ A.tab=k; render(); }},l)))));
   if (A.tab==="admin") return renderAssessAdmin(app);
   if (!A.cls){ app.append(h("div",{class:"notice"},S.realAdmin?"還沒有任何班級的幼兒名單。":"管理員還沒在「管理者後台 → 班級老師 → 老師／班級組合」設定您帶的班級，設定好後就能使用教學評量。")); return; }
   asSubscribe();
