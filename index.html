@@ -1727,7 +1727,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L23</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L24</footer>
     </div>
   </template>
 
@@ -4113,7 +4113,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L23</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L24</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7739,7 +7739,7 @@ function renderMeetingEditor(app){
       fld("標題",h("div",null,titleIn,h("label",{style:"font-size:12px;font-weight:400;display:flex;gap:4px;align-items:center;margin-top:2px"},h("input",{type:"checkbox",checked:d.autoTitle,onchange:e=>{ d.autoTitle=e.target.checked; titleIn.disabled=d.autoTitle; if (!d.autoTitle) d.title=titleIn.value; upd(); mark(); }}),"自動產生標題")))),
     h("div",{class:"f4"},
       fld("一、時間（日期）",inp("date","","date")),
-      fld("上午／下午",h("select",{class:"in",onchange:e=>{ d.ampm=e.target.value; mark(); }},["上午","下午"].map(v=>h("option",{value:v,selected:d.ampm===v},v)))),
+      fld("上午／下午",h("select",{class:"in",onchange:e=>{ d.ampm=e.target.value; mark(); }},[["上午","上午"],["下午","下午"],["","（不顯示）"]].map(([v,l])=>h("option",{value:v,selected:(d.ampm||"")===v},l)))),
       fld("開始",inp("from","","time")), fld("結束",inp("to","","time"))),
     h("div",{class:"f4"}, fld("二、地點",inp("place")), fld("三、主席",inp("chair","例如：林佳靜園長")), fld("記錄",inp("recorder")), fld("四、出（列）席人員",inp("attendees","(詳簽到表)")))));
   const phEd = (arr, label) => { const st = h("span",{class:"err",style:"margin-left:6px"});
@@ -7802,7 +7802,7 @@ function mtBodyHtml(m, withImgs, forPdf){
   const ind = t => forPdf ? str(t||"").split("\n").map(x=>`<span class="tool" style="display:block">${esc(x)||"&nbsp;"}</span>`).join("") : lines(t||"");
   let n = 0, body = "";
   body += `<div class="hd1">桃園市仁德非營利幼兒園 (委託社團法人臺灣宛靜文教協會辦理)</div><div class="hd2">${esc(mtTitle(m))}</div>`;
-  const tm = `${mtRocDate(m.date)||"　年　月　日(　)"}　<span class="${m.ampm==="上午"?"on":""}">上午</span>/<span class="${m.ampm==="下午"?"on":""}">下午</span>　${mtTime(m.from)||"　時　分"}-${mtTime(m.to)||"　時　分"}`;
+  const tm = `${mtRocDate(m.date)||"　年　月　日(　)"}${m.ampm?"　"+esc(m.ampm):""}　${mtTime(m.from)||"　時　分"}-${mtTime(m.to)||"　時　分"}`;
   body += `<div class="row"><span class="no">一、</span>時間：${tm}</div>`;
   body += `<div class="row"><span class="no">二、</span>地點：${esc(m.place)}</div>`;
   body += `<div class="row"><span class="no">三、</span>主席：${esc(m.chair)}<span class="rec">記錄：${esc(m.recorder)}</span></div>`;
