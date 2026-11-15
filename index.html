@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L33</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L34</footer>
     </div>
   </template>
 
@@ -1850,7 +1850,7 @@ function sync(data){
   const uid=d.currentUser&&d.currentUser.uid;
   if(d.db&&uid&&subUid!==uid){if(sub)sub();subUid=uid;sub=d.db.collection("teachingPlans").onSnapshot(s=>{plans=s.docs.map(x=>{const o={...x.data(),id:x.id};if(typeof o.name==="string")o.name=o.name.replace(/教學計[畫劃]/g,"課程規劃");return o});try{if(tab==="plan"&&plan&&plan.id){const me=(d.currentUser&&d.currentUser.email)||"",c=s.docChanges().find(x=>x.doc.id===plan.id&&x.type==="modified"&&!x.doc.metadata.hasPendingWrites),rec=c&&plans.find(x=>x.id===plan.id);if(rec&&rec.by&&rec.by!==me&&(rec.at||"")>(plan.at||"")){if(!dirty()){loadPlan(normPlan(JSON.parse(JSON.stringify(rec))));setTimeout(()=>{rPlan();d.showToast&&d.showToast("「"+rec.by+"」剛更新了這份計畫，已載入最新內容",5000)},0)}else{d.showToast&&d.showToast("⚠️「"+rec.by+"」剛儲存了這份計畫，你也有尚未儲存的修改。存檔會蓋掉對方剛改的內容，請先確認或重新開啟這份計畫。",10000)}}}}catch(e0){}if(tab==="list"||tab==="view")render();else if(tab==="plan"&&root.querySelector("#ps"))root.querySelector("#ps").innerHTML=selOpts();else if(tab==="plan"&&admin()&&root.querySelector("#ps")&&!document.activeElement.matches("#ps")){const el=$("#ps");if(el)el.innerHTML=selOpts()}},e=>{plans=[];root.dataset.err=e.code||e.message;if(!root._ea){root._ea=1;alert("無法讀取已存的課程規劃（"+(e.code||e.message)+"）。請確認 Firestore 規則已開放 teachingPlans 集合給登入者讀取。")}if(tab==="list")render()})}
   const lu=(d.isAdmin&&uid)?uid:null;if(lu!==subLogUid){if(subLog){subLog();subLog=null}subLogUid=lu;logs=[];delete root.dataset.logErr;if(lu&&d.db)subLog=d.db.collection("teachingPlanLogs").orderBy("createdAt","desc").limit(300).onSnapshot(s=>{logs=s.docs.map(x=>({...x.data(),id:x.id}));if(tab==="logs")render()},e=>{root.dataset.logErr=e.code||e.message;if(tab==="logs")render()})}
-  if(!root._lv){root._lv=1;["input","change","keydown"].forEach(ev=>root.addEventListener(ev,()=>{lastEdit=Date.now()},true));setInterval(liveTick,2000);document.addEventListener("visibilitychange",()=>{if(document.hidden&&admin()&&dirty()&&!liveBusy)liveSave()});window.addEventListener("pagehide",()=>{if(admin()&&dirty()&&!liveBusy)liveSave()})}
+  if(!root._ud){root._ud=1;let UH=[],UI=-1,UID=null,UT=null;const usn=()=>JSON.stringify(plan);const ucommit=()=>{if(UID!==plan.id){UID=plan.id;UH=[];UI=-1}const s=usn();if(UH[UI]===s)return;UH=UH.slice(0,UI+1);UH.push(s);if(UH.length>150)UH.shift();UI=UH.length-1;ubtn()};const ugo=dir=>{if(tab!=="plan"||!admin())return;clearTimeout(UT);ucommit();const ni=UI+dir;if(ni<0||ni>=UH.length){setLiveSt(dir<0?"沒有更早的步驟可以復原":"沒有可以重做的步驟");d&&d.showToast&&d.showToast(dir<0?"沒有更早的步驟可以復原":"沒有可以重做的步驟");return}UI=ni;plan=JSON.parse(UH[UI]);lastEdit=Date.now();const y=window.scrollY;rPlan();window.scrollTo(0,y);ubtn();d&&d.showToast&&d.showToast(dir<0?"已復原上一步":"已重做")};const ub=document.createElement("div");ub.id="tp-undo";ub.style.cssText="position:fixed;right:16px;bottom:44px;z-index:60;display:none;gap:8px";ub.innerHTML='<button type="button" title="復原上一步（Ctrl+Z）" style="width:46px;height:46px;border-radius:50%;border:0;background:#2f6b4f;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.28)">↶</button><button type="button" title="重做（Ctrl+Y）" style="width:46px;height:46px;border-radius:50%;border:0;background:#2f6b4f;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.28)">↷</button>';document.body.appendChild(ub);ub.children[0].onclick=()=>ugo(-1);ub.children[1].onclick=()=>ugo(1);const uvis=()=>admin()&&tab==="plan"&&root&&root.offsetParent!==null;function ubtn(){const v=uvis();ub.style.display=v?"flex":"none";if(!v)return;ub.children[0].disabled=UI<=0;ub.children[1].disabled=UI>=UH.length-1;ub.children[0].style.opacity=UI<=0?".45":"1";ub.children[1].style.opacity=UI>=UH.length-1?".45":"1"}setInterval(()=>{if(uvis()){if(UID!==plan.id||UI<0)ucommit();}ubtn()},800);["input","change","click"].forEach(ev=>root.addEventListener(ev,()=>{clearTimeout(UT);UT=setTimeout(ucommit,600)},false));document.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.altKey||!uvis())return;const t=document.activeElement,ty=t&&(t.tagName==="TEXTAREA"||(t.tagName==="INPUT"&&!/^(checkbox|radio|button|file|date)$/i.test(t.type))||t.isContentEditable);if(ty)return;const k=(e.key||"").toLowerCase();if(k==="z"&&!e.shiftKey){e.preventDefault();ugo(-1)}else if(k==="y"||(k==="z"&&e.shiftKey)){e.preventDefault();ugo(1)}})}if(!root._lv){root._lv=1;["input","change","keydown"].forEach(ev=>root.addEventListener(ev,()=>{lastEdit=Date.now()},true));setInterval(liveTick,2000);document.addEventListener("visibilitychange",()=>{if(document.hidden&&admin()&&dirty()&&!liveBusy)liveSave()});window.addEventListener("pagehide",()=>{if(admin()&&dirty()&&!liveBusy)liveSave()})}
   if(!root._tm){root._tm=1;["input","click","keydown","change","mousemove"].forEach(ev=>root.addEventListener(ev,touch,true))}
   if(!root._rf){root._rf=1;root.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rfb");if(b)openRef(b.dataset.k,b.dataset.c)})}
   if(!root.dataset.init||root.dataset.adm!==adm){root.dataset.init=1;root.dataset.adm=adm;viewing=null;render()}else if(tab==="tools")render();
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L33</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L34</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5934,6 +5934,9 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb-autost.ok{border-color:#2f6b4f;color:#2f6b4f;background:#eef7f1}
 #kb-autost.wait{border-color:#c08a2d;color:#8a5a10;background:#fff7e6}
 #kb-autost.bad{border-color:#b4472f;color:#b4472f;background:#fbeae5}
+#kb-undo{position:fixed;right:16px;bottom:44px;z-index:9998;display:flex;gap:8px}
+#kb-undo button{width:46px;height:46px;border-radius:50%;border:0;background:#2f6b4f;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.28)}
+#kb-undo button:disabled{background:#b9b3a3;cursor:default;box-shadow:none}
 
 </style>
 <script>
@@ -8318,6 +8321,47 @@ render = (orig => function(){ const r = orig.apply(this, arguments); try{ autoAf
   document.addEventListener("change", onEdit, false);
   window.addEventListener("beforeunload", e => { const c=edCtx(); if (c && c.h.dirty){ autoRun(c); e.preventDefault(); e.returnValue=""; return ""; } });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState==="hidden"){ const c=edCtx(); if (c && c.h.dirty) autoRun(c); } });
+})();
+/* ---------- 編輯畫面：復原上一步／重做 ---------- */
+function histInit(H){ if (H._hd!==H.draft){ H._hd=H.draft; H._hs=[autoSnap(H.draft)]; H._hi=0; } }
+function histCommit(){
+  const c = edCtx(); if (!c) return; const H = c.h; histInit(H);
+  const s = autoSnap(H.draft); if (H._hs[H._hi]===s){ undoBtns(); return; }
+  H._hs = H._hs.slice(0, H._hi+1); H._hs.push(s); if (H._hs.length>150) H._hs.shift(); H._hi = H._hs.length-1; undoBtns();
+}
+function histGo(dir){
+  const c = edCtx(); if (!c) return; const H = c.h; clearTimeout(H._ht); histCommit();
+  const ni = H._hi + dir;
+  if (ni<0 || ni>=H._hs.length){ toast(dir<0 ? "沒有更早的步驟可以復原" : "沒有可以重做的步驟"); return; }
+  H._hi = ni; const o = JSON.parse(H._hs[ni]), cur = H.draft;
+  ["id","_new"].forEach(k=>{ if (cur && cur[k]!==undefined) o[k]=cur[k]; });
+  H.draft = o; H._hd = o; H.dirty = true;
+  const y = window.scrollY; render(); window.scrollTo(0,y); autoArm();
+  toast(dir<0 ? "已復原上一步" : "已重做");
+}
+function undoBtns(){
+  let el = document.getElementById("kb-undo"); const c = edCtx();
+  if (!c){ if (el) el.style.display="none"; return; }
+  if (!el){ el = h("div",{id:"kb-undo"},
+      h("button",{type:"button",title:"復原上一步（Ctrl+Z）",onclick:()=>histGo(-1)},"↶"),
+      h("button",{type:"button",title:"重做（Ctrl+Y）",onclick:()=>histGo(1)},"↷"));
+    ($("#kb")||document.body).append(el); }
+  el.style.display = ""; const H = c.h; histInit(H);
+  el.children[0].disabled = H._hi<=0; el.children[1].disabled = H._hi>=H._hs.length-1;
+}
+render = (orig => function(){ const r = orig.apply(this, arguments); try{ if (edCtx()) histCommit(); else undoBtns(); }catch(_){} return r; })(render);
+(function(){
+  const later = e => { if (!e.target || !e.target.closest || !e.target.closest("#kb-app")) return; const c = edCtx(); if (!c) return; clearTimeout(c.h._ht); c.h._ht = setTimeout(histCommit, 600); };
+  document.addEventListener("input", later, false);
+  document.addEventListener("change", later, false);
+  document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey||e.metaKey) || e.altKey || !edCtx()) return;
+    const t = document.activeElement, typing = t && (t.tagName==="TEXTAREA" || (t.tagName==="INPUT" && !/^(checkbox|radio|button|file|date)$/i.test(t.type)));
+    if (typing) return;
+    const k = e.key.toLowerCase();
+    if (k==="z" && !e.shiftKey){ e.preventDefault(); histGo(-1); }
+    else if (k==="y" || (k==="z" && e.shiftKey)){ e.preventDefault(); histGo(1); }
+  });
 })();
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
