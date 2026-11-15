@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L42</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L43</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L42</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L43</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6605,7 +6605,7 @@ function actPrintHtml(a, pics, pdf){
   const chk = t => (str(a.planType)===t ? "■" : "□") + t;
   const kv = (k,v) => str(v).trim() ? `<div class="kv"><div class="k">${k}</div><div class="v">${lines(v)}</div></div>` : "";
   const css = `@page{size:A4 portrait;margin:14mm 16mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:"PMingLiU","新細明體","Noto Serif CJK TC","Noto Serif TC",serif;font-size:12pt;line-height:1.6;margin:0;color:#000;background:#fff}
+body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.6;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
 .wrap{max-width:${pdf?"none":"178mm"};margin:0 auto}@media screen{.wrap{padding:${pdf?"0":"10mm 0"}}}
 .hd{text-align:center;line-height:1.35}.hd .o{font-size:17pt}.hd .t{font-size:12.5pt;margin-top:4px}.rd{text-align:right;font-size:11pt;margin:2px 0 4px}
