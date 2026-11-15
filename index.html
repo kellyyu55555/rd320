@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L36</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L37</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L36</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L37</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5941,6 +5941,18 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .sch-st{font-size:12.5px;font-weight:700;color:var(--muted);align-self:center;margin-left:6px}
 #kb .sch-st.ok{color:#2f6b4f}#kb .sch-st.wait{color:#8a5a10}#kb .sch-st.bad{color:#b4472f}
 
+/* 巡堂紀錄表：整頁完整顯示（不用左右捲動） */
+@media (min-width:900px){
+  #kb .tablewrap.pt-full{width:calc(100vw - 40px);position:relative;left:50%;transform:translateX(-50%);overflow-x:visible}
+  #kb .tablewrap.pt-full table.patrol{min-width:0;table-layout:fixed;font-size:12px}
+  #kb .tablewrap.pt-full table.patrol .pg{width:34px;font-size:11px;padding:2px}
+  #kb .tablewrap.pt-full table.patrol .pi{width:96px;font-size:11px;padding:2px 3px;line-height:1.3}
+  #kb .tablewrap.pt-full table.patrol th.pc{width:auto;font-size:10px;padding:2px 0;line-height:1.15}
+  #kb .tablewrap.pt-full table.patrol td{padding:2px 1px}
+  #kb .tablewrap.pt-full table.patrol .pt-sel{width:100%;max-width:34px;-webkit-appearance:none;-moz-appearance:none;appearance:none;text-align:center;text-align-last:center;padding:2px 0;font-size:13px;font-weight:700}
+  #kb .tablewrap.pt-full table.patrol td.pn textarea{width:100%;box-sizing:border-box}
+}
+
 </style>
 <script>
 
@@ -7325,7 +7337,7 @@ function patrolTable(r, edit){
     r.days.map((d,di)=>h("td",{colspan:String(nC),class:"pn"+(di?" dl":"")}, edit
       ? h("textarea",{class:"in",rows:"4",oninput:e=>{ d.note=e.target.value; }}, d.note)
       : d.note))));
-  return h("div",{class:"tablewrap"}, h("table",{class:"patrol"}, h("thead",null,head1,head2), h("tbody",null,body)));
+  return h("div",{class:"tablewrap pt-full"}, h("table",{class:"patrol"+(edit?" ed":"")}, h("thead",null,head1,head2), h("tbody",null,body)));
 }
 async function pSave(auto){
   const P = S.patrol, r = P.draft; if (!r) return true;
