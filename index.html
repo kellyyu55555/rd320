@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L39</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L40</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L39</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L40</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5953,6 +5953,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
   #kb .tablewrap.pt-full table.patrol td.pn textarea{width:100%;box-sizing:border-box}
 }
 #kb table.patrol td.hol{font-size:18px;font-weight:800;letter-spacing:4px;color:#8a5a10;background:#fbf3e2;vertical-align:middle}
+#kb .act-sort{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--muted);white-space:nowrap}#kb .act-sort .in{width:auto;padding:4px 8px}
 
 </style>
 <script>
@@ -6282,8 +6283,15 @@ function renderActivities(app){
   app.append(h("div",{class:"subtabs"}, ACT_TYPES.map(t =>
     h("button",{class:"kchip","aria-pressed":String(t===S.actType), onclick:()=>{S.actType=t; render();}},
       `${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`))));
-  const list = S.activities.filter(a=>typeOf(a)===S.actType).sort((a,b)=>str(b.date).localeCompare(str(a.date)));
+  const SORTS = [["dateDesc","活動日期：新→舊"],["dateAsc","活動日期：舊→新"],["name","活動名稱"],["status","狀態"],["expDesc","支出：多→少"],["expAsc","支出：少→多"]];
+  if (!S.actSort){ try{ S.actSort = localStorage.getItem("actSort") || "dateDesc"; }catch(_){ S.actSort = "dateDesc"; } }
+  const ST = {"草稿":0,"已呈報":1,"已核准":2};
+  const cmp = { dateDesc:(a,b)=>str(b.date).localeCompare(str(a.date)), dateAsc:(a,b)=>str(a.date).localeCompare(str(b.date)),
+    name:(a,b)=>str(a.name).localeCompare(str(b.name),"zh-Hant"), status:(a,b)=>(ST[str(a.status)||"草稿"]??0)-(ST[str(b.status)||"草稿"]??0)||str(b.date).localeCompare(str(a.date)),
+    expDesc:(a,b)=>sumOf(b.expense)-sumOf(a.expense), expAsc:(a,b)=>sumOf(a.expense)-sumOf(b.expense) }[S.actSort] || ((a,b)=>str(b.date).localeCompare(str(a.date)));
+  const list = S.activities.filter(a=>typeOf(a)===S.actType).sort(cmp);
   app.append(h("div",{class:"toolbar"},h("h2",null,S.actType),h("span",{class:"sp"}),
+    h("label",{class:"act-sort"},"排序：",h("select",{class:"in",onchange:e=>{ S.actSort=e.target.value; try{ localStorage.setItem("actSort",S.actSort); }catch(_){} render(); }}, SORTS.map(([k,l])=>h("option",{value:k,selected:S.actSort===k},l)))),
     h("button",{class:"btn",onclick:()=>importActivities()},"📥 匯入檔案"),
     h("button",{class:"btn primary",onclick:()=>editActivity(null)},"＋ 新增"+S.actType)));
   if (!list.length){ app.append(h("div",{class:"notice"},`還沒有${S.actType}。`, !S.activities.length ? seedButton() : null)); return; }
