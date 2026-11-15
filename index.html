@@ -1737,7 +1737,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L25</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L26</footer>
     </div>
   </template>
 
@@ -4123,7 +4123,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L25</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L26</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5901,6 +5901,10 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .wp-view .hd{text-align:center;font-weight:700;font-size:18px;margin-bottom:6px}#kb .wp-view .sh{font-weight:700;margin:4px 0}#kb .wp-view .nt{white-space:pre-wrap;margin-top:10px}
 #kb .wp-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:9999}
 #kb .wp-pick,.wp-pick{background:#fff;border-radius:14px;padding:16px;max-width:460px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+#kb .wp-ro{display:flex;flex-direction:column;gap:2px;font-size:14px}
+#kb .wp-ro>span{font-size:12px;color:var(--muted);font-weight:500}
+#kb .wp-ro>div{background:#f3efe6;border:1px dashed #d5ccb6;border-radius:8px;padding:6px 10px;white-space:pre-wrap;color:#4a4436;min-height:34px}
 
 </style>
 <script>
@@ -8056,17 +8060,20 @@ function renderWorkplanEditor(app){
     h("label",{class:"fl",style:"margin-top:8px"},"標題（空白時自動產生）",titleIn)));
   const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"年度目標及工作內容"),
     h("p",{class:"note",style:"margin:0 0 10px"},"類別、年度目標、工作項目相同的相鄰列，列印時會自動合併成同一格。只有類別和年度目標（例如：收支預算編列）的列，會印成一整列。"));
+  const fixed = d.kind!=="plan";
+  if (fixed) sec.querySelector("p").textContent = "類別、年度目標、工作項目、"+WP_ITEM[d.kind]+"是固定內容，不能修改；請填寫執行成效等欄位。";
+  const ro = (l, v) => h("div",{class:"wp-ro"}, h("span",null,l), h("div",null, v || "—"));
   let lastArea = null;
   d.rows.forEach((r,i)=>{
     if (r.cat+"|"+r.area !== lastArea){ lastArea = r.cat+"|"+r.area; sec.append(h("div",{class:"wp-grp"}, [r.cat, r.area].filter(Boolean).join("　›　") || "（未分類）")); }
     const mv = (k) => { const j=i+k; if (j<0||j>=d.rows.length) return; const t=d.rows[i]; d.rows[i]=d.rows[j]; d.rows[j]=t; mark(); render(); };
     const card = h("div",{class:"wp-row"},
-      h("div",{class:"wp-rh"}, h("b",null,`第 ${i+1} 列`), h("span",{class:"sp"}),
+      h("div",{class:"wp-rh"}, h("b",null,`第 ${i+1} 列`), h("span",{class:"sp"}), fixed ? null : [
         h("button",{class:"btn sm",title:"上移",onclick:()=>mv(-1)},"↑"), h("button",{class:"btn sm",title:"下移",onclick:()=>mv(1)},"↓"),
         h("button",{class:"btn sm",onclick:()=>{ const n=Object.assign(wpBlank(d),{cat:r.cat,goal:r.goal,area:r.area}); d.rows.splice(i+1,0,n); mark(); render(); }},"＋ 下方插入"),
-        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這一列？")) return; d.rows.splice(i,1); mark(); render(); }},"刪除")),
-      h("div",{class:"wp-g3"}, ta(r,"cat","類別",1), ta(r,"goal","年度目標",2), ta(r,"area","工作項目",1,"例：1.園務領導")),
-      ta(r,"item",WP_ITEM[d.kind],3,"例：1-1定期召開園務會議…"),
+        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這一列？")) return; d.rows.splice(i,1); mark(); render(); }},"刪除")]),
+      fixed ? h("div",{class:"wp-g3 wp-fix"}, ro("類別",r.cat), ro("年度目標",r.goal), ro("工作項目",r.area)) : h("div",{class:"wp-g3"}, ta(r,"cat","類別",1), ta(r,"goal","年度目標",2), ta(r,"area","工作項目",1,"例：1.園務領導")),
+      fixed ? h("div",{class:"wp-fix"}, ro(WP_ITEM[d.kind], r.item)) : ta(r,"item",WP_ITEM[d.kind],3,"例：1-1定期召開園務會議…"),
       wpHasPer(d.kind) ? h("div",{class:"wp-per"}, h("span",{class:"wp-pl"}, d.kind==="plan"?"實施期程：":"執行進度："),
         d.periods.map((p,k)=>h("label",{class:"wp-ck"+(r.marks[k]?" on":"")}, h("input",{type:"checkbox",checked:r.marks[k]?true:null,onchange:e=>{ r.marks[k]=e.target.checked; e.target.parentNode.classList.toggle("on",e.target.checked); mark(); }}), d.kind==="plan"&&/^\d$/.test(p)?`第${p}年`:p))) : null,
       d.kind==="plan" ? ta(r,"expected","預期成效",3) : null,
@@ -8076,7 +8083,7 @@ function renderWorkplanEditor(app){
       d.kind!=="plan" ? ta(r,"review","檢討與改善或持續發展",2) : null);
     sec.append(card);
   });
-  sec.append(h("button",{class:"btn",onclick:()=>{ const l=d.rows[d.rows.length-1]; d.rows.push(Object.assign(wpBlank(d), l?{cat:l.cat,goal:l.goal,area:l.area}:{})); mark(); render(); }},"＋ 新增一列"));
+  if (!fixed) sec.append(h("button",{class:"btn",onclick:()=>{ const l=d.rows[d.rows.length-1]; d.rows.push(Object.assign(wpBlank(d), l?{cat:l.cat,goal:l.goal,area:l.area}:{})); mark(); render(); }},"＋ 新增一列"));
   app.append(sec);
   app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"附件／附註"), ta(d,"notes","印在表格下方（例：附件一 114-1行事曆）",4)));
   app.append(tb());
