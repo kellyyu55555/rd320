@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L31</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L32</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L31</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L32</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7041,10 +7041,12 @@ function renderCoteach(app, cur){
     h("p",{class:"note"},"桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）"),
     h("h1",null,str(cur.title)||str(cur.name)+" 協同教學"),
     str(cur.note) ? h("p",{class:"note",style:"margin-top:6px"},str(cur.note)) : null,
-    S.isAdmin ? h("div",{class:"abs",style:"display:flex;gap:8px"},
-      h("button",{class:"btn",onclick:()=>editCoteach(cur.id)},"編輯"),
+    h("div",{class:"abs",style:"display:flex;gap:8px;flex-wrap:wrap"},
+      h("button",{class:"btn",onclick:()=>printCoteach(cur)},"🖨 列印"),
+      h("button",{class:"btn",onclick:e=>downloadCoteach(cur,e.currentTarget)},"⬇️ 下載 PDF"),
+      S.isAdmin ? [h("button",{class:"btn",onclick:()=>editCoteach(cur.id)},"編輯"),
       h("button",{class:"btn",onclick:()=>copyDoc(SCH_COL,cur,"name","協同教學",id=>{ S.sch.sel.coteach=id; })},"複製"),
-      h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份協同教學？",`「${str(cur.title||cur.name)}」刪除後無法復原。`,"刪除",()=>S.db.doc(SCH_COL+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除")) : null));
+      h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份協同教學？",`「${str(cur.title||cur.name)}」刪除後無法復原。`,"刪除",()=>S.db.doc(SCH_COL+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除")] : null)));
   const body = [];
   rows.forEach((r,i)=>{
     const days = DAYS.map((_,k)=>str((Array.isArray(r.days)?r.days:[])[k]));
@@ -7136,6 +7138,58 @@ function editCoteach(id){
     h("div",{class:"mf"},h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
 }
 
+
+/* 協同教學：列印與下載 PDF */
+function coteachHtml(cur, pdf){
+  const rows = (Array.isArray(cur.rows)?cur.rows:[]).filter(r=>r&&typeof r==="object");
+  const sp = vals => spans(vals);
+  const duty = t => str(t).split("\n").map(line=>{
+    const m = line.match(/^(\s*\*?(?:主教|副教)(?:[、,，]\s*\*?(?:主教|副教))?\s*[－-])(.*)$/);
+    if (m) return `<div><b>${esc(m[1].replace(/[－-]\s*$/,"").replace(/\*/g,""))}</b>－${esc(m[2])}</div>`;
+    return `<div>${esc(line)||"&nbsp;"}</div>`; }).join("");
+  let body = "";
+  rows.forEach((r,i)=>{
+    const days = DAYS.map((_,k)=>str((Array.isArray(r.days)?r.days:[])[k]));
+    const duties = DAYS.map((_,k)=>str((Array.isArray(r.duties)?r.duties:[])[k]));
+    const first = i===0 || str(rows[i-1].period)!==str(r.period);
+    const last = i===rows.length-1 || str(rows[i+1].period)!==str(r.period);
+    body += `<tr><td rowspan="2" class="per" style="${first?"":"border-top:none;"}${last?"":"border-bottom:none;"}">${first?esc(r.period).split("").join("<br>"):""}</td><td rowspan="2" class="tm">${esc(r.time)}</td>${sp(days).map(([k,n,v])=>`<td colspan="${n}" class="act">${esc(v)}</td>`).join("")}</tr>`;
+    body += `<tr class="du">${sp(duties).map(([k,n,v])=>`<td colspan="${n}">${v?duty(v):"&nbsp;"}</td>`).join("")}</tr>`;
+  });
+  let notes = "";
+  if (str(cur.notes).trim()){
+    const blocks = []; let cb = null;
+    str(cur.notes).split("\n").forEach(l=>{ const m=l.match(/^【(.*)】\s*$/); if (m){ cb={t:m[1],items:[]}; blocks.push(cb); } else if (l.trim()){ if(!cb){ cb={t:"",items:[]}; blocks.push(cb); } cb.items.push(l.trim()); } });
+    notes = `<div class="nt"><div class="nh">分工與其他工作</div><div class="ng">${blocks.map(b=>`<div class="nb">${b.t?`<b>${esc(b.t)}</b>`:""}${b.items.map(t=>`<div>${esc(t)}</div>`).join("")}</div>`).join("")}</div></div>`;
+  }
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}
+.wrap{width:190mm;margin:0 auto;font-size:10.5pt;line-height:1.4}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}.nt{break-inside:avoid;page-break-inside:avoid}@media screen{.wrap{padding:8mm 0}}
+th{background:#f2f2f2;font-weight:bold;text-align:center}td{vertical-align:middle;text-align:center}
+.per{font-weight:bold}.tm{white-space:nowrap;font-size:.9em}.act{font-weight:bold;background:#f7f7f7}
+tr.du td{text-align:left;vertical-align:top;font-size:.82em}tr.du td div{margin:0}
+.nt{margin-top:8px;border:1px solid #000;padding:5px 8px;font-size:.85em}.nh{font-weight:bold;margin-bottom:3px}
+.ng{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px}.nb b{display:block}`;
+  const title = str(cur.title)||str(cur.name)+" 協同教學";
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}${pdf?".wrap{width:auto!important;padding:0!important}":""}</style></head><body>
+${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」，勾選「背景圖形」。內容較多時會分成多頁，每頁都會重印表頭。</span></div>'}
+<div class="wrap" id="w"><div class="hd"><div>桃園市仁德非營利幼兒園（委託社團法人臺灣宛靜文教協會辦理）</div><div class="t">${esc(title)}</div>${str(cur.note)?`<div style="font-size:.85em">${esc(cur.note)}</div>`:""}</div>
+<table><colgroup><col style="width:5%"><col style="width:11%"><col span="5" style="width:16.8%"></colgroup>
+<thead><tr><th>時段</th><th>時間</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>${notes}</div>
+${pdf?"":'<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script>'}</body></html>`;
+}
+function printCoteach(cur){ openPrint(coteachHtml(cur, false)); }
+async function downloadCoteach(cur, btn){
+  if (!window.PdfUtil || !PdfUtil.htmlToPdf){ alert("PDF 元件尚未載入，請重新整理頁面；也可以按「🖨 列印」，目的地選「另存為 PDF」。"); return; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "產生 PDF 中…";
+  try{
+    const blob = await PdfUtil.htmlToPdf(coteachHtml(cur, true), { landscape:false, margin:10, units:".wrap", keepRows:true });
+    const nm = (str(cur.title)||str(cur.name)+" 協同教學").replace(/[\\/:*?"<>|]/g,"_") + ".pdf";
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nm; document.body.append(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    toast("已下載 " + nm);
+  }catch(e){ console.error(e); alert("產生 PDF 失敗：" + (e.message||e)); }
+  finally{ btn.disabled = false; btn.textContent = label; }
+}
 /* ---------- 巡堂紀錄表：僅限本人（config/admins 的 owners）使用，Firestore 規則同樣只允許這個帳號 ---------- */
 const PATROL_COL = "patrolRecords";
 const PATROL_GROUPS = [
