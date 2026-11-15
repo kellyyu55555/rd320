@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L38</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L39</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L38</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L39</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6284,6 +6284,7 @@ function renderActivities(app){
       `${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`))));
   const list = S.activities.filter(a=>typeOf(a)===S.actType).sort((a,b)=>str(b.date).localeCompare(str(a.date)));
   app.append(h("div",{class:"toolbar"},h("h2",null,S.actType),h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>importActivities()},"📥 匯入檔案"),
     h("button",{class:"btn primary",onclick:()=>editActivity(null)},"＋ 新增"+S.actType)));
   if (!list.length){ app.append(h("div",{class:"notice"},`還沒有${S.actType}。`, !S.activities.length ? seedButton() : null)); return; }
   app.append(h("div",{class:"list"}, list.map(a =>
@@ -6293,6 +6294,37 @@ function renderActivities(app){
       statusPill(a.status)))));
 }
 
+function importActivities(){
+  const inp = h("input",{type:"file",accept:".json,application/json",style:"display:none"});
+  inp.addEventListener("change", async ()=>{
+    const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+    let j; try{ j = JSON.parse(await f.text()); }catch(e){ alert("這個檔案不是正確的活動計畫匯入檔（JSON 格式錯誤）。"); return; }
+    const list = (Array.isArray(j) ? j : Array.isArray(j.activities) ? j.activities : (j && j.name ? [j] : [])).filter(x=>x && str(x.name).trim());
+    if (!list.length){ alert("檔案裡沒有活動計畫。"); return; }
+    const key = x => str(x.name).replace(/\s+/g,"")+"|"+str(x.date);
+    const dupOf = x => S.activities.find(y=>key(y)===key(x));
+    const byT = {}; list.forEach(x=>{ const t = ACT_TYPES.includes(x.type)?x.type:ACT_TYPES[0]; byT[t]=(byT[t]||0)+1; });
+    const nd = list.filter(dupOf).length;
+    if (!confirm(`要匯入 ${list.length} 份活動計畫嗎？\n`+Object.entries(byT).map(([t,n])=>`・${t}：${n} 份`).join("\n")+(nd?`\n\n其中 ${nd} 份已經有同名同日期的計畫，會更新內容（照片保留）。`:""))) return;
+    let ok = 0; const bad = [];
+    for (const x of list){
+      try{ const old = dupOf(x);
+        const data = {};
+        for (const k of ["name","semester","type","location","date","time","target","content","notify","partner","staff","prep","contact","notes","planType","status","reportDate","handler","director"]) data[k] = str(x[k]).trim();
+        if (!ACT_TYPES.includes(data.type)) data.type = ACT_TYPES[0];
+        data.status = data.status || "草稿";
+        data.purpose = arr(x.purpose).map(v=>str(v).trim()).filter(Boolean);
+        const ml = v => (Array.isArray(v)?v:[]).map(m=>({item:str(m&&m.item).trim(), amount: m&&m.amount!==""&&m.amount!=null ? num(m.amount) : null})).filter(m=>m.item||m.amount);
+        data.income = ml(x.income); data.expense = ml(x.expense);
+        data.flow = (Array.isArray(x.flow)?x.flow:[]).filter(v=>v&&typeof v==="object").map(v=>({name:str(v.name),desc:str(v.desc),props:str(v.props),staff:str(v.staff)}));
+        data.photos = idsOf(old && old.photos); data.flowImages = idsOf(old && old.flowImages);
+        const ref = old ? S.db.doc(ACT_COL+"/"+old.id) : S.db.collection(ACT_COL).doc(); await ref.set(data); ok++;
+      }catch(e){ bad.push(`${str(x.name)}（${errText(e)}）`); }
+    }
+    render(); alert(`已匯入 ${ok} 份。`+(bad.length?"\n\n失敗：\n"+bad.join("\n"):""));
+  });
+  document.body.append(inp); inp.click();
+}
 function imgTile(a, field, aid, wide){
   return h("div",{class:"photo"+(wide?" wide":"")},
     photoImg(aid,{onclick:()=>lightbox(aid,()=>showActivity(a.id))}),
