@@ -345,6 +345,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
           
           
+          
         
           <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && isOwner)) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
           <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'"
@@ -366,6 +367,10 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='meeting' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗒️ 會議紀錄
+          </button><button style="outline:2px dashed #8e4fb8;outline-offset:-2px;" x-show="currentUser && isOwner" @click="view='workplan'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='workplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📑 工作計畫
           </button>
         </nav>
       </header>
@@ -461,6 +466,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗒️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔒 會議紀錄</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">教保會議、園務會議、課發會、勞資會議（僅限本人使用）</p>
+          </button>
+          <button type="button" x-show="currentUser && isOwner" @click="view='workplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📑</span></div>
+            <h3 class="font-heading font-black text-base mt-3">🔒 工作計畫</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每年的工作計畫、工作執行成效、檢核、工作報告（僅限本人使用）</p>
           </button>
           <button type="button" x-show="isAdmin" @click="view='admin'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📋</span><span x-show="adminPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待處理 ${adminPendingCount}`"></span></div>
@@ -804,7 +814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1727,7 +1737,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L24</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L25</footer>
     </div>
   </template>
 
@@ -4113,7 +4123,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L24</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L25</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5870,6 +5880,28 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-sortbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 2px;font-size:14px;color:var(--muted)}
 #kb .mt-sortbar select.in{width:auto;display:inline-block;font-weight:700}
 
+#kb .as-tab.wp-k1{--tc:#2f5597;--tb:#eaf0fb}
+#kb .as-tab.wp-k2{--tc:#2f6b4f;--tb:#e9f5ee}
+#kb .as-tab.wp-k3{--tc:#c26a1b;--tb:#fff3e6}
+#kb .as-tab.wp-k4{--tc:#7a3e9d;--tb:#f4ebfa}
+#kb .wp-grp{margin:14px 0 6px;padding:6px 10px;border-left:5px solid var(--accent);background:#f7f1e3;font-weight:700;border-radius:6px}
+#kb .wp-row{border:1px solid #e3dccb;border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff;display:flex;flex-direction:column;gap:8px}
+#kb .wp-rh{display:flex;gap:6px;align-items:center;flex-wrap:wrap}#kb .wp-rh .sp{flex:1}
+#kb .wp-g3{display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px}
+@media (max-width:760px){#kb .wp-g3{grid-template-columns:1fr}}
+#kb .wp-per{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#kb .wp-pl{font-size:13px;color:var(--muted);font-weight:700}
+#kb .wp-ck{display:inline-flex;gap:4px;align-items:center;border:1.5px solid #cfc6b0;border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer;background:#fff}
+#kb .wp-ck.on{border-color:var(--accent);background:#fdf3dc;font-weight:700}
+#kb .wp-view{overflow-x:auto}
+#kb .wp-view table{border-collapse:collapse;width:100%;min-width:900px;table-layout:fixed;font-size:13px}
+#kb .wp-view th,#kb .wp-view td{border:1px solid #555;padding:4px 6px;white-space:pre-wrap;word-break:break-all;vertical-align:top}
+#kb .wp-view th{background:#f1ece0;text-align:center;vertical-align:middle}
+#kb .wp-view td.c{text-align:center;vertical-align:middle}#kb .wp-view td.b{font-weight:700}#kb .wp-view td.k{text-align:center}
+#kb .wp-view .hd{text-align:center;font-weight:700;font-size:18px;margin-bottom:6px}#kb .wp-view .sh{font-weight:700;margin:4px 0}#kb .wp-view .nt{white-space:pre-wrap;margin-top:10px}
+#kb .wp-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:9999}
+#kb .wp-pick,.wp-pick{background:#fff;border-radius:14px;padding:16px;max-width:460px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
 </style>
 <script>
 
@@ -5939,6 +5971,7 @@ function render(){
   if (S.view==="patrol") return renderPatrol(app);
   if (S.view==="assess") return renderAssess(app);
   if (S.view==="meeting") return renderMeeting(app);
+  if (S.view==="workplan") return renderWorkplan(app);
   renderCourses(app);
 }
 
@@ -6598,7 +6631,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting" || v==="workplan";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -7896,6 +7929,219 @@ function mtImport(){
   });
   document.body.append(inp); inp.click();
 }
+/* ---------- 工作計畫：工作計畫、工作執行成效、檢核、工作報告（本人專用） ---------- */
+const WP_COL = "workPlans";
+const WP_KINDS = [
+  ["plan",  "工作計畫",     "wp-k1"],
+  ["effect","工作執行成效", "wp-k2"],
+  ["check", "檢核",         "wp-k3"],
+  ["report","工作報告",     "wp-k4"]
+];
+const WP_TNAME = { plan:"工作計畫", effect:"工作執行成效", check:"工作計畫檢核", report:"工作報告" };
+const WP_ITEM = { plan:"預定之工作內容", effect:"預定之工作內容", check:"實際執行之工作內容", report:"實際執行之工作內容" };
+const WP_PER = { plan:["1","2","3","4"], check:["10-11月","12-1月","2-3月","4-5月","6-7月"] };
+const WP_RES = ["超出預期","符合預期","未達預期"];
+const WP_ORG = "仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)";
+const wpCan = () => !!(S.d && S.d.currentUser && S.d.isOwner);
+const wpY0 = () => { const t=new Date(); return t.getFullYear()-1911-(t.getMonth()<7?1:0); };
+const wpYNum = y => +(str(y).match(/\d+/)||[0])[0];
+const wpTitle = d => str(d.title).trim() || `${d.year||""}學年${WP_ORG}${WP_TNAME[d.kind]||""}`;
+const wpRow = r => ({ cat:str(r&&r.cat), goal:str(r&&r.goal), area:str(r&&r.area), item:str(r&&r.item), effect:str(r&&r.effect), result:str(r&&r.result), expected:str(r&&r.expected), review:str(r&&r.review), marks:(Array.isArray(r&&r.marks)?r.marks:Array.isArray(r&&r.progress)&&r.progress.length?r.progress:Array.isArray(r&&r.years)?r.years:[]).map(x=>!!x) });
+function wpNorm(d0){
+  const d = Object.assign({ kind:"plan", year:String(wpY0()), title:"", heading:"一、年度目標及工作內容", periods:null, rows:[], notes:"" }, JSON.parse(JSON.stringify(d0||{})));
+  if (!Array.isArray(d.periods) || !d.periods.length) d.periods = (WP_PER[d.kind]||[]).slice();
+  d.periods = d.periods.map(str);
+  d.rows = (Array.isArray(d.rows)?d.rows:[]).map(wpRow);
+  d.rows.forEach(r=>{ while (r.marks.length < d.periods.length) r.marks.push(false); r.marks.length = d.periods.length; });
+  return d;
+}
+const wpHasPer = k => k==="plan" || k==="check";
+const wpHasRes = k => k==="effect" || k==="report";
+const wpWide = r => !r.area && !r.effect && !r.expected && !r.review && !r.marks.some(Boolean) && !!(r.goal||r.item) && !!r.cat;
+const wpBlank = (d) => ({ cat:"", goal:"", area:"", item:"", effect:"", result:"", expected:"", review:"", marks:d.periods.map(()=>false) });
+
+function renderWorkplan(app){
+  const W = S.wp;
+  if (!wpCan()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  if (!W.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "工作計畫載入中…")); return; }
+  if (W.edit) return renderWorkplanEditor(app);
+  if (W.view) return renderWorkplanView(app);
+  { const seen = new Set(); W.list = W.list.filter(x=>{ if (seen.has(x.id)) return false; seen.add(x.id); return true; }); }
+  const years = [...new Set(W.list.map(x=>str(x.year)))].sort((a,b)=>wpYNum(b)-wpYNum(a) || b.length-a.length);
+  const list = W.list.filter(x=>x.kind===W.kind).filter(x=>W.year==="all"||str(x.year)===W.year)
+    .sort((a,b)=>wpYNum(b.year)-wpYNum(a.year) || str(b.year).length-str(a.year).length);
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"工作計畫"),
+    h("p",{class:"note"},"🔒 僅限本人使用，其他人（包含其他管理員）都看不到"),
+    h("p",{class:"note",style:"margin-top:4px"},"每一學年的工作計畫、工作執行成效、檢核與工作報告。"),
+    h("div",{class:"as-tabs"}, WP_KINDS.map(([k,l,c])=>h("button",{class:"as-tab "+c+(W.kind===k?" on":""),onclick:()=>{ W.kind=k; render(); }},`${l}（${W.list.filter(x=>x.kind===k).length}）`))),
+    h("div",{class:"abs",style:"display:flex;gap:6px"},
+      h("button",{class:"btn",onclick:()=>wpImport()},"📥 匯入檔案"),
+      h("button",{class:"btn primary",onclick:()=>wpNew()},"＋ 新增"+(WP_KINDS.find(x=>x[0]===W.kind)||[])[1]))));
+  app.append(h("div",{class:"mt-sortbar"},
+    h("span",null,`共 ${list.length} 份`),
+    h("label",null,"學年度：",h("select",{class:"in",onchange:e=>{ W.year=e.target.value; render(); }},
+      [h("option",{value:"all",selected:W.year==="all"},"全部"), ...years.map(y=>h("option",{value:y,selected:W.year===y},y+" 學年"))]))));
+  if (!list.length){ app.append(h("div",{class:"notice"},"這裡還沒有資料，按「＋ 新增」開始，或用「📥 匯入檔案」匯入。")); return; }
+  app.append(h("div",{class:"list"}, list.map(d0=>{ const d=wpNorm(d0);
+    const filled = d.kind==="plan" ? d.rows.filter(r=>r.item).length : d.rows.filter(r=>r.item && (r.effect||r.result)).length;
+    const total = d.rows.filter(r=>r.item).length;
+    return h("div",{class:"card row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:240px"},
+        h("b",null,`${d.year} 學年 ${WP_TNAME[d.kind]}`),
+        h("div",{class:"note",style:"font-size:13px"}, d.kind==="plan" ? `${total} 項工作內容` : `已填 ${filled}／${total} 項`, d0.updatedAt ? "　更新："+new Date(d0.updatedAt).toLocaleDateString("zh-TW") : "")),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>{ W.view=d0.id; render(); }},"檢視"),
+        h("button",{class:"btn",onclick:()=>wpEdit(d0)},"編輯"),
+        h("button",{class:"btn",onclick:()=>printWorkplan(d)},"🖨 列印"),
+        h("button",{class:"btn",onclick:()=>wpDerive(d)},"複製成…"),
+        h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份資料？",`${d.year} 學年 ${WP_TNAME[d.kind]} 刪除後無法復原。`,"刪除",async()=>{ await S.db.doc(WP_COL+"/"+d0.id).delete(); W.list=W.list.filter(x=>x.id!==d0.id); toast("已刪除"); render(); })},"刪除")));
+  })));
+}
+function wpEdit(d0){ const W=S.wp; W.draft = wpNorm(d0); W.edit = d0.id; W.dirty=false; render(); }
+function wpNew(){
+  const W = S.wp, kind = W.kind;
+  const y = W.year!=="all" ? W.year : String(wpY0());
+  const plan = W.list.find(x=>x.kind==="plan" && str(x.year)===y) || W.list.filter(x=>x.kind==="plan").sort((a,b)=>wpYNum(b.year)-wpYNum(a.year))[0];
+  const prev = W.list.filter(x=>x.kind===kind).sort((a,b)=>wpYNum(b.year)-wpYNum(a.year))[0];
+  const src = kind==="plan" ? prev : plan || prev;
+  const d = wpNorm({ kind, year:y });
+  if (src){ const s = wpNorm(src); d.rows = s.rows.map(r=>Object.assign(wpBlank(d), { cat:r.cat, goal:r.goal, area:r.area, item:r.item, expected: kind==="plan" ? r.expected : "" })); }
+  else d.rows = [wpBlank(d)];
+  W.draft = d; W.edit = "__new"; W.dirty = !!src; render();
+  if (src) toast(`已從「${src.year} 學年 ${WP_TNAME[src.kind]}」帶入工作項目，記得檢查後儲存`);
+}
+function wpDerive(d){
+  const W = S.wp;
+  const opts = WP_KINDS.filter(([k])=>k!==d.kind);
+  const box = h("div",{class:"wp-pick"}, h("div",{style:"font-weight:700;margin-bottom:8px"},`用「${d.year} 學年 ${WP_TNAME[d.kind]}」的工作項目建立：`),
+    h("label",{class:"fl"},"學年度",(()=>{ const i=h("input",{class:"in",value:d.year,id:"wp-dy"}); return i; })()),
+    h("div",{style:"display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"}, [[d.kind,"同類（新學年）"],...opts.map(([k,l])=>[k,l])].map(([k,l])=>h("button",{class:"btn",onclick:()=>{
+      const y = str((document.getElementById("wp-dy")||{}).value||d.year).trim(); ov.remove();
+      const n = wpNorm({ kind:k, year:y }); n.rows = d.rows.map(r=>Object.assign(wpBlank(n), { cat:r.cat, goal:r.goal, area:r.area, item:r.item, expected:k==="plan"?r.expected:"" }));
+      W.kind = k; W.draft = n; W.edit="__new"; W.dirty=true; W.view=null; render(); }},l))),
+    h("div",{style:"margin-top:10px;text-align:right"},h("button",{class:"btn",onclick:()=>ov.remove()},"取消")));
+  const ov = h("div",{class:"wp-ov",onclick:e=>{ if (e.target===ov) ov.remove(); }}, box);
+  ($("#kb")||document.body).append(ov);
+}
+async function wpSave(btn){
+  const W = S.wp, d = W.draft; if (!d) return;
+  if (!str(d.year).trim()){ alert("請填寫學年度"); return; }
+  const dup = W.list.find(x=>x.kind===d.kind && str(x.year)===str(d.year).trim() && x.id!==W.edit);
+  if (dup && !confirm(`已經有一份「${d.year} 學年 ${WP_TNAME[d.kind]}」，仍要再存一份嗎？`)) return;
+  const body = JSON.parse(JSON.stringify(wpNorm(d))); delete body.id; body.year = str(body.year).trim();
+  body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
+  if (btn) btn.disabled = true;
+  try{ const ref = W.edit==="__new" ? S.db.collection(WP_COL).doc() : S.db.doc(WP_COL+"/"+W.edit); await ref.set(body);
+    W.list = W.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); W.edit=null; W.draft=null; W.dirty=false; W.kind=body.kind; toast("已儲存"); render();
+  }catch(e){ if (btn) btn.disabled=false; alert("儲存失敗："+errText(e)); }
+}
+function renderWorkplanEditor(app){
+  const W = S.wp, d = W.draft, mark = () => { W.dirty = true; };
+  const back = () => { if (W.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; W.edit=null; W.draft=null; render(); };
+  const ta = (o, f, l, rows, ph) => h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows||2),placeholder:ph||"",oninput:e=>{ o[f]=e.target.value; mark(); }},o[f]));
+  const tb = () => h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>printWorkplan(d)},"🖨 預覽列印"),
+    h("button",{class:"btn primary",onclick:e=>wpSave(e.currentTarget)},"💾 儲存"));
+  app.append(tb());
+  const titleIn = h("input",{class:"in",value:wpTitle(d),oninput:e=>{ d.title=e.target.value; mark(); }});
+  app.append(h("section",{class:"as-form mt-form"},
+    h("div",{class:"mt-sh"},`${WP_TNAME[d.kind]}　基本資料`),
+    h("div",{class:"f4"},
+      h("label",{class:"fl"},"類型",h("select",{class:"in",onchange:e=>{ d.kind=e.target.value; const keep=d.periods; d.periods=(WP_PER[d.kind]||[]).slice(); if (wpHasPer(d.kind) && keep.length && (d.kind==="plan")===(/^\d$/.test(keep[0]))) d.periods=keep; Object.assign(d, wpNorm(d)); if (!d.title) titleIn.value=wpTitle(d); mark(); render(); }}, WP_KINDS.map(([k,l])=>h("option",{value:k,selected:d.kind===k},l)))),
+      h("label",{class:"fl"},"學年度（例：115；四年計畫可填 114-117）",h("input",{class:"in",value:d.year,oninput:e=>{ d.year=e.target.value; mark(); if (!d.title) titleIn.value=wpTitle(d); }})),
+      wpHasPer(d.kind) ? h("label",{class:"fl"}, d.kind==="plan"?"實施期程欄位（用逗號分隔）":"執行進度欄位（用逗號分隔）",
+        h("input",{class:"in",value:d.periods.join(","),onchange:e=>{ const p=str(e.target.value).split(/[,，、]/).map(x=>x.trim()).filter(Boolean); d.periods = p.length?p:(WP_PER[d.kind]||[]).slice(); Object.assign(d, wpNorm(d)); mark(); render(); }})) : null,
+      h("label",{class:"fl"},"大標題下的小標",h("input",{class:"in",value:d.heading,oninput:e=>{ d.heading=e.target.value; mark(); }}))),
+    h("label",{class:"fl",style:"margin-top:8px"},"標題（空白時自動產生）",titleIn)));
+  const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"年度目標及工作內容"),
+    h("p",{class:"note",style:"margin:0 0 10px"},"類別、年度目標、工作項目相同的相鄰列，列印時會自動合併成同一格。只有類別和年度目標（例如：收支預算編列）的列，會印成一整列。"));
+  let lastArea = null;
+  d.rows.forEach((r,i)=>{
+    if (r.cat+"|"+r.area !== lastArea){ lastArea = r.cat+"|"+r.area; sec.append(h("div",{class:"wp-grp"}, [r.cat, r.area].filter(Boolean).join("　›　") || "（未分類）")); }
+    const mv = (k) => { const j=i+k; if (j<0||j>=d.rows.length) return; const t=d.rows[i]; d.rows[i]=d.rows[j]; d.rows[j]=t; mark(); render(); };
+    const card = h("div",{class:"wp-row"},
+      h("div",{class:"wp-rh"}, h("b",null,`第 ${i+1} 列`), h("span",{class:"sp"}),
+        h("button",{class:"btn sm",title:"上移",onclick:()=>mv(-1)},"↑"), h("button",{class:"btn sm",title:"下移",onclick:()=>mv(1)},"↓"),
+        h("button",{class:"btn sm",onclick:()=>{ const n=Object.assign(wpBlank(d),{cat:r.cat,goal:r.goal,area:r.area}); d.rows.splice(i+1,0,n); mark(); render(); }},"＋ 下方插入"),
+        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這一列？")) return; d.rows.splice(i,1); mark(); render(); }},"刪除")),
+      h("div",{class:"wp-g3"}, ta(r,"cat","類別",1), ta(r,"goal","年度目標",2), ta(r,"area","工作項目",1,"例：1.園務領導")),
+      ta(r,"item",WP_ITEM[d.kind],3,"例：1-1定期召開園務會議…"),
+      wpHasPer(d.kind) ? h("div",{class:"wp-per"}, h("span",{class:"wp-pl"}, d.kind==="plan"?"實施期程：":"執行進度："),
+        d.periods.map((p,k)=>h("label",{class:"wp-ck"+(r.marks[k]?" on":"")}, h("input",{type:"checkbox",checked:r.marks[k]?true:null,onchange:e=>{ r.marks[k]=e.target.checked; e.target.parentNode.classList.toggle("on",e.target.checked); mark(); }}), d.kind==="plan"&&/^\d$/.test(p)?`第${p}年`:p))) : null,
+      d.kind==="plan" ? ta(r,"expected","預期成效",3) : null,
+      d.kind!=="plan" ? ta(r,"effect","執行成效",3) : null,
+      wpHasRes(d.kind) ? h("div",{class:"wp-per"}, h("span",{class:"wp-pl"},"達成情形："),
+        [...WP_RES,""].map(v=>h("label",{class:"wp-ck"+(r.result===v?" on":"")}, h("input",{type:"radio",name:"wpres"+i,checked:r.result===v?true:null,onchange:()=>{ r.result=v; mark(); render(); }}), v||"未勾選"))) : null,
+      d.kind!=="plan" ? ta(r,"review","檢討與改善或持續發展",2) : null);
+    sec.append(card);
+  });
+  sec.append(h("button",{class:"btn",onclick:()=>{ const l=d.rows[d.rows.length-1]; d.rows.push(Object.assign(wpBlank(d), l?{cat:l.cat,goal:l.goal,area:l.area}:{})); mark(); render(); }},"＋ 新增一列"));
+  app.append(sec);
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"附件／附註"), ta(d,"notes","印在表格下方（例：附件一 114-1行事曆）",4)));
+  app.append(tb());
+}
+function renderWorkplanView(app){
+  const W = S.wp, d0 = W.list.find(x=>x.id===W.view); if (!d0){ W.view=null; return renderWorkplan(app); }
+  const d = wpNorm(d0);
+  app.append(h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:()=>{ W.view=null; render(); }},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>wpEdit(d0)},"編輯"), h("button",{class:"btn primary",onclick:()=>printWorkplan(d)},"🖨 列印")));
+  const box = h("div",{class:"mt-view wp-view"}); box.innerHTML = wpBodyHtml(d); app.append(box);
+}
+function wpBodyHtml(d){
+  const k = d.kind, per = wpHasPer(k) ? d.periods : [], res = wpHasRes(k);
+  const nCols = 4 + (k==="plan" ? per.length+1 : 1 + per.length + (res?3:0) + 1);
+  const V = b => b ? "V" : "";
+  const T = s => esc(str(s));
+  const span = (key, i) => { const r=d.rows[i]; if (wpWide(r)) return 1; if (i>0 && !wpWide(d.rows[i-1]) && same(key,i-1,i)) return 0; let n=1; while (i+n<d.rows.length && !wpWide(d.rows[i+n]) && same(key,i,i+n)) n++; return n; };
+  const same = (key,a,b) => { const A=d.rows[a], B=d.rows[b]; if (!A[key]) return false; if (key==="goal" && A.cat!==B.cat) return false; if (key==="area" && (A.cat!==B.cat)) return false; if (key==="expected" && (A.cat!==B.cat || A.area!==B.area)) return false; return A[key]===B[key]; };
+  const cw = k==="plan" ? ["7%","15%","9%","26%",...per.map(()=>(per.length>2?"4%":"5%")),"auto"]
+    : k==="check" ? ["6%","11%","8%","19%","auto",...per.map(()=>"4%"),"16%"]
+    : ["6%","11%","8%","20%","auto","4.5%","4.5%","4.5%","17%"];
+  let hd = `<tr><th rowspan="${per.length||res?2:1}">類別</th><th rowspan="${per.length||res?2:1}">年度目標</th><th rowspan="${per.length||res?2:1}">工作項目</th><th rowspan="${per.length||res?2:1}">${WP_ITEM[k]}</th>`;
+  if (k==="plan") hd += `<th colspan="${per.length}">實施期程<br><span style="font-weight:normal;font-size:.85em">（單位：年度）</span></th><th rowspan="2">預期成效</th></tr><tr>${per.map(p=>`<th>${T(p)}</th>`).join("")}</tr>`;
+  else if (k==="check") hd += `<th rowspan="2">執行成效</th><th colspan="${per.length}">執行進度</th><th rowspan="2">檢討與改善或持續發展</th></tr><tr>${per.map(p=>`<th style="font-size:.8em">${T(p)}</th>`).join("")}</tr>`;
+  else hd += `<th rowspan="2">執行成效</th><th colspan="3">達成情形</th><th rowspan="2">檢討與改善或持續發展</th></tr><tr>${WP_RES.map(p=>`<th style="font-size:.8em">${p}</th>`).join("")}</tr>`;
+  const body = d.rows.map((r,i)=>{
+    if (wpWide(r)) return `<tr><td class="k b">${T(r.cat)}</td><td colspan="${nCols-1}">${T(r.goal||r.item)}</td></tr>`;
+    const cell = (key, cls) => { const n=span(key,i); return n===0 ? "" : `<td${n>1?` rowspan="${n}"`:""} class="${cls||""}">${T(r[key])}</td>`; };
+    let t = `<tr>${cell("cat","k b")}${cell("goal")}${cell("area","b")}<td>${T(r.item)}</td>`;
+    if (k==="plan") t += per.map((p,j)=>`<td class="c">${V(r.marks[j])}</td>`).join("") + cell("expected");
+    else if (k==="check") t += `<td>${T(r.effect)}</td>` + per.map((p,j)=>`<td class="c">${V(r.marks[j])}</td>`).join("") + `<td>${T(r.review)}</td>`;
+    else t += `<td>${T(r.effect)}</td>` + WP_RES.map(v=>`<td class="c">${r.result===v?"✔":""}</td>`).join("") + `<td>${T(r.review)}</td>`;
+    return t + "</tr>";
+  }).join("");
+  return `<div class="hd"><div class="t">${T(wpTitle(d))}</div></div>${d.heading?`<div class="sh">${T(d.heading)}</div>`:""}
+<table class="wpt"><colgroup>${cw.map(w=>`<col${w==="auto"?"":` style="width:${w}"`}>`).join("")}</colgroup><thead>${hd}</thead><tbody>${body}</tbody></table>
+${str(d.notes).trim()?`<div class="nt">${T(d.notes)}</div>`:""}`;
+}
+const WP_CSS = `.wpt{font-size:10.5pt}.wpt th{background:#eee;font-weight:bold;text-align:center;vertical-align:middle}.wpt td{vertical-align:top;line-height:1.35}.wpt td.c{text-align:center;vertical-align:middle}.wpt td.b{font-weight:bold}.wpt td.k{text-align:center}.wpt thead{display:table-header-group}.wpt tr{page-break-inside:avoid;break-inside:avoid}.sh{font-weight:bold;margin:6px 0 4px;font-size:1.05em}.nt{white-space:pre-wrap;margin-top:10px;font-size:10.5pt}`;
+function printWorkplan(d){
+  d = wpNorm(d);
+  const ls = true;
+  openPrint(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(wpTitle(d))}</title><style>${PRINT_BASE}${WP_CSS}@page{size:A4 ${ls?"landscape":"portrait"};margin:10mm}.pg{padding:6px}</style></head><body><div class="bar"><button onclick="print()">🖨 列印</button><span>建議：A4 橫向。表格很長時會自動分頁，每頁都會重印表頭。</span></div><div class="pg">${wpBodyHtml(d)}</div></body></html>`);
+}
+function wpImport(){
+  const inp = h("input",{type:"file",accept:".json,application/json",style:"display:none"});
+  inp.addEventListener("change", async ()=>{
+    const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+    let j; try{ j = JSON.parse(await f.text()); }catch(e){ alert("這個檔案不是正確的工作計畫匯入檔（JSON 格式錯誤）。"); return; }
+    const list = (Array.isArray(j) ? j : Array.isArray(j.workPlans) ? j.workPlans : (j && j.kind ? [j] : [])).filter(x=>x && WP_TNAME[x.kind]);
+    if (!list.length){ alert("檔案裡沒有工作計畫資料。"); return; }
+    const W = S.wp, dupOf = x => W.list.find(y=>y.kind===x.kind && str(y.year)===str(x.year));
+    const dups = list.filter(dupOf);
+    if (!confirm(`要匯入 ${list.length} 份資料嗎？\n`+list.map(x=>`・${x.year} 學年 ${WP_TNAME[x.kind]}${dupOf(x)?"（已存在，會覆蓋）":""}`).join("\n"))) return;
+    let ok=0; const bad=[];
+    for (const x of list){
+      try{ const body = JSON.parse(JSON.stringify(wpNorm(x))); delete body.id; body.updatedAt=Date.now(); body.updatedBy=(S.d.currentUser||{}).email||""; body.importedFrom=f.name;
+        const old = dupOf(x); const ref = old ? S.db.doc(WP_COL+"/"+old.id) : S.db.collection(WP_COL).doc(); await ref.set(body);
+        W.list = W.list.filter(y=>y.id!==ref.id).concat([{id:ref.id,...body}]); ok++;
+      }catch(e){ bad.push(`${x.year} ${WP_TNAME[x.kind]}（${errText(e)}）`); }
+    }
+    render(); alert(`已匯入 ${ok} 份。`+(bad.length?"\n\n失敗：\n"+bad.join("\n"):""));
+  });
+  document.body.append(inp); inp.click();
+}
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -7944,6 +8190,9 @@ function sync(d, view){
     S.mt = { list:[], got:false, q:"", sort:(()=>{ try{ return localStorage.getItem("mtSort")||"dateDesc"; }catch(_){ return "dateDesc"; } })(), type:"all", view:null, edit:null, draft:null, dirty:false };
     if (d.isOwner) unsubs.push(subscribe(d.db.collection("meetingMinutes"), S.mt, "got", snap=>{ S.mt.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.mt.got = true;
+    S.wp = { list:[], got:false, kind:"plan", year:"all", view:null, edit:null, draft:null, dirty:false };
+    if (d.isOwner) unsubs.push(subscribe(d.db.collection("workPlans"), S.wp, "got", snap=>{ S.wp.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    else S.wp.got = true;
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
