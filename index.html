@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L30</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L31</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L30</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L31</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5930,6 +5930,11 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .wp-ro>span{font-size:12px;color:var(--muted);font-weight:500}
 #kb .wp-ro>div{background:#f3efe6;border:1px dashed #d5ccb6;border-radius:8px;padding:6px 10px;white-space:pre-wrap;color:#4a4436;min-height:34px}
 
+#kb-autost{position:fixed;left:14px;bottom:14px;z-index:9998;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.15);background:#fff;border:1.5px solid #cfc6b0;color:#5a4a2a}
+#kb-autost.ok{border-color:#2f6b4f;color:#2f6b4f;background:#eef7f1}
+#kb-autost.wait{border-color:#c08a2d;color:#8a5a10;background:#fff7e6}
+#kb-autost.bad{border-color:#b4472f;color:#b4472f;background:#fbeae5}
+
 </style>
 <script>
 
@@ -7222,6 +7227,13 @@ function patrolTable(r, edit){
       : d.note))));
   return h("div",{class:"tablewrap"}, h("table",{class:"patrol"}, h("thead",null,head1,head2), h("tbody",null,body)));
 }
+async function pSave(auto){
+  const P = S.patrol, r = P.draft; if (!r) return true;
+  const data = { semester:r.semester, dateFrom:r.dateFrom, dateTo:r.dateTo, recorder:r.recorder, classes:r.classes,
+    days:r.days.map(d=>({date:d.date,time:d.time,note:d.note,scores:d.scores.map(row=>row.join(","))})), updatedAt:Date.now() };
+  const ref = P.open==="__new" ? S.db.collection(PATROL_COL).doc() : S.db.doc(PATROL_COL+"/"+P.open); P.open = ref.id; await ref.set(data);
+  P.list = P.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...data}]); return true;
+}
 function renderPatrolSheet(app){
   const P = S.patrol;
   const src = P.open==="__new" ? null : P.list.find(x=>x.id===P.open);
@@ -7229,10 +7241,11 @@ function renderPatrolSheet(app){
   const r = P.edit ? P.draft : pNorm(src);
   const back = () => { P.open=null; P.edit=false; P.draft=null; render(); };
   const bar = h("div",{class:"toolbar"},
-    h("button",{class:"btn",onclick:()=>{ if(P.edit && !confirm("要放棄這次的修改嗎？")) return; back(); }},"← 返回清單"), h("span",{class:"sp"}),
-    !P.edit ? h("button",{class:"btn",onclick:()=>{ P.draft=pNorm(src); P.edit=true; render(); }},"編輯") : null,
+    h("button",{class:"btn",onclick:async()=>{ if (P.edit && !(await edLeave(P))) return; P.dirty=false; back(); }},"← 返回清單"), h("span",{class:"sp"}),
+    !P.edit ? h("button",{class:"btn",onclick:()=>{ P.draft=pNorm(src); P.edit=true; P.dirty=false; render(); }},"編輯") : null,
     h("button",{class:"btn",onclick:()=>printPatrol(r)},"🖨 列印"),
     P.edit ? h("button",{class:"btn primary",onclick:async(e)=>{
+      clearTimeout(P._at); P._timerOn=false;
       const miss = r.days.map((d,i)=>d.scores.flat().includes("4") && !d.note.trim() ? pMd(d.date)||`第${i+1}天` : "").filter(Boolean);
       if (miss.length && !confirm("以下日期有填 4（待改進），但還沒寫補充說明：\n"+miss.join("、")+"\n\n仍要儲存嗎？")) return;
       const data = { semester:r.semester, dateFrom:r.dateFrom, dateTo:r.dateTo, recorder:r.recorder, classes:r.classes,
@@ -7244,6 +7257,7 @@ function renderPatrolSheet(app){
       catch(err){ e.target.disabled=false; toast(errText(err)); }
     }},"💾 儲存") : null);
   app.append(bar);
+  if (P.open==="__new" && P.edit && !P.dirty) P.dirty = true;
   const head = h("section",{class:"intro"},
     h("p",{class:"note"},"桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)"),
     P.edit ? h("div",{class:"f"},
@@ -7447,11 +7461,13 @@ function asOpen(type, child){
   d0.dates = d0.dates || {};
   A.open = { type, child }; A.draft = d0; A.dirty = false; render(); window.scrollTo(0,0);
 }
-async function asSave(btn){
-  const A = S.as, d = A.draft; if (!d) return;
+async function asSave(btn, auto){
+  const A = S.as, d = A.draft; if (!d) return true;
+  if (!auto){ clearTimeout(A._at); A._timerOn=false; }
   const id = asDocId(d.year, d.type, d.cls, d.child), u = S.d.currentUser || {};
   const body = { year:d.year, type:d.type, cls:d.cls, child:d.child, data:d.data, dates:d.dates||{}, comment:str(d.comment), age:str(d.age), teacher:str(d.teacher),
     updatedAt:Date.now(), updatedBy:u.uid||"", updatedByName:asMe()||u.email||"" };
+  if (auto){ await S.db.doc(AS_COL+"/"+id).set(body); d._new=false; d.id=id; return true; }
   if (btn) btn.disabled = true;
   try{ await S.db.doc(AS_COL+"/"+id).set(body); d._new=false; d.id=id; A.dirty=false; toast("已儲存"); render(); }
   catch(e){ toast("儲存失敗："+errText(e)); }
@@ -7460,7 +7476,7 @@ async function asSave(btn){
 function renderAssessEditor(app){
   const A = S.as, d = A.draft, type = A.open.type, T = AS_T[type];
   const mark = () => { A.dirty = true; };
-  const back = () => { if (A.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; A.open=null; A.draft=null; render(); };
+  const back = async () => { if (!(await edLeave(A))) return; A.open=null; A.draft=null; A.dirty=false; render(); };
   const N = asN(type, d.age), filled = N ? T.pers.map(([k,l])=>{ const n=d.data[k].filter(Boolean).length; return `${l} ${n}/${N}`; }).join("　") : "";
   const setAge = v => { const n2 = asN(type, v), had = T.pers.some(([k])=>d.data[k].some(Boolean));
     if (type==="routine" && had && v!==d.age && !confirm("不同年齡層的例行性評量題目不一樣，改年齡層會清除已勾選的項目。要繼續嗎？")) { render(); return; }
@@ -7770,10 +7786,13 @@ function mtCopy(m){
   d.reports.forEach(r=>{ r.photos=[]; }); d.issues.forEach(r=>{ r.photos=[]; r.resPhotos=[]; r.classes.forEach(c=>{ c.items=[]; }); });
   M.draft = d; M.edit = "__new"; M.dirty = true; render(); window.scrollTo(0,0); toast("已複製內容（照片不會複製），改好日期後按儲存");
 }
-async function mtSave(btn){
-  const M = S.mt, d = M.draft; if (!d) return;
+async function mtSave(btn, auto){
+  const M = S.mt, d = M.draft; if (!d) return true;
+  if (!auto){ clearTimeout(M._at); M._timerOn=false; }
   const body = JSON.parse(JSON.stringify(d)); delete body.id; body.no = +body.no || 1; body.signRows = Math.max(0,Math.min(40,+body.signRows||0)); body.signCols = Math.max(1,Math.min(6,+body.signCols||3));
   if (body.autoTitle) body.title = ""; body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
+  if (auto){ const ref = M.edit==="__new" ? S.db.collection(MT_COL).doc() : S.db.doc(MT_COL+"/"+M.edit); M.edit = ref.id; d.id = ref.id; await ref.set(body);
+    M.list = M.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); return true; }
   if (btn) btn.disabled = true;
   try{ const ref = M.edit==="__new" ? S.db.collection(MT_COL).doc() : S.db.doc(MT_COL+"/"+M.edit); await ref.set(body);
     M.list = M.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); M.edit = ref.id; d.id = ref.id; M.dirty=false; toast("已儲存"); render(); }
@@ -7782,7 +7801,7 @@ async function mtSave(btn){
 }
 function renderMeetingEditor(app){
   const M = S.mt, d = M.draft, mark = () => { M.dirty = true; };
-  const back = () => { if (M.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; M.edit=null; M.draft=null; render(); };
+  const back = async () => { if (!(await edLeave(M))) return; M.edit=null; M.draft=null; M.dirty=false; render(); };
   const fld = (label, el, cls) => h("label",{class:"fl"+(cls?" "+cls:"")},label,el);
   const inp = (k, ph, type) => h("input",{class:"in",type:type||"text",value:d[k]==null?"":String(d[k]),placeholder:ph||"",oninput:e=>{ d[k]=e.target.value; mark(); if (k==="year"||k==="sem"||k==="no"||k==="type") upd(); }});
   const titleIn = h("input",{class:"in",value:mtTitle(d),disabled:d.autoTitle?true:null,oninput:e=>{ d.title=e.target.value; mark(); }});
@@ -8052,10 +8071,17 @@ function wpDerive(d){
   const ov = h("div",{class:"wp-ov",onclick:e=>{ if (e.target===ov) ov.remove(); }}, box);
   ($("#kb")||document.body).append(ov);
 }
-async function wpSave(btn){
-  const W = S.wp, d = W.draft; if (!d) return;
-  if (!str(d.year).trim()){ alert("請填寫學年度"); return; }
+async function wpSave(btn, auto){
+  const W = S.wp, d = W.draft; if (!d) return true;
+  if (!auto){ clearTimeout(W._at); W._timerOn=false; }
+  if (!str(d.year).trim()){ if (auto) return "請填寫學年度"; alert("請填寫學年度"); return; }
   const dup = W.list.find(x=>x.kind===d.kind && str(x.year)===str(d.year).trim() && x.id!==W.edit);
+  if (auto){
+    if (dup && W.edit==="__new") return `已經有一份「${d.year} 學年 ${WP_TNAME[d.kind]}」，請確認後按「💾 儲存」`;
+    const body = JSON.parse(JSON.stringify(wpNorm(d))); delete body.id; body.year = str(body.year).trim(); body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
+    const ref = W.edit==="__new" ? S.db.collection(WP_COL).doc() : S.db.doc(WP_COL+"/"+W.edit); W.edit = ref.id; await ref.set(body);
+    W.list = W.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); return true;
+  }
   if (dup && !confirm(`已經有一份「${d.year} 學年 ${WP_TNAME[d.kind]}」，仍要再存一份嗎？`)) return;
   const body = JSON.parse(JSON.stringify(wpNorm(d))); delete body.id; body.year = str(body.year).trim();
   body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
@@ -8066,7 +8092,7 @@ async function wpSave(btn){
 }
 function renderWorkplanEditor(app){
   const W = S.wp, d = W.draft, mark = () => { W.dirty = true; };
-  const back = () => { if (W.dirty && !confirm("還沒儲存，要放棄這次的修改嗎？")) return; W.edit=null; W.draft=null; render(); };
+  const back = async () => { if (!(await edLeave(W))) return; W.edit=null; W.draft=null; W.dirty=false; render(); };
   const ta = (o, f, l, rows, ph) => h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows||2),placeholder:ph||"",oninput:e=>{ o[f]=e.target.value; mark(); }},o[f]));
   const tb = () => h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
     h("button",{class:"btn",onclick:()=>printWorkplan(d)},"🖨 預覽列印"),
@@ -8173,12 +8199,73 @@ function wpImport(){
   });
   document.body.append(inp); inp.click();
 }
+/* ---------- 編輯畫面自動儲存（會議紀錄、工作計畫、教學評量、巡堂紀錄） ---------- */
+const AUTO_MS = 1200;
+const autoSnap = d => JSON.stringify(d, (k,v)=> (k==="id"||k==="_new") ? undefined : v);
+function edCtx(){
+  const v = S.view;
+  if (v==="meeting"  && S.mt && S.mt.edit && S.mt.draft) return { h:S.mt, save:a=>mtSave(null,a) };
+  if (v==="workplan" && S.wp && S.wp.edit && S.wp.draft) return { h:S.wp, save:a=>wpSave(null,a) };
+  if (v==="assess"   && S.as && S.as.open && S.as.draft) return { h:S.as, save:a=>asSave(null,a) };
+  if (v==="patrol"   && S.patrol && S.patrol.edit && S.patrol.draft) return { h:S.patrol, save:a=>pSave(a) };
+  return null;
+}
+function autoSt(msg, kind){
+  let el = document.getElementById("kb-autost");
+  if (!el){ el = h("div",{id:"kb-autost"}); ($("#kb")||document.body).append(el); }
+  if (!msg){ el.style.display="none"; return; }
+  el.style.display=""; el.className = kind||""; el.textContent = msg;
+}
+function autoArm(){
+  const c = edCtx(); if (!c) return;
+  c.h.dirty = true; clearTimeout(c.h._at); c.h._timerOn = true;
+  autoSt("✏️ 編輯中…", "wait");
+  c.h._at = setTimeout(()=>{ c.h._timerOn=false; autoRun(c); }, AUTO_MS);
+}
+async function autoRun(c){
+  c = c || edCtx(); if (!c) return true;
+  const H = c.h; clearTimeout(H._at); H._timerOn = false;
+  if (!H.dirty) return true;
+  if (H._busy){ H._again = true; return H._busyP; }
+  H._busy = true; autoSt("💾 儲存中…", "wait");
+  const snap = autoSnap(H.draft);
+  let r; H._busyP = (async()=>{ try{ r = await c.save(true); }catch(e){ r = errText(e); } return r; })();
+  await H._busyP; H._busy = false;
+  if (r===true){
+    if (autoSnap(H.draft)===snap) H.dirty = false;
+    const t = new Date(); autoSt(H.dirty ? "✏️ 編輯中…" : `✓ 已自動儲存 ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}:${String(t.getSeconds()).padStart(2,"0")}`, H.dirty?"wait":"ok");
+  } else autoSt("⚠️ 尚未儲存："+(typeof r==="string"&&r ? r : "自動儲存失敗，請按「💾 儲存」"), "bad");
+  if (H._again){ H._again = false; if (H.dirty) return autoRun(c); }
+  return r===true;
+}
+/* 離開編輯畫面前先存好；存不了才詢問 */
+async function edLeave(H){
+  const c = edCtx();
+  if (!c || !H.dirty) return true;
+  const ok = await autoRun(c);
+  if (ok===true && !H.dirty) return true;
+  return confirm("這次的修改還沒辦法自動儲存（請看畫面下方的提示）。\n要放棄修改並離開嗎？");
+}
+function autoAfterRender(){
+  const c = edCtx();
+  if (!c){ autoSt(null); return; }
+  if (c.h.dirty && !c.h._timerOn && !c.h._busy) autoArm();
+  else if (!c.h.dirty && !c.h._busy){ const el=document.getElementById("kb-autost"); if (!el || el.style.display==="none" || !/已自動儲存/.test(el.textContent)) autoSt("☁️ 修改會自動儲存", "ok"); }
+}
+render = (orig => function(){ const r = orig.apply(this, arguments); try{ autoAfterRender(); }catch(_){} return r; })(render);
+(function(){
+  const onEdit = e => { if (!e.target || !e.target.closest) return; if (e.target.closest("#kb-app") && edCtx()) autoArm(); };
+  document.addEventListener("input", onEdit, true);
+  document.addEventListener("change", onEdit, false);
+  window.addEventListener("beforeunload", e => { const c=edCtx(); if (c && c.h.dirty){ autoRun(c); e.preventDefault(); e.returnValue=""; return ""; } });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState==="hidden"){ const c=edCtx(); if (c && c.h.dirty) autoRun(c); } });
+})();
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
   return query.onSnapshot(snap=>{
     if (!snap.metadata.fromCache){ clearTimeout(timer); S.stale=false; }
-    map(snap); gotObj[key]=true; render();
+    map(snap); gotObj[key]=true; if (typeof edCtx==="function" && edCtx()) return; render();
   }, e=>{
     clearTimeout(timer); gotObj[key]=true;
     if (e && e.code==="permission-denied"){ S.failed="沒有權限讀取這些資料，請確認 Firestore 規則已開放（見說明）。"; }
@@ -8194,6 +8281,7 @@ function sync(d, view){
   if (view==="actplan") view = "activities";
   const key = d.currentUser.uid + "|" + !!d.isAdmin + "|" + !!d.isEditor + "|" + !!d.isOwner;
   if (isPage(view) && (view!==S.view || key!==subKey)){
+    { const c0 = (typeof edCtx==="function") ? edCtx() : null; if (c0 && c0.h.dirty && S.view!==view) autoRun(c0); }
     S.view = view; S.openAct = null; const L=document.getElementById("kb-layer"); if (L) L.replaceChildren();
   }
   if (key !== subKey){
