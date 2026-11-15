@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L34</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L35</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L34</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L35</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5938,6 +5938,9 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb-undo button{width:46px;height:46px;border-radius:50%;border:0;background:#2f6b4f;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.28)}
 #kb-undo button:disabled{background:#b9b3a3;cursor:default;box-shadow:none}
 
+#kb .sch-st{font-size:12.5px;font-weight:700;color:var(--muted);align-self:center;margin-left:6px}
+#kb .sch-st.ok{color:#2f6b4f}#kb .sch-st.wait{color:#8a5a10}#kb .sch-st.bad{color:#b4472f}
+
 </style>
 <script>
 
@@ -6059,6 +6062,7 @@ function renderCourses(app){
 /* ---------- modal helpers ---------- */
 let lastFocus=null;
 function openModal(node, small){
+  if (S._modalFlush){ try{ S._modalFlush(); }catch(_){} S._modalFlush=null; }
   lastFocus = document.activeElement;
   const close = () => closeModal();
   const m = h("div",{class:"modal"+(small?" sm":""),role:"dialog","aria-modal":"true"},
@@ -6067,7 +6071,7 @@ function openModal(node, small){
   $("#kb-layer").replaceChildren(scrim);
   const f = m.querySelector("input,textarea,select"); (f||m.querySelector(".x")).focus();
 }
-function closeModal(){ S.openAct=null; $("#kb-layer").replaceChildren(); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+function closeModal(){ if (S._modalFlush){ try{ S._modalFlush(); }catch(_){} S._modalFlush=null; } S.openAct=null; $("#kb-layer").replaceChildren(); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#kb-layer").firstChild) closeModal(); });
 
 function confirmBox(title, msg, okLabel, onOk){
@@ -6755,13 +6759,40 @@ function editSchedule(id){
   };
   ((cur && Array.isArray(cur.rows) && cur.rows.length) ? cur.rows : [{}]).forEach(x=>add(x||{}));
   const err = h("div",{class:"err"});
+  /* 自動儲存＋復原上一步 */
+  let docId = id || null, dirty = false, busy = false, again = false, at = null, ht = null;
+  const raw = () => ({ group:f.group.value, name:f.name.value, title:f.title.value, order:f.order.value, note:f.note.value, rows:[...box.children].map(r=>r._read()) });
+  const build = () => { const data = { group:f.group.value, name:f.name.value.trim(), title:f.title.value.trim()||f.name.value.trim()+"作息表",
+      order:num(f.order.value)||1, note:f.note.value.trim(), rows:[...box.children].map(r=>r._read()).filter(r=>r.time||r.days.some(Boolean)) };
+    const c0 = docId ? sc.list.find(x=>x.id===docId) : cur;
+    if (c0 && c0.driveUrl){ data.driveUrl = c0.driveUrl; data.driveName = str(c0.driveName); data.driveAt = num(c0.driveAt); }
+    return data; };
+  const st = h("span",{class:"sch-st"},"☁️ 修改會自動儲存");
+  const setSt = (t,k) => { st.textContent = t; st.className = "sch-st "+(k||""); };
+  const autoSave = async () => {
+    clearTimeout(at); if (!dirty) return true;
+    if (busy){ again = true; return false; }
+    if (!f.name.value.trim()){ setSt("⚠️ 請先填寫名稱才能自動儲存","bad"); return false; }
+    busy = true; setSt("💾 儲存中…","wait"); const snap = JSON.stringify(raw());
+    try{ const ref = docId ? S.db.doc(SCH_COL+"/"+docId) : S.db.collection(SCH_COL).doc(); docId = ref.id; await ref.set(build());
+      if (JSON.stringify(raw())===snap) dirty = false;
+      const t = new Date(); setSt(dirty ? "✏️ 編輯中…" : `✓ 已自動儲存 ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}:${String(t.getSeconds()).padStart(2,"0")}`, dirty?"wait":"ok");
+    }catch(e){ setSt("⚠️ 自動儲存失敗："+errText(e),"bad"); busy = false; return false; }
+    busy = false; if (again){ again = false; if (dirty) return autoSave(); } return true; };
+  let hs = [JSON.stringify(raw())], hi = 0;
+  const ub = h("button",{type:"button",class:"btn sm",title:"復原上一步（Ctrl+Z）",onclick:()=>go(-1)},"↶ 上一步");
+  const rb = h("button",{type:"button",class:"btn sm",title:"重做（Ctrl+Y）",onclick:()=>go(1)},"↷ 下一步");
+  const ubtn = () => { ub.disabled = hi<=0; rb.disabled = hi>=hs.length-1; };
+  const commit = () => { const s = JSON.stringify(raw()); if (hs[hi]===s){ ubtn(); return; } hs = hs.slice(0,hi+1); hs.push(s); if (hs.length>150) hs.shift(); hi = hs.length-1; ubtn(); };
+  const load = o => { f.group.value=o.group; f.name.value=o.name; f.title.value=o.title; f.order.value=o.order; f.note.value=o.note; box.replaceChildren(); (o.rows.length?o.rows:[{}]).forEach(x=>add(x)); };
+  const go = dir => { clearTimeout(ht); commit(); const ni = hi+dir; if (ni<0||ni>=hs.length){ toast(dir<0?"沒有更早的步驟可以復原":"沒有可以重做的步驟"); return; }
+    hi = ni; load(JSON.parse(hs[hi])); ubtn(); touched(true); toast(dir<0?"已復原上一步":"已重做"); };
+  const touched = (noHist) => { dirty = true; setSt("✏️ 編輯中…","wait"); clearTimeout(at); at = setTimeout(autoSave, 1200); if (!noHist){ clearTimeout(ht); ht = setTimeout(commit, 600); } };
   const save = h("button",{class:"btn primary",onclick:async()=>{
     if (!f.name.value.trim()){ err.textContent="請填寫班級／作息表名稱。"; return; }
-    const data = { group:f.group.value, name:f.name.value.trim(), title:f.title.value.trim()||f.name.value.trim()+"作息表",
-      order:num(f.order.value)||1, note:f.note.value.trim(), rows:[...box.children].map(r=>r._read()).filter(r=>r.time||r.days.some(Boolean)) };
-    if (cur && cur.driveUrl){ data.driveUrl = cur.driveUrl; data.driveName = str(cur.driveName); data.driveAt = num(cur.driveAt); }
+    clearTimeout(at); const data = build();
     save.disabled=true; err.textContent="";
-    try{ const ref = id ? S.db.doc(SCH_COL+"/"+id) : S.db.collection(SCH_COL).doc(); await ref.set(data);
+    try{ const ref = docId ? S.db.doc(SCH_COL+"/"+docId) : S.db.collection(SCH_COL).doc(); docId = ref.id; dirty = false; await ref.set(data);
       sc.group = data.group; sc.sel[data.group] = ref.id; closeModal(); toast("已儲存"); render(); }
     catch(e){ save.disabled=false; err.textContent=errText(e); }
   }},"儲存");
@@ -6773,7 +6804,14 @@ function editSchedule(id){
       h("div",{class:"f2"},h("label",{class:"fl"},"名稱（分頁顯示）",f.name),h("label",{class:"fl"},"標題",f.title)),
       h("label",{class:"fl"},"備註",f.note),
       h("label",{class:"fl"},"時段",box), h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增時段"), err),
-    h("div",{class:"mf"},del,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+    h("div",{class:"mf"},del,ub,rb,st,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"關閉"),save)));
+  ubtn();
+  const layer = $("#kb-layer"), mb = layer.querySelector(".modal");
+  mb.addEventListener("input", e=>{ if (e.target.closest(".mf")) return; touched(); });
+  mb.addEventListener("change", e=>{ if (e.target.closest(".mf")) return; touched(); });
+  mb.addEventListener("click", e=>{ const b = e.target.closest && e.target.closest(".fr .hd button, .mb > .btn"); if (b) setTimeout(()=>touched(),0); });
+  mb.addEventListener("keydown", e=>{ if (!(e.ctrlKey||e.metaKey)) return; const t=e.target, ty=t&&(t.tagName==="TEXTAREA"||(t.tagName==="INPUT"&&!/^(checkbox|radio|number)$/i.test(t.type))); if (ty) return; const k=(e.key||"").toLowerCase(); if (k==="z"&&!e.shiftKey){ e.preventDefault(); go(-1); } else if (k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); go(1); } });
+  S._modalFlush = () => { if (dirty) autoSave(); };
 }
 
 function renderCalendar(app){
