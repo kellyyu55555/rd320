@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L32</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L33</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L32</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L33</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7153,8 +7153,11 @@ function coteachHtml(cur, pdf){
     const duties = DAYS.map((_,k)=>str((Array.isArray(r.duties)?r.duties:[])[k]));
     const first = i===0 || str(rows[i-1].period)!==str(r.period);
     const last = i===rows.length-1 || str(rows[i+1].period)!==str(r.period);
-    body += `<tr><td rowspan="2" class="per" style="${first?"":"border-top:none;"}${last?"":"border-bottom:none;"}">${first?esc(r.period).split("").join("<br>"):""}</td><td rowspan="2" class="tm">${esc(r.time)}</td>${sp(days).map(([k,n,v])=>`<td colspan="${n}" class="act">${esc(v)}</td>`).join("")}</tr>`;
-    body += `<tr class="du">${sp(duties).map(([k,n,v])=>`<td colspan="${n}">${v?duty(v):"&nbsp;"}</td>`).join("")}</tr>`;
+    const bd = (k,n,top,bot) => `border-left:${k===0?"none":"1px solid #000"};border-right:${k+n===5?"none":"1px solid #000"};border-top:${top?"none":"1px solid #000"};border-bottom:${bot?"none":"1px solid #000"};`;
+    const inner = `<table class="in"><colgroup><col span="5" style="width:20%"></colgroup>`
+      + `<tr>${sp(days).map(([k,n,v])=>`<td colspan="${n}" class="act" style="${bd(k,n,true,false)}">${esc(v)||"&nbsp;"}</td>`).join("")}</tr>`
+      + `<tr class="du">${sp(duties).map(([k,n,v])=>`<td colspan="${n}" style="${bd(k,n,false,true)}">${v?duty(v):"&nbsp;"}</td>`).join("")}</tr></table>`;
+    body += `<tr class="slot"><td class="per" style="${first?"":"border-top:none;"}${last?"":"border-bottom:none;"}">${first?esc(r.period).split("").join("<br>"):""}</td><td class="tm">${esc(r.time)}</td><td colspan="5" class="sl">${inner}</td></tr>`;
   });
   let notes = "";
   if (str(cur.notes).trim()){
@@ -7164,10 +7167,12 @@ function coteachHtml(cur, pdf){
   }
   const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}
 .wrap{width:190mm;margin:0 auto;font-size:10.5pt;line-height:1.4}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}.nt{break-inside:avoid;page-break-inside:avoid}@media screen{.wrap{padding:8mm 0}}
-th{background:#f2f2f2;font-weight:bold;text-align:center}td{vertical-align:middle;text-align:center}
-.per{font-weight:bold}.tm{white-space:nowrap;font-size:.9em}.act{font-weight:bold;background:#f7f7f7}
-tr.du td{text-align:left;vertical-align:top;font-size:.82em}tr.du td div{margin:0}
-.nt{margin-top:8px;border:1px solid #000;padding:5px 8px;font-size:.85em}.nh{font-weight:bold;margin-bottom:3px}
+th{background:#f2f2f2;font-weight:bold;text-align:center;padding:5px 4px 7px;line-height:1.4}td{vertical-align:middle;text-align:center;padding:4px 6px 7px;line-height:1.5}
+.per{font-weight:bold}.tm{white-space:nowrap;font-size:.9em}
+td.sl{padding:0!important;vertical-align:top}table.in{width:100%;border-collapse:collapse;table-layout:fixed;margin:0}
+table.in td{padding:5px 7px 8px}table.in td.act{font-weight:bold;background:#f7f7f7;padding:5px 6px 8px}
+table.in tr.du td{text-align:left;vertical-align:top;font-size:.85em;line-height:1.6}table.in tr.du td div{margin:0}
+.nt{margin-top:8px;border:1px solid #000;padding:6px 10px 9px;font-size:.85em;line-height:1.6}.nh{font-weight:bold;margin-bottom:3px}
 .ng{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px}.nb b{display:block}`;
   const title = str(cur.title)||str(cur.name)+" 協同教學";
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}${pdf?".wrap{width:auto!important;padding:0!important}":""}</style></head><body>
