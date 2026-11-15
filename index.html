@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L41</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L42</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L41</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L42</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5954,6 +5954,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 }
 #kb table.patrol td.hol{font-size:18px;font-weight:800;letter-spacing:4px;color:#8a5a10;background:#fbf3e2;vertical-align:middle}
 #kb .act-sort{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--muted);white-space:nowrap}#kb .act-sort .in{width:auto;padding:4px 8px}
+#kb .act-viewwrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}#kb iframe.act-view{display:block;width:100%;border:0;min-height:600px;background:#fff}
 
 </style>
 <script>
@@ -6278,6 +6279,7 @@ const typeOf = a => ACT_TYPES.includes(a.type) ? a.type : ACT_TYPES[0];
 const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
 
 function renderActivities(app){
+  if (S.viewAct && typeof renderActView==="function") return renderActView(app);
   if (!S.got.activities){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "活動計畫載入中…")); return; }
   if (!ACT_TYPES.includes(S.actType)) S.actType = ACT_TYPES[0];
   app.append(h("div",{class:"subtabs"}, ACT_TYPES.map(t =>
@@ -6296,10 +6298,11 @@ function renderActivities(app){
     h("button",{class:"btn primary",onclick:()=>editActivity(null)},"＋ 新增"+S.actType)));
   if (!list.length){ app.append(h("div",{class:"notice"},`還沒有${S.actType}。`, !S.activities.length ? seedButton() : null)); return; }
   app.append(h("div",{class:"list"}, list.map(a =>
-    h("button",{class:"card row",onclick:()=>showActivity(a.id)},
-      h("span",null,h("span",{class:"m"},[str(a.semester),str(a.time)].filter(Boolean).join("．")),h("br"),h("span",{class:"t"},str(a.name))),
+    h("div",{class:"card row",role:"button",tabindex:"0",style:"cursor:pointer",onclick:()=>showActivity(a.id),onkeydown:e=>{ if (e.key==="Enter") showActivity(a.id); }},
+      h("span",{style:"flex:1;min-width:200px"},h("span",{class:"m"},[str(a.semester),str(a.time)].filter(Boolean).join("．")),h("br"),h("span",{class:"t"},str(a.name))),
       h("span",{class:"money"},"支出 "+money(sumOf(a.expense))),
-      statusPill(a.status)))));
+      statusPill(a.status),
+      h("button",{class:"btn sm",onclick:e=>{ e.stopPropagation(); viewActivity(a.id); }},"👁 檢視")))));
 }
 
 function importActivities(){
@@ -6391,6 +6394,7 @@ function showActivity(id){
       h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份活動計畫？",`「${str(a.name)}」刪除後無法復原。`,"刪除",async()=>{ const ids=idsOf(a.photos).concat(idsOf(a.flowImages)); await S.db.doc(ACT_COL+"/"+a.id).delete(); toast("已刪除");
         if (S.assets) for (const x of ids){ try{ await photoStore.delete(x); }catch(_){} } })},"刪除"),
       h("span",{class:"sp"}),
+      h("button",{class:"btn",onclick:()=>viewActivity(a.id)},"👁 檢視"),
       h("button",{class:"btn",onclick:()=>printAct(a.id)},"🖨 列印"),
       (()=>{ const st=h("span",{class:"err",style:"align-self:center"}); const b=h("button",{class:"btn",onclick:()=>uploadAct(a.id,b,st)},"☁️ 上傳雲端硬碟"); return [st,b]; })(),
       h("button",{class:"btn",onclick:()=>editActivity(a.id,true)},"複製成新計畫"),
@@ -6677,6 +6681,34 @@ async function uploadAct(id, btn, status){
   finally{ btn.disabled = false; btn.textContent = label; }
 }
 
+
+/* 活動計畫：整頁檢視（版面同列印） */
+function viewActivity(id){ S.viewAct = id; if ($("#kb-layer").firstChild) closeModal(); render(); window.scrollTo(0,0); }
+function renderActView(app){
+  const a = S.activities.find(x=>x.id===S.viewAct); if (!a){ S.viewAct = null; return renderActivities(app); }
+  const back = () => { S.viewAct = null; render(); };
+  const list = S.activities.filter(x=>typeOf(x)===typeOf(a)).sort((x,y)=>str(x.date).localeCompare(str(y.date)));
+  const i = list.findIndex(x=>x.id===a.id), prev = list[i-1], next = list[i+1];
+  app.append(h("div",{class:"toolbar"},
+    h("button",{class:"btn",onclick:back},"← 返回清單"),
+    prev ? h("button",{class:"btn",title:str(prev.name),onclick:()=>viewActivity(prev.id)},"‹ 上一份") : null,
+    next ? h("button",{class:"btn",title:str(next.name),onclick:()=>viewActivity(next.id)},"下一份 ›") : null,
+    h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>showActivity(a.id)},"照片／流程表"),
+    h("button",{class:"btn",onclick:()=>editActivity(a.id)},"編輯"),
+    h("button",{class:"btn primary",onclick:()=>printAct(a.id)},"🖨 列印")));
+  const fr = h("iframe",{class:"act-view",title:str(a.name)});
+  const wrap = h("div",{class:"act-viewwrap"}, h("div",{class:"hint",style:"padding:20px"},"載入中…"));
+  app.append(wrap);
+  const myId = a.id;
+  photosOf(idsOf(a.photos).concat(idsOf(a.flowImages))).catch(()=>({})).then(pics=>{
+    if (S.viewAct!==myId || !wrap.isConnected) return;
+    wrap.replaceChildren(fr);
+    fr.onload = () => { try{ const d = fr.contentDocument; const st = d.createElement("style"); st.textContent = ".bar{display:none!important}body{margin:0;padding:18px 0;background:#fff}"; d.head.appendChild(st);
+      const fit = () => { fr.style.height = (d.documentElement.scrollHeight+20)+"px"; }; fit(); setTimeout(fit,300); setTimeout(fit,1200); d.querySelectorAll("img").forEach(im=>im.addEventListener("load",fit)); }catch(_){} };
+    fr.srcdoc = actPrintHtml(a, pics||{}, false).replace(/<script[\s\S]*?<\/script>/gi,"");
+  });
+}
 /* ---------- 作息表（3-5歲班／兩歲專班）與行事曆：老師檢視、管理者編輯 ---------- */
 const SCH_COL = "schedules", CAL_COL = "calendars", CALD_COL = "calendarDrafts";
 /* 行事曆：calendars＝已開放老師檢視；calendarDrafts＝草稿（只有管理員、編輯者看得到） */
