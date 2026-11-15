@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L35</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L36</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L35</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L36</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7812,7 +7812,14 @@ function mtNorm(m){
   o.reports.forEach(r=>{ if (r.fixed && !(F.reports||[]).some(fx=>mtKey(fx.title)===mtKey(r.title))) r.fixed = false; });
   (F.issues||[]).forEach(fx=>{ const r = o.issues.find(x=>mtKey(x.title)===mtKey(fx.title)); if (r){ r.fixed = fx.mode; r.title = fx.title; } else o.issues.push({title:fx.title, content:"", resolution:"", photos:[], resPhotos:[], fixed:fx.mode, classes:[]}); });
   o.issues.forEach(r=>{ if (r.fixed && !(F.issues||[]).some(fx=>mtKey(fx.title)===mtKey(r.title))) r.fixed = ""; });
-  o.issues.forEach(r=>{ if (r.fixed){ const have = new Set(r.classes.map(c=>c.cls)); mtCls().forEach(c=>{ if (!have.has(c)) r.classes.push({cls:c, items:[]}); }); } });
+  /* 固定議題只保留標題，內容改成自由編輯：舊的「各班欄位」內容轉成文字併入內容 */
+  o.issues.forEach(r=>{ if (!r.fixed || !r.classes.length) return;
+    const out = []; let n = 0;
+    r.classes.forEach(c=>{ const its = (c.items||[]).filter(x=>str(x.q).trim()||str(x.a).trim()); if (!its.length) return;
+      if (r.fixed==="ask") its.forEach(x=>{ n++; out.push(`${n}. ${str(c.cls).replace(/班$/,"")}：${str(x.q).trim()}`+(str(x.a).trim()?`\n回覆：${str(x.a).trim()}`:"")); });
+      else { out.push(`【${c.cls}】`); its.forEach((x,j)=>{ out.push(`Ｑ${fw(j+1)}：${str(x.q).trim()}`); out.push(`Ａ${fw(j+1)}${str(x.by).trim()}：${str(x.a).trim()}`); }); } });
+    if (out.length) r.content = (r.content.trim() ? r.content.replace(/\s+$/,"")+"\n" : "") + out.join("\n");
+    r.classes = []; });
   o.photos = (Array.isArray(o.photos)?o.photos:[]).filter(p=>p&&p.id).map(p=>({id:str(p.id), cap:str(p.cap)}));
   return o;
 }
@@ -7947,7 +7954,7 @@ function renderMeetingEditor(app){
           it.fixed ? null : h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除「"+lab+"」？")) return; d[key].splice(i,1); mark(); render(); }},"刪除")),
         it.fixed ? h("div",{class:"fl"},key==="reports"?"標題":"議題",h("div",{class:"mt-fixt"},it.title)) : h("label",{class:"fl"},key==="reports"?"標題（例如：地震演練時程）":"議題（例如：十月分學習區任務卡的執行計畫）",h("input",{class:"in",value:it.title,oninput:e=>{ it.title=e.target.value; mark(); }})),
         key==="reports" ? [ta(it,"body","內容（可分行）",5), phEd(it.photos,"內容加照片")]
-          : [ta(it,"content", it.fixed?"內容／補充說明（選填，可分行）":"內容／討論（可分行）", it.fixed?3:6), phEd(it.photos,"內容加照片"), it.fixed ? clsEd(it) : null, ta(it,"resolution","決議（可分行）",4), phEd(it.resPhotos,"決議加照片")]));
+          : [ta(it,"content","內容／討論（可分行）",6), phEd(it.photos,"內容加照片"), ta(it,"resolution","決議（可分行）",4), phEd(it.resPhotos,"決議加照片")]));
     });
     sec.append(h("button",{class:"btn",onclick:()=>{ const n = mk(); const fi = d[key].findIndex(x=>x.fixed); if (fi>=0) d[key].splice(fi,0,n); else d[key].push(n); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
     return sec;
