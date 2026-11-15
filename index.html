@@ -1737,7 +1737,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L26</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L27</footer>
     </div>
   </template>
 
@@ -4123,7 +4123,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L26</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L27</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5894,7 +5894,9 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .wp-ck{display:inline-flex;gap:4px;align-items:center;border:1.5px solid #cfc6b0;border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer;background:#fff}
 #kb .wp-ck.on{border-color:var(--accent);background:#fdf3dc;font-weight:700}
 #kb .wp-view{overflow-x:auto}
-#kb .wp-view table{border-collapse:collapse;width:100%;min-width:900px;table-layout:fixed;font-size:13px}
+#kb .mt-view.wp-view{max-width:none;padding:16px 14px}
+#kb .wp-view table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:13px;line-height:1.5}
+@media (max-width:700px){#kb .wp-view table{min-width:760px}}
 #kb .wp-view th,#kb .wp-view td{border:1px solid #555;padding:4px 6px;white-space:pre-wrap;word-break:break-all;vertical-align:top}
 #kb .wp-view th{background:#f1ece0;text-align:center;vertical-align:middle}
 #kb .wp-view td.c{text-align:center;vertical-align:middle}#kb .wp-view td.b{font-weight:700}#kb .wp-view td.k{text-align:center}
