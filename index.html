@@ -490,7 +490,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           <button type="button" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔑 活動計畫</h3>
-            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德活動計畫（僅管理者）</p>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德、親職教育活動計畫（僅管理者）</p>
           </button>
           <button type="button" x-show="currentUser && isOwner" @click="view='patrol'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L40</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L41</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L40</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L41</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6273,7 +6273,7 @@ function editProgram(pid){
 /* ---------- activities (admin only) ---------- */
 const sumOf = list => (Array.isArray(list)?list:[]).reduce((s,x)=>s+num(x&&x.amount),0);
 const money = n => n.toLocaleString("zh-TW")+" 元";
-const ACT_TYPES = ["社區活動計畫","研習活動計畫","仁德活動計畫"];
+const ACT_TYPES = ["社區活動計畫","研習活動計畫","仁德活動計畫","親職教育活動計畫"];
 const typeOf = a => ACT_TYPES.includes(a.type) ? a.type : ACT_TYPES[0];
 const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
 
@@ -6585,7 +6585,8 @@ function seedButton(){
 const DRIVE_FOLDERS = {
   "仁德活動計畫": "https://drive.google.com/drive/folders/1bnmZzrFK3CDEh_46k6fO4Gk5XuuS3aBW",
   "社區活動計畫": "https://drive.google.com/drive/folders/1hbCVj0HUoXazwbEebsUkxymVuOIJjgTO",
-  "研習活動計畫": "https://drive.google.com/drive/folders/1az6cyqE6vCje7tULSdrkW3A3lbbXwlTz"
+  "研習活動計畫": "https://drive.google.com/drive/folders/1az6cyqE6vCje7tULSdrkW3A3lbbXwlTz",
+  "親職教育活動計畫": "https://drive.google.com/drive/folders/1hbCVj0HUoXazwbEebsUkxymVuOIJjgTO"
 };
 const esc = v => str(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const lines = v => str(v).split("\n").map(l=>esc(l)||"&nbsp;").join("<br>");
