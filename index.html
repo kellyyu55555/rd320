@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L45</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L46</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L45</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L46</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5956,6 +5956,16 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .act-sort{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--muted);white-space:nowrap}#kb .act-sort .in{width:auto;padding:4px 8px}
 #kb .act-viewwrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}#kb iframe.act-view{display:block;width:100%;border:0;min-height:600px;background:#fff}
 
+#kb .af-sec{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fffdf8}
+#kb .af-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}#kb .af-h .sp{flex:1}
+#kb .af-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px dashed var(--line)}
+#kb .af-n{flex:1;min-width:200px;font-weight:600;word-break:break-all}#kb .af-n small{color:var(--muted);font-weight:400}
+#kb .af-b{display:flex;gap:6px;flex-wrap:wrap}
+#kb .act-attwrap{margin-top:14px}
+#kb .af-prev{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f3f1ec}
+#kb .af-ph{padding:6px 10px;font-weight:700;background:#efe9db}
+#kb iframe.af-frame{display:block;width:100%;height:85vh;border:0;background:#fff}
+
 </style>
 <script>
 
@@ -6329,6 +6339,12 @@ function importActivities(){
         data.income = ml(x.income); data.expense = ml(x.expense);
         data.flow = (Array.isArray(x.flow)?x.flow:[]).filter(v=>v&&typeof v==="object").map(v=>({name:str(v.name),desc:str(v.desc),props:str(v.props),staff:str(v.staff)}));
         data.photos = idsOf(old && old.photos); data.flowImages = idsOf(old && old.flowImages);
+        let atts = (typeof attOf==="function" && old) ? attOf(old) : [];
+        for (const f of (Array.isArray(x.attachments)?x.attachments:[])){
+          if (!f || !f.data || !f.name || atts.some(y=>y.name===f.name)) continue;
+          atts = atts.concat([await afStore(str(f.data).replace(/^data:[^,]*,/,""), str(f.name), str(f.type)||"application/pdf", num(f.size) || Math.round(str(f.data).length*0.75))]);
+        }
+        data.attachments = atts;
         const ref = old ? S.db.doc(ACT_COL+"/"+old.id) : S.db.collection(ACT_COL).doc(); await ref.set(data); ok++;
       }catch(e){ bad.push(`${str(x.name)}（${errText(e)}）`); }
     }
@@ -6389,6 +6405,7 @@ function showActivity(id){
         tr("計畫類別",str(a.planType)))),
       flowSection(a, flow),
       photoSection(a),
+      typeof afSection==="function" ? afSection(a) : null,
       h("div",{class:"sign"},h("span",null,"承辦人：",str(a.handler)||"＿＿＿"),h("span",null,"園長：",str(a.director)||"＿＿＿"))),
     h("div",{class:"mf"},
       h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份活動計畫？",`「${str(a.name)}」刪除後無法復原。`,"刪除",async()=>{ const ids=idsOf(a.photos).concat(idsOf(a.flowImages)); await S.db.doc(ACT_COL+"/"+a.id).delete(); toast("已刪除");
@@ -6536,6 +6553,7 @@ function editActivity(id, copy, focus){
     data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read();
     const latest = (id && !copy) ? S.activities.find(x=>x.id===id) : null;
     data.photos = idsOf(latest && latest.photos); data.flowImages = idsOf(latest && latest.flowImages);
+    data.attachments = (latest && Array.isArray(latest.attachments)) ? latest.attachments : [];
     save.disabled=true; err.textContent="";
     try{
       const ref = (id && !copy) ? S.db.doc(ACT_COL+"/"+id) : S.db.collection(ACT_COL).doc();
@@ -6700,6 +6718,7 @@ function renderActView(app){
   const fr = h("iframe",{class:"act-view",title:str(a.name)});
   const wrap = h("div",{class:"act-viewwrap"}, h("div",{class:"hint",style:"padding:20px"},"載入中…"));
   app.append(wrap);
+  { const sec = typeof afSection==="function" ? afSection(a, true) : null; if (sec) app.append(h("div",{class:"act-attwrap"}, sec)); }
   const myId = a.id;
   photosOf(idsOf(a.photos).concat(idsOf(a.flowImages))).catch(()=>({})).then(pics=>{
     if (S.viewAct!==myId || !wrap.isConnected) return;
@@ -8521,6 +8540,102 @@ render = (orig => function(){ const r = orig.apply(this, arguments); try{ if (ed
     else if (k==="y" || (k==="z" && e.shiftKey)){ e.preventDefault(); histGo(1); }
   });
 })();
+/* ---------- 活動計畫：附件（PDF／圖片，分段存在 Firestore，可檢視、列印、下載） ---------- */
+const AF_COL = "activityPlanFiles", AF_CH = "activityPlanFileChunks", AF_CHUNK = 700000, AF_MAX = 15*1024*1024;
+const AFURL = {}, AFQ = {};
+const attOf = a => (Array.isArray(a && a.attachments) ? a.attachments : []).filter(x=>x && x.id);
+const afSize = n => n>=1048576 ? (n/1048576).toFixed(1)+" MB" : Math.max(1,Math.round(n/1024))+" KB";
+const afIcon = t => /pdf/.test(t) ? "📄" : /^image\//.test(t) ? "🖼️" : "📎";
+function afB64(file){ return new Promise((ok,bad)=>{ const fr=new FileReader(); fr.onload=()=>ok(String(fr.result).split(",")[1]||""); fr.onerror=bad; fr.readAsDataURL(file); }); }
+async function afStore(b64, name, type, size){
+  const ref = S.db.collection(AF_COL).doc(), id = ref.id, n = Math.max(1, Math.ceil(b64.length/AF_CHUNK));
+  for (let i=0;i<n;i++) await S.db.collection(AF_CH).doc(id+"_"+i).set({ file:id, i, d:b64.slice(i*AF_CHUNK,(i+1)*AF_CHUNK) });
+  await ref.set({ name, type, size, n, createdAt:Date.now(), uid:(S.d&&S.d.currentUser&&S.d.currentUser.uid)||"" });
+  return { id, name, type, size, n, at:Date.now() };
+}
+async function afSetList(aid, list){ await S.db.doc(ACT_COL+"/"+aid).set({ attachments:list }, { merge:true }); const a = S.activities.find(x=>x.id===aid); if (a) a.attachments = list; }
+function afBlobUrl(att){
+  if (AFURL[att.id]) return Promise.resolve(AFURL[att.id]);
+  if (!AFQ[att.id]) AFQ[att.id] = (async()=>{
+    const n = num(att.n) || ((await S.db.collection(AF_COL).doc(att.id).get()).data()||{}).n || 1;
+    const parts = await Promise.all(Array.from({length:n},(_,i)=>S.db.collection(AF_CH).doc(att.id+"_"+i).get().then(x=>x.exists?str((x.data()||{}).d):"")));
+    if (parts.some(p=>!p)) throw new Error("附件資料不完整，請重新上傳");
+    const bin = atob(parts.join("")), u8 = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    return AFURL[att.id] = URL.createObjectURL(new Blob([u8], { type: att.type||"application/octet-stream" }));
+  })().catch(e=>{ delete AFQ[att.id]; throw e; });
+  return AFQ[att.id];
+}
+async function afView(att){
+  const w = window.open("", "_blank"); if (!w){ alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次"); return; }
+  w.document.write('<p style="font:16px sans-serif;padding:20px">附件載入中…</p>');
+  try{ const u = await afBlobUrl(att);
+    if (/^image\//.test(att.type)){ w.document.open(); w.document.write(`<!doctype html><title>${esc(att.name)}</title><body style="margin:0;background:#555;text-align:center"><img src="${u}" style="max-width:100%;background:#fff"></body>`); w.document.close(); }
+    else w.location.href = u;
+  }catch(e){ w.close(); alert("附件開啟失敗：" + (e.message||e)); }
+}
+async function afPrint(att, btn){
+  const lb = btn && btn.textContent; if (btn){ btn.disabled = true; btn.textContent = "準備中…"; }
+  try{ const u = await afBlobUrl(att);
+    if (/^image\//.test(att.type)){
+      const w = window.open("", "_blank"); if (!w){ alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次"); return; }
+      w.document.write(`<!doctype html><title>${esc(att.name)}</title><style>@page{size:A4;margin:8mm}body{margin:0;text-align:center}img{max-width:100%;max-height:277mm}</style><body><img src="${u}" onload="setTimeout(function(){print()},300)"></body>`); w.document.close(); return;
+    }
+    const fr = document.createElement("iframe"); fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0"; fr.src = u;
+    let done = false;
+    fr.onload = () => { setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); done = true; }catch(_){ window.open(u, "_blank"); } setTimeout(()=>fr.remove(), 60000); }, 500); };
+    document.body.append(fr);
+    setTimeout(()=>{ if (!done){ /* 部分瀏覽器（例如手機）無法直接列印 PDF：改開新分頁，用檢視器的列印 */ } }, 4000);
+  }catch(e){ alert("附件列印失敗：" + (e.message||e)); }
+  finally{ if (btn){ btn.disabled = false; btn.textContent = lb; } }
+}
+async function afDownload(att){
+  try{ const u = await afBlobUrl(att); const a = document.createElement("a"); a.href = u; a.download = att.name || "附件"; document.body.append(a); a.click(); a.remove(); }
+  catch(e){ alert("下載失敗：" + (e.message||e)); }
+}
+async function afRemove(aid, att){
+  const a = S.activities.find(x=>x.id===aid); if (!a) return;
+  await afSetList(aid, attOf(a).filter(x=>x.id!==att.id));
+  try{ for (let i=0;i<(num(att.n)||1);i++) await S.db.collection(AF_CH).doc(att.id+"_"+i).delete(); await S.db.collection(AF_COL).doc(att.id).delete(); }catch(_){}
+  toast("已刪除附件");
+}
+function afPick(aid, st){
+  const inp = h("input",{type:"file",accept:"application/pdf,image/*",multiple:true,style:"display:none"});
+  inp.addEventListener("change", async ()=>{
+    const fs = [...inp.files]; inp.remove(); if (!fs.length) return;
+    for (let k=0;k<fs.length;k++){ const f = fs[k];
+      if (!/pdf$|^image\//.test(f.type) && !/\.pdf$/i.test(f.name)){ alert(`「${f.name}」不是 PDF 或圖片，沒有上傳。`); continue; }
+      if (f.size > AF_MAX){ alert(`「${f.name}」超過 15 MB，請先壓縮再上傳。`); continue; }
+      st.textContent = `上傳中… ${k+1}/${fs.length}（${f.name}）`;
+      try{ const att = await afStore(await afB64(f), f.name, f.type || "application/pdf", f.size);
+        const a = S.activities.find(x=>x.id===aid); await afSetList(aid, attOf(a).concat([att]));
+      }catch(e){ alert(`「${f.name}」上傳失敗：` + errText(e)); }
+    }
+    st.textContent = ""; toast("附件已上傳"); render(); if (S.openAct===aid && $("#kb-layer").firstChild) showActivity(aid);
+  });
+  document.body.append(inp); inp.click();
+}
+/* 附件區塊：詳細視窗與整頁檢視共用 */
+function afSection(a, inline){
+  const list = attOf(a), can = !!S.assets, st = h("span",{class:"err",style:"margin-left:8px"});
+  if (!list.length && !can) return null;
+  const box = h("div",{class:"af-sec"},
+    h("div",{class:"af-h"}, h("b",null,"📎 附件"), h("span",{class:"note",style:"margin-left:6px"}, list.length ? `${list.length} 個` : "尚無附件"), h("span",{class:"sp"}),
+      can ? h("button",{class:"btn sm",onclick:()=>afPick(a.id, st)},"＋ 上傳附件（PDF／圖片）") : null, st),
+    list.map(att=>h("div",{class:"af-row"},
+      h("span",{class:"af-n"}, afIcon(att.type)+" "+str(att.name), h("small",null,"　"+afSize(num(att.size)))),
+      h("span",{class:"af-b"},
+        h("button",{class:"btn sm",onclick:()=>afView(att)},"👁 檢視"),
+        h("button",{class:"btn sm",onclick:e=>afPrint(att, e.currentTarget)},"🖨 列印"),
+        h("button",{class:"btn sm",onclick:()=>afDownload(att)},"⬇ 下載"),
+        can ? h("button",{class:"btn sm danger",onclick:()=>confirmBox("刪除這個附件？",`「${str(att.name)}」刪除後無法復原。`,"刪除",()=>afRemove(a.id, att).then(()=>{ render(); if (S.openAct===a.id && $("#kb-layer").firstChild) showActivity(a.id); }))},"刪除") : null))));
+  if (inline) list.forEach(att=>{
+    const holder = h("div",{class:"af-prev"}, h("div",{class:"af-ph"}, afIcon(att.type)+" "+str(att.name)), h("div",{class:"hint",style:"padding:14px"},"附件載入中…"));
+    box.append(holder);
+    afBlobUrl(att).then(u=>{ if (!holder.isConnected) return; holder.lastChild.replaceWith(/^image\//.test(att.type) ? h("img",{src:u,alt:"",style:"max-width:100%;display:block;margin:0 auto"}) : h("iframe",{src:u,class:"af-frame",title:str(att.name)})); })
+      .catch(e=>{ if (holder.isConnected) holder.lastChild.textContent = "附件無法顯示：" + (e.message||e); });
+  });
+  return box;
+}
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
