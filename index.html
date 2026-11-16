@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L47</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L49</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L47</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L49</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5966,6 +5966,19 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .af-ph{padding:6px 10px;font-weight:700;background:#efe9db}
 #kb iframe.af-frame{display:block;width:100%;height:85vh;border:0;background:#fff}
 
+#kb .cal-rich{min-height:84px;max-height:260px;overflow:auto;line-height:1.6;white-space:pre-wrap;cursor:text}
+#kb .cal-rich:focus{outline:2px solid var(--accent);outline-offset:1px}
+#kb .cal-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fffaf0;position:sticky;top:-14px;z-index:2}
+#kb .cal-bl{font-size:13px;color:var(--muted);font-weight:700}
+#kb .cal-sw{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer;padding:0}
+#kb .cal-sw:hover{transform:scale(1.15)}
+#kb .cal-bar select.in{width:auto;padding:3px 6px;font-size:13px}
+
+#kb .cal-dates{border:1px dashed var(--accent);border-radius:10px;padding:8px 10px;background:#fffaf0;display:flex;flex-direction:column;gap:6px}
+#kb .cal-dl{font-weight:700;font-size:13.5px}
+#kb .f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:640px){#kb .f3{grid-template-columns:1fr}}
+
 </style>
 <script>
 
@@ -6960,7 +6973,7 @@ function renderCalendar(app){
         S.isAdmin ? h("button",{class:"btn",onclick:()=>editMonth(cur.id,i)},"編輯") : null),
       h("div",{class:"calg"}, CAL_CATS.map(([k,label])=>{
         const items = arr(m[k]);
-        return h("div",{class:"calc"},h("h3",null,label), items.length ? h("ul",null,items.map(t=>h("li",null,t))) : h("p",{class:"empty"},"—"));
+        return h("div",{class:"calc"},h("h3",null,label), items.length ? h("ul",null,items.map(t=>{ const li=h("li"); li.innerHTML=calRich(t); return li; })) : h("p",{class:"empty"},"—"));
       }))));
   });
   if (S.isAdmin) app.append(h("button",{class:"btn primary",onclick:()=>editMonth(cur.id,-1)},"＋ 新增月份"));
@@ -6987,25 +7000,127 @@ function editCalendar(id){
     h("div",{class:"mf"},del,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)), true);
 }
 
+/* ---------- 行事曆：文字顏色、粗體、字體大小 ---------- */
+const CAL_SIZES = { "2":"0.85em", "3":"", "5":"1.2em", "6":"1.45em" };
+const CAL_COLORS = [["#000000","黑"],["#c62828","紅"],["#1565c0","藍"],["#2e7d32","綠"],["#ef6c00","橘"],["#6a1b9a","紫"],["#ad1457","桃紅"],["#795548","咖啡"]];
+const calIsRich = s => /<\/?(b|strong|i|em|u|span|font|br)\b/i.test(str(s));
+function calRich(s){
+  s = str(s); if (!calIsRich(s)) return esc(s);
+  const tpl = document.createElement("template"); tpl.innerHTML = s;
+  return calRichNode(tpl.content);
+}
+function calRichNode(root){
+  const okColor = v => /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|[a-z]{3,20})$/i.test(v.trim());
+  const okSize = v => /^(\d+(\.\d+)?(em|rem|px|pt|%)|small|medium|large|x-large|xx-large|smaller|larger)$/i.test(v.trim());
+  const walk = n => [...n.childNodes].map(c=>{
+    if (c.nodeType===3) return esc(c.nodeValue);
+    if (c.nodeType!==1) return "";
+    const t = c.tagName.toLowerCase(), inner = walk(c);
+    if (t==="br") return "<br>";
+    const wrapSt = x => { const st=[]; const col=c.style&&c.style.color||""; if (col&&okColor(col)) st.push("color:"+col.trim()); const fs=c.style&&c.style.fontSize||""; if (fs&&okSize(fs)) st.push("font-size:"+fs.trim()); return st.length?`<span style="${st.join(";")}">${x}</span>`:x; };
+    if (t==="b"||t==="strong") return `<b>${wrapSt(inner)}</b>`;
+    if (t==="i"||t==="em") return `<i>${wrapSt(inner)}</i>`;
+    if (t==="u") return `<u>${wrapSt(inner)}</u>`;
+    if (t==="span"||t==="font"){
+      const st = [];
+      const col = c.style && c.style.color || c.getAttribute("color") || ""; if (col && okColor(col)) st.push("color:"+col.trim());
+      let fs = c.style && c.style.fontSize || ""; if (!fs && c.getAttribute("size")) fs = CAL_SIZES[c.getAttribute("size")] || "";
+      if (fs && okSize(fs)) st.push("font-size:"+fs.trim());
+      if (c.style && /^(bold|[6-9]00)$/.test(c.style.fontWeight||"")) return `<b>${st.length?`<span style="${st.join(";")}">${inner}</span>`:inner}</b>`;
+      return st.length ? `<span style="${st.join(";")}">${inner}</span>` : inner;
+    }
+    return inner;
+  }).join("");
+  return walk(root);
+}
+const calPlain = s => { const d = document.createElement("div"); d.innerHTML = calRich(s); return d.textContent; };
+function calRichEd(items){
+  const ed = h("div",{class:"in cal-rich",contenteditable:"true",spellcheck:"false"});
+  ed.innerHTML = (items.length ? items : [""]).map(t=>`<div>${calRich(t)||"<br>"}</div>`).join("");
+  ed.addEventListener("focus", ()=>{ S._calEd = ed; });
+  ed.addEventListener("paste", e=>{ e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, t); });
+  return ed;
+}
+function calRichRead(ed){
+  // 先把瀏覽器產生的 <font size> 換成 span 字體大小
+  ed.querySelectorAll("font[size]").forEach(f=>{ const sp=document.createElement("span"); const fs=CAL_SIZES[f.getAttribute("size")]; if (fs) sp.style.fontSize=fs; if (f.getAttribute("color")) sp.style.color=f.getAttribute("color"); while (f.firstChild) sp.appendChild(f.firstChild); f.replaceWith(sp); });
+  const blocks = []; let loose = document.createElement("div");
+  const pushLoose = () => { if (loose.childNodes.length){ blocks.push(loose); loose = document.createElement("div"); } };
+  [...ed.childNodes].forEach(n=>{
+    if (n.nodeType===1 && /^(DIV|P|LI)$/.test(n.tagName)){ pushLoose(); blocks.push(n); }
+    else if (n.nodeType===1 && n.tagName==="BR") pushLoose();
+    else loose.appendChild(n.cloneNode(true));
+  });
+  pushLoose();
+  const out = [];
+  blocks.forEach(b=>{
+    // 一個區塊裡如果有 <br>，拆成多項
+    const parts = calRichNode(b).split(/<br>/);
+    parts.forEach(p=>{ const d=document.createElement("div"); d.innerHTML=p; const plain=d.textContent.replace(/\u00a0/g," ").trim(); if (!plain) return;
+      out.push(/<(b|i|u|span)\b/.test(p) ? p.trim() : plain); });
+  });
+  return out;
+}
+function calRichBar(){
+  const keep = e => e.preventDefault();          // 按工具列時不讓編輯框失去選取範圍
+  const act = (cmd, val) => { const ed = S._calEd; if (!ed) { toast("請先點一下要修改的文字"); return; } ed.focus(); document.execCommand("styleWithCSS", false, cmd==="foreColor"); document.execCommand(cmd, false, val); };
+  const sizeSel = h("select",{class:"in",title:"字體大小",onmousedown:()=>{ const s=window.getSelection(); S._calRange = s.rangeCount ? s.getRangeAt(0).cloneRange() : null; },onchange:e=>{ const v=e.target.value; e.target.value=""; if (!v) return; const ed=S._calEd; if (!ed) { toast("請先選取要修改的文字"); return; } ed.focus(); if (S._calRange){ const s=window.getSelection(); s.removeAllRanges(); s.addRange(S._calRange); } document.execCommand("styleWithCSS", false, false); document.execCommand("fontSize", false, v); }},
+    h("option",{value:""},"字體大小"), h("option",{value:"2"},"小"), h("option",{value:"3"},"標準"), h("option",{value:"5"},"大"), h("option",{value:"6"},"特大"));
+  return h("div",{class:"cal-bar"},
+    h("span",{class:"cal-bl"},"選取文字後："),
+    h("button",{type:"button",class:"btn sm",title:"粗體",onmousedown:keep,onclick:()=>act("bold")},h("b",null,"B 粗體")),
+    CAL_COLORS.map(([c,n])=>h("button",{type:"button",class:"cal-sw",title:n,style:`background:${c}`,onmousedown:keep,onclick:()=>act("foreColor",c)})),
+    sizeSel,
+    h("button",{type:"button",class:"btn sm",title:"清除格式",onmousedown:keep,onclick:()=>act("removeFormat")},"清除格式"));
+}
 function editMonth(calId, idx){
   const cal = calFind(calId); if(!cal) return;
   const months = (Array.isArray(cal.months)?cal.months:[]).map(m=>Object.assign({},m));
   const m = idx>=0 ? months[idx] : {};
   const f = { month:h("input",{class:"in",value:str(m.month),placeholder:"例如：2月"}), weeks:h("input",{class:"in",value:str(m.weeks),placeholder:"例如：第1–4週（02/01–02/28）"}) };
-  const tas = {}; CAL_CATS.forEach(([k])=>{ tas[k]=h("textarea",{class:"in"}); tas[k].value = arr(m[k]).join("\n"); });
+  /* 用萬年曆點選日期，自動算出月份與週次 */
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const pd = v => { const m0 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(v)); return m0 ? new Date(+m0[1], +m0[2]-1, +m0[3]) : null; };
+  const guessStart = () => { const t = str(cal.title), y = +(t.match(/(\d{3})學年/)||[])[1] || (new Date().getFullYear()-1911-(new Date().getMonth()<7?1:0));
+    return /第二學期|下學期/.test(t) ? `${y+1912}-02-01` : `${y+1911}-08-01`; };
+  const d0 = h("input",{class:"in",type:"date",value:str(m.from)}), d1 = h("input",{class:"in",type:"date",value:str(m.to)});
+  const ds = h("input",{class:"in",type:"date",value:str(cal.startDate)||guessStart()});
+  const wkInfo = h("div",{class:"note",style:"font-size:12.5px;margin-top:-4px"});
+  const mon = d => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay()+6)%7)); x.setHours(0,0,0,0); return x; };
+  const calcWeeks = () => {
+    const a = pd(d0.value), st = pd(ds.value); let b = pd(d1.value);
+    if (!a){ wkInfo.textContent = ""; return; }
+    if (!b || b < a){ b = new Date(a.getFullYear(), a.getMonth()+1, 0); d1.value = ymd(b); }
+    const md = d => `${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
+    f.month.value = (a.getMonth()+1) + "月" + (b.getMonth()!==a.getMonth() ? "–" + (b.getMonth()+1) + "月" : "");
+    if (st){
+      const w = d => Math.floor((mon(d) - mon(st)) / 604800000) + 1;
+      const w1 = Math.max(1, w(a)), w2 = Math.max(1, w(b));
+      f.weeks.value = `第${w1}${w2!==w1?"–"+w2:""}週（${md(a)}–${md(b)}）`;
+      wkInfo.textContent = `週次從 ${ds.value.replace(/-/g,"/")} 那一週算第 1 週（每週從星期一開始）。` + (a < mon(st) ? "　⚠️ 起始日在第 1 週之前" : "");
+    } else { f.weeks.value = `${md(a)}–${md(b)}`; wkInfo.textContent = "填上「第 1 週開始日」就會自動算週次。"; }
+  };
+  d0.addEventListener("change", ()=>{ d1.value = ""; calcWeeks(); });
+  d1.addEventListener("change", calcWeeks); ds.addEventListener("change", calcWeeks);
+  const tas = {}; CAL_CATS.forEach(([k])=>{ tas[k]=calRichEd(arr(m[k])); });
   const err = h("div",{class:"err"});
   const write = async next => S.db.doc(cal._col+"/"+calId).update({ months: next });
   const save = h("button",{class:"btn primary",onclick:async()=>{
     if(!f.month.value.trim()){ err.textContent="請填寫月份。"; return; }
-    const data = { month:f.month.value.trim(), weeks:f.weeks.value.trim() }; CAL_CATS.forEach(([k])=>data[k]=linesOf(tas[k].value));
+    const data = { month:f.month.value.trim(), weeks:f.weeks.value.trim(), from:d0.value, to:d1.value }; CAL_CATS.forEach(([k])=>data[k]=calRichRead(tas[k]));
+    if (ds.value && ds.value!==str(cal.startDate)){ try{ await S.db.doc(cal._col+"/"+calId).update({ startDate: ds.value }); cal.startDate = ds.value; }catch(_){} }
     if (idx>=0) months[idx]=data; else months.push(data);
     save.disabled=true; try{ await write(months); closeModal(); toast("已儲存"); }catch(e){ save.disabled=false; err.textContent=errText(e); }
   }},"儲存");
   const del = idx>=0 ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(m.month)}」刪除後無法復原。`,"刪除",()=>write(months.filter((_,i)=>i!==idx)).then(()=>toast("已刪除")))},"刪除月份") : null;
   const up = idx>0 ? h("button",{class:"btn",onclick:async()=>{ const t=months[idx-1]; months[idx-1]=months[idx]; months[idx]=t; try{ await write(months); closeModal(); }catch(e){ err.textContent=errText(e); } }},"↑ 往前移") : null;
   openModal(h("div",null, h("div",{class:"mh"},h("h2",null,idx>=0?"編輯月份":"新增月份")),
-    h("div",{class:"mb f"}, h("div",{class:"f2"},h("label",{class:"fl"},"月份",f.month),h("label",{class:"fl"},"週次／日期",f.weeks)),
-      CAL_CATS.map(([k,l])=>h("label",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項）")),tas[k])), err),
+    h("div",{class:"mb f"},
+      h("div",{class:"cal-dates"}, h("div",{class:"cal-dl"},"📅 點選日期，自動算出月份和週次"),
+        h("div",{class:"f3"}, h("label",{class:"fl"},"起始日",d0), h("label",{class:"fl"},"結束日（可不填，預設到月底）",d1), h("label",{class:"fl"},"第 1 週開始日（開學日）",ds)), wkInfo),
+      h("div",{class:"f2"},h("label",{class:"fl"},"月份",f.month),h("label",{class:"fl"},"週次／日期（可自行修改）",f.weeks)),
+      calRichBar(),
+      CAL_CATS.map(([k,l])=>h("div",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項，按 Enter 換下一項）")),tas[k])), err),
     h("div",{class:"mf"},del,up,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
 }
 
@@ -7051,7 +7166,7 @@ function printSchedule(cur){ openPrint(scheduleHtml(cur, false)); }
 
 function calendarHtml(cur, pdf){
   const months = (Array.isArray(cur.months)?cur.months:[]).filter(m=>m&&typeof m==="object");
-  const ul = a => arr(a).map(t=>`<div>${esc(t)}</div>`).join("") || "&nbsp;";
+  const ul = a => arr(a).map(t=>`<div>${calRich(t)}</div>`).join("") || "&nbsp;";
   const css = PRINT_BASE + `@page{size:A4 landscape;margin:10mm}
 .wrap{font-size:10pt;line-height:1.4}@media screen{.wrap{max-width:277mm;margin:0 auto;padding:8mm 0}}
 th{background:#f2f2f2;font-weight:bold;text-align:center;vertical-align:middle}td{vertical-align:top}
