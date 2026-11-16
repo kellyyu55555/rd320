@@ -1773,7 +1773,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L51</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L52</footer>
     </div>
   </template>
 
@@ -4159,7 +4159,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L51</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L52</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -8323,8 +8323,9 @@ function mtBodyHtml(m, withImgs, forPdf){
   body += `<div class="row"><span class="no">四、</span>出（列）席人員：${esc(m.attendees)}</div>`;
   body += `<div class="row"><span class="no">五、</span>報告事項</div>`;
   const pg = arr => { if (!arr || !arr.length) return ""; let t = `<table class="pt in">`; for (let i=0;i<arr.length;i+=2){ t += "<tr>"+[arr[i],arr[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:(arr.length>1?"<td></td>":"")).join("")+"</tr>"; } return t+"</table>"; };
-  m.reports = m.reports.filter(r=>r.fixed||r.title.trim()||r.body.trim()||r.photos.length);
-  m.issues = m.issues.filter(r=>r.fixed||r.title.trim()||r.content.trim()||r.resolution.trim()||r.photos.length||r.resPhotos.length);
+  /* 固定項目只有標題、沒有內容時不列印；一般項目有填標題就印 */
+  m.reports = m.reports.filter(r=>r.body.trim()||r.photos.length||(!r.fixed&&r.title.trim()));
+  m.issues = m.issues.filter(r=>r.content.trim()||r.resolution.trim()||r.photos.length||r.resPhotos.length||(r.classes||[]).some(c=>(c.items||[]).some(x=>str(x.q).trim()||str(x.a).trim()))||(!r.fixed&&r.title.trim()));
   m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>${pg(r.photos)}`; });
   body += `<div class="row">六、議題討論：</div>`;
   m.issues.forEach((r,i)=>{
@@ -8334,7 +8335,7 @@ function mtBodyHtml(m, withImgs, forPdf){
     if (r.fixed==="ask"){ let n=0; r.classes.forEach(c=>c.items.filter(x=>x.q.trim()||x.a.trim()).forEach(x=>{ n++; body += `<div class="txt">${n}. ${esc(c.cls.replace(/班$/,""))}：${ind(x.q)}${x.a.trim()?`<br>回覆：${ind(x.a)}`:""}</div>`; })); }
     if (r.fixed==="help"){ r.classes.forEach(c=>{ const its=c.items.filter(x=>x.q.trim()||x.a.trim()); if (!its.length) return; body += `<div class="txt cls">【${esc(c.cls)}】</div>`;
       its.forEach((x,j)=>{ body += `<div class="txt qa"><b>Ｑ${fw(j+1)}：</b>${ind(x.q)}</div><div class="txt qa"><b>Ａ${fw(j+1)}${esc(x.by)}：</b>${ind(x.a)}</div>`; }); }); }
-    body += `<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>${pg(r.resPhotos)}`; });
+    if (r.resolution.trim() || r.resPhotos.length) body += `<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>${pg(r.resPhotos)}`; });
   if (m.photos.length){ body += `<table class="pt">`; for (let i=0;i<m.photos.length;i+=2){ body += "<tr>"+[m.photos[i],m.photos[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:"<td></td>").join("")+"</tr>"; } body += `</table>`; }
   if (+m.signRows>0){ body += `<div class="sg">與會人員簽到表</div><table class="sgt">`+Array.from({length:+m.signRows},()=>"<tr>"+Array.from({length:Math.max(1,+m.signCols||3)},()=>"<td></td>").join("")+"</tr>").join("")+`</table>`; }
   body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
