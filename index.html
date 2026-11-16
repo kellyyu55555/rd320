@@ -1700,6 +1700,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       <div class="no-print mt-4 bg-cream rounded-2xl p-3 flex flex-wrap items-center gap-3">
         <button type="button" class="obs-btn" data-action="roster-edit">👧 新增／刪除幼兒名單</button>
         <button type="button" class="obs-btn" data-action="import-obs-pdf">📂 匯入舊紀錄 PDF</button><input id="obs-pdfimp-file" type="file" accept="application/pdf,.pdf" multiple hidden>
+        <button type="button" class="obs-btn" data-action="pending-names">🏷️ 待指定姓名</button>
         <button type="button" class="obs-btn" data-action="copy-pickup" hidden>🚌 從接送系統複製全園名單</button>
         <button type="button" class="obs-btn" data-action="import-children" hidden>📋 匯入幼兒名單檔</button>
         <button type="button" class="obs-btn" data-action="import-old" hidden>📂 匯入舊紀錄檔</button>
@@ -1772,7 +1773,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L49</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L50</footer>
     </div>
   </template>
 
@@ -4158,7 +4159,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L49</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L50</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -4618,15 +4619,15 @@ function kgApp() {
   function showObsPdfDialog(cls, names, items) {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,20,.45);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto';
-    const nameOpts = v => `<option value="">（不匯入這頁）</option>` + names.map(n => `<option value="${escP(n)}" ${n === v ? 'selected' : ''}>${escP(n)}</option>`).join('');
+    const nameOpts = v => `<option value="">（不匯入這頁）</option><option value="__later" ${v === '__later' ? 'selected' : ''}>（先匯入，之後再指定姓名）</option>` + names.map(n => `<option value="${escP(n)}" ${n === v ? 'selected' : ''}>${escP(n)}</option>`).join('');
     const found = items.filter(x => x.name).length, noText = items.every(x => !x.text);
     const rows = items.map((x, i) => `<tr style="border-top:1px solid #eee5d3"><td style="padding:6px"><img src="${x.thumb}" data-big="${i}" title="點一下放大" style="width:70px;border:1px solid #ddd;border-radius:4px;cursor:zoom-in"></td>
       <td style="padding:6px;font-size:12px;color:#6f6a5e">${escP(x.file.name)}<br>第 ${x.page} 頁</td>
-      <td style="padding:6px"><select data-pn="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px;${x.name ? '' : 'background:#fff4c2'}">${nameOpts(x.name)}</select>${x.name ? '' : '<div style="font-size:11px;color:#b4472f">沒讀到姓名，請自己選</div>'}</td>
+      <td style="padding:6px"><select data-pn="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px;${x.name ? '' : 'background:#fff4c2'}">${nameOpts(x.name || '__later')}</select>${x.name ? '' : '<div style="font-size:11px;color:#b4472f">沒讀到姓名：可以現在選，或先匯入、之後再到「🏷️ 待指定姓名」選</div>'}</td>
       <td style="padding:6px"><input type="date" data-pd="${i}" value="${x.date || today()}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px"></td></td></tr>`).join('');
     ov.innerHTML = `<div style="background:#fffdf8;border-radius:18px;max-width:880px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-size:14px">
       <div style="padding:18px 22px 8px;border-bottom:1px solid #eee5d3"><b style="font-size:18px">📂 匯入舊觀察紀錄 PDF｜${escP(cls)}</b>
-      <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">共 ${items.length} 頁，讀到姓名的有 ${found} 頁。每一頁會存成該幼兒的一筆觀察紀錄（頁面存成圖片），並計入本學期觀察進度。請確認每頁的姓名和日期，選「不匯入這頁」就會略過。</p>
+      <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">共 ${items.length} 頁，讀到姓名的有 ${found} 頁。每一頁會存成該幼兒的一筆觀察紀錄（頁面存成圖片），並計入本學期觀察進度。請確認每頁的姓名和日期，選「不匯入這頁」就會略過；沒讀到姓名的頁面會先匯入，之後再到「🏷️ 待指定姓名」選姓名，選好就會自動標示進度。</p>
       ${noText ? '<p style="margin:8px 0 0;color:#b4472f;font-weight:700">這份 PDF 讀不到文字（可能是掃描檔），請看縮圖逐頁選擇幼兒姓名。</p>' : ''}</div>
       <div style="padding:10px 22px;max-height:60vh;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="color:#6f6a5e;font-size:12px;text-align:left"><th style="padding:4px 6px">頁面</th><th style="padding:4px 6px">檔案</th><th style="padding:4px 6px">幼兒姓名</th><th style="padding:4px 6px">日期</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #eee5d3"><span data-pst style="flex:1;color:#b4472f;font-weight:700;align-self:center"></span>
@@ -4640,6 +4641,7 @@ function kgApp() {
     ov.querySelector('[data-pgo]').onclick = async (e) => {
       const btn = e.currentTarget, st = ov.querySelector('[data-pst]');
       const todo = items.map((x, i) => ({ x, name: ov.querySelector(`[data-pn="${i}"]`).value, date: ov.querySelector(`[data-pd="${i}"]`).value || today(), signed: true })).filter(t => t.name);
+      todo.forEach(t => { if (t.name === '__later') { t.later = true; t.name = ''; } });
       if (!todo.length) { st.textContent = '沒有要匯入的頁面，請至少幫一頁選幼兒姓名。'; return; }
       btn.disabled = true; ov.querySelector('[data-pcancel]').disabled = true;
       const user = firebase.auth().currentUser, db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp(); let ok = 0; const fail = [];
@@ -4649,17 +4651,19 @@ function kgApp() {
         try {
           const img = PIMG(await renderPdfPage(await t.x.doc.getPage(t.x.page), 1300)), pid = 'pdf' + Date.now() + Math.random().toString(36).slice(2, 6);
           const nm = t.x.file.name + ' 第' + t.x.page + '頁';
-          await ref.set({ className: cls, childName: t.name, observationDate: t.date, semester: semOf(t.date), source: 'pdf-import', pdfName: t.x.file.name, pdfPage: t.x.page,
+          await ref.set({ className: cls, childName: t.name, needsName: !!t.later, observationDate: t.date, semester: semOf(t.date), source: 'pdf-import', pdfName: t.x.file.name, pdfPage: t.x.page,
             sharedWith: [...shareSel].map(x => String(x).toLowerCase()), learningAreas: [], performances: [],
             indicator: { age: '', category: '', item: '', level: '' }, areaPhotoIds: { 'PDF匯入': [pid] }, photoCount: 1, photoMeta: [{ id: pid, area: 'PDF匯入', name: nm }],
             uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos', createdAt: TS, updatedAt: TS });
           await ref.collection('photos').doc(pid).set({ data: img, area: 'PDF匯入', name: nm, createdAt: Date.now() });
-          try { await addMark(cls, t.name, t.date, ref.id, t.signed, { source: 'pdf' }); } catch (e2) { console.error(e2); }
+          if (!t.later) { try { await addMark(cls, t.name, t.date, ref.id, t.signed, { source: 'pdf' }); } catch (e2) { console.error(e2); } }
           ok++;
         } catch (err) { console.error(err); fail.push(t.name + '（第' + t.x.page + '頁：' + (err.code || err.message) + '）'); try { await ref.delete(); } catch (e3) {} }
       }
       ov.remove();
-      rosterMsg('已匯入 ' + ok + ' 頁觀察紀錄' + (fail.length ? '；失敗 ' + fail.length + ' 頁：' + fail.join('、') : '。可到「🗂️ 已儲存／分享給我」查看。'), !!fail.length);
+      const nl = todo.filter(t => t.later).length;
+      rosterMsg('已匯入 ' + ok + ' 頁觀察紀錄' + (fail.length ? '；失敗 ' + fail.length + ' 頁：' + fail.join('、') : '。可到「🗂️ 已儲存／分享給我」查看。') + (nl ? '　其中 ' + nl + ' 頁還沒指定姓名，請按「🏷️ 待指定姓名」選好，就會自動標示進度。' : ''), !!fail.length);
+      refreshPendingCount();
     };
   }
   async function viewPdfRecord(id, d) {
@@ -4674,6 +4678,69 @@ function kgApp() {
     document.body.appendChild(ov);
     ov.querySelector('[data-vx]').onclick = () => ov.remove(); ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
     ov.querySelector('[data-vp]').onclick = () => { const w = window.open('', '_blank'); if (!w) return; w.document.write('<!DOCTYPE html><title>' + escP(d.childName || '') + ' 觀察紀錄</title><style>@page{size:A4;margin:8mm}body{margin:0}img{width:100%;page-break-after:always;display:block}</style>' + imgs.map(u => '<img src="' + u + '">').join('') + '<script>window.onload=()=>setTimeout(()=>print(),300)<\/script>'); w.document.close(); };
+  }
+
+  /* ---- PDF 匯入後還沒指定姓名的頁面：手動選姓名，選好就自動標示進度 ---- */
+  async function pendingObsDocs() {
+    const user = fbUser(); if (!user) return [];
+    const q = await firebase.firestore().collection('learningObservations').where('uid', '==', user.uid).where('needsName', '==', true).get();
+    return q.docs.map(x => ({ id: x.id, d: x.data() })).sort((a, b) => String(a.d.pdfName || '').localeCompare(String(b.d.pdfName || '')) || (a.d.pdfPage || 0) - (b.d.pdfPage || 0));
+  }
+  async function refreshPendingCount() {
+    const b = document.querySelector('[data-action="pending-names"]'); if (!b) return;
+    try { const n = (await pendingObsDocs()).length; b.textContent = '🏷️ 待指定姓名' + (n ? '（' + n + '）' : ''); b.style.background = n ? '#fff4c2' : ''; b.style.borderColor = n ? '#e0a800' : ''; } catch (e) { console.error(e); }
+  }
+  async function showPendingNames() {
+    if (!fbUser()) { rosterMsg('請先登入。', true); return; }
+    rosterMsg('讀取待指定姓名的頁面…');
+    let list; try { list = await pendingObsDocs(); } catch (e) { rosterMsg('讀取失敗：' + (e.code || e.message), true); return; }
+    rosterMsg('');
+    if (!list.length) { rosterMsg('目前沒有待指定姓名的頁面。'); refreshPendingCount(); return; }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,20,.45);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto';
+    const opts = (cls, v) => `<option value="">（請選擇幼兒）</option>` + (roster[cls] || []).map(n => `<option value="${escP(n)}" ${n === v ? 'selected' : ''}>${escP(n)}</option>`).join('');
+    const rows = list.map((r, i) => `<tr data-row="${i}" style="border-top:1px solid #eee5d3"><td style="padding:6px"><img data-th="${i}" alt="" title="點一下放大" style="width:90px;min-height:60px;border:1px solid #ddd;border-radius:4px;cursor:zoom-in;background:#f3f1ec"></td>
+      <td style="padding:6px;font-size:12px;color:#6f6a5e">${escP(r.d.className || '')}<br>${escP(r.d.pdfName || '')}<br>第 ${r.d.pdfPage || ''} 頁</td>
+      <td style="padding:6px"><select data-nm="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px;background:#fff4c2">${opts(r.d.className, '')}</select></td>
+      <td style="padding:6px"><input type="date" data-dt="${i}" value="${escP(r.d.observationDate || today())}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px"></td>
+      <td style="padding:6px;white-space:nowrap"><button type="button" data-sv="${i}" style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:8px;padding:4px 10px;cursor:pointer">儲存</button>
+      <button type="button" data-dl="${i}" title="刪除這頁" style="border:1px solid #e3b4a8;color:#b4472f;background:#fff;border-radius:8px;padding:4px 8px;cursor:pointer">刪除</button><div data-ok="${i}" style="font-size:12px;color:#2f6b4f;font-weight:700"></div></td></tr>`).join('');
+    ov.innerHTML = `<div style="background:#fffdf8;border-radius:18px;max-width:900px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-size:14px">
+      <div style="padding:18px 22px 8px;border-bottom:1px solid #eee5d3"><b style="font-size:18px">🏷️ 待指定姓名（${list.length} 頁）</b>
+      <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">這些是匯入 PDF 時沒讀到姓名、先匯入的頁面。點縮圖可以放大看，選好幼兒姓名後按「儲存」，就會歸到該幼兒並自動標示觀察進度。也可以全部選好後按「全部儲存」。</p></div>
+      <div style="padding:10px 22px;max-height:62vh;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="color:#6f6a5e;font-size:12px;text-align:left"><th style="padding:4px 6px">頁面</th><th style="padding:4px 6px">來源</th><th style="padding:4px 6px">幼兒姓名</th><th style="padding:4px 6px">日期</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #eee5d3"><span data-st style="flex:1;color:#b4472f;font-weight:700;align-self:center"></span>
+      <button type="button" data-x style="border:1px solid #cdbf9e;background:#fff;border-radius:10px;padding:6px 14px;cursor:pointer">關閉</button><button type="button" data-all style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:10px;padding:6px 14px;cursor:pointer">全部儲存</button></div></div>`;
+    document.body.appendChild(ov);
+    const db = firebase.firestore(), imgs = {};
+    list.forEach((r, i) => {
+      db.collection('learningObservations').doc(r.id).collection('photos').limit(1).get().then(ps => { const u = ps.docs[0] && ps.docs[0].data().data; if (u) { imgs[i] = u; const im = ov.querySelector(`[data-th="${i}"]`); if (im) im.src = u; } }).catch(() => {});
+    });
+    ov.querySelectorAll('img[data-th]').forEach(im => im.onclick = () => { const u = imgs[+im.dataset.th]; if (!u) return; const w = window.open('', '_blank'); if (w) { w.document.body.style.margin = '0'; const i2 = w.document.createElement('img'); i2.src = u; i2.style.cssText = 'max-width:100%;display:block;margin:auto'; w.document.body.appendChild(i2); } });
+    const done = new Set();
+    const saveOne = async i => {
+      if (done.has(i)) return true;
+      const r = list[i], name = ov.querySelector(`[data-nm="${i}"]`).value, date = ov.querySelector(`[data-dt="${i}"]`).value || today(), ok = ov.querySelector(`[data-ok="${i}"]`);
+      if (!name) return false;
+      try {
+        await db.collection('learningObservations').doc(r.id).update({ childName: name, needsName: false, observationDate: date, semester: semOf(date), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        try { await addMark(r.d.className, name, date, r.id, true, { source: 'pdf' }); } catch (e2) { console.error(e2); }
+        done.add(i); ok.textContent = '✓ 已歸到 ' + name;
+        const row = ov.querySelector(`[data-row="${i}"]`); row.style.opacity = '.55'; row.querySelectorAll('select,input,button').forEach(x => x.disabled = true);
+        return true;
+      } catch (e) { ok.style.color = '#b4472f'; ok.textContent = '儲存失敗：' + (e.code || e.message); return false; }
+    };
+    ov.querySelectorAll('[data-sv]').forEach(b => b.onclick = async () => { const i = +b.dataset.sv; if (!ov.querySelector(`[data-nm="${i}"]`).value) { ov.querySelector('[data-st]').textContent = '請先選擇幼兒姓名。'; return; } ov.querySelector('[data-st]').textContent = ''; await saveOne(i); refreshPendingCount(); });
+    ov.querySelectorAll('[data-dl]').forEach(b => b.onclick = async () => { const i = +b.dataset.dl, r = list[i]; if (!confirm('刪除這一頁（' + (r.d.pdfName || '') + ' 第 ' + (r.d.pdfPage || '') + ' 頁）？刪除後無法復原。')) return;
+      try { const ps = await db.collection('learningObservations').doc(r.id).collection('photos').get(); for (const p of ps.docs) await p.ref.delete(); await db.collection('learningObservations').doc(r.id).delete(); done.add(i); const row = ov.querySelector(`[data-row="${i}"]`); row.remove(); refreshPendingCount(); } catch (e) { alert('刪除失敗：' + (e.code || e.message)); } });
+    ov.querySelector('[data-all]').onclick = async e => {
+      const btn = e.currentTarget; btn.disabled = true; let n = 0, skip = 0;
+      for (let i = 0; i < list.length; i++) { if (done.has(i) || !ov.querySelector(`[data-row="${i}"]`)) continue; if (!ov.querySelector(`[data-nm="${i}"]`).value) { skip++; continue; } btn.textContent = '儲存中…'; if (await saveOne(i)) n++; }
+      btn.disabled = false; btn.textContent = '全部儲存';
+      ov.querySelector('[data-st]').textContent = '已儲存 ' + n + ' 頁' + (skip ? '；還有 ' + skip + ' 頁沒選姓名' : '') + '。';
+      refreshPendingCount();
+    };
+    ov.querySelector('[data-x]').onclick = () => { ov.remove(); refreshPendingCount(); };
   }
   function renderAdmin() {
     const box = $('#obs-adm-list'); if (!box || !isAdm()) return;
@@ -4897,6 +4964,7 @@ function kgApp() {
     const of = $('#old-records-file');
     $('[data-action="import-old"]').addEventListener('click', () => of.click());
     { const rb = $('[data-action="roster-edit"]'); if (rb) rb.addEventListener('click', rosterEdit); }
+    { const nb = $('[data-action="pending-names"]'); if (nb) { nb.addEventListener('click', showPendingNames); setTimeout(refreshPendingCount, 2500); } }
     { const pb = $('[data-action="import-obs-pdf"]'), pf2 = $('#obs-pdfimp-file'); if (pb && pf2) { pb.addEventListener('click', () => { if (!curCls()) { rosterMsg('請先在上方選擇班級，再匯入 PDF。', true); return; } pf2.click(); }); pf2.addEventListener('change', async () => { const fs = [...(pf2.files || [])]; pf2.value = ''; if (!fs.length) return; try { await importObsPdf(fs); } catch (e) { rosterMsg('匯入失敗：' + (e.code || e.message || e), true); } }); } }
     $('[data-action="old-sample"]').addEventListener('click', downloadOldSample);
     const pf = $('#obs-pdf-file');
