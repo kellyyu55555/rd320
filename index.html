@@ -1773,7 +1773,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L56</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L57</footer>
     </div>
   </template>
 
@@ -2555,9 +2555,9 @@ function docHtml(L,mode){
   return `<h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:${color};text-decoration:underline">${esc(L.cls)}${title}</span>教學活動與幼兒學習觀察紀錄</h2><table class="${kind}">${C()}<tr class="hd"><th colspan="5">日期</th><th colspan="4">幼兒年齡層</th><th colspan="3">教學與協同教師</th></tr><tr><td colspan="5" class="c" style="white-space:nowrap">${dates}</td><td colspan="4" class="c">${ages}</td><td colspan="3" class="c">${E?`<input type="text" list="wkt" data-k="t1" value="${esc(L.t1)}" placeholder="老師 1" style="margin-bottom:3px"><input type="text" list="wkt" data-k="t2" value="${esc(L.t2)}" placeholder="老師 2（協同）">`:esc(tch(L))}</td></tr><tr class="band"><th colspan="12">班級幼生背景說明</th></tr><tr><td colspan="12">${RT_("bg",2)}</td></tr>`};
  const photoRows=(sec,caps)=>{const arr=L[sec].photos||[],o=[];for(let i=0;i<arr.length;i+=2){const pr=[arr[i],arr[i+1]];
   o.push(`<tr>${pr.map((p,j)=>`<td colspan="6" class="ph">${p?`<img src="${photos[p.id]||""}" alt="">${E?`<br><button type="button" class="xb" data-xp="${sec}:${i+j}">刪除照片</button>`:""}`:""}</td>`).join("")}</tr>`);
-  if(caps)o.push(`<tr>${pr.map((p,j)=>`<td colspan="6" class="cap">${p?(E?`<textarea data-k="${sec}.photos.${i+j}.cap" rows="1" placeholder="照片說明">${esc(p.cap)}</textarea>`:nl(p.cap)):""}</td>`).join("")}</tr>`)}
+  if(caps&&(E||pr.some(p=>p&&String(p.cap||"").trim())))o.push(`<tr>${pr.map((p,j)=>`<td colspan="6" class="cap">${p?(E?`<textarea data-k="${sec}.photos.${i+j}.cap" rows="1" placeholder="照片說明">${esc(p.cap)}</textarea>`:nl(p.cap)):""}</td>`).join("")}</tr>`)}
   return o.join("")+(E?`<tr><td colspan="12" class="c"><label class="wkb" style="display:inline-block">＋ 上傳照片（可多選）<input type="file" accept="image/*" multiple data-up="${sec}" style="display:none"></label></td></tr>`:"")};
-const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.ws.slots;return `<div class="fw"><section class="sheet sh fit"><h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:#2f5597;text-decoration:underline">${esc(L.cls)}在地文化社區踏查</span>教學活動學習單</h2><table class="blue">${C()}${[0,1].map(i=>{const s=S[i]||{id:"",cap:""};const img=s.id&&photos[s.id]?`<img src="${photos[s.id]}" alt="">`:"";return `<tr><td colspan="12" class="wsbox">${img||(E?'<span class="wsph">學習單掃描</span>':"")}${E?`<br><label class="wkb" style="display:inline-block">${s.id?"更換掃描檔":"＋ 上傳學習單掃描檔"}<input type="file" accept="image/*" data-upws="${i}" style="display:none"></label>${s.id?`<button type="button" class="xb" data-xws="${i}">刪除</button>`:""}`:""}</td></tr><tr><td colspan="12" class="wscap">${E?`<textarea data-k="ws.slots.${i}.cap" rows="1" placeholder="學習單說明">${esc(s.cap)}</textarea>`:nl(s.cap)}</td></tr>`}).join("")}</table></section></div>`};
+const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.ws.slots;return `<div class="fw"><section class="sheet sh fit"><h1>桃園市仁德非營利幼兒園(委託社團法人臺灣宛靜文教協會辦理)</h1><h2>${esc(L.sem)}<span style="color:#2f5597;text-decoration:underline">${esc(L.cls)}在地文化社區踏查</span>教學活動學習單</h2><table class="blue">${C()}${[0,1].map(i=>{const s=S[i]||{id:"",cap:""};const img=s.id&&photos[s.id]?`<img src="${photos[s.id]}" alt="">`:"";return `<tr><td colspan="12" class="wsbox">${img||(E?'<span class="wsph">學習單掃描</span>':"")}${E?`<br><label class="wkb" style="display:inline-block">${s.id?"更換掃描檔":"＋ 上傳學習單掃描檔"}<input type="file" accept="image/*" data-upws="${i}" style="display:none"></label>${s.id?`<button type="button" class="xb" data-xws="${i}">刪除</button>`:""}`:""}</td></tr>${E||String(s.cap||"").trim()?`<tr><td colspan="12" class="wscap">${E?`<textarea data-k="ws.slots.${i}.cap" rows="1" placeholder="學習單說明">${esc(s.cap)}</textarea>`:nl(s.cap)}</td></tr>`:""}`}).join("")}</table></section></div>`};
  const stratCell=()=>{const sel=(L.lz.sopts||[]).filter(o=>SOPTS.includes(o));
   const optsEl=E?`<details class="sdd"><summary>${sel.length?esc(sel.join("、")):"請選擇▾"}</summary><div class="sddp">${SOPTS.map(o=>`<label><input type="checkbox" data-sopt="${o}" ${sel.includes(o)?"checked":""}>${o}</label>`).join("")}</div></details>`:esc(sel.join("、"));
   let x=`<div>引導說明：${E?`<b style="color:#c0392b;margin-left:8px;font-size:.95em">💡 針對一般大部分幼兒引導的方法</b>`:""}</div>${RT_("lz.guide",3)}${E?"":"<div><br></div>"}<div>課程調整策略：${E?`<b style="color:#c0392b;margin-left:8px;font-size:.95em">💡 針對 IEP 或疑似幼兒「個別」引導的方法</b>`:""}</div>${RT_("lz.strategy",4)}`;
@@ -4159,7 +4159,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L56</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L57</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
