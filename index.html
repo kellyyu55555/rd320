@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L44</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L45</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L44</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L45</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5888,7 +5888,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-search input{border:0;flex:1;font-size:16px;background:transparent;outline:none;box-shadow:none}
 #kb .mt-snip{margin-top:6px;font-size:13px;color:#4a4232;background:#fffbea;border-left:3px solid #e0b84a;padding:4px 8px;border-radius:4px;line-height:1.6}
 #kb .mt-snip mark{background:#ffe066;padding:0 1px;border-radius:2px}
-#kb .mt-item.fixed{border:2px solid #e0b84a;background:#fffaf0}
+#kb .mt-item.mt-isfixed{border:2px solid #e0b84a;background:#fffaf0}
 #kb .mt-fix{font-size:12px;font-weight:700;color:#8a6a00;background:#fff1c2;border-radius:999px;padding:1px 8px;margin-left:6px}
 #kb .mt-fixt{padding:7px 10px;background:#f6f1e4;border-radius:8px;font-weight:700}
 #kb .mt-inph{margin:4px 0 10px}
@@ -8060,7 +8060,7 @@ function renderMeetingEditor(app){
   const listEd = (title, key, mk) => {
     const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},title));
     d[key].forEach((it,i)=>{ const lab = key==="reports" ? `報告${mtNum(i+1)}` : `議題${mtNum(i+1)}`;
-      sec.append(h("div",{class:"mt-item"+(it.fixed?" fixed":"")},
+      sec.append(h("div",{class:"mt-item"+(it.fixed?" mt-isfixed":"")},
         h("div",{class:"mt-ih"},h("b",null,lab),it.fixed?h("span",{class:"mt-fix"},"📌 固定項目"):null,h("span",{class:"sp"}),
           i>0 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i-1],d[key][i]]=[d[key][i],d[key][i-1]]; mark(); render(); }},"↑") : null,
           i<d[key].length-1 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i+1],d[key][i]]=[d[key][i],d[key][i+1]]; mark(); render(); }},"↓") : null,
