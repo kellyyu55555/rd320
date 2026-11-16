@@ -1773,7 +1773,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L50</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L51</footer>
     </div>
   </template>
 
@@ -4159,7 +4159,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L50</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L51</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6047,6 +6047,15 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 @media (max-width:640px){#kb .f3{grid-template-columns:1fr}}
 
+#kb .pt-card.past{background:#eef1ee;border-color:#c9d3cb;border-left:6px solid #8aa394}
+#kb .pt-card.past .t{color:#5f6f64}
+#kb .pt-card.now{background:#fff6dc;border:2px solid #e0a800;border-left:8px solid #e0a800;box-shadow:0 3px 12px rgba(224,168,0,.25)}
+#kb .pt-card.future{border-left:6px solid #9bb8e0}
+#kb .pt-tag{display:inline-block;margin-left:8px;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;vertical-align:1px}
+#kb .pt-tag.past{background:#dfe7e1;color:#4f6b5a}
+#kb .pt-tag.now{background:#e0a800;color:#fff}
+#kb .pt-tag.fut{background:#e6eefa;color:#3b5f99}
+
 </style>
 <script>
 
@@ -7565,8 +7574,11 @@ function renderPatrol(app){
   }
   app.append(h("div",{class:"list"}, list.map(r0=>{ const r=pNorm(r0);
     const all = r.days.flatMap(d=>d.scores.flat()).filter(Boolean), n4 = all.filter(v=>v==="4").length;
-    return h("div",{class:"card row",style:"cursor:default"},
-      h("span",null,h("span",{class:"m"},r.semester),h("br"),h("span",{class:"t"},`${pRoc(r.dateFrom)}～${pRoc(r.dateTo)}`),
+    const td = (()=>{ const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; })();
+    const st = str(r.dateTo) && str(r.dateTo) < td ? "past" : (str(r.dateFrom) <= td && td <= str(r.dateTo) ? "now" : "future");
+    const tag = st==="past" ? h("span",{class:"pt-tag past"},"✔ 已過") : st==="now" ? h("span",{class:"pt-tag now"},"📍 本週") : h("span",{class:"pt-tag fut"},"未到");
+    return h("div",{class:"card row pt-card "+st,style:"cursor:default"},
+      h("span",null,h("span",{class:"m"},r.semester),tag,h("br"),h("span",{class:"t"},`${pRoc(r.dateFrom)}～${pRoc(r.dateTo)}`),
         h("span",{style:"font-size:13px;color:var(--muted);margin-left:10px"},`巡堂紀錄者：${r.recorder||"—"}｜已填 ${all.length}／${PATROL_ITEMS.length*25} 格`+(n4?`｜待改進 ${n4} 格`:""))),
       h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
         h("button",{class:"btn",onclick:()=>{ P.open=r.id; P.edit=false; render(); }},"檢視"),
