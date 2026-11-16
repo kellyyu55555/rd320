@@ -1772,7 +1772,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L43</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L44</footer>
     </div>
   </template>
 
@@ -4158,7 +4158,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L43</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L44</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7898,7 +7898,7 @@ const MT_TYPES = [["教保會議","t1"],["園務會議","t2"],["課發會","t3"]
 const MT_NUM = ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"];
 const mtNum = n => MT_NUM[n-1] || String(n);
 const MT_FIXED = {
-  "教保會議": { issues:[ { title:"對於教保或園務問題提問", mode:"ask" }, { title:"班上需要協助的幼兒學習情形，各班老師給予策略與建議。", mode:"help" } ] },
+  "教保會議": { issues:[ { title:"對於教保或園務問題提問", mode:"ask" }, { title:"班上需要協助的幼兒學習情形，各班老師給予策略與建議。", mode:"help" }, { title:"特教承辦事務", mode:"text" } ] },
   "園務會議": { reports:[ { title:"特教業務" } ] }
 };
 const mtKey = t => str(t).replace(/[\s。．.，,、：:]/g,"");
