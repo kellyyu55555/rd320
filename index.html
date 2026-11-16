@@ -1773,7 +1773,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L54</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L56</footer>
     </div>
   </template>
 
@@ -4159,7 +4159,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L54</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L56</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6059,6 +6059,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-lbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}#kb .mt-lbar .sp{flex:1}
 #kb .mt-lbar .btn.sm{padding:2px 8px;font-size:12px}
 #kb .mt-view .li{display:flex;align-items:flex-start}#kb .mt-view .li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em}#kb .mt-view .li .lt{flex:1}#kb .mt-view .lc{padding-left:1.95em}
+#kb .mt-view,#kb .wp-view{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif}
 
 </style>
 <script>
@@ -7211,7 +7212,7 @@ function openPrint(html){
   w.document.open(); w.document.write(html); w.document.close();
 }
 const PRINT_BASE = `*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;margin:0;color:#000;background:#fff}
+body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
 table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:3px 5px;word-break:break-all;white-space:pre-wrap}
 .hd{text-align:center;margin-bottom:6px}.hd .t{font-size:1.35em;font-weight:bold}`;
@@ -7692,7 +7693,7 @@ function printPatrol(r0){
     rows += `<tr>${gi===0?`<td rowspan="${g.items.length}" class="g">${esc(g.g).split("").join("<br>")}</td>`:""}<td class="it">${esc(it)}</td>${D.map((d,di)=>{ const hol=pHol(d); if (hol) return i===0 ? `<td rowspan="${PATROL_ITEMS.length}" colspan="${nC}" class="hol${di?" dl":""}">${esc(hol)}</td>` : ""; return C.map((c,k)=>`<td class="s${di&&!k?" dl":""}">${esc(d.scores[i][k]||"")}</td>`).join(""); }).join("")}</tr>`; }));
   rows += `<tr class="nt"><td class="g">${"三、其他事項或特殊狀況".split("").join("<br>")}</td><td class="it"></td>${D.map((d,di)=>`<td colspan="${nC}" class="n${di?" dl":""}">${lines(d.note)}</td>`).join("")}</tr>`;
   const css = PRINT_BASE + `@page{size:A4 landscape;margin:8mm}td.hol{font-size:15pt;font-weight:bold;letter-spacing:4px;vertical-align:middle;text-align:center;background:#f3f3f3}
-body{font-family:"Noto Sans TC","微軟正黑體","Microsoft JhengHei",sans-serif}
+body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif}
 .wrap{width:100%;margin:0 auto;padding:0 1.5mm;font-size:10pt;line-height:1.3}@media screen{.wrap{width:281mm;padding:6mm 1.5mm}}
 table{border:1.5px solid #000}th,td{border:1px solid #000!important}
 .hd .t{font-size:1.25em;font-weight:bold;text-align:center}.sub{margin:4px 0 6px}.sub u{text-decoration:none;border-bottom:1px solid #000;padding:0 .8em}
@@ -7860,6 +7861,7 @@ function renderAssess(app){
     h("b",null,`${A.cls}｜${T.label}完成進度：`),
     T.pers.map(([k,l])=>h("span",{class:"as-sumi"},`${l} ${tot[k]}／${kids.length}`)),
     h("label",{style:"margin-left:auto;font-size:14px"},h("input",{type:"checkbox",checked:A.mine,onchange:e=>{ A.mine=e.target.checked; render(); }})," 只看分配給我的"),
+    h("button",{class:"btn",onclick:()=>{ A.tab="roster"; render(); window.scrollTo(0,0); }},"✏️ 編輯幼兒名單"),
     kids.length ? h("button",{class:"btn",onclick:()=>printAssessMany(type, kids.filter(c=>docOf(c)).map(c=>docOf(c)))},"🖨 列印全班已填的") : null,
     kids.length && asFolder(A.cls) ? h("button",{class:"btn",onclick:e=>asUploadAll(e.currentTarget, type, kids.map(c=>docOf(c)).filter(Boolean))},"☁️ 全班上傳雲端") : null,
     asFolder(A.cls) ? h("a",{class:"btn",href:"https://drive.google.com/drive/folders/"+asFolder(A.cls),target:"_blank",rel:"noopener"},"📁 開啟雲端資料夾") : null));
@@ -7984,9 +7986,25 @@ function renderAssessRoster(app){
       teachers.length ? h("button",{class:"btn",onclick:()=>confirmBox("平均分配？",`把 ${kids.length} 位幼兒依名單順序平均分給 ${teachers.join("、")}（會取代目前的分配）。`,"平均分配",()=>{ const m={}; kids.forEach((c,i)=>m[c]=teachers[i%teachers.length]); return saveAssign(m); })},"⚖️ 平均分配") : null,
       h("button",{class:"btn",onclick:()=>confirmBox("清除分配？","所有幼兒都會變成「未分配」。","清除",()=>saveAssign({}))},"清除分配"))));
   if (!kids.length){ app.append(h("div",{class:"notice"},"名單是空的，請在上面輸入幼兒姓名。")); return; }
+  const move = (i,k) => { const j=i+k; if (j<0||j>=kids.length) return; const l=kids.slice(); [l[i],l[j]]=[l[j],l[i]]; saveRoster(l); };
+  const renameKid = async old => {
+    const nv = str(prompt(`把「${old}」改成：`, old)||"").trim();
+    if (!nv || nv===old) return;
+    if (kids.includes(nv)){ alert(`名單裡已經有「${nv}」了。`); return; }
+    const m={...A.assign}, g={...A.ages};
+    if (m[old]!==undefined){ m[nv]=m[old]; delete m[old]; } if (g[old]!==undefined){ g[nv]=g[old]; delete g[old]; }
+    await saveAssign(m, g); await saveRoster(kids.map(x=>x===old?nv:x));
+    try{ const q = await S.db.collection(AS_COL).where("cls","==",cls).where("child","==",old).get(); let n=0;
+      for (const dd of q.docs){ const v = {...dd.data(), child:nv, updatedAt:Date.now()}; await S.db.doc(AS_COL+"/"+asDocId(v.year,v.type,cls,nv)).set(v); await S.db.doc(AS_COL+"/"+dd.id).delete(); n++; }
+      toast(`已改名為「${nv}」`+(n?`，${n} 份評量一起改好`:""));
+    }catch(e){ toast("名單已改名，但搬移已填的評量失敗："+errText(e)); }
+  };
   const opts = [...new Set([...teachers, ...Object.values(A.assign).filter(Boolean)])];
   app.append(h("div",{class:"list"},kids.map((c,i)=>h("div",{class:"card row",style:"cursor:default;padding:10px 14px"},
-    h("span",{style:"flex:1"},h("span",{style:"color:var(--muted);margin-right:8px"},i+1),h("b",null,c)),
+    h("span",{style:"flex:1;display:flex;align-items:center;gap:6px"},h("span",{style:"color:var(--muted);min-width:1.6em"},i+1),h("b",null,c),
+      h("button",{class:"btn sm",title:"修改姓名",onclick:()=>renameKid(c)},"✏️ 改名"),
+      h("button",{class:"btn sm",title:"上移",disabled:i===0?true:null,onclick:()=>move(i,-1)},"↑"),
+      h("button",{class:"btn sm",title:"下移",disabled:i===kids.length-1?true:null,onclick:()=>move(i,1)},"↓")),
     h("select",{class:"in",style:"width:auto"+(asDefAge(cls,c)?"":";background:#fff4c2"),title:"年齡層：決定例行性評量用哪一版題目",onchange:e=>{ const g={...A.ages}; if (e.target.value) g[c]=e.target.value; else delete g[c]; saveAssign({...A.assign}, g); }},
       h("option",{value:""},"年齡層…"), AGES.map(v=>h("option",{value:v,selected:asDefAge(cls,c)===v},v==="幼"?"幼（兩歲）":v+"班"))),
     h("select",{class:"in",style:"width:auto",onchange:e=>{ const m={...A.assign}; if (e.target.value) m[c]=e.target.value; else delete m[c]; saveAssign(m); }},
@@ -8054,7 +8072,7 @@ function asSummHtml(d){
 function assessHtml(type, docs, forPdf){
   const T = AS_T[type];
   const norm = d => { const o = JSON.parse(JSON.stringify(d)); o.data = o.data || {}; T.pers.forEach(([k])=>{ if (!Array.isArray(o.data[k])) o.data[k]=[]; }); return o; };
-  const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}body{font-family:"Noto Serif TC","Noto Sans TC","標楷體","DFKai-SB","Microsoft JhengHei",serif;color:#000}
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:10mm}body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;color:#000}
 .sheet{width:190mm;margin:0 auto;font-size:10.5pt;line-height:1.35;page-break-after:always}.sheet:last-child{page-break-after:auto}@media screen{.sheet{border-bottom:2px dashed #bbb;margin-bottom:8mm}}
 .t1{text-align:center;font-weight:bold;font-size:12.5pt}.t2{text-align:center;font-weight:bold;font-size:12.5pt;margin:2px 0 6px}
 .inf{display:flex;justify-content:space-between;font-weight:bold;margin:4px 8mm}
@@ -8357,7 +8375,7 @@ const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;f
 table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
 table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
 function mtPrintHtml(m, forPdf){
-  const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"Noto Serif TC","標楷體","DFKai-SB","Microsoft JhengHei",serif;color:#000;font-size:12pt;line-height:1.6}
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;color:#000;font-size:12pt;line-height:1.6}
 .wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:${forPdf?"0":"10mm 0"}}}table.pt tr,.sub{page-break-inside:avoid}.sub{page-break-after:avoid;break-after:avoid}table.pt,table.sgt{width:calc(100% - 2px)}` + MT_CSS;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(mtTitle(m))}</title><style>${css}</style></head><body>
 ${forPdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 直式</span></div>'}<div class="wrap">${mtBodyHtml(m, true, forPdf)}</div>
