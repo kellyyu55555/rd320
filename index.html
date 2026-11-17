@@ -1778,7 +1778,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L60</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L61</footer>
     </div>
   </template>
 
@@ -4165,7 +4165,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L60</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L61</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7854,7 +7854,16 @@ function renderAssess(app){
       A.tab!=="admin" ? h("label",null,"班級 ",myCls.length ? h("select",{class:"in",onchange:e=>{ A.cls=e.target.value; render(); }},myCls.map(c=>h("option",{value:c,selected:c===A.cls},c))) : h("b",{style:"color:var(--warn)"},"（管理員還沒設定您的班級）")) : null),
     h("div",{class:"as-tabs"},tabs.map(([k,l])=>h("button",{class:"as-tab t-"+k+(A.tab===k?" on":""),onclick:()=>{ A.tab=k; render(); }},l)))));
   if (A.tab==="admin") return renderAssessAdmin(app);
-  if (!A.cls){ app.append(h("div",{class:"notice"},S.realAdmin?"還沒有任何班級的幼兒名單。":"管理員還沒在「管理者後台 → 班級老師 → 老師／班級組合」設定您帶的班級，設定好後就能使用教學評量。")); return; }
+  if (!A.cls){
+    if (S.realAdmin){ app.append(h("div",{class:"notice"},"還沒有任何班級的幼兒名單。")); return; }
+    const me = asMe(), pt = [...new Set(asPairs().map(p=>str(p.t).trim()).filter(Boolean))];
+    app.append(h("div",{class:"notice",style:"text-align:left;line-height:1.8"},
+      h("div",null,h("b",null,"找不到您帶的班級。")),
+      h("div",null,"系統是用帳號的老師姓名，去對「管理者後台 → 班級老師 → 老師／班級組合」裡的老師姓名。"),
+      h("div",null,"您的帳號姓名是：",h("b",{style:"color:var(--warn)"},me ? `「${me}」` : "（尚未設定）"),
+        pt.length ? h("span",null,"；組合裡的老師有：",pt.join("、")) : null),
+      h("div",null,"請管理員擇一處理：①到「管理者後台 → 帳號管理」按這個帳號的「✏️ 改姓名」，改成組合裡的老師姓名；或 ②在「老師／班級組合」新增「",me||"您的姓名","／班級」。改好後重新整理頁面即可。")));
+    return; }
   asSubscribe();
   if (A.tab==="roster") return renderAssessRoster(app);
   if (!A.got){ app.append(h("div",{class:"notice"},"評量資料載入中…")); return; }
