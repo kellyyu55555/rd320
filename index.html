@@ -247,6 +247,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 @media (min-width:1024px){
   #homeGrid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 }
+</style><style id="photo-center">
+#learning-observation-page .obs-photos,#learning-observation-page .obs-area .obs-photos,#learning-observation-page .obs-act .obs-photos{justify-content:center!important;align-items:center!important;align-content:center!important}
+#learning-observation-page .obs-ph{display:flex!important;align-items:center;justify-content:center}
+#learning-observation-page .obs-ph img,#learning-observation-page .obs-photos img{object-position:center center!important;margin-left:auto;margin-right:auto}
+#learning-observation-page .obs-photos-2 .obs-ph img{object-position:center center!important}
 </style></head>
 <body class="bg-cream text-wood-dark min-h-screen">
 
@@ -1773,7 +1778,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L59</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L60</footer>
     </div>
   </template>
 
@@ -2417,11 +2422,11 @@ const CSS=`.wk{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",seri
 .wk .orange .hd th,.wk .orange .band th{background:#fce4d6}
 .wk .green .hd th,.wk .green .band th{background:#e2efda}
 .wk td.c{text-align:center}.wk td.lb{font-weight:bold;text-align:center}
-.wk td.ph{text-align:center;padding:8px 4px}.wk td.ph img{max-width:82%;max-height:5.6cm;object-fit:contain}
+.wk td.ph{text-align:center;vertical-align:middle;padding:8px 4px}.wk td.ph img{max-width:82%;max-height:5.6cm;object-fit:contain;display:block;margin:0 auto}
 .wk td.cap{text-align:left}
 .wk .bl{padding-left:1.5em;text-indent:-1.5em}.wk .lbl{margin-bottom:2px}
 .wk .sh{margin-bottom:14px}
-.wk td.wsbox{height:100mm;text-align:center;vertical-align:middle}.wk td.wsbox img{max-width:97%;max-height:96mm;object-fit:contain}.wk td.wscap{height:12mm;vertical-align:top}
+.wk td.wsbox{height:100mm;text-align:center;vertical-align:middle}.wk td.wsbox img{max-width:97%;max-height:96mm;object-fit:contain;display:block;margin:0 auto}.wk td.wscap{height:12mm;vertical-align:top}
 .wsbox.nocap{height:124mm}.wsbox.nocap img{max-width:98%;max-height:120mm}.wk .wsph{color:#bbb;font-size:20pt;font-weight:bold}`;
 const EDIT_CSS=`#weeklyRoot .wk textarea,#weeklyRoot .wk input[type=text],#weeklyRoot .wk input[type=date]{width:100%;border:1px dashed #b9ae94;background:#fffef6;font:inherit;padding:2px 4px;border-radius:3px;resize:none;overflow:hidden;box-sizing:border-box}
 #weeklyRoot .wk .sheet{background:#fff;border:1px solid #d8cfba;border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto}
@@ -4160,7 +4165,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L59</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L60</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
