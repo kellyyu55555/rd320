@@ -1778,7 +1778,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L61</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L62</footer>
     </div>
   </template>
 
@@ -2745,7 +2745,7 @@ async function seedImportSel(){const S=impState;if(!S)return;const todo=S.seeds.
 const impCard=()=>{const def=SEEDCLS.includes((prefs||{}).cls)?prefs.cls:(myClasses().find(c=>SEEDCLS.includes(c))||SEEDCLS[0]),S=impState;
  return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#f2f7fb;border-color:#b9d3ea"><div><b>📥 匯入已完成的週誌</b><span style="font-size:12px;color:#7a6f57">　先選班級，再勾選要匯入的週次（不會一次全部匯入），匯入後就能在「我的週誌」開啟修改。</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="wkimpcls" style="border:1px solid #cdbf9e;border-radius:8px;padding:5px 8px;font-size:14px">${SEEDCLS.map(c=>`<option ${(S?S.cls:def)===c?"selected":""}>${c}</option>`).join("")}</select><button class="wkb on" data-impseed="1">查看可匯入的週誌</button><span id="wkimpst" style="font-size:12px;font-weight:700;color:#375623"></span></div>${S?`<div style="border-top:1px dashed #b9d3ea;padding-top:6px"><div style="font-size:13px;font-weight:700">「${esc(S.cls)}」可匯入的週誌（勾選要匯入的週次）：</div><div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0">${S.seeds.map(x=>{const h=S.have.has(x.sid);return `<label style="white-space:nowrap;font-size:14px;${h?"color:#9a917a":"cursor:pointer"}"><input type="checkbox" data-impck="${esc(x.sid)}" ${h?"disabled checked":(S.sel.has(x.sid)?"checked":"")}> ${esc(x.weeks||"")}　${roc(x.dateFrom)}${h?"（已匯入）":""}</label>`}).join("")}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb" data-impall="1">全選尚未匯入的</button><button class="wkb" data-impnone="1">全部取消</button><button class="wkb on" data-impgo="1">匯入勾選的週誌</button><button class="wkb" data-impcancel="1">關閉</button></div></div>`:""}</div>`};
 function listHtml(){return(mode==="all"&&d.isAdmin)?allHtml():mineHtml()}
-async function rvAct(kind){const o=cur;if(!o||!d.isAdmin)return;const note=String((root.querySelector("#wkrvnote")||{}).value||rvNote||"").trim();
+async function rvAct(kind){const o=cur;if(!o||!d.isAdmin)return;let note=String((root.querySelector("#wkrvnote")||{}).value||rvNote||"").trim();if(kind==="ok"&&!note)note="已完成，可以上傳雲端了。謝謝";
  const me=d.myName||(d.currentUser||{}).displayName||(d.currentUser||{}).email||"管理員";
  if(kind==="ret"&&!note){alert("退件請先在說明欄寫下退件原因（老師會收到 LINE 通知）");return}
  const toE=o.submittedByEmail||o.ownerEmail,head=`${o.cls||""}　${roc(o.dateFrom)}－${roc(o.dateTo)}`;
@@ -2809,14 +2809,14 @@ function viewerHtml(){const L=cur;if(L.kind==="ext")return extViewerHtml();
  if(d.isAdmin){const sent=["submitted","reviewed","returned"].includes(L.status);
   return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button></div>
   <div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a"><div><b>🗂️ 管理員審閱</b>${badge(L)}<span style="font-size:12px;color:#7a6f57">　送出者：${esc(who(L))}${L.submittedAt?"　｜　送出："+tm(L.submittedAt):""}</span></div>${reasonLine2(L)}
-  ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱。</div>`}</div>
+  ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="按「已閱」時沒寫說明，會自動回覆：已完成，可以上傳雲端了。謝謝／退件請寫原因，例如：請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱。</div>`}</div>
   ${docHtml(L,"print")}`}
  return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button></div>
  <div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(L.ownerName||L.ownerEmail||"")} ${(L.sharedWith||[]).includes(myEmail())?"分享給您的":"的（同班老師）"}，僅供檢視，不能修改。</div>
  ${docHtml(L,"print")}`}
 function rvCardEd(){const L=cur;if(!d.isAdmin||L.uid===(d.currentUser||{}).uid)return"";const sent=["submitted","reviewed","returned"].includes(L.status);
  return `<div class="wkcard" style="flex-direction:column;align-items:stretch;gap:6px;background:#fff8e7;border-color:#e0c98a;margin-bottom:10px"><div><b>🗂️ 管理員審閱（您正在編輯 ${esc(who(L))} 的週誌，修改會直接存回同一份）</b>${badge(L)}<span style="font-size:12px;color:#7a6f57">　${L.submittedAt?"送出："+tm(L.submittedAt):""}</span></div>${reasonLine2(L)}
- ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="例如：照片和反思都很完整，辛苦了！／請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱（您仍可直接修改內容）。</div>`}</div>`}
+ ${sent?`<div style="font-size:12px;color:#7a6f57">說明（選填）：按「退件」時，系統會用 LINE 把這段說明傳給老師（退件一定要寫說明）；按「已閱」預設不傳 LINE（節省訊息額度），老師開啟系統就看得到這段說明。</div><textarea id="wkrvnote" rows="3" placeholder="按「已閱」時沒寫說明，會自動回覆：已完成，可以上傳雲端了。謝謝／退件請寫原因，例如：請補上學習單說明後再送出。" style="width:100%;border:1px solid #cdbf9e;border-radius:8px;padding:6px 10px;font-size:14px">${esc(rvNote)}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="wkb on" data-rvok="1">✔ 已閱</button><label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="wkrvline"> 也用 LINE 通知老師（會用掉 1 則額度）</label><button class="wkb" data-rvret="1" style="color:#d35400;border-color:#d35400">↩ 退件</button></div>`:`<div style="font-size:13px;color:#7a6f57">這份週誌老師還沒有送出，所以暫時不能審閱（您仍可直接修改內容）。</div>`}</div>`}
 function editorHtml(){if(viewOnly)return viewerHtml();if(cur.kind==="ext")return extEditorHtml()+undoBar();return editorHtml0()+undoBar()}
 function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(gmOf(L));
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
@@ -4165,7 +4165,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L61</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L62</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
