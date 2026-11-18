@@ -389,7 +389,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
         
           <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && isOwner)) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
-          <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor)" @click="view='actplan'"
+          <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor || restrictedPW)" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
@@ -493,7 +493,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">行事曆</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">本學期每月節慶、行政、教保活動、健康安全與社區活動</p>
           </button>
-          <button type="button" x-show="(isAdmin || isEditor)" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="(isAdmin || isEditor || restrictedPW)" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔑 活動計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德、親職教育活動計畫（僅管理者）</p>
@@ -858,7 +858,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && (!restrictedPW || view==='actplan') && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && (!restrictedPW || view==='actplan') && (view!=='actplan' || isAdmin || isEditor || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1783,7 +1783,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L68</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L69</footer>
     </div>
   </template>
 
@@ -4170,7 +4170,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L68</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L69</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6179,7 +6179,7 @@ function renderTabs(){
 
 /* ---------- render ---------- */
 function render(){
-  const canE = () => !!S.realAdmin || (!!S.isEditor && ["walk","motor","schedule","calendar","activities"].includes(S.view));
+  const canE = () => !!S.realAdmin || (!!S.isEditor && ["walk","motor","schedule","calendar","activities"].includes(S.view)) || (!!(S.d && S.d.restrictedPW) && S.view==="activities");
   S.isAdmin = canE();
   if (!S.isAdmin && S.view==="activities") S.view="walk";
   S.isAdmin = canE();
@@ -9105,6 +9105,7 @@ function sync(d, view){
   if (key !== subKey){
     unsubs.forEach(f=>{ try{ f(); }catch(_){} }); unsubs = [];
     subKey = key; S.db = d.db; S.realAdmin = !!d.isAdmin; S.isEditor = !!d.isEditor && !S.realAdmin; S.isAdmin = S.realAdmin; S.failed = ""; S.stale = false;
+    if (!d.restrictedPW){   // 限制帳號只讀活動計畫（其他資料規則不開放，訂閱會被拒絕）
     for (const [kind,cfg] of Object.entries(KINDS)){
       const k = S.k[kind]; k.gotP = k.gotC = false;
       unsubs.push(subscribe(d.db.collection(cfg.progCol),k,"gotP",snap=>{ const o={}; k.notice=null; snap.docs.forEach(x=>{ if (x.id==="_notice") { k.notice=x.data(); return; } o[x.id]=x.data(); }); k.programs=o; }));
@@ -9130,13 +9131,14 @@ function sync(d, view){
     S.wp = { list:[], got:false, kind:"plan", year:"all", view:null, edit:null, draft:null, dirty:false };
     if (d.isOwner) unsubs.push(subscribe(d.db.collection("workPlans"), S.wp, "got", snap=>{ S.wp.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.wp.got = true;
+    }
     S.got.activities = false; S.activities = [];
-    if (S.realAdmin || S.isEditor) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
+    if (S.realAdmin || S.isEditor || d.restrictedPW) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
       if (S.openAct && $("#kb-layer .modal") && !$("#kb-layer .lightbox") && !$("#kb-layer input, #kb-layer textarea") && !$("#kb-layer .modal.sm")) showActivity(S.openAct);
     }));
     else S.got.activities = true;
-    S.assets = (S.realAdmin || S.isEditor) ? photoStore : null;
+    S.assets = (S.realAdmin || S.isEditor) && !d.restrictedPW ? photoStore : null;
   }
   render();
 }
