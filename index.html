@@ -389,7 +389,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
         
           <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && isOwner)) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
-          <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'"
+          <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor)" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
@@ -493,7 +493,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">行事曆</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">本學期每月節慶、行政、教保活動、健康安全與社區活動</p>
           </button>
-          <button type="button" x-show="(isAdmin || isEditor) && !restrictedPW" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="(isAdmin || isEditor)" @click="view='actplan'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔑 活動計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德、親職教育活動計畫（僅管理者）</p>
@@ -858,7 +858,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && !restrictedPW && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&!restrictedPW&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && (!restrictedPW || view==='actplan') && (view!=='actplan' || isAdmin || isEditor)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1783,7 +1783,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L67</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L68</footer>
     </div>
   </template>
 
@@ -4170,7 +4170,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L67</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L68</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6447,6 +6447,7 @@ const typeOf = a => ACT_TYPES.includes(a.type) ? a.type : ACT_TYPES[0];
 const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
 
 function renderActivities(app){
+  if (S.d && S.d.restrictedPW && typeof renderActExpense==="function") return renderActExpense(app);
   if (S.viewAct && typeof renderActView==="function") return renderActView(app);
   if (!S.got.activities){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "活動計畫載入中…")); return; }
   if (!ACT_TYPES.includes(S.actType)) S.actType = ACT_TYPES[0];
@@ -6884,6 +6885,36 @@ function renderActView(app){
     fr.onload = () => { try{ const d = fr.contentDocument; const st = d.createElement("style"); st.textContent = ".bar{display:none!important}body{margin:0;padding:18px 0;background:#fff}"; d.head.appendChild(st);
       const fit = () => { fr.style.height = (d.documentElement.scrollHeight+20)+"px"; }; fit(); setTimeout(fit,300); setTimeout(fit,1200); d.querySelectorAll("img").forEach(im=>im.addEventListener("load",fit)); }catch(_){} };
     fr.srcdoc = actPrintHtml(a, pics||{}, false).replace(/<script[\s\S]*?<\/script>/gi,"");
+  });
+}
+
+/* 活動計畫：只開放編輯「經費支出」的帳號（不能看照片、附件，也不能改其他欄位） */
+function renderActExpense(app){
+  if (!S.actType) S.actType = ACT_TYPES[0];
+  const list = S.activities.filter(a=>typeOf(a)===S.actType).sort((a,b)=>str(b.date).localeCompare(str(a.date)));
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"活動計畫・經費支出"),
+    h("p",{class:"note"},"這個帳號可以共同編輯每份活動計畫的「經費支出」，其他欄位只能查看。修改後按「💾 儲存經費」。"),
+    h("div",{class:"as-tabs"}, ACT_TYPES.map(t=>h("button",{class:"as-tab"+(S.actType===t?" on":""),onclick:()=>{ S.actType=t; render(); }},`${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`)))));
+  if (!list.length){ app.append(h("div",{class:"notice"},"這個分類還沒有活動計畫。")); return; }
+  list.forEach(a=>{
+    const ml = moneyLines(a.expense), st = h("span",{class:"err",style:"align-self:center"});
+    const tot = h("b",null,money(sumOf(a.expense)));
+    ml.addEventListener("input", ()=>{ tot.textContent = money(sumOf(ml.read())); st.textContent = "尚未儲存"; st.style.color = "#b4472f"; });
+    const save = h("button",{class:"btn primary",onclick:async()=>{
+      save.disabled = true; st.textContent = "儲存中…"; st.style.color = "";
+      try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expense: ml.read(), expenseBy: str(S.d.myName) || ((S.d.currentUser||{}).email||""), expenseAt: Date.now() });
+        st.textContent = "✓ 已儲存"; st.style.color = "#2f6b4f"; }
+      catch(e){ st.textContent = "儲存失敗：" + errText(e); st.style.color = "#b4472f"; }
+      finally{ save.disabled = false; } }},"💾 儲存經費");
+    app.append(h("div",{class:"card",style:"cursor:default;display:block;margin-bottom:12px"},
+      h("div",{style:"display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"},
+        h("b",{style:"font-size:17px"},str(a.name)), h("span",{class:"note"},[str(a.semester),str(a.time)].filter(Boolean).join("．")), statusPill(a.status)),
+      h("div",{class:"note",style:"margin:4px 0 8px"},[str(a.location)&&"地點："+str(a.location), str(a.target)&&"對象："+str(a.target)].filter(Boolean).join("　")),
+      h("div",{style:"font-weight:700;margin-bottom:4px"},"經費支出 ",h("span",{class:"note"},"（合計 ",tot,"）")),
+      ml,
+      h("div",{style:"display:flex;gap:8px;justify-content:flex-end;margin-top:8px"}, st, save),
+      a.expenseAt ? h("div",{class:"note",style:"text-align:right;font-size:12px"},`上次修改：${str(a.expenseBy)}　${new Date(a.expenseAt).toLocaleString("zh-TW")}`) : null));
   });
 }
 /* ---------- 作息表（3-5歲班／兩歲專班）與行事曆：老師檢視、管理者編輯 ---------- */
@@ -9063,7 +9094,7 @@ let subKey = null, unsubs = [];
 function sync(d, view){
   S.d = d;
   if (!d || !d.db || !d.currentUser) return;
-  if (d.restrictedPW) return;            // 只能用借還、護貝膜、管理者後台的帳號
+  if (d.restrictedPW && view!=="actplan" && view!=="activities") return;   // 只能用借還、護貝膜、管理者後台的帳號（活動計畫只能編輯經費支出）
   if (!document.getElementById("kb-app")) return;
   if (view==="actplan") view = "activities";
   const key = d.currentUser.uid + "|" + !!d.isAdmin + "|" + !!d.isEditor + "|" + !!d.isOwner;
