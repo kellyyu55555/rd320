@@ -252,6 +252,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-ph{display:flex!important;align-items:center;justify-content:center}
 #learning-observation-page .obs-ph img,#learning-observation-page .obs-photos img{object-position:center center!important;margin-left:auto;margin-right:auto}
 #learning-observation-page .obs-photos-2 .obs-ph img{object-position:center center!important}
+#learning-observation-page .obs-photos img,#learning-observation-page .obs-act .obs-photos img{object-fit:contain!important;object-position:center center!important;background:none!important}
 </style></head>
 <body class="bg-cream text-wood-dark min-h-screen">
 
@@ -1706,6 +1707,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <button type="button" class="obs-btn" data-action="roster-edit">👧 新增／刪除幼兒名單</button>
         <button type="button" class="obs-btn" data-action="import-obs-pdf">📂 匯入舊紀錄 PDF</button><input id="obs-pdfimp-file" type="file" accept="application/pdf,.pdf" multiple hidden>
         <button type="button" class="obs-btn" data-action="pending-names">🏷️ 待指定姓名</button>
+        <button type="button" class="obs-btn" data-action="clean-dup-pdf" title="同一份 PDF 的同一頁匯入了不只一次時，只保留一筆">🧹 清除重複匯入</button>
         <button type="button" class="obs-btn" data-action="copy-pickup" hidden>🚌 從接送系統複製全園名單</button>
         <button type="button" class="obs-btn" data-action="import-children" hidden>📋 匯入幼兒名單檔</button>
         <button type="button" class="obs-btn" data-action="import-old" hidden>📂 匯入舊紀錄檔</button>
@@ -1778,7 +1780,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L63</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L65</footer>
     </div>
   </template>
 
@@ -1948,9 +1950,9 @@ function rPlan(){const tp=D.tpl.find(t=>t.cls===plan.cls);const mm=String(plan.s
   $("#sa").onclick=()=>{const p=normPlan(JSON.parse(JSON.stringify(plan)));p.id="p"+Date.now();p.name=(p.name||"")+"（副本）";delete p.by;delete p.at;loadPlan(p);snap="";rPlan()};
   $("#ps").onchange=e=>{const v=e.target.value;if(v==="__new"||v===plan.id)return;if(dirty()&&!confirm("目前計畫有未儲存的修改，確定要切換？")){rPlan();return}const f=plans.find(x=>x.id===v);if(f){loadPlan(normPlan(JSON.parse(JSON.stringify(f))));rPlan()}};
   $("#oa").onclick=()=>{plan.areas.forEach((a,i)=>openMap["a"+i]=true);drawAreas()};$("#ca").onclick=()=>{Object.keys(openMap).forEach(k=>openMap[k]=false);drawAreas()};drawAreas();}
-function toolImg(t,x,pics){const u=x?x[5]:((pics||[]).find(p=>p.n===t)||{}).u;if(!u)return "";const src=x?u:(photoSrc(u,"w200")||"");return src?`<img src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:64px;max-height:64px;width:auto;height:auto;object-fit:contain;border-radius:4px;flex:none" onerror="this.style.display='none'">`:""}
+function toolImg(t,x,pics){const u=x?x[5]:((pics||[]).find(p=>p.n===t)||{}).u;if(!u)return "";const src=x?u:(photoSrc(u,"w600")||"");return src?`<img src="${esc(src)}" referrerpolicy="no-referrer" style="max-width:230px;max-height:230px;width:auto;height:auto;object-fit:contain;border-radius:4px;flex:none;display:block" onerror="this.style.display='none'">`:""}
 function toolTag(t,ai,ri,pi,k,pics){const x=findInv(t);const nm=t.replace(/^(自製|新購|待購)[：:]/,"自製：");const ed=ai!==undefined;
-  return `<span class="pu-tag" style="display:inline-flex;align-items:center;gap:5px;vertical-align:top;margin:3px">${toolImg(t,x,pics)}<span>${x?"◎":"△"}${esc(x?x[1]:nm)}${x?` <span class="pu-m">剩${x[3]}/${x[2]}</span>`:""}${x&&x[3]===0?' <span class="pu-w">全借出</span>':""}</span>${ed?`${!x?` <b class="tpb" data-a="${ai}" data-r="${ri}" data-n="${esc(t)}" title="貼上這個教具的照片連結" style="cursor:pointer">🖼</b>`:""} <b class="rmt" data-a="${ai}" data-r="${ri}" data-p="${pi}" data-k="${k}" title="移除這個教具" style="cursor:pointer;color:#c0392b;font-size:16px">×</b>`:""}</span>`}
+  return `<span class="pu-tag" style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px;vertical-align:top;margin:3px;max-width:100%">${toolImg(t,x,pics)}<span>${x?"◎":"△"}${esc(x?x[1]:nm)}${x?` <span class="pu-m">剩${x[3]}/${x[2]}</span>`:""}${x&&x[3]===0?' <span class="pu-w">全借出</span>':""}</span>${ed?`${!x?` <b class="tpb" data-a="${ai}" data-r="${ri}" data-n="${esc(t)}" title="貼上這個教具的照片連結" style="cursor:pointer">🖼</b>`:""} <b class="rmt" data-a="${ai}" data-r="${ri}" data-p="${pi}" data-k="${k}" title="移除這個教具" style="cursor:pointer;color:#c0392b;font-size:16px">×</b>`:""}</span>`}
 const RT="<!--rt-->";
 const RT_FONTS=["標楷體","微軟正黑體","新細明體","Noto Sans TC","Arial","Times New Roman"];
 const RT_SIZES=[10,12,14,16,18,20,24,28,32];
@@ -2169,7 +2171,7 @@ async function uploadPlanPdf(){
 function exportDoc(pdf){if(!admin())return;
   const tl=(a,pics)=>a.map(t=>{const x=findInv(t);const u=x?x[5]:((pics||[]).find(p=>p.n===t)||{}).u;const src=u?(x?u:photoSrc(u,"w800")):"";return `<div class="tool">${src?`<img src="${esc(src)}" referrerpolicy="no-referrer" alt="">`:""}<span>${x?"◎":"△"}${esc(x?x[1]:t.replace(/^(自製|新購|待購)[：:]/,"自製："))}</span></div>`}).join("");
   const ph=(r,i)=>`${rtView(r.p[i])}${r.tools[i].length?`<div class="lb">教具</div>${tl(r.tools[i],r.tpics)}`:""}${r.links[i].length?`<div class="lb">參考教學連結</div>${r.links[i].map(l=>`<div class="lk">${esc(l.t||"連結")}：${esc(l.u)}</div>`).join("")}`:""}${r.photos[i].length?`<div class="lb">照片</div><div class="ph">${r.photos[i].map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div>`:""}`;
-  const css=`@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact;--fs:16pt;--ps:5cm;--ts:3cm}body{font-family:"標楷體","DFKai-SB","Noto Serif CJK TC",serif;font-size:var(--fs);line-height:1.4;margin:0;color:#000}
+  const css=`@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact;--fs:16pt;--ps:5cm;--ts:5cm}body{font-family:"標楷體","DFKai-SB","Noto Serif CJK TC",serif;font-size:var(--fs);line-height:1.4;margin:0;color:#000}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:14px;align-items:center;flex-wrap:wrap}.bar button,.bar select{font-size:14px;padding:4px 10px}@media print{.bar{display:none}}
 h1{text-align:center;font-size:1.3em;margin:6px 0}h2{color:#fff;padding:4px 10px;font-size:1.1em;margin:8px 0 4px}.area{break-before:page;page-break-before:always;break-after:page;page-break-after:always}.area:first-of-type{break-before:auto;page-break-before:auto}.area:last-of-type{break-after:auto;page-break-after:auto}
 table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:6px}th,td{border:1px solid #555;padding:3px 5px;vertical-align:top;word-break:break-all}th{background:#d9e2f3;font-size:.9em}thead{display:table-header-group}
@@ -2178,7 +2180,7 @@ tbody>tr{break-inside:avoid;page-break-inside:avoid}h2,.in-h,.in-title{break-aft
 .ph{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}figure{margin:0;break-inside:avoid;text-align:center;max-width:calc(var(--ps) + 1cm)}figure img{width:var(--ps);height:var(--ps);max-width:100%;object-fit:contain;display:block;margin:auto}figcaption{font-size:.6em;margin-top:.2cm;line-height:1.2}.diff{font-size:.85em;margin:2px 0 6px}.intro{break-after:page;page-break-after:always}.in-title{text-align:center;font-size:1.2em;font-weight:bold;margin:6px 0}.in-h{font-weight:bold;margin:10px 0 3px}.in-p{line-height:1.6}.intro th{text-align:center}`;
   const body=plan.areas.map((a,i)=>`<section class="area"><h2 style="background:${colorOf(a.name)}">${esc(a.name)}</h2>`+(a.tiers.length?`<table><colgroup><col style="width:8%"><col style="width:24%"><col style="width:34%"><col style="width:34%"></colgroup><thead><tr><th>年段</th><th>學習目標</th><th>教師意圖</th><th>幼兒能力（期末預期）</th></tr></thead><tbody>${a.tiers.map(t=>`<tr><td>${esc(t[0])}</td><td>${esc(t[3]||"")}</td><td>${esc(t[1])}</td><td>${esc(t[2])}</td></tr>`).join("")}</tbody></table>`:"")+
   `<table><colgroup><col style="width:9%"><col style="width:15%"><col style="width:25.3%"><col style="width:25.3%"><col style="width:25.4%"></colgroup><thead><tr><th>學習區活動／年段</th><th>課程指標</th>${[0,1,2].map(i=>`<th>${phL(i,plan)}</th>`).join("")}</tr></thead><tbody>`+a.rows.map(r=>`<tr><td class="act">${esc(r.act)}${r.age?`<br><span style="font-weight:normal">（${esc(r.age)}）</span>`:""}</td><td class="ind">${(r.codes||[]).map(c=>`<div>${esc(c+" "+(D.ind[c]||""))}</div>`).join("")}</td>${[0,1,2].map(k=>`<td>${ph(r,k)}</td>`).join("")}</tr>${(r.rphotos||[]).length?`<tr><td colspan="5"><div class="lb">活動照片：${esc(r.act)}</div><div class="ph">${r.rphotos.map(l=>{const src=photoSrc(l.u,"w1600");return src?`<figure><img${ppA(l.u)} src="${esc(src)}" referrerpolicy="no-referrer" alt=""><figcaption>${esc(l.t||"")}</figcaption></figure>`:`<div class="lk">🖼 ${esc(l.t||"照片")}：${esc(l.u)}</div>`}).join("")}</div></td></tr>`:""}`).join("")+`</tbody></table>`+(a.diff.length?`<div class="diff"><b>混齡差異化：</b>${a.diff.filter(Boolean).map(esc).join("；")}</div>`:"")+`</section>`).join("");
-  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(plan.name||"課程規劃")}</title><style>${css}</style></head><body><div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><label>字體大小 <select onchange="document.documentElement.style.setProperty('--fs',this.value+'pt')"><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option></select> pt</label><label>照片大小 <select onchange="document.documentElement.style.setProperty('--ps',this.value+'cm')"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select> 公分</label><label>教具照片 <select onchange="document.documentElement.style.setProperty('--ts',this.value+'cm')"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select> 公分</label><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。照片需等載入完成後再列印。</span></div><h1>${esc(plan.name||plan.cls+"課程規劃")}（${esc(plan.cls)}・${esc(plan.sem)}）</h1>${introHtml("print",plan.intro)}${body}<script>(function(){var PH=194*96/25.4;function fit(){document.querySelectorAll("tbody>tr").forEach(function(tr){tr.style.removeProperty("--ps");tr.style.removeProperty("--ts")});document.querySelectorAll("table").forEach(function(tb){var hh=tb.tHead?tb.tHead.offsetHeight:0,pv=tb.previousElementSibling,hx=pv&&/^H[1-6]$/.test(pv.tagName)?pv.offsetHeight+20:0,f1=true;Array.prototype.forEach.call(tb.tBodies,function(bd){Array.prototype.forEach.call(bd.rows,function(tr){var lim=PH-hh-8-(f1?hx:0);f1=false;if(tr.offsetHeight<=lim)return;var cs=getComputedStyle(tr),ps=parseFloat(cs.getPropertyValue("--ps"))||5,ts=parseFloat(cs.getPropertyValue("--ts"))||3,n=0;while(tr.offsetHeight>lim&&(ps>1.5||ts>1.2)&&n++<40){ps=Math.max(1.5,ps*.88);ts=Math.max(1.2,ts*.88);tr.style.setProperty("--ps",ps.toFixed(2)+"cm");tr.style.setProperty("--ts",ts.toFixed(2)+"cm")}})})})}window.addEventListener("load",fit);window.addEventListener("beforeprint",fit);document.querySelectorAll(".bar select").forEach(function(s){s.addEventListener("change",function(){setTimeout(fit,50)})})})()<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(plan.name||"課程規劃")}</title><style>${css}</style></head><body><div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><label>字體大小 <select onchange="document.documentElement.style.setProperty('--fs',this.value+'pt')"><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option></select> pt</label><label>照片大小 <select onchange="document.documentElement.style.setProperty('--ps',this.value+'cm')"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select> 公分</label><label>教具照片 <select onchange="document.documentElement.style.setProperty('--ts',this.value+'cm')"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select> 公分</label><span>列印設定：紙張 A4、方向「橫向」，勾選「背景圖形」。照片需等載入完成後再列印。</span></div><h1>${esc(plan.name||plan.cls+"課程規劃")}（${esc(plan.cls)}・${esc(plan.sem)}）</h1>${introHtml("print",plan.intro)}${body}<script>(function(){var PH=194*96/25.4;function fit(){document.querySelectorAll("tbody>tr").forEach(function(tr){tr.style.removeProperty("--ps");tr.style.removeProperty("--ts")});document.querySelectorAll("table").forEach(function(tb){var hh=tb.tHead?tb.tHead.offsetHeight:0,pv=tb.previousElementSibling,hx=pv&&/^H[1-6]$/.test(pv.tagName)?pv.offsetHeight+20:0,f1=true;Array.prototype.forEach.call(tb.tBodies,function(bd){Array.prototype.forEach.call(bd.rows,function(tr){var lim=PH-hh-8-(f1?hx:0);f1=false;if(tr.offsetHeight<=lim)return;var cs=getComputedStyle(tr),ps=parseFloat(cs.getPropertyValue("--ps"))||5,ts=parseFloat(cs.getPropertyValue("--ts"))||3,n=0;while(tr.offsetHeight>lim&&(ps>1.5||ts>1.2)&&n++<40){ps=Math.max(1.5,ps*.88);ts=Math.max(1.2,ts*.88);tr.style.setProperty("--ps",ps.toFixed(2)+"cm");tr.style.setProperty("--ts",ts.toFixed(2)+"cm")}})})})}window.addEventListener("load",fit);window.addEventListener("beforeprint",fit);document.querySelectorAll(".bar select").forEach(function(s){s.addEventListener("change",function(){setTimeout(fit,50)})})})()<\/script></body></html>`;
   if(pdf===true)return html.replace(/<div class="bar">[\s\S]*?<\/span><\/div><h1>/,"<h1>");const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"}));const w=window.open(url,"_blank");if(!w)alert("瀏覽器擋住了新視窗，請允許此網站的彈出視窗後再按一次");setTimeout(()=>URL.revokeObjectURL(url),600000)}
 function roHtml(p){p=normPlan(JSON.parse(JSON.stringify(p)));
   return `<div class="pu-ro"><div class="pu-card"><button id="bk">← 返回計畫列表</button> <b style="font-size:18px">${esc(p.name)}</b> <span class="pu-m">${esc(p.cls)}｜${esc(p.sem)}（唯讀）</span> <select id="vs">${byNew().map(x=>`<option value="${x.id}" ${x.id===p.id?"selected":""}>${esc(x.name)}｜${esc(x.cls)}｜${esc(x.sem)}</option>`).join("")}</select></div>`+introHtml("view",p.intro)+p.areas.map(a=>{const col=colorOf(a.name);return `<details class="pu-area" style="border-color:${col}"><summary style="background:${col}"><span>${esc(a.name)}</span><span class="pu-cnt">${a.rows.length} 項活動</span></summary><div style="padding:8px">`+
@@ -4165,7 +4167,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L63</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L65</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -4619,22 +4621,40 @@ function kgApp() {
         items.push({ file, doc, page: i, text, thumb, name: pdfFindName(text, names), date: pdfFindDate(text) });
       }
     }
+    /* 防止重複匯入：同一頁（內容相同，或同一個檔名＋頁碼）已經匯入過就擋下 */
+    rosterMsg('檢查是否已經匯入過…');
+    const hashes = new Set(), keys = new Set();
+    try {
+      const q = await firebase.firestore().collection('learningObservations').where('uid', '==', fbUser().uid).where('source', '==', 'pdf-import').get();
+      q.docs.forEach(x => { const v = x.data(); if (v.pageHash) hashes.add(v.pageHash); keys.add([v.className, v.pdfName, v.pdfPage].join('|')); });
+    } catch (e) { console.error(e); }
+    const seen = new Set();
+    for (const x of items) {
+      x.hash = await pdfHash(x.text ? x.text + '|' + x.thumb.length : x.thumb);
+      x.dup = hashes.has(x.hash) || keys.has([cls, x.file.name, x.page].join('|')) ? 'old' : (seen.has(x.hash) ? 'same' : '');
+      seen.add(x.hash);
+    }
     rosterMsg('');
     showObsPdfDialog(cls, names, items);
+  }
+  async function pdfHash(str) {
+    try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(b)).slice(0, 16).map(x => x.toString(16).padStart(2, '0')).join(''); }
+    catch (e) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return 'h' + h + '_' + str.length; }
   }
   function showObsPdfDialog(cls, names, items) {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(30,28,20,.45);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto';
     const nameOpts = v => `<option value="">（不匯入這頁）</option><option value="__later" ${v === '__later' ? 'selected' : ''}>（先匯入，之後再指定姓名）</option>` + names.map(n => `<option value="${escP(n)}" ${n === v ? 'selected' : ''}>${escP(n)}</option>`).join('');
-    const found = items.filter(x => x.name).length, noText = items.every(x => !x.text);
+    const found = items.filter(x => x.name).length, noText = items.every(x => !x.text), nDup = items.filter(x => x.dup).length;
     const rows = items.map((x, i) => `<tr style="border-top:1px solid #eee5d3"><td style="padding:6px"><img src="${x.thumb}" data-big="${i}" title="點一下放大" style="width:70px;border:1px solid #ddd;border-radius:4px;cursor:zoom-in"></td>
       <td style="padding:6px;font-size:12px;color:#6f6a5e">${escP(x.file.name)}<br>第 ${x.page} 頁</td>
-      <td style="padding:6px"><select data-pn="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px;${x.name ? '' : 'background:#fff4c2'}">${nameOpts(x.name || '__later')}</select>${x.name ? '' : '<div style="font-size:11px;color:#b4472f">沒讀到姓名：可以現在選，或先匯入、之後再到「🏷️ 待指定姓名」選</div>'}</td>
+      <td style="padding:6px">${x.dup ? `<select data-pn="${i}" disabled style="border:1px solid #e3b4a8;border-radius:8px;padding:3px 6px;background:#fbeae5"><option value="">（已匯入過，略過）</option></select><div style="font-size:11px;color:#b4472f;font-weight:700">${x.dup === 'old' ? '⚠️ 這頁之前已經匯入過了，不會重複匯入' : '⚠️ 這次選的檔案裡有一樣的頁面，只匯入一次'}</div>` : `<select data-pn="${i}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px;${x.name ? '' : 'background:#fff4c2'}">${nameOpts(x.name || '__later')}</select>${x.name ? '' : '<div style="font-size:11px;color:#b4472f">沒讀到姓名：可以現在選，或先匯入、之後再到「🏷️ 待指定姓名」選</div>'}`}</td>
       <td style="padding:6px"><input type="date" data-pd="${i}" value="${x.date || today()}" style="border:1px solid #cdbf9e;border-radius:8px;padding:3px 6px"></td></td></tr>`).join('');
     ov.innerHTML = `<div style="background:#fffdf8;border-radius:18px;max-width:880px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-size:14px">
       <div style="padding:18px 22px 8px;border-bottom:1px solid #eee5d3"><b style="font-size:18px">📂 匯入舊觀察紀錄 PDF｜${escP(cls)}</b>
       <p style="margin:6px 0 0;color:#6f6a5e;font-size:13px">共 ${items.length} 頁，讀到姓名的有 ${found} 頁。每一頁會存成該幼兒的一筆觀察紀錄（頁面存成圖片），並計入本學期觀察進度。請確認每頁的姓名和日期，選「不匯入這頁」就會略過；沒讀到姓名的頁面會先匯入，之後再到「🏷️ 待指定姓名」選姓名，選好就會自動標示進度。</p>
-      ${noText ? '<p style="margin:8px 0 0;color:#b4472f;font-weight:700">這份 PDF 讀不到文字（可能是掃描檔），請看縮圖逐頁選擇幼兒姓名。</p>' : ''}</div>
+      ${noText ? '<p style="margin:8px 0 0;color:#b4472f;font-weight:700">這份 PDF 讀不到文字（可能是掃描檔），請看縮圖逐頁選擇幼兒姓名。</p>' : ''}
+      ${nDup ? `<p style="margin:8px 0 0;color:#b4472f;font-weight:700">有 ${nDup} 頁已經匯入過，系統會自動略過，不會重複匯入。</p>` : ''}</div>
       <div style="padding:10px 22px;max-height:60vh;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="color:#6f6a5e;font-size:12px;text-align:left"><th style="padding:4px 6px">頁面</th><th style="padding:4px 6px">檔案</th><th style="padding:4px 6px">幼兒姓名</th><th style="padding:4px 6px">日期</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div style="padding:12px 22px 18px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #eee5d3"><span data-pst style="flex:1;color:#b4472f;font-weight:700;align-self:center"></span>
       <button type="button" data-pcancel style="border:1px solid #cdbf9e;background:#fff;border-radius:10px;padding:6px 14px;cursor:pointer">取消</button><button type="button" data-pgo style="background:#2f6b4f;color:#fff;border:1px solid #2f6b4f;border-radius:10px;padding:6px 14px;cursor:pointer">確定匯入</button></div></div>`;
@@ -4657,7 +4677,7 @@ function kgApp() {
         try {
           const img = PIMG(await renderPdfPage(await t.x.doc.getPage(t.x.page), 1300)), pid = 'pdf' + Date.now() + Math.random().toString(36).slice(2, 6);
           const nm = t.x.file.name + ' 第' + t.x.page + '頁';
-          await ref.set({ className: cls, childName: t.name, needsName: !!t.later, observationDate: t.date, semester: semOf(t.date), source: 'pdf-import', pdfName: t.x.file.name, pdfPage: t.x.page,
+          await ref.set({ className: cls, childName: t.name, needsName: !!t.later, observationDate: t.date, semester: semOf(t.date), source: 'pdf-import', pdfName: t.x.file.name, pdfPage: t.x.page, pageHash: t.x.hash || '',
             sharedWith: [...shareSel].map(x => String(x).toLowerCase()), learningAreas: [], performances: [],
             indicator: { age: '', category: '', item: '', level: '' }, areaPhotoIds: { 'PDF匯入': [pid] }, photoCount: 1, photoMeta: [{ id: pid, area: 'PDF匯入', name: nm }],
             uid: user.uid, userEmail: user.email || '', userName: user.displayName || '', storageMode: 'firestore-photos', createdAt: TS, updatedAt: TS });
@@ -4747,6 +4767,39 @@ function kgApp() {
       refreshPendingCount();
     };
     ov.querySelector('[data-x]').onclick = () => { ov.remove(); refreshPendingCount(); };
+  }
+
+  /* ---- 清除自己匯入 PDF 時重複的頁面（同班、同檔名、同頁碼只保留一筆；優先保留已指定姓名的） ---- */
+  async function cleanDupPdf() {
+    const u = fbUser(); if (!u) { rosterMsg('請先登入。', true); return; }
+    const db = firebase.firestore();
+    rosterMsg('檢查重複的頁面…');
+    const adm = isAdm(), cls = curCls();
+    if (adm && !cls) { rosterMsg('管理員請先在上方選擇要檢查的班級。', true); return; }
+    let docs; try { docs = (await (adm ? db.collection('learningObservations').where('className', '==', cls) : db.collection('learningObservations').where('uid', '==', u.uid)).where('source', '==', 'pdf-import').get()).docs; }
+    catch (e) { rosterMsg('讀取失敗：' + (e.code || e.message), true); return; }
+    const grp = {};
+    docs.forEach(x => { const v = x.data(); const k = [v.uid, v.className, v.pdfName, v.pdfPage].join('|'); (grp[k] = grp[k] || []).push({ id: x.id, v }); });
+    const del = [];
+    Object.values(grp).forEach(g => { if (g.length < 2) return;
+      g.sort((a, b) => (b.v.childName ? 1 : 0) - (a.v.childName ? 1 : 0) || ((a.v.createdAt && a.v.createdAt.seconds) || 0) - ((b.v.createdAt && b.v.createdAt.seconds) || 0));
+      del.push(...g.slice(1)); });
+    if (!del.length) { rosterMsg((adm ? '「' + cls + '」' : '') + '沒有重複匯入的頁面 ✓'); return; }
+    const named = del.filter(x => x.v.childName).length;
+    if (!confirm((adm ? '「' + cls + '」' : '') + '找到 ' + del.length + ' 筆重複匯入的頁面（同一份 PDF 的同一頁匯入了不只一次）。\n每一頁只保留一筆（優先保留已指定姓名的那筆），其餘刪除' + (named ? '，其中 ' + named + ' 筆已指定姓名的重複紀錄也會一起移除進度標示' : '') + '。\n\n要刪除嗎？刪除後無法復原。')) { rosterMsg(''); return; }
+    let n = 0;
+    for (const x of del) {
+      rosterMsg('刪除重複頁面中… ' + (n + 1) + '／' + del.length);
+      try {
+        const ref = db.collection('learningObservations').doc(x.id);
+        const ms = await db.collection('observationMarks').where('obsId', '==', x.id).get();
+        await Promise.all(ms.docs.filter(m => m.data().byUid === u.uid || isAdm()).map(m => m.ref.delete()));
+        const ps = await ref.collection('photos').get(); await Promise.all(ps.docs.map(p => p.ref.delete()));
+        await ref.delete(); n++;
+      } catch (e) { console.error(e); }
+    }
+    rosterMsg('已刪除 ' + n + ' 筆重複的頁面 ✓');
+    refreshPendingCount();
   }
   function renderAdmin() {
     const box = $('#obs-adm-list'); if (!box || !isAdm()) return;
@@ -4971,6 +5024,7 @@ function kgApp() {
     $('[data-action="import-old"]').addEventListener('click', () => of.click());
     { const rb = $('[data-action="roster-edit"]'); if (rb) rb.addEventListener('click', rosterEdit); }
     { const nb = $('[data-action="pending-names"]'); if (nb) { nb.addEventListener('click', showPendingNames); setTimeout(refreshPendingCount, 2500); } }
+    { const cb = $('[data-action="clean-dup-pdf"]'); if (cb) cb.addEventListener('click', cleanDupPdf); }
     { const pb = $('[data-action="import-obs-pdf"]'), pf2 = $('#obs-pdfimp-file'); if (pb && pf2) { pb.addEventListener('click', () => { if (!curCls()) { rosterMsg('請先在上方選擇班級，再匯入 PDF。', true); return; } pf2.click(); }); pf2.addEventListener('change', async () => { const fs = [...(pf2.files || [])]; pf2.value = ''; if (!fs.length) return; try { await importObsPdf(fs); } catch (e) { rosterMsg('匯入失敗：' + (e.code || e.message || e), true); } }); } }
     $('[data-action="old-sample"]').addEventListener('click', downloadOldSample);
     const pf = $('#obs-pdf-file');
