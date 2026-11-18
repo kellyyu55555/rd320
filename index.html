@@ -819,6 +819,9 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
               <div class="bg-cream rounded-2xl p-3 space-y-2">
                 <p class="text-sm font-bold text-wood-dark/80">① 先將要護貝的檔案上傳到雲端資料夾</p>
                 <a href="https://drive.google.com/drive/folders/1J8M-CQjOvRfuwrydiA5VINlis1R_JXEJ?usp=sharing" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-paper text-sm font-bold hover:bg-brand-dark transition">📂 開啟雲端資料夾上傳檔案</a>
+                <button type="button" onclick="window.LamUpload&&window.LamUpload(this)" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sage text-paper text-sm font-bold hover:bg-sage-dark transition">📤 從手機／電腦直接上傳檔案</button>
+                <p class="text-[11px] text-wood-dark/60">手機請用「直接上傳」：可選照片或 PDF，照片會自動合併成一個 PDF 存進護貝資料夾，不需要 Google 帳號權限。</p>
+                <p id="lam-up-msg" class="text-xs font-bold" style="white-space:pre-line"></p>
                 <label class="flex items-center gap-2 text-xs font-bold text-wood-dark/80"><input type="checkbox" x-model="laminateForm.uploaded" class="w-4 h-4 accent-sage"> 我已將檔案上傳到雲端資料夾</label>
               </div>
               <div><label class="text-sm font-bold text-wood-dark/80">申請日期</label>
@@ -1780,7 +1783,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L65</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L67</footer>
     </div>
   </template>
 
@@ -4167,7 +4170,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L65</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L67</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6478,10 +6481,10 @@ function importActivities(){
     const list = (Array.isArray(j) ? j : Array.isArray(j.activities) ? j.activities : (j && j.name ? [j] : [])).filter(x=>x && str(x.name).trim());
     if (!list.length){ alert("檔案裡沒有活動計畫。"); return; }
     const key = x => str(x.name).replace(/\s+/g,"")+"|"+str(x.date);
-    const dupOf = x => S.activities.find(y=>key(y)===key(x));
+    const dupOf = x => S.activities.find(y=>key(y)===key(x)) || (x.replace && S.activities.find(y=>key(y)===key(x.replace)));
     const byT = {}; list.forEach(x=>{ const t = ACT_TYPES.includes(x.type)?x.type:ACT_TYPES[0]; byT[t]=(byT[t]||0)+1; });
     const nd = list.filter(dupOf).length;
-    if (!confirm(`要匯入 ${list.length} 份活動計畫嗎？\n`+Object.entries(byT).map(([t,n])=>`・${t}：${n} 份`).join("\n")+(nd?`\n\n其中 ${nd} 份已經有同名同日期的計畫，會更新內容（照片保留）。`:""))) return;
+    if (!confirm(`要匯入 ${list.length} 份活動計畫嗎？\n`+Object.entries(byT).map(([t,n])=>`・${t}：${n} 份`).join("\n")+(nd?`\n\n以下 ${nd} 份會覆蓋系統裡原有的計畫（照片與附件保留）：\n`+list.filter(dupOf).map(x=>`・${str(dupOf(x).name)} → ${str(x.name)}`).join("\n"):""))) return;
     let ok = 0; const bad = [];
     for (const x of list){
       try{ const old = dupOf(x);
@@ -8984,6 +8987,66 @@ function afSection(a, inline){
   });
   return box;
 }
+/* ---------- 護貝膜申請：從手機／電腦直接上傳檔案到護貝雲端資料夾（透過系統的上傳網址，不需要 Google 帳號權限） ---------- */
+const LAM_FOLDER = "1J8M-CQjOvRfuwrydiA5VINlis1R_JXEJ";
+const LAM_JSP = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+function lamLoad(u){ return new Promise((ok,bad)=>{ const s=document.createElement("script"); s.src=u; s.onload=ok; s.onerror=()=>bad(new Error("無法載入 PDF 工具，請檢查網路後再試")); document.head.appendChild(s); }); }
+function lamImg(file){ return new Promise((ok,bad)=>{ const u=URL.createObjectURL(file), im=new Image();
+  im.onload=()=>{ const MAX=2400, k=Math.min(1, MAX/Math.max(im.naturalWidth, im.naturalHeight)); const c=document.createElement("canvas"); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
+    const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u); ok({ data:c.toDataURL("image/jpeg",0.85), w:c.width, h:c.height }); };
+  im.onerror=()=>{ URL.revokeObjectURL(u); bad(new Error("「"+file.name+"」無法讀取，請改用 JPG 或 PNG 照片")); }; im.src=u; }); }
+async function lamImagesToPdf(files, onStep){
+  if (!(window.jspdf && window.jspdf.jsPDF)) await lamLoad(LAM_JSP);
+  let pdf = null;
+  for (let i=0;i<files.length;i++){
+    onStep && onStep(i+1, files.length);
+    const g = await lamImg(files[i]), land = g.w > g.h, W = land?297:210, H = land?210:297, m = 8;
+    if (!pdf) pdf = new window.jspdf.jsPDF({ orientation: land?"landscape":"portrait", unit:"mm", format:"a4" });
+    else pdf.addPage("a4", land?"landscape":"portrait");
+    const k = Math.min((W-2*m)/g.w, (H-2*m)/g.h), w = g.w*k, h = g.h*k;
+    pdf.addImage(g.data, "JPEG", (W-w)/2, (H-h)/2, w, h);
+  }
+  return pdf.output("blob");
+}
+window.LamUpload = async function(btn){
+  const box = btn.closest("form") || document;
+  const msg = box.querySelector("#lam-up-msg");
+  const say = (t, bad) => { if (msg){ msg.textContent = t; msg.style.color = bad ? "#b4472f" : "#2f6b4f"; } };
+  if (!window.PdfUtil || !window.__driveUrl){ say("系統還沒設定雲端上傳網址，請管理員到「管理者後台 → ☁️ 雲端硬碟上傳設定」設定；或先用上方按鈕開啟雲端資料夾上傳。", true); return; }
+  const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.accept = "image/*,application/pdf,.pdf"; inp.style.display = "none";
+  inp.addEventListener("change", async () => {
+    const fs = [...inp.files]; inp.remove(); if (!fs.length) return;
+    const val = sel => { const e = box.querySelector(sel); return e ? String(e.value||"").trim() : ""; };
+    const who = val('input[list="laminateTeachers"]') || "老師", cls = val('select[x-model="laminateForm.className"]') || "", day = val('input[x-model="laminateForm.requestDate"]') || new Date().toISOString().slice(0,10);
+    const base = [day.replace(/-/g,""), cls, who, "護貝"].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g,"_");
+    const imgs = fs.filter(f=>/^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name)), pdfs = fs.filter(f=>!imgs.includes(f) && (/pdf/.test(f.type) || /\.pdf$/i.test(f.name))), other = fs.filter(f=>!imgs.includes(f) && !pdfs.includes(f));
+    if (other.length) alert("只能上傳照片或 PDF，以下檔案沒有上傳：\n" + other.map(f=>f.name).join("\n"));
+    if (!imgs.length && !pdfs.length) return;
+    const old = btn.textContent; btn.disabled = true; const done = [], bad = [];
+    try{
+      if (imgs.length){
+        say(`照片整理中…`);
+        const blob = await lamImagesToPdf(imgs, (i,n)=>{ btn.textContent = `處理照片 ${i}/${n}…`; });
+        btn.textContent = "上傳中…"; say(`上傳 ${imgs.length} 張照片（合併成一個 PDF）…`);
+        const nm = base + "_照片" + imgs.length + "張.pdf";
+        try{ await PdfUtil.upload(blob, { filename:nm, subfolder:"", folderId:LAM_FOLDER }); done.push(nm); }catch(e){ bad.push("照片（"+(e.message||e)+"）"); }
+      }
+      for (let i=0;i<pdfs.length;i++){
+        const f = pdfs[i]; btn.textContent = `上傳 PDF ${i+1}/${pdfs.length}…`;
+        if (f.size > 25*1024*1024){ bad.push(f.name+"（超過 25 MB）"); continue; }
+        const nm = base + "_" + f.name.replace(/[\\/:*?"<>|]/g,"_");
+        try{ await PdfUtil.upload(f, { filename:nm, subfolder:"", folderId:LAM_FOLDER }); done.push(nm); }catch(e){ bad.push(f.name+"（"+(e.message||e)+"）"); }
+      }
+    }catch(e){ bad.push(e.message||String(e)); }
+    btn.disabled = false; btn.textContent = old;
+    if (done.length){
+      const ck = box.querySelector('input[type="checkbox"][x-model="laminateForm.uploaded"]');
+      if (ck && !ck.checked){ ck.checked = true; ck.dispatchEvent(new Event("change", { bubbles:true })); ck.dispatchEvent(new Event("input", { bubbles:true })); }
+    }
+    say((done.length ? "✅ 已上傳到護貝雲端資料夾：" + done.join("、") : "") + (bad.length ? (done.length?"\n":"") + "⚠️ 上傳失敗：" + bad.join("、") : ""), !!bad.length && !done.length);
+  });
+  document.body.append(inp); inp.click();
+};
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
