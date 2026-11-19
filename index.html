@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L74</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L77</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L74</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L77</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6190,6 +6190,25 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-view .li{display:flex;align-items:flex-start}#kb .mt-view .li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em}#kb .mt-view .li .lt{flex:1}#kb .mt-view .lc{padding-left:1.95em}
 #kb .mt-view,#kb .wp-view{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif}
 
+#kb .pill.exs-sub{background:#fff1c2;color:#8a5a00}
+#kb .pill.exs-ok{background:#e3f3e8;color:#2f6b4f}
+#kb .pill.exs-ret{background:#fde8e1;color:#b4472f}
+#kb .exs-box{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fffdf7;white-space:normal}
+#kb .exs-box.exs-sub{border-color:#e0a800}
+#kb .exs-box.exs-ok{border-color:#9cc9ab}
+#kb .exs-box.exs-ret{border-color:#e3a08d}
+#kb .exs-note{background:#fde8e1;color:#8c2f1c;border-radius:8px;padding:6px 10px;margin:4px 0 8px;white-space:pre-wrap;font-size:14px}
+#kb .exs-banner{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff7dd;border:1.5px solid #e0a800;border-radius:12px;padding:10px 14px;margin:0 0 12px}
+#kb .exs-sum{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px}
+#kb .exs-card.exs-sub{border-color:#e0a800}
+#kb .exs-card.exs-ret{border-color:#e3a08d}
+#kb .exs-card.exs-ok{border-color:#9cc9ab}
+#kb .lines.locked input{background:#f4f1ea;color:#6f6a5e}
+#kb .lines.locked button{display:none}
+
+#kb .act-last{font-size:12px;color:#7a7466;font-weight:normal;white-space:nowrap}
+#kb .act-last.in-meta{background:#f1ece1;border-radius:999px;padding:1px 9px}
+
 </style>
 <script>
 
@@ -6510,6 +6529,43 @@ const sumOf = list => (Array.isArray(list)?list:[]).reduce((s,x)=>s+num(x&&x.amo
 const money = n => n.toLocaleString("zh-TW")+" 元";
 const ACT_TYPES = ["社區活動計畫","研習活動計畫","仁德活動計畫","親職教育活動計畫"];
 const typeOf = a => ACT_TYPES.includes(a.type) ? a.type : ACT_TYPES[0];
+/* ---------- 經費檢核：經費帳號確認後送出，由園方負責人（owner）檢核 ---------- */
+const EXST = { submitted:["📨 經費待檢核","exs-sub"], checked:["✅ 經費已檢核","exs-ok"], returned:["↩ 經費退回修改","exs-ret"] };
+const exPill = a => { const x = EXST[str(a && a.expenseStatus)]; return x ? h("span",{class:"pill "+x[1]},x[0]) : null; };
+const exWho = () => str(S.d && S.d.myName) || ((S.d && S.d.currentUser)||{}).email || "";
+const exTime = ms => ms ? new Date(ms).toLocaleString("zh-TW",{hour12:false}) : "";
+function exReview(a){
+  const s = str(a.expenseStatus); if (!s) return null;
+  const owner = !!(S.d && S.d.isOwner);
+  const info = h("div",{class:"note",style:"font-size:13px"},
+    s==="submitted" ? `${str(a.expenseSubmitBy)||"經費帳號"} 於 ${exTime(a.expenseSubmitAt)} 送出檢核` :
+    s==="checked" ? `${str(a.expenseCheckBy)} 於 ${exTime(a.expenseCheckAt)} 檢核通過` :
+    `${str(a.expenseCheckBy)} 於 ${exTime(a.expenseCheckAt)} 退回`);
+  const note = str(a.expenseCheckNote).trim() ? h("div",{class:"exs-note"},"檢核說明：",str(a.expenseCheckNote)) : null;
+  const err = h("span",{class:"err"});
+  const set = async (st, nt) => { try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expenseStatus:st, expenseCheckAt:Date.now(), expenseCheckBy:exWho(), expenseCheckNote:nt||"" }); toast(st==="checked"?"經費檢核通過":(st==="returned"?"已退回經費帳號修改":"已改回待檢核")); setTimeout(()=>{ if (S.openAct===a.id) showActivity(a.id); }, 400); }catch(e){ err.textContent = errText(e); } };
+  let btns = null;
+  if (owner && s==="submitted"){
+    const ta = h("textarea",{class:"in",placeholder:"退回時請寫要修改的地方（通過可留空）",style:"min-height:56px"});
+    btns = h("div",{style:"display:grid;gap:6px;margin-top:6px"}, ta,
+      h("div",{style:"display:flex;gap:8px;flex-wrap:wrap"},
+        h("button",{class:"btn primary",onclick:()=>set("checked", ta.value.trim())},"✅ 檢核通過"),
+        h("button",{class:"btn",onclick:()=>{ if (!ta.value.trim()){ err.textContent="退回請寫要修改的地方。"; ta.focus(); return; } set("returned", ta.value.trim()); }},"↩ 退回修改"), err));
+  } else if (owner && s==="checked"){
+    btns = h("div",{style:"margin-top:6px"}, h("button",{class:"btn sm",onclick:()=>confirmBox("取消檢核通過？","改回「待檢核」，經費帳號仍不能修改；要讓他修改請改按退回。","改回待檢核",()=>set("submitted",""))},"改回待檢核"), err);
+  }
+  return h("div",{class:"exs-box "+(EXST[s]||["",""])[1]}, h("div",{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap"}, h("b",null,"經費檢核"), exPill(a)), info, note, btns);
+}
+/* 最後修改：取一般編輯、經費修改、經費檢核中最新的一次（只在系統裡顯示，不會印出） */
+function actLast(a){
+  const c = [[a.updatedAt,a.updatedBy],[a.expenseAt,a.expenseBy],[a.expenseSubmitAt,a.expenseSubmitBy],[a.expenseCheckAt,a.expenseCheckBy]].filter(x=>num(x[0])>0).sort((x,y)=>num(y[0])-num(x[0]))[0];
+  return c ? { at:num(c[0]), by:str(c[1]) } : null;
+}
+function actLastEl(a, cls){
+  const L = actLast(a); if (!L) return null;
+  const d = new Date(L.at), p = n=>String(n).padStart(2,"0");
+  return h("span",{class:"act-last "+(cls||""),title:"最後修改"},`🕒 ${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`+(L.by?`　${L.by}`:""));
+}
 const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
 
 function renderActivities(app){
@@ -6527,6 +6583,9 @@ function renderActivities(app){
     name:(a,b)=>str(a.name).localeCompare(str(b.name),"zh-Hant"), status:(a,b)=>(ST[str(a.status)||"草稿"]??0)-(ST[str(b.status)||"草稿"]??0)||str(b.date).localeCompare(str(a.date)),
     expDesc:(a,b)=>sumOf(b.expense)-sumOf(a.expense), expAsc:(a,b)=>sumOf(a.expense)-sumOf(b.expense) }[S.actSort] || ((a,b)=>str(b.date).localeCompare(str(a.date)));
   const list = S.activities.filter(a=>typeOf(a)===S.actType).sort(cmp);
+  if (S.d && S.d.isOwner){ const wait = S.activities.filter(a=>str(a.expenseStatus)==="submitted");
+    if (wait.length) app.append(h("div",{class:"exs-banner"}, h("b",null,`📨 有 ${wait.length} 份活動計畫的經費等你檢核：`),
+      wait.map(a=>h("button",{class:"btn sm",onclick:()=>{ S.actType = typeOf(a); render(); showActivity(a.id); }},`${typeOf(a).replace("活動計畫","")}｜${str(a.name)}`)))); }
   app.append(h("div",{class:"toolbar"},h("h2",null,S.actType),h("span",{class:"sp"}),
     h("label",{class:"act-sort"},"排序：",h("select",{class:"in",onchange:e=>{ S.actSort=e.target.value; try{ localStorage.setItem("actSort",S.actSort); }catch(_){} render(); }}, SORTS.map(([k,l])=>h("option",{value:k,selected:S.actSort===k},l)))),
     h("button",{class:"btn",onclick:()=>importActivities()},"📥 匯入檔案"),
@@ -6534,8 +6593,10 @@ function renderActivities(app){
   if (!list.length){ app.append(h("div",{class:"notice"},`還沒有${S.actType}。`, !S.activities.length ? seedButton() : null)); return; }
   app.append(h("div",{class:"list"}, list.map(a =>
     h("div",{class:"card row",role:"button",tabindex:"0",style:"cursor:pointer",onclick:()=>showActivity(a.id),onkeydown:e=>{ if (e.key==="Enter") showActivity(a.id); }},
-      h("span",{style:"flex:1;min-width:200px"},h("span",{class:"m"},[str(a.semester),str(a.time)].filter(Boolean).join("．")),h("br"),h("span",{class:"t"},str(a.name))),
+      h("span",{style:"flex:1;min-width:200px"},h("span",{class:"m"},[str(a.semester),str(a.time)].filter(Boolean).join("．")),h("br"),h("span",{class:"t"},str(a.name)),
+        actLast(a) ? h("br") : null, actLastEl(a)),
       h("span",{class:"money"},"支出 "+money(sumOf(a.expense))),
+      exPill(a),
       statusPill(a.status),
       h("button",{class:"btn sm",onclick:e=>{ e.stopPropagation(); viewActivity(a.id); }},"👁 檢視")))));
 }
@@ -6570,6 +6631,7 @@ function importActivities(){
           atts = atts.concat([await afStore(str(f.data).replace(/^data:[^,]*,/,""), str(f.name), str(f.type)||"application/pdf", num(f.size) || Math.round(str(f.data).length*0.75))]);
         }
         data.attachments = atts;
+        data.updatedAt = Date.now(); data.updatedBy = exWho() + "（匯入）";
         const ref = old ? S.db.doc(ACT_COL+"/"+old.id) : S.db.collection(ACT_COL).doc(); await ref.set(data); ok++;
       }catch(e){ bad.push(`${str(x.name)}（${errText(e)}）`); }
     }
@@ -6639,7 +6701,7 @@ function showActivity(id){
   openModal(h("div",null,
     h("div",{class:"mh"},h("div",{class:"m"},[typeOf(a),str(a.semester)].filter(Boolean).join("．")),h("h2",null,str(a.name)),
       h("div",{class:"meta"},h("span",null,"呈報日期：",h("b",null,str(a.reportDate)||"—")),statusPill(a.status),
-        a.driveUrl ? h("a",{href:str(a.driveUrl),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},"☁️ 已上傳雲端："+(str(a.driveName)||"開啟檔案")) : null)),
+        a.driveUrl ? h("a",{href:str(a.driveUrl),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},"☁️ 已上傳雲端："+(str(a.driveName)||"開啟檔案")) : null, actLastEl(a,"in-meta"))),
     h("div",{class:"mb"},
       h("table",{class:"form"},h("tbody",null,
         tr("活動地點",str(a.location)), tr("舉辦時間",str(a.time)),
@@ -6650,7 +6712,7 @@ function showActivity(id){
         opt("配合單位",a.partner), opt("工作人員",a.staff),
         opt("準備物品",a.prep), opt("執行與聯絡",a.contact),
         tr("經費收入",items(a.income)+`\n總計：${money(sumOf(a.income))}`),
-        tr("經費支出", expView(a)),
+        tr("經費支出", h("div",null, expView(a), exReview(a))),
         tr("計畫類別",str(a.planType)), opt("注意事項",a.notes))),
       photoSection(a),
       typeof afSection==="function" ? afSection(a) : null,
@@ -6681,6 +6743,7 @@ function moneyLines(list, opt){
   };
   (Array.isArray(list)&&list.length?list:[{item:"",amount:""}]).forEach(x=>add(str(x&&x.item), x&&x.amount!==""&&x.amount!=null?num(x.amount):"", !!(x&&x.bought)));
   const wrap = h("div",{class:"lines"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增一列"));
+  wrap.lock = on => { wrap.classList.toggle("locked", !!on); wrap.querySelectorAll("input:not(.buy),button").forEach(x=>{ x.disabled = !!on; }); };   // 鎖定時仍可勾「已購買」
   wrap.read = () => [...box.children].map(ln=>{ const [i,a]=ln.querySelectorAll("input.in"), cb=ln.querySelector("input.buy"); const o={item:i.value.trim(),amount:a.value.trim()===""?null:num(a.value)}; if (cb && cb.checked) o.bought=true; return o; }).filter(x=>x.item||x.amount);
   return wrap;
 }
@@ -6797,20 +6860,40 @@ function editActivity(id, copy, focus){
   f.purpose.value = a ? arr(a.purpose).join("\n") : "";
   if (copy){ f.name.value = v("name")+"（複本）"; }
   const err = h("div",{class:"err"});
-  const save = h("button",{class:"btn primary",onclick:async()=>{
-    if(!f.name.value.trim()){ err.textContent="請填寫活動名稱。"; return; }
-    const data = {};
+  /* 自動儲存：停止輸入 1.2 秒後自動存；新增或複製的計畫第一次自動儲存後就有自己的編號，之後都存回同一份 */
+  let docId = (id && !copy) ? id : null, dirty = false, at = null, busy = null;
+  const st = h("span",{class:"hint",style:"align-self:center;font-size:13px"});
+  const setSt = (t,k) => { st.textContent = t; st.style.color = k==="bad" ? "#b4472f" : (k==="ok" ? "#2f6b4f" : ""); };
+  const build = () => {
+    const keep = docId ? S.activities.find(x=>x.id===docId) : null;   // 表單沒有的欄位（經費檢核狀態、雲端連結…）照舊保留
+    const data = keep ? Object.fromEntries(Object.entries(keep).filter(([k])=>k!=="id" && k[0]!=="_")) : {};
     for (const k of ["name","semester","type","location","date","time","target","content","notify","partner","staff","prep","contact","notes","planType","status","reportDate","handler","director"])
       data[k] = f[k].value.trim();
     data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read();
-    const latest = (id && !copy) ? S.activities.find(x=>x.id===id) : null;
+    const latest = docId ? S.activities.find(x=>x.id===docId) : null;
     data.photos = idsOf(latest && latest.photos); data.flowImages = idsOf(latest && latest.flowImages);
     data.attachments = (latest && Array.isArray(latest.attachments)) ? latest.attachments : [];
+    return data;
+  };
+  const write = async data => { data.updatedAt = Date.now(); data.updatedBy = exWho(); const ref = docId ? S.db.doc(ACT_COL+"/"+docId) : S.db.collection(ACT_COL).doc(); docId = ref.id; await ref.set(data); };
+  const autoSave = async () => {
+    clearTimeout(at); if (!dirty) return true;
+    if (!f.name.value.trim()){ setSt("✏️ 填好活動名稱後才會自動儲存","wait"); return false; }
+    if (busy){ await busy; if (!dirty) return true; }
+    dirty = false; setSt("💾 儲存中…","wait");
+    busy = write(build()).then(()=>{ const t=new Date(), p=n=>String(n).padStart(2,"0"); if (!dirty) setSt(`✓ 已自動儲存 ${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`,"ok"); return true; })
+      .catch(e=>{ dirty = true; setSt("⚠️ 自動儲存失敗："+errText(e),"bad"); return false; });
+    const r = await busy; busy = null; return r;
+  };
+  const touched = () => { dirty = true; setSt("✏️ 編輯中…","wait"); clearTimeout(at); at = setTimeout(autoSave, 1200); };
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    if(!f.name.value.trim()){ err.textContent="請填寫活動名稱。"; return; }
+    clearTimeout(at); const data = build();
     save.disabled=true; err.textContent="";
     try{
-      const ref = (id && !copy) ? S.db.doc(ACT_COL+"/"+id) : S.db.collection(ACT_COL).doc();
-      await ref.set(data); closeModal(); toast("已儲存"); S.actType=data.type; render();
-    }catch(e){ save.disabled=false; err.textContent=errText(e); }
+      if (busy) await busy;
+      dirty = false; await write(data); closeModal(); toast("已儲存"); S.actType=data.type; render();
+    }catch(e){ dirty = true; save.disabled=false; err.textContent=errText(e); }
   }},"儲存");
   const L = (label, el, hint) => h("label",{class:"fl"}, hint ? h("span",null,label+" ",h("small",null,hint)) : label, el);
   openModal(h("div",null,
@@ -6830,7 +6913,13 @@ function editActivity(id, copy, focus){
       h("div",{class:"f2"},L("計畫類別",f.planType),L("狀態",f.status)),
       h("div",{class:"f2"},L("呈報日期",f.reportDate),L("承辦人",f.handler)),
       L("園長",f.director), err),
-    h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),save)));
+    h("div",{class:"mf"},st,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"關閉"),save)));
+  setSt("☁️ 修改會自動儲存","ok");
+  { const mb = $("#kb-layer").querySelector(".modal");
+    mb.addEventListener("input", e=>{ if (!e.target.closest(".mf")) touched(); });
+    mb.addEventListener("change", e=>{ if (!e.target.closest(".mf")) touched(); });
+    mb.addEventListener("click", e=>{ const b = e.target.closest && e.target.closest(".mb button"); if (b) setTimeout(touched,0); });   // 新增／移除一列
+    S._modalFlush = () => { if (dirty) autoSave(); }; }
   if (focus==="flow"){ f.flow.scrollIntoView({block:"start"}); if(!f.flow.read().length) f.flow.querySelector(".btn").click(); }
 }
 
@@ -6983,32 +7072,68 @@ function renderActView(app){
 }
 
 /* 活動計畫：只開放編輯「經費支出」的帳號（不能看照片、附件，也不能改其他欄位） */
+/* 經費帳號正在輸入或還在自動儲存時，先不要重畫畫面（免得游標跳掉），離開輸入框後再更新 */
+function exBusy(){
+  if (!(S.d && S.d.restrictedPW) || S.view!=="activities" || S.viewAct) return false;
+  const ae = document.activeElement;
+  return Object.values(S._exAuto||{}).some(A=>A.dirty||A.busy) || !!(ae && ae.closest && ae.closest("#kb-app .lines"));
+}
+document.addEventListener("focusout", ()=>setTimeout(()=>{ if (S._exPend && !exBusy()){ S._exPend = false; render(); } }, 300));
 function renderActExpense(app){
   if (!S.actType) S.actType = ACT_TYPES[0];
   const list = S.activities.filter(a=>typeOf(a)===S.actType).sort((a,b)=>str(b.date).localeCompare(str(a.date)));
+  const cnt = st => S.activities.filter(a=>str(a.expenseStatus)===st).length;
   app.append(h("section",{class:"intro"},
     h("h1",null,"活動計畫・經費支出"),
-    h("p",{class:"note"},"這個帳號可以共同編輯每份活動計畫的「經費支出」，其他欄位只能查看。修改後按「💾 儲存經費」。"),
-    h("div",{class:"as-tabs"}, ACT_TYPES.map(t=>h("button",{class:"as-tab"+(S.actType===t?" on":""),onclick:()=>{ S.actType=t; render(); }},`${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`)))));
+    h("p",{class:"note"},"這個帳號可以共同編輯每份活動計畫的「經費支出」，其他欄位只能查看。修改會自動儲存；確認完成後按「📨 送出檢核」交給園方檢核。"),
+    h("div",{class:"exs-sum"}, h("span",{class:"pill exs-sub"},`待檢核 ${cnt("submitted")}`), h("span",{class:"pill exs-ret"},`退回修改 ${cnt("returned")}`), h("span",{class:"pill exs-ok"},`已檢核 ${cnt("checked")}`)),
+    h("div",{class:"as-tabs"}, ACT_TYPES.map(t=>h("button",{class:"as-tab"+(S.actType===t?" on":""),onclick:()=>{ S.actType=t; render(); }},`${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`+(S.activities.some(a=>typeOf(a)===t&&str(a.expenseStatus)==="returned")?" ↩":""))))));
   if (!list.length){ app.append(h("div",{class:"notice"},"這個分類還沒有活動計畫。")); return; }
+  S._exAuto = S._exAuto || {};
   list.forEach(a=>{
-    const ml = moneyLines(a.expense,{check:true}), st = h("span",{class:"err",style:"align-self:center"});
+    const es = str(a.expenseStatus), locked = es==="submitted" || es==="checked";
+    const ml = moneyLines(a.expense,{check:true}), st = h("span",{class:"hint",style:"align-self:center;font-size:13px"});
     const tot = h("b",null,money(sumOf(a.expense)));
-    ml.addEventListener("input", ()=>{ tot.textContent = money(sumOf(ml.read())); st.textContent = "尚未儲存"; st.style.color = "#b4472f"; });
-    const save = h("button",{class:"btn primary",onclick:async()=>{
-      save.disabled = true; st.textContent = "儲存中…"; st.style.color = "";
-      try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expense: ml.read(), expenseBy: str(S.d.myName) || ((S.d.currentUser||{}).email||""), expenseAt: Date.now() });
-        st.textContent = "✓ 已儲存"; st.style.color = "#2f6b4f"; }
-      catch(e){ st.textContent = "儲存失敗：" + errText(e); st.style.color = "#b4472f"; }
-      finally{ save.disabled = false; } }},"💾 儲存經費");
-    app.append(h("div",{class:"card",style:"cursor:default;display:block;margin-bottom:12px"},
+    const setSt = (t,k) => { st.textContent = t; st.style.color = k==="bad" ? "#b4472f" : (k==="ok" ? "#2f6b4f" : ""); };
+    /* 自動儲存（停止輸入 1.2 秒後） */
+    const A = S._exAuto[a.id] = { dirty:false, t:null, busy:null };
+    const saveNow = async () => {
+      clearTimeout(A.t); if (!A.dirty) return true;
+      if (A.busy) await A.busy;
+      A.dirty = false; setSt("💾 儲存中…","wait");
+      A.busy = S.db.doc(ACT_COL+"/"+a.id).update({ expense: ml.read(), expenseBy: exWho(), expenseAt: Date.now() })
+        .then(()=>{ const t=new Date(), p=n=>String(n).padStart(2,"0"); if (!A.dirty) setSt(`✓ 已自動儲存 ${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`,"ok"); setTimeout(()=>{ if (S._exPend && !exBusy()){ S._exPend = false; render(); } }, 400); return true; })
+        .catch(e=>{ A.dirty = true; setSt("⚠️ 自動儲存失敗："+errText(e),"bad"); return false; });
+      const r = await A.busy; A.busy = null; return r;
+    };
+    A.flush = saveNow;
+    const touch = () => { tot.textContent = money(sumOf(ml.read())); A.dirty = true; setSt("✏️ 編輯中…","wait"); clearTimeout(A.t); A.t = setTimeout(saveNow, 1200); };
+    ml.addEventListener("input", touch); ml.addEventListener("change", touch);
+    ml.addEventListener("click", e=>{ if (e.target.closest("button")) setTimeout(touch,0); });
+    if (locked){ ml.lock(true); setSt("（送出後只能勾選「已購買」）",""); } else setSt("☁️ 修改會自動儲存","ok");
+    const submit = h("button",{class:"btn primary",onclick:()=>{
+      const n = ml.read().length;
+      confirmBox("送出經費檢核？",`「${str(a.name)}」經費支出共 ${n} 項、合計 ${money(sumOf(ml.read()))}。送出後要等檢核完成或退回才能再修改。`,"📨 送出檢核",async()=>{
+        if (!(await saveNow())) return;
+        await S.db.doc(ACT_COL+"/"+a.id).update({ expense: ml.read(), expenseBy: exWho(), expenseAt: Date.now(), expenseStatus:"submitted", expenseSubmitAt: Date.now(), expenseSubmitBy: exWho() });
+        toast("已送出經費檢核 📨");
+      });
+    }}, es==="returned" ? "📨 修改完成，重新送出" : "📨 送出檢核");
+    const withdraw = h("button",{class:"btn",onclick:()=>confirmBox("撤回經費檢核？","撤回後可以再修改，改完要重新送出。","撤回",async()=>{
+      await S.db.doc(ACT_COL+"/"+a.id).update({ expenseStatus:"", expenseBy: exWho(), expenseAt: Date.now() }); toast("已撤回，可以修改了");
+    })},"↩ 撤回再修改");
+    app.append(h("div",{class:"card"+(es?" exs-card "+EXST[es][1]:""),style:"cursor:default;display:block;margin-bottom:12px"},
       h("div",{style:"display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"},
-        h("b",{style:"font-size:17px"},str(a.name)), h("span",{class:"note"},[str(a.semester),str(a.time)].filter(Boolean).join("．")), statusPill(a.status)),
+        h("b",{style:"font-size:17px"},str(a.name)), h("span",{class:"note"},[str(a.semester),str(a.time)].filter(Boolean).join("．")), statusPill(a.status), exPill(a)),
       h("div",{class:"note",style:"margin:4px 0 8px"},[str(a.location)&&"地點："+str(a.location), str(a.target)&&"對象："+str(a.target)].filter(Boolean).join("　")),
+      es==="returned" && str(a.expenseCheckNote).trim() ? h("div",{class:"exs-note"},"↩ 退回說明：",str(a.expenseCheckNote)) : null,
+      es==="checked" ? h("div",{class:"note",style:"color:#2f6b4f;margin-bottom:6px"},`✅ ${str(a.expenseCheckBy)} 於 ${exTime(a.expenseCheckAt)} 檢核通過`+(str(a.expenseCheckNote).trim()?"：「"+str(a.expenseCheckNote)+"」":"")) : null,
+      es==="submitted" ? h("div",{class:"note",style:"margin-bottom:6px"},`📨 已於 ${exTime(a.expenseSubmitAt)} 送出，等待檢核中（不能修改）。`) : null,
       h("div",{style:"font-weight:700;margin-bottom:4px"},"經費支出 ",h("span",{class:"note"},"（合計 ",tot,"）")),
       ml,
-      h("div",{style:"display:flex;gap:8px;justify-content:flex-end;margin-top:8px"}, st, save),
-      a.expenseAt ? h("div",{class:"note",style:"text-align:right;font-size:12px"},`上次修改：${str(a.expenseBy)}　${new Date(a.expenseAt).toLocaleString("zh-TW")}`) : null));
+      h("div",{style:"display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px"}, st, h("span",{style:"flex:1"}),
+        es==="submitted" ? withdraw : (es==="checked" ? null : submit)),
+      actLast(a) ? h("div",{style:"text-align:right"}, h("span",{class:"note",style:"font-size:12px"},"最後修改："), actLastEl(a)) : null));
   });
 }
 /* ---------- 作息表（3-5歲班／兩歲專班）與行事曆：老師檢視、管理者編輯 ---------- */
@@ -9310,7 +9435,7 @@ function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
   return query.onSnapshot(snap=>{
     if (!snap.metadata.fromCache){ clearTimeout(timer); S.stale=false; }
-    map(snap); gotObj[key]=true; if (typeof edCtx==="function" && edCtx()) return; render();
+    map(snap); gotObj[key]=true; if (typeof edCtx==="function" && edCtx()) return; if (typeof exBusy==="function" && exBusy()){ S._exPend = true; return; } render();
   }, e=>{
     clearTimeout(timer); gotObj[key]=true;
     if (e && e.code==="permission-denied"){ S.failed="沒有權限讀取這些資料，請確認 Firestore 規則已開放（見說明）。"; }
