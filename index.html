@@ -1629,7 +1629,6 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           <button type="button" class="he-btn" data-he="sgenok" style="font-size:13px;padding:3px 10px">套用到上方欄位</button>
           <button type="button" class="he-btn" data-he="sgenno" style="font-size:13px;padding:3px 10px">關閉</button>
         </div>
-        <details id="he-sex" style="margin-top:6px"><summary style="cursor:pointer;color:#375623;font-weight:700">📋 範例（來自各班已完成的週誌，按「套用」後再修改成自己的）</summary><div id="he-sexl" style="display:grid;gap:6px;margin-top:6px;max-height:260px;overflow:auto"></div></details>
       </div>
     </div>
 
@@ -1795,7 +1794,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L83</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L85</footer>
     </div>
   </template>
 
@@ -4182,7 +4181,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L83</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L85</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5774,13 +5773,6 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
       });
       $('[data-he="sgenok"]').addEventListener('click', () => { if (full) setVal(full); pv.hidden = true; st.textContent = '已套用 ✓'; });
       $('[data-he="sgenno"]').addEventListener('click', () => { pv.hidden = true; st.textContent = ''; });
-      const sex = $('#he-sex');
-      sex.addEventListener('toggle', () => { const G = window.StratGen, l = $('#he-sexl'); if (!sex.open || !G || l.childElementCount) return;
-        G.ex.forEach(e => { const d = document.createElement('div'); d.style.cssText = 'border:1px solid #e3dccb;border-radius:8px;padding:6px 8px;background:#fffdf7';
-          const t = document.createElement('div'); t.style.cssText = 'white-space:pre-wrap;margin-bottom:4px'; t.textContent = e.x;
-          const b = document.createElement('button'); b.type = 'button'; b.className = 'he-btn'; b.style.cssText = 'font-size:12px;padding:2px 8px'; b.textContent = '套用這個範例';
-          b.addEventListener('click', () => { if (ta.value.trim() && !confirm('要用這個範例取代目前「課程調整策略」的內容嗎？')) return; setVal(e.x); st.textContent = '已套用範例，請修改成自己的內容。'; });
-          d.append(t, b); l.append(d); }); });
     }
     $('[data-he="submit"]').addEventListener('click', submitToAdmin);
     $('[data-he="approve"]').addEventListener('click', () => review('read'));
@@ -6240,8 +6232,9 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .act-last{font-size:12px;color:#7a7466;font-weight:normal;white-space:nowrap}
 #kb .act-last.in-meta{background:#f1ece1;border-radius:999px;padding:1px 9px}
 
-#kb .act-fixnotes{margin:2px 0 6px;padding-left:1.6em;color:#5f5a4e;font-size:14px}
-#kb .act-fixnotes li{margin:2px 0}
+#kb .act-fixnotes{margin:2px 0 6px;color:#5f5a4e;font-size:14px}
+#kb .act-fixnotes .fxl{display:flex;gap:6px;margin:2px 0}
+#kb .act-fixnotes .fxl b{flex:none;min-width:1.4em}
 #kb .act-fixnotes .fx{margin-left:8px;font-size:11px;background:#ece6d8;color:#7a7466;border-radius:6px;padding:0 6px}
 
 </style>
@@ -6602,11 +6595,12 @@ function actLastEl(a, cls){
   return h("span",{class:"act-last "+(cls||""),title:"最後修改"},`🕒 ${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`+(L.by?`　${L.by}`:""));
 }
 /* ---------- 注意事項：第 1、2 點固定，自己加的從第 3 點開始 ---------- */
-const ACT_FIXED_NOTES = ["請各班老師注意需要協助的特殊幼兒，務必安排人力支援。", "本計畫園長核可後實施，修正時亦同。"];
+const ACT_FIXED_NOTES = ["請各班老師注意需要協助的特殊教育幼兒需求，活動當天若家長需要協助，務必安排人力支援。", "本計畫園長核可後實施，修正時亦同。"];
+const ACT_OLD_NOTES = ["請各班老師注意需要協助的特殊幼兒，務必安排人力支援。"];   // 舊的寫法，出現時視為重複，不再列出
 const noteNorm = t => str(t).normalize("NFKC").replace(/[\s，,。.、；;：:]/g,"");
 /* 自己加的注意事項（每行一點）：去掉原本打的編號、項目符號，以及和固定兩點重複的內容 */
 function actNoteExtra(notes){
-  const fx = ACT_FIXED_NOTES.map(noteNorm);
+  const fx = ACT_FIXED_NOTES.concat(ACT_OLD_NOTES).map(noteNorm);
   return str(notes).split(/\n|(?=﹡)/).map(t=>t.replace(/^\s*(?:\d+\s*[.、．)）]|[（(]\d+[)）]|[﹡*•・●])\s*/,"").trim()).filter(t=>t && !fx.includes(noteNorm(t)));
 }
 const actNoteAll = notes => ACT_FIXED_NOTES.concat(actNoteExtra(notes));
@@ -6954,7 +6948,7 @@ function editActivity(id, copy, focus){
       h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
       L("準備物品",f.prep),
       h("div",{class:"fl"}, h("span",null,"注意事項 ",h("small",null,"（第 1、2 點固定，自己加的從第 3 點開始，一行一點）")),
-        h("ol",{class:"act-fixnotes"}, ACT_FIXED_NOTES.map(t=>h("li",null,t,h("span",{class:"fx"},"固定")))), f.notes),
+        h("div",{class:"act-fixnotes"}, ACT_FIXED_NOTES.map((t,i)=>h("div",{class:"fxl"},h("b",null,(i+1)+"."),h("span",null,t,h("span",{class:"fx"},"固定"))))), f.notes),
       L("活動流程與道具規劃",f.flow,"（可留空；流程表圖片請在檢視頁上傳）"),
       L("經費收入",f.income), L("經費支出",f.expense),
       h("div",{class:"f2"},L("計畫類別",f.planType),L("狀態",f.status)),
