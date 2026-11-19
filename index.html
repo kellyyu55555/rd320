@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L72</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L73</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L72</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L73</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6616,11 +6616,11 @@ function showActivity(id){
         tr("服務對象及人數",str(a.target)), opt("活動內容",a.content))),
       flowSection(a, flow),
       h("table",{class:"form",style:"margin-top:14px"},h("tbody",null,
-        opt("通知對象",a.notify), opt("配合單位",a.partner), opt("工作人員",a.staff),
-        opt("準備物品",a.prep), opt("執行與聯絡",a.contact), opt("注意事項",a.notes),
+        opt("配合單位",a.partner), opt("工作人員",a.staff),
+        opt("準備物品",a.prep), opt("執行與聯絡",a.contact),
         tr("經費收入",items(a.income)+`\n總計：${money(sumOf(a.income))}`),
         tr("經費支出",items(a.expense)+`\n總計：${money(sumOf(a.expense))}`),
-        tr("計畫類別",str(a.planType)))),
+        tr("計畫類別",str(a.planType)), opt("注意事項",a.notes))),
       photoSection(a),
       typeof afSection==="function" ? afSection(a) : null,
       h("div",{class:"sign"},h("span",null,"承辦人：",str(a.handler)||"＿＿＿"),h("span",null,"園長：",str(a.director)||"＿＿＿"))),
@@ -6787,7 +6787,7 @@ function editActivity(id, copy, focus){
       L("舉辦時間",f.time),
       L("宗旨或目的",f.purpose,"（一行一項）"),
       L("服務對象及人數",f.target), L("活動內容",f.content),
-      h("div",{class:"f2"},L("通知對象",f.notify),L("配合單位",f.partner)),
+      L("配合單位",f.partner),
       h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
       L("準備物品",f.prep), L("注意事項",f.notes),
       L("活動流程與道具規劃",f.flow,"（可留空；流程表圖片請在檢視頁上傳）"),
@@ -6846,7 +6846,7 @@ body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC
 .hd{text-align:center;line-height:1.35}.hd .o{font-size:17pt}.hd .t{font-size:12.5pt;margin-top:4px}.rd{text-align:right;font-size:11pt;margin:2px 0 4px}
 .sec{border-top:1.5px solid #000;padding:5px 2px}.sec.last{border-bottom:1.5px solid #000}
 .sec p{margin:0}.ind{padding-left:1.6em}
-.kvs{border-top:1.5px solid #000}.kv{display:flex;padding:4px 2px;border-bottom:1px solid #000;break-inside:avoid}.kv .k{width:26mm;flex:none;font-weight:bold}.kv .v{flex:1}
+.kvs{border-top:1.5px solid #000}.kv{display:flex;padding:4px 2px;border-bottom:1px solid #000;break-inside:avoid}.kv .k{width:26mm;flex:none;font-weight:bold}.kv .v{flex:1}.kv.nt{border-bottom:1.5px solid #000}
 .money{display:flex;border-top:1.5px solid #000;border-bottom:1.5px solid #000;min-height:34mm;break-inside:avoid}
 .money>div{flex:1;padding:4px 6px;display:flex;flex-direction:column}.money>div:first-child{border-right:1px solid #000}
 .money .h{margin-bottom:2px}.money .h u{text-decoration:underline}.money .tot{margin-top:auto;padding-top:8px}
@@ -6874,11 +6874,12 @@ ${flow.length?`<table class="flow"><colgroup><col style="width:7%"><col style="w
 <thead><tr><th></th><th>活動名稱</th><th>玩法說明</th><th>道具與器材需求</th><th>負責人員</th></tr></thead>
 <tbody>${flow.map((x,i)=>`<tr><td class="n">${i+1}</td><td>${lines(x.name)}</td><td>${lines(x.desc)}</td><td>${lines(x.props)}</td><td>${lines(x.staff)}</td></tr>`).join("")}</tbody></table>`:""}
 ${fimgs.map(id=>`<div class="fimg"><img src="${pics[id]}" alt=""></div>`).join("")}</div>`:""}</div>
-${[a.notify,a.partner,a.staff,a.prep,a.contact,a.notes].some(v=>str(v).trim()) ? `<div class="kvs">${kv("通知對象",a.notify)}${kv("配合單位",a.partner)}${kv("參加人員",a.staff)}${kv("準備物品",a.prep)}${kv("執行與聯絡",a.contact)}${kv("注意事項",a.notes)}</div>` : ""}
-<div class="money" style="margin-top:${[a.notify,a.partner,a.staff,a.prep,a.contact,a.notes].some(v=>str(v).trim())?"8px":"0"}">
+${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim()) ? `<div class="kvs">${kv("配合單位",a.partner)}${kv("參加人員",a.staff)}${kv("準備物品",a.prep)}${kv("執行與聯絡",a.contact)}</div>` : ""}
+<div class="money" style="margin-top:${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim())?"8px":"0"}">
 <div><div class="h">八、經費預算　　<u>收 入</u></div>${mon(a.income)}<div class="tot">總　計:${sumOf(a.income).toLocaleString("zh-TW")} 元</div></div>
 <div><div class="h" style="text-align:center"><u>支 出※</u></div>${mon(a.expense)}<div class="tot" style="text-align:center">總　計: ${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></div></div>
 <div class="sec last" style="border-top:0"><p>九、其他說明（是否為年度計畫、協辦單位、社會資源運用情形、需要本會協助事項等）</p><p class="chk">${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</p></div>
+${str(a.notes).trim() ? `<div class="kv nt">${`<div class="k">注意事項</div><div class="v">${lines(a.notes)}</div>`}</div>` : ""}
 ${sign}
 </div>
 ${photos.length ? `<div class="p3"><p class="st">活動照片</p><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table>${sign}</div>`:""}
