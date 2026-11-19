@@ -1539,6 +1539,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #health-edu-page .he-ph .box{aspect-ratio:4/3;border-radius:.6rem;background:#FAF3E6;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;color:#a08a6c;font-size:.85rem;font-weight:700;text-align:center}
 #health-edu-page .he-ph .box img{width:100%;height:100%;object-fit:contain;background:#fff}
 #health-edu-page .he-ph .row{display:flex;gap:.4rem;flex-wrap:wrap}
+@media (min-width:640px){#health-edu-page #he-photos{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #health-edu-page .he-ph .row button{padding:.25rem .6rem;font-size:.75rem}
 #health-edu-page .he-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;padding:.6rem .8rem;border:1px solid #EEE2CF;border-radius:.8rem;background:#FFFDF8}
 #health-edu-page .he-fixed{display:inline-block;margin-top:.25rem;padding:.5rem .75rem;border-radius:.75rem;background:#FAF3E6;font-weight:800;color:#2F6271}
@@ -1633,7 +1634,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
 
     <div class="paper-card rounded-3xl p-6 shadow-card space-y-3">
-      <h3 class="font-heading font-bold text-sm">五、成果展現 <span class="he-hint">（最多 6 張照片，點方框上傳；照片說明請自行輸入）</span></h3>
+      <h3 class="font-heading font-bold text-sm">五、成果展現 <span class="he-hint">（最多 4 張照片，點方框上傳；照片說明請自行輸入）</span></h3>
       <div class="he-g3" id="he-photos"></div>
     </div>
 
@@ -1794,7 +1795,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L85</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L86</footer>
     </div>
   </template>
 
@@ -4181,7 +4182,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L85</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L86</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5379,7 +5380,7 @@ function kgApp() {
 /* ============ 衛教宣導 ============ */
 (function () {
   'use strict';
-  const COL = 'healthEducation', N = 6, TIME = '15:00-15:30', DRAFT = 'healthEduDraft';
+  const COL = 'healthEducation', N = 4, TIME = '15:00-15:30', DRAFT = 'healthEduDraft';
   const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/13lLX0lkTFGbCG6Af1ZjObgcLc74_0r4i';
   const PLACES = ['三樓活動室', '各班教室', '一樓穿堂', '戶外遊戲場'];
   const SEMS = ['115 學年度上學期', '115 學年度下學期'];
