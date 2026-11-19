@@ -1804,7 +1804,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L92</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L93</footer>
     </div>
   </template>
 
@@ -4200,7 +4200,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L92</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L93</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6617,7 +6617,11 @@ function exReview(a){
     `${str(a.expenseCheckBy)} 於 ${exTime(a.expenseCheckAt)} 退回`);
   const note = str(a.expenseCheckNote).trim() ? h("div",{class:"exs-note"},"檢核說明：",str(a.expenseCheckNote)) : null;
   const err = h("span",{class:"err"});
-  const set = async (st, nt) => { try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expenseStatus:st, expenseCheckAt:Date.now(), expenseCheckBy:exWho(), expenseCheckNote:nt||"" }); toast(st==="checked"?"經費檢核通過":(st==="returned"?"已退回經費帳號修改":"已改回待檢核")); setTimeout(()=>{ if (S.openAct===a.id) showActivity(a.id); }, 400); }catch(e){ err.textContent = errText(e); } };
+  const set = async (st, nt) => { try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expenseStatus:st, expenseCheckAt:Date.now(), expenseCheckBy:exWho(), expenseCheckNote:nt||"" }); toast(st==="checked"?"經費檢核通過":(st==="returned"?"已退回經費帳號修改":"已改回待檢核"));
+      /* LINE 通知送出經費的人（有綁定 LINE 才會收到） */
+      const to = str(a.expenseSubmitEmail);
+      if (to && (st==="checked"||st==="returned") && S.d.notifyLineTo){ S.d.notifyLineTo(to, st==="checked" ? `✅ 活動計畫經費已檢核通過\n活動：${str(a.name)}\n檢核者：${exWho()}${nt?"\n說明："+nt:""}` : `↩️ 活動計畫經費被退回，請修改\n活動：${str(a.name)}\n退回者：${exWho()}\n原因：${nt}\n請至系統「活動計畫・經費支出」修改後重新送出`).catch(()=>{}); }
+      setTimeout(()=>{ if (S.openAct===a.id) showActivity(a.id); }, 400); }catch(e){ err.textContent = errText(e); } };
   let btns = null;
   if (owner && s==="submitted"){
     const ta = h("textarea",{class:"in",placeholder:"退回時請寫要修改的地方（通過可留空）",style:"min-height:56px"});
@@ -7201,9 +7205,17 @@ function renderActExpense(app){
     const submit = h("button",{class:"btn primary",onclick:()=>{
       const n = ml.read().length;
       confirmBox("送出經費檢核？",`「${str(a.name)}」經費支出共 ${n} 項、合計 ${money(sumOf(ml.read()))}。送出後要等檢核完成或退回才能再修改。`,"📨 送出檢核",async()=>{
-        if (!(await saveNow())) return;
-        await S.db.doc(ACT_COL+"/"+a.id).update({ expense: ml.read(), expenseBy: exWho(), expenseAt: Date.now(), expenseStatus:"submitted", expenseSubmitAt: Date.now(), expenseSubmitBy: exWho() });
-        toast("已送出經費檢核 📨");
+        if (!(await saveNow())) throw new Error("經費還沒存好："+(st.textContent||"請稍後再試"));
+        const ex = ml.read();
+        try{
+          await S.db.doc(ACT_COL+"/"+a.id).update({ expense: ex, expenseBy: exWho(), expenseAt: Date.now(), expenseStatus:"submitted", expenseSubmitAt: Date.now(), expenseSubmitBy: exWho(), expenseSubmitEmail: String((S.d.currentUser||{}).email||"").toLowerCase() });
+        }catch(e){
+          if (String(e && (e.code||e.message)).includes("permission")) throw new Error("沒有權限送出檢核：Firebase 的安全規則還是舊版。請管理者到 Firebase 主控台 → Firestore → 規則，貼上最新的 firestore.rules 並按「發布」，再重新送出。");
+          throw e;
+        }
+        /* LINE 通知管理員（和借用、護貝膜申請同一個通知管道） */
+        if (S.d.notifyLine){ try{ S.d.notifyLine(`📨 活動計畫經費待檢核\n活動：${str(a.name)}\n類別：${typeOf(a)}\n支出合計：${money(sumOf(ex))}（${ex.length} 項）\n送出者：${exWho()}\n請至系統「活動計畫」檢核`); }catch(e2){} }
+        toast("已送出經費檢核 📨 已通知管理員");
       });
     }}, es==="returned" ? "📨 修改完成，重新送出" : "📨 送出檢核");
     const withdraw = h("button",{class:"btn",onclick:()=>confirmBox("撤回經費檢核？","撤回後可以再修改，改完要重新送出。","撤回",async()=>{
