@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L73</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L74</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L73</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L74</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5874,6 +5874,15 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .err{color:var(--warn);font-size:13px;min-height:1em}
 #kb .lines{display:grid;gap:6px}
 #kb .lines .ln{display:grid;grid-template-columns:1fr 110px 32px;gap:6px}
+#kb .lines .ln.ck{grid-template-columns:30px 1fr 110px 32px}
+#kb .lines .ln .buyl{display:flex;align-items:center;justify-content:center;cursor:pointer}
+#kb input.buy{width:19px;height:19px;accent-color:#2f6b4f;cursor:pointer}
+#kb .lines .ln.bought input.in:first-of-type{color:#6f6a5e;text-decoration:line-through}
+#kb .exlist{display:flex;flex-direction:column;gap:3px}
+#kb .exrow{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+#kb .exrow input{margin-top:3px;flex:none}
+#kb .exrow.bought span{color:#6f6a5e;text-decoration:line-through}
+#kb .extot{margin-top:4px;font-weight:700}
 #kb .lines .ln button{border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted)}
 #kb table.form{width:100%;border-collapse:collapse;font-size:14px}
 #kb table.form th,#kb table.form td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
@@ -6598,6 +6607,28 @@ function photoSection(a){
       : null);
 }
 
+/* 活動計畫視窗的經費支出：每個項目前面有「已購買」核選方塊，打勾立即儲存（列印、PDF 不會出現） */
+function expView(a){
+  const raw = Array.isArray(a.expense)?a.expense:[], idx = raw.map((_,i)=>i).filter(i=>raw[i]&&(raw[i].item||raw[i].amount));
+  const ex = idx.map(i=>Object.assign({},raw[i]));
+  if (!ex.length) return `—\n總計：${money(sumOf(a.expense))}`;
+  const can = S.isAdmin || S.isEditor || (S.d && S.d.restrictedPW);
+  const cnt = h("span",{class:"note"}), upd = () => { const n = ex.filter(x=>x.bought).length; cnt.textContent = `已購買 ${n}／${ex.length}`; cnt.style.color = n===ex.length ? "#2f6b4f" : ""; };
+  const rows = ex.map((x,i)=>{
+    const cb = h("input",{type:"checkbox",class:"buy",checked:!!x.bought,disabled:!can,title:can?"打勾＝已購買":"只有可以編輯經費的帳號能勾選"});
+    const row = h("label",{class:"exrow"+(x.bought?" bought":"")}, cb, h("span",null,`${str(x.item)}　${x.amount==null||x.amount===""?"（金額未定）":money(num(x.amount))}`));
+    cb.addEventListener("change", async()=>{
+      const all = (Array.isArray(a.expense)?a.expense:[]).map(o=>o&&typeof o==="object"?Object.assign({},o):o), k = idx[i];
+      if (k==null || !all[k]) return; if (cb.checked) all[k].bought = true; else delete all[k].bought;
+      x.bought = cb.checked; row.classList.toggle("bought", cb.checked); upd();
+      try{ await S.db.doc(ACT_COL+"/"+a.id).update({ expense: all, expenseBy: str(S.d.myName) || ((S.d.currentUser||{}).email||""), expenseAt: Date.now() }); a.expense = all; }
+      catch(e){ cb.checked = !cb.checked; x.bought = cb.checked; row.classList.toggle("bought", cb.checked); upd(); toast("儲存失敗：" + errText(e)); }
+    });
+    return row;
+  });
+  upd();
+  return h("div",{class:"exlist"}, rows, h("div",{class:"extot"}, `總計：${money(sumOf(a.expense))}`, "　", cnt), h("div",{class:"note",style:"font-size:12px"},"☑ 打勾表示已購買，只在系統裡顯示，不會印出。"));
+}
 function showActivity(id){
   const a = S.activities.find(x=>x.id===id); if(!a) return;
   S.openAct = id;
@@ -6619,7 +6650,7 @@ function showActivity(id){
         opt("配合單位",a.partner), opt("工作人員",a.staff),
         opt("準備物品",a.prep), opt("執行與聯絡",a.contact),
         tr("經費收入",items(a.income)+`\n總計：${money(sumOf(a.income))}`),
-        tr("經費支出",items(a.expense)+`\n總計：${money(sumOf(a.expense))}`),
+        tr("經費支出", expView(a)),
         tr("計畫類別",str(a.planType)), opt("注意事項",a.notes))),
       photoSection(a),
       typeof afSection==="function" ? afSection(a) : null,
@@ -6635,18 +6666,22 @@ function showActivity(id){
       h("button",{class:"btn primary",onclick:()=>editActivity(a.id)},"編輯"))));
 }
 
-function moneyLines(list){
+function moneyLines(list, opt){
+  const chk = !!(opt && opt.check);              // 經費支出：項目前面有「已購買」核選方塊（只在系統裡看，不會印出）
   const box = h("div",{class:"lines"});
-  const add = (item="",amount="") => {
-    const ln = h("div",{class:"ln"},
+  const add = (item="",amount="",bought=false) => {
+    const cb = chk ? h("input",{type:"checkbox",class:"buy",title:"已購買",checked:!!bought}) : null;
+    const ln = h("div",{class:"ln"+(chk?" ck":"")+(bought?" bought":"")},
+      cb ? h("label",{class:"buyl",title:"打勾＝已購買"},cb) : null,
       h("input",{class:"in",placeholder:"項目",value:item}),
       h("input",{class:"in",type:"number",placeholder:"金額",value:String(amount)}),
       h("button",{type:"button","aria-label":"移除",onclick:()=>ln.remove()},"×"));
+    if (cb) cb.addEventListener("change", ()=>{ ln.classList.toggle("bought", cb.checked); box.dispatchEvent(new Event("input",{bubbles:true})); });
     box.append(ln);
   };
-  (Array.isArray(list)&&list.length?list:[{item:"",amount:""}]).forEach(x=>add(str(x&&x.item), x&&x.amount!==""&&x.amount!=null?num(x.amount):""));
+  (Array.isArray(list)&&list.length?list:[{item:"",amount:""}]).forEach(x=>add(str(x&&x.item), x&&x.amount!==""&&x.amount!=null?num(x.amount):"", !!(x&&x.bought)));
   const wrap = h("div",{class:"lines"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增一列"));
-  wrap.read = () => [...box.children].map(ln=>{ const [i,a]=ln.querySelectorAll("input"); return {item:i.value.trim(),amount:a.value.trim()===""?null:num(a.value)}; }).filter(x=>x.item||x.amount);
+  wrap.read = () => [...box.children].map(ln=>{ const [i,a]=ln.querySelectorAll("input.in"), cb=ln.querySelector("input.buy"); const o={item:i.value.trim(),amount:a.value.trim()===""?null:num(a.value)}; if (cb && cb.checked) o.bought=true; return o; }).filter(x=>x.item||x.amount);
   return wrap;
 }
 
@@ -6754,7 +6789,7 @@ function editActivity(id, copy, focus){
     location:inp("location"), date:h("input",{class:"in",type:"date",value:v("date")}), time:inp("time","例如：115年10月15日上午10:00-11:00"),
     purpose:h("textarea",{class:"in"}), target:ta("target",60), content:ta("content"),
     notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:ta("notes"),
-    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense), flow:flowEditor(a&&a.flow),
+    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow),
     planType:h("select",{class:"in"},["年度計畫","非年度計畫","全園性節慶活動"].map(o=>h("option",{selected:v("planType")===o},o))),
     status:h("select",{class:"in"},["草稿","已呈報","已核准"].map(o=>h("option",{selected:(copy?"草稿":(v("status")||"草稿"))===o},o))),
     reportDate:inp("reportDate","例如：115.08.01"), handler:inp("handler"), director:inp("director")
@@ -6957,7 +6992,7 @@ function renderActExpense(app){
     h("div",{class:"as-tabs"}, ACT_TYPES.map(t=>h("button",{class:"as-tab"+(S.actType===t?" on":""),onclick:()=>{ S.actType=t; render(); }},`${t}（${S.activities.filter(a=>typeOf(a)===t).length}）`)))));
   if (!list.length){ app.append(h("div",{class:"notice"},"這個分類還沒有活動計畫。")); return; }
   list.forEach(a=>{
-    const ml = moneyLines(a.expense), st = h("span",{class:"err",style:"align-self:center"});
+    const ml = moneyLines(a.expense,{check:true}), st = h("span",{class:"err",style:"align-self:center"});
     const tot = h("b",null,money(sumOf(a.expense)));
     ml.addEventListener("input", ()=>{ tot.textContent = money(sumOf(ml.read())); st.textContent = "尚未儲存"; st.style.color = "#b4472f"; });
     const save = h("button",{class:"btn primary",onclick:async()=>{
@@ -9336,7 +9371,7 @@ function sync(d, view){
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor || d.restrictedPW) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
       S.activities=snap.docs.map(x=>({id:x.id,...x.data()}));
-      if (S.openAct && $("#kb-layer .modal") && !$("#kb-layer .lightbox") && !$("#kb-layer input, #kb-layer textarea") && !$("#kb-layer .modal.sm")) showActivity(S.openAct);
+      if (S.openAct && $("#kb-layer .modal") && !$("#kb-layer .lightbox") && !$("#kb-layer input:not(.buy), #kb-layer textarea") && !$("#kb-layer .modal.sm")) showActivity(S.openAct);
     }));
     else S.got.activities = true;
     S.assets = (S.realAdmin || S.isEditor) && !d.restrictedPW ? photoStore : null;
