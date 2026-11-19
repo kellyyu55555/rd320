@@ -1550,7 +1550,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
     <div class="flex flex-wrap gap-2">
       <button type="button" class="he-btn" data-he="print">🖨️ 列印</button>
-      <button type="button" class="he-btn" data-he="new">＋ 新增一份</button>
+      <button type="button" class="he-btn" data-he="import">📥 匯入檔案</button>
+        <button type="button" class="he-btn" data-he="new">＋ 新增一份</button>
     </div>
   </div>
 
@@ -1594,8 +1595,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         <div><span class="he-lb">一、活動日期</span>
           <input class="he-in" name="date" placeholder="例：115 年 11 月 09 日（一）">
           <label class="he-hint flex items-center gap-1 mt-1">或從日曆選：<input type="date" id="he-datepick" style="font-size:12px;border:1px solid #E3D3BA;border-radius:6px;padding:1px 4px"></label></div>
-        <div><span class="he-lb">二、活動時間 <span class="he-hint">（固定）</span></span><br>
-          <span class="he-fixed">15:00-15:30</span></div>
+        <div><span class="he-lb">二、活動時間 <span class="he-hint">（預設 15:00-15:30，可修改）</span></span>
+          <input class="he-in" name="time" placeholder="15:00-15:30"></div>
         <div><span class="he-lb">三、活動地點 <span class="he-hint">（會印在第三點）</span></span>
           <select class="he-in" id="he-place-sel">
             <option value="">請選擇地點</option>
@@ -1612,7 +1613,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
     </div>
 
     <div class="paper-card rounded-3xl p-6 shadow-card space-y-4">
-      <h3 class="font-heading font-bold text-sm">活動流程 <span class="he-hint">（時間固定 15:00-15:30）</span></h3>
+      <h3 class="font-heading font-bold text-sm">活動流程 <span class="he-hint">（時間依「二、活動時間」）</span></h3>
       <label class="block"><span class="he-lb">活動內容</span>
         <textarea class="he-in" name="content" rows="14" placeholder="1. …&#10;2. …&#10;3. …"></textarea></label>
       <label class="block"><span class="he-lb">器材／道具</span>
@@ -1783,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L69</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L71</footer>
     </div>
   </template>
 
@@ -2401,7 +2402,7 @@ async function upload(blob,o){
  const user=firebase.auth().currentUser;if(!user)throw new Error("尚未登入");
  const token=await user.getIdToken();
  const data=await new Promise((ok,bad)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(",")[1]);fr.onerror=bad;fr.readAsDataURL(blob)});
- const r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({token:token,filename:o.filename,subfolder:o.subfolder||"",folderId:o.folderId||"",data:data})});
+ const r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({token:token,filename:o.filename,subfolder:o.subfolder||"",folderId:o.folderId||"",data:data,...(o.replaceId?{replaceId:o.replaceId,replaceName:o.replaceName||""}:{})})});
  let j;try{j=await r.json()}catch(e){throw new Error("上傳網址沒有正確回應，請確認 Apps Script 已部署為「任何人」可存取的網頁應用程式")}
  if(!j.ok)throw new Error(j.error||"上傳失敗");return j}
 function folderId(u){const m=String(u||"").match(/folders\/([\w-]+)/)||String(u||"").match(/[?&]id=([\w-]+)/);return m?m[1]:""}
@@ -4170,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L69</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L71</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5372,7 +5373,7 @@ function kgApp() {
   const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/13lLX0lkTFGbCG6Af1ZjObgcLc74_0r4i';
   const PLACES = ['三樓活動室', '各班教室', '一樓穿堂', '戶外遊戲場'];
   const SEMS = ['115 學年度上學期', '115 學年度下學期'];
-  const FIELDS = ['sem', 'topic', 'date', 'purpose', 'content', 'equip', 'strategy', 'organizer'];
+  const FIELDS = ['sem', 'topic', 'date', 'time', 'purpose', 'content', 'equip', 'strategy', 'organizer'];
   const ST = { draft: ['草稿', '#8a7a66', '#F3ECE0'], submitted: ['已送出・待審閱', '#9a6b00', '#FFF4D6'], read: ['已閱', '#2f6e4f', '#E3F3EA'], returned: ['退件', '#b03a2e', '#FDECEA'] };
   let page = null, form = null, app = null, editing = null, list = [], unsub = null, unsubKey = '', saving = false, firstSnap = true;
   let photos = []; // [{data, cap, changed}]
@@ -5465,11 +5466,11 @@ function kgApp() {
   /* ---------- 表單資料 ---------- */
   function collect() {
     const o = {}; FIELDS.forEach(k => { o[k] = (form.elements[k].value || '').trim(); });
-    o.place = getPlace(); o.time = TIME; o.captions = photos.map(p => p.cap.trim());
+    o.place = getPlace(); o.time = o.time || TIME; o.captions = photos.map(p => p.cap.trim());
     return o;
   }
   function fill(o) {
-    FIELDS.forEach(k => { if (k !== 'sem' && k !== 'organizer') form.elements[k].value = o[k] || ''; });
+    FIELDS.forEach(k => { if (k !== 'sem' && k !== 'organizer') form.elements[k].value = o[k] || (k === 'time' ? TIME : ''); });
     setSelect(form.elements.sem, o.sem || (SEMS.includes(semOf()) ? semOf() : SEMS[0]), SEMS);
     setSelect(form.elements.organizer, o.organizer != null && o.organizer !== '' ? o.organizer : (o.__new ? myName() : ''), teacherNames());
     setPlace(o.place || ''); $('#he-datepick').value = '';
@@ -5538,6 +5539,37 @@ function kgApp() {
     }
     const s = await ref.get();
     return { id: ref.id, ...s.data() };
+  }
+  /* 匯入衛教宣導（JSON：{healthEducation:[{sem,topic,date,time,place,purpose,content,equip,strategy,organizer,status,photos:[{data,cap}]}]}） */
+  function importRecs() {
+    const u = fbUser(); if (!u) { alert('請先登入'); return; }
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json'; inp.style.display = 'none';
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      let j; try { j = JSON.parse(await f.text()); } catch (e) { alert('這個檔案不是正確的衛教宣導匯入檔（JSON 格式錯誤）。'); return; }
+      const recs = (Array.isArray(j) ? j : (j.healthEducation || [])).filter(r => r && (r.topic || r.content));
+      if (!recs.length) { alert('檔案裡沒有衛教宣導紀錄。'); return; }
+      const key = r => String(r.topic || '').trim() + '|' + String(r.date || '').replace(/\s/g, '');
+      const dupOf = r => list.find(x => key(x) === key(r) && x.uid === u.uid);
+      const nd = recs.filter(dupOf).length;
+      if (!confirm('要匯入 ' + recs.length + ' 份衛教宣導嗎？\n' + recs.map(r => '・' + r.topic + '（' + (r.date || '') + '）' + (dupOf(r) ? '（已存在，會覆蓋）' : '')).join('\n') + '\n\n匯入後都可以開啟編輯或刪除。')) return;
+      const db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp(); let ok = 0; const bad = [];
+      for (const r of recs) {
+        try {
+          const ph = (Array.isArray(r.photos) ? r.photos : []).slice(0, N);
+          const data = { sem: r.sem || SEMS[0], topic: r.topic || '', date: r.date || '', time: r.time || TIME, place: r.place || '', purpose: r.purpose || '', content: r.content || '', equip: r.equip || '', strategy: r.strategy || '', organizer: r.organizer || '',
+            captions: Array.from({ length: N }, (_, i) => (ph[i] && ph[i].cap) || ''), photoSlots: Array.from({ length: N }, (_, i) => !!(ph[i] && ph[i].data)), importedFrom: f.name };
+          const old = dupOf(r), ref = old ? db.collection(COL).doc(old.id) : db.collection(COL).doc();
+          if (old) await ref.update({ ...data, updatedAt: TS });
+          else await ref.set({ status: isAdmin() ? (r.status || 'draft') : 'draft', ...data, uid: u.uid, userEmail: (u.email || '').toLowerCase(), userName: myName() || u.displayName || '', createdAt: TS, updatedAt: TS });
+          for (let i = 0; i < N; i++) { const pr = ref.collection('photos').doc('p' + i); if (ph[i] && ph[i].data) await pr.set({ data: ph[i].data, slot: i, createdAt: Date.now() }); else if (old) await pr.delete().catch(() => {}); }
+          ok++;
+        } catch (e) { console.error(e); bad.push(r.topic + '（' + (e.code || e.message) + '）'); }
+      }
+      alert('已匯入 ' + ok + ' 份衛教宣導。' + (bad.length ? '\n\n失敗：\n' + bad.join('\n') : '\n可到「🗂️ 已儲存」開啟編輯或刪除。'));
+      setTab('saved');
+    });
+    document.body.appendChild(inp); inp.click();
   }
   async function loadPhotos(id) {
     const ph = Array(N).fill('');
@@ -5648,13 +5680,13 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 <div class="hd"><div>桃園市仁德非營利幼兒園</div><div>(委託社團法人臺灣宛靜文教協會辦理)</div><div>${esc(o.sem || '')} <u>${esc(topic)}</u> 宣導</div></div>
 <div class="info">
 <div class="k">一、活動日期：</div><div>${esc(o.date || '')}</div>
-<div class="k">二、活動時間：</div><div>${TIME}</div>
+<div class="k">二、活動時間：</div><div>${esc(o.time || TIME)}</div>
 <div class="k">三、活動地點：</div><div>桃園市仁德非營利幼兒園${o.place ? '(' + esc(o.place) + ')' : ''}。</div>
 <div class="k">四、活動目的：</div><div>${purpose}</div>
 </div>
 <table class="flow"><colgroup><col style="width:12%"><col style="width:66%"><col style="width:22%"></colgroup>
 <thead><tr><th>時間</th><th>活動內容</th><th>器材/道具</th></tr></thead>
-<tbody><tr><td>${TIME.replace('-', '-<br>')}</td><td>${lines(o.content || '') || '&nbsp;'}</td><td>${lines(o.equip || '')}</td></tr></tbody></table>
+<tbody><tr><td>${esc(o.time || TIME).replace(/[-~～]/, m => m + '<br>')}</td><td>${lines(o.content || '') || '&nbsp;'}</td><td>${lines(o.equip || '')}</td></tr></tbody></table>
 <table class="st"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tr><td style="border-top:0">課程調整策略:</td><td style="border-top:0">${lines(o.strategy || '') || '&nbsp;'}</td></tr></table>
 </div>
 <div class="p2"><div class="p2h">五、成果展現</div>
@@ -5718,6 +5750,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
     $$('[data-hetab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.hetab)));
     $$('[data-he="print"]').forEach(b => b.addEventListener('click', () => printRec()));
     $('[data-he="upload"]').addEventListener('click', uploadRec);
+    { const ib = $('[data-he="import"]'); if (ib) ib.addEventListener('click', importRecs); }
     $('[data-he="submit"]').addEventListener('click', submitToAdmin);
     $('[data-he="approve"]').addEventListener('click', () => review('read'));
     $('[data-he="return"]').addEventListener('click', () => review('returned'));
@@ -6099,6 +6132,30 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 
 #kb .cal-rich{min-height:84px;max-height:260px;overflow:auto;line-height:1.6;white-space:pre-wrap;cursor:text}
 #kb .cal-rich:focus{outline:2px solid var(--accent);outline-offset:1px}
+#kb .cal-rich > div[data-dup]{background:#fff1c2;box-shadow:inset 3px 0 0 #e0a800;border-radius:3px}
+#kb .cal-dup{border:1.5px solid #e0a800;background:#fffaf0;border-radius:10px;padding:8px 12px;font-size:14px}
+#kb .cal-dup-h{font-weight:800;color:#8a5a00;margin-bottom:2px}
+#kb .cal-dup ul{margin:2px 0 4px}
+#kb .cal-dup li.hard{color:#a3361f}
+#kb .cal-dup li.soft{color:#6f6a5e}
+#kb .cal-dup-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+#kb .cal-duprep li{margin:4px 0}
+#kb .cal-duprep li.soft{color:var(--muted)}
+#kb .cal-upd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px}
+#kb .cal-newm{font-size:12px;font-weight:800;color:#b4472f;background:#fde8e1;border-radius:999px;padding:1px 8px}
+#kb .cal-new{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;color:#fff;background:#d9534f;border-radius:6px;padding:0 5px;line-height:1.5;vertical-align:1px}
+#kb li.cal-isnew{background:linear-gradient(transparent 55%,#fff0b3 55%)}
+#kb .cal-log{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto}
+#kb .cal-lg{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--paper)}
+#kb .cal-lg-h{display:flex;gap:10px;flex-wrap:wrap;font-size:13.5px}
+#kb .cal-lg-h .t{font-weight:800}
+#kb .cal-lg-h .by{color:var(--muted)}
+#kb .cal-lg-h .act{color:var(--accent);font-weight:700}
+#kb .cal-lg-p{font-size:13.5px;margin-top:4px}
+#kb .cal-lg-p ul{margin:2px 0 0}
+#kb .cal-lg-p.add b{color:#2e7d32}
+#kb .cal-lg-p.del b{color:#c62828}
+#kb .cal-lg-p.chg b{color:#1565c0}
 #kb .cal-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fffaf0;position:sticky;top:-14px;z-index:2}
 #kb .cal-bl{font-size:13px;color:var(--muted);font-weight:700}
 #kb .cal-sw{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer;padding:0}
@@ -7132,24 +7189,28 @@ function renderCalendar(app){
   app.append(h("section",{class:"intro"},
     str(cur.note) ? h("p",{class:"note"},str(cur.note)) : null,
     h("h1",null,str(cur.title)),
+    h("div",{class:"cal-upd"}, cur.updatedAt ? h("span",null,`🕒 最後更新：${calTime(cur.updatedAt)}${str(cur.updatedBy)?"（"+str(cur.updatedBy)+"）":""}`) : h("span",null,"🕒 尚無更新紀錄"),
+      h("button",{class:"btn sm",onclick:()=>calLogView(cur)},"📝 更新紀錄")),
     driveLink(cur),
     months.length ? h("div",{class:"subtabs",style:"margin:10px 0 0"}, months.map((m,i)=>
-      h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")))) : null,
+      h("button",{class:"kchip","aria-pressed":String(str(m.month)===nowM), onclick:()=>{ const t=document.getElementById("kb-m"+i); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); }}, str(m.month)+(str(m.month)===nowM?"（本月）":"")+(calIsNew(m.upd)?" 🆕":"")))) : null,
     h("div",{class:"abs",style:"display:flex;gap:8px"},
       h("button",{class:"btn",onclick:()=>printCalendar(cur)},"🖨 列印"),
       uploadBtn(cur._col, cur),
       S.isAdmin ? h("button",{class:"btn",onclick:()=>editCalendar(cur.id)},"編輯標題") : null,
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>calDupReport(cur)},"🔍 檢查重複") : null,
       S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(CALD_COL,cur,"title","行事曆（複製後是草稿）",id=>{ S.cal.sel=id; })},"複製") : null,
       S.isAdmin ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份行事曆？",`「${str(cur.title)}」整份刪除後無法復原。`,"刪除",()=>S.db.doc(cur._col+"/"+cur.id).delete().then(()=>toast("已刪除")))},"刪除") : null)));
   if (!months.length) app.append(h("div",{class:"notice"},"這份行事曆還沒有月份。"));
   months.forEach((m,i)=>{
     app.append(h("section",{class:"intro calm"+(str(m.month)===nowM?" now":""),id:"kb-m"+i},
       h("div",{class:"calh"},h("b",null,str(m.month)),h("span",null,str(m.weeks)),
+        calIsNew(m.upd) ? h("span",{class:"cal-newm",title:"更新時間："+calTime(m.upd)},`🆕 ${calMD(m.upd)} 更新`) : null,
         S.isAdmin ? h("span",{class:"sp"}) : null,
         S.isAdmin ? h("button",{class:"btn",onclick:()=>editMonth(cur.id,i)},"編輯") : null),
       h("div",{class:"calg"}, CAL_CATS.map(([k,label])=>{
         const items = arr(m[k]);
-        return h("div",{class:"calc"},h("h3",null,label), items.length ? h("ul",null,items.map(t=>{ const li=h("li"); li.innerHTML=calRich(t); return li; })) : h("p",{class:"empty"},"—"));
+        return h("div",{class:"calc"},h("h3",null,label), items.length ? h("ul",null,items.map(t=>{ const li=h("li"); li.innerHTML=calRich(t); const nw = calNews(m).find(x=>x&&x.k===calKey(t)); if (nw && calIsNew(nw.at)){ li.classList.add("cal-isnew"); li.append(h("span",{class:"cal-new",title:"新增於 "+calTime(nw.at)},"新")); } return li; })) : h("p",{class:"empty"},"—"));
       }))));
   });
   if (S.isAdmin) app.append(h("button",{class:"btn primary",onclick:()=>editMonth(cur.id,-1)},"＋ 新增月份"));
@@ -7165,7 +7226,8 @@ function editCalendar(id){
     if(!f.title.value.trim()){ err.textContent="請填寫標題。"; return; }
     save.disabled=true;
     try{ const ref = id ? S.db.doc(cur._col+"/"+id) : S.db.collection(CALD_COL).doc();
-      if (id) await ref.update({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value)});
+      if (id){ const ch = []; if (str(cur.title)!==f.title.value.trim()) ch.push(`標題：${str(cur.title)} → ${f.title.value.trim()}`); if (str(cur.note)!==f.note.value.trim()) ch.push("上方說明已修改");
+        await ref.update(Object.assign({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value)}, ch.length ? calStamp(cur, { act:"修改標題", changed: ch }) : {})); }
       else await ref.set({title:f.title.value.trim(),note:f.note.value.trim(),order:num(f.order.value),months:[]});
       S.cal.sel = ref.id; closeModal(); toast("已儲存"); render(); }
     catch(e){ save.disabled=false; err.textContent=errText(e); }
@@ -7210,6 +7272,94 @@ function calRichNode(root){
   return walk(root);
 }
 const calPlain = s => { const d = document.createElement("div"); d.innerHTML = calRich(s); return d.textContent; };
+/* ---------- 行事曆：更新日期與更新紀錄 ---------- */
+const CAL_NEW_DAYS = 14;                        // 「🆕 新」標示保留幾天
+const calWho = () => str((S.d && (S.d.myName || (S.d.currentUser && S.d.currentUser.displayName))) || "");
+const calTime = ms => { const d = new Date(ms); const p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const calMD = ms => { const d = new Date(ms); return `${d.getMonth()+1}/${d.getDate()}`; };
+const calNews = m => (Array.isArray(m && m.news) ? m.news : []).filter(x=>x && typeof x=="object" && x.k);
+const calIsNew = ms => num(ms) > 0 && Date.now() - num(ms) < CAL_NEW_DAYS * 864e5;
+/* 寫入更新日期、更新者，並把這次的變更加進更新紀錄（只留最近 80 筆） */
+function calStamp(cal, entry){
+  const at = Date.now(), by = calWho();
+  const log = (Array.isArray(cal.changeLog) ? cal.changeLog : []).concat([Object.assign({ at, by }, entry)]).slice(-80);
+  return { updatedAt: at, updatedBy: by, changeLog: log };
+}
+/* 比較同一個月份修改前後：新增、刪除了哪些項目，月份名稱或週次有沒有改 */
+function calDiff(oldM, newM){
+  const added = [], removed = [], changed = [];
+  CAL_CATS.forEach(([k,l])=>{
+    const a = arr(oldM[k]).map(calKey), b = arr(newM[k]).map(calKey);
+    arr(newM[k]).forEach((t,i)=>{ if (!a.includes(b[i])) added.push(l+"｜"+calPlain(t).trim()); });
+    arr(oldM[k]).forEach((t,i)=>{ if (!b.includes(a[i])) removed.push(l+"｜"+calPlain(t).trim()); });
+  });
+  if (str(oldM.month) && str(oldM.month)!==str(newM.month)) changed.push(`月份：${str(oldM.month)} → ${str(newM.month)}`);
+  if (str(oldM.weeks)!==str(newM.weeks) && (str(oldM.weeks)||str(newM.weeks))) changed.push(`週次：${str(oldM.weeks)||"（空白）"} → ${str(newM.weeks)||"（空白）"}`);
+  return { added, removed, changed };
+}
+function calLogView(cal){
+  const log = (Array.isArray(cal.changeLog) ? cal.changeLog : []).slice().reverse();
+  const part = (lab, xs, cls) => xs && xs.length ? h("div",{class:"cal-lg-p "+cls}, h("b",null,lab), h("ul",null, xs.map(t=>h("li",null,t)))) : null;
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"📝 更新紀錄："+(str(cal.title)||"行事曆"))),
+    h("div",{class:"mb"},
+      cal.updatedAt ? h("p",{class:"note",style:"margin:0 0 10px"},`最後更新：${calTime(cal.updatedAt)}${str(cal.updatedBy)?"（"+str(cal.updatedBy)+"）":""}`) : null,
+      log.length ? h("div",{class:"cal-log"}, log.map(e=>h("div",{class:"cal-lg"},
+        h("div",{class:"cal-lg-h"}, h("span",{class:"t"},calTime(e.at)), str(e.by)?h("span",{class:"by"},str(e.by)):null, h("span",{class:"act"},str(e.act)+(str(e.month)?"："+str(e.month):""))),
+        part("＋ 新增",e.added,"add"), part("－ 刪除",e.removed,"del"), part("✎ 修改",e.changed,"chg"))))
+      : h("p",{style:"margin:0"},"目前還沒有更新紀錄（從這一版開始記錄）。")),
+    h("div",{class:"mf"},h("span",{class:"sp"}),h("button",{class:"btn primary",onclick:closeModal},"關閉"))));
+}
+/* ---------- 行事曆防呆：找出重複的活動或事務 ---------- */
+const CAL_DATE_RE = /\d{1,2}\s*[\/月.．]\s*\d{1,2}\s*日?|\d{1,2}\s*日|[（(]\s*[一二三四五六日]\s*[)）]|週[一二三四五六日]|星期[一二三四五六日]/g;
+const calNorm = t => str(t).normalize("NFKC").toLowerCase().replace(/[\s ]+/g,"").replace(/[、，,。.．:：;；!！?？~～\-－—–_＿|｜/／\\()（）\[\]【】「」『』〈〉《》"'“”‘’・·•*＊#＃]/g,"");
+const calDates = t => [...calPlain(t).normalize("NFKC").matchAll(/(\d{1,2})\s*[\/月.．]\s*(\d{1,2})/g)].map(m=>(+m[1])+"/"+(+m[2])).join(",");
+const calKey = t => { const d = calDates(t), n = calName(t); return d || n ? d + "|" + n : ""; };                    // 日期＋名稱都一樣（不管星期幾、空白、標點）
+const calName = t => calNorm(calPlain(t).replace(CAL_DATE_RE," "));    // 拿掉日期後的活動名稱
+const calHasDate = t => { CAL_DATE_RE.lastIndex = 0; return CAL_DATE_RE.test(calPlain(t)); };
+const calCatLabel = k => (CAL_CATS.find(c=>c[0]===k)||[k,k])[1];
+/* data＝這個月份（各分類的陣列）；others＝同一份行事曆的其他月份。回傳 {hard:[…], soft:[…], dupIdx:{分類:Set(要移除的位置)}} */
+function calDupCheck(data, others){
+  const hard = [], soft = [], dupIdx = {};
+  const seen = {}, names = {};
+  CAL_CATS.forEach(([k])=>{ dupIdx[k] = new Set(); arr(data[k]).forEach((t,i)=>{
+    const key = calKey(t), nm = calName(t), txt = calPlain(t).trim(); if (!key) return;
+    if (seen[key]){ const f = seen[key];
+      hard.push(`「${txt}」重複出現${f.k===k ? `在「${calCatLabel(k)}」` : `：「${calCatLabel(f.k)}」和「${calCatLabel(k)}」都有`}。`); dupIdx[k].add(i); return; }
+    seen[key] = { k, i };
+    if (nm && nm.length >= 2){ const o = names[nm]; if (o && o.key !== key) soft.push(`「${o.txt}」和「${txt}」名稱相同、日期不同，請確認是不是同一件事。`); else if (!o) names[nm] = { key, txt }; }
+  }); });
+  (others||[]).forEach(om=>{ CAL_CATS.forEach(([k])=>arr(om[k]).forEach(t=>{
+    const key = calKey(t); if (!key || !seen[key] || !calHasDate(t)) return;   // 沒有日期的（例如每月例行事務）不算重複
+    const f = seen[key]; if (f.warned) return; f.warned = 1;
+    hard.push(`「${calPlain(t).trim()}」在「${str(om.month)||"其他月份"}」已經有了。`); dupIdx[f.k].add(f.i);
+  })); });
+  return { hard, soft, dupIdx };
+}
+/* 月份本身：月份名稱重複、日期範圍重疊 */
+function calMonthCheck(data, others){
+  const out = [], m0 = calNorm(data.month);
+  (others||[]).forEach(om=>{
+    if (m0 && calNorm(om.month) === m0) out.push(`已經有「${str(om.month)}」這個月份了。`);
+    else if (data.from && om.from){ const a0 = data.from, a1 = data.to || data.from, b0 = om.from, b1 = om.to || om.from;
+      if (a0 <= b1 && b0 <= a1) out.push(`日期範圍和「${str(om.month)}」（${b0.replace(/-/g,"/")}–${b1.replace(/-/g,"/")}）重疊。`); }
+  });
+  return out;
+}
+function calDupReport(cal){
+  const months = Array.isArray(cal.months) ? cal.months : [], lines = [];
+  months.forEach((m,i)=>{
+    const others = months.slice(0,i);       // 只跟前面的月份比，同一組重複只列一次
+    const r = calDupCheck(m, others), mm = calMonthCheck(m, others);
+    [...mm, ...r.hard].forEach(t=>lines.push([str(m.month)||"（未命名月份）", t, "hard"]));
+    r.soft.forEach(t=>lines.push([str(m.month)||"（未命名月份）", t, "soft"]));
+  });
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"🔍 檢查重複："+(str(cal.title)||"行事曆"))),
+    h("div",{class:"mb"}, lines.length
+      ? h("div",null, h("p",{class:"note",style:"margin:0 0 8px"},"⚠️＝確定重複，建議刪除；💡＝可能重複，請確認。到該月份按「編輯」修改。"),
+          h("ul",{class:"cal-duprep"}, lines.map(([mo,t,lv])=>h("li",{class:lv}, h("b",null,(lv==="hard"?"⚠️ ":"💡 ")+mo+"："), t))))
+      : h("p",{style:"margin:0"},"✅ 沒有發現重複的活動或事務。")),
+    h("div",{class:"mf"},h("span",{class:"sp"}),h("button",{class:"btn primary",onclick:closeModal},"關閉"))));
+}
 function calRichEd(items){
   const ed = h("div",{class:"in cal-rich",contenteditable:"true",spellcheck:"false"});
   ed.innerHTML = (items.length ? items : [""]).map(t=>`<div>${calRich(t)||"<br>"}</div>`).join("");
@@ -7280,23 +7430,60 @@ function editMonth(calId, idx){
   d1.addEventListener("change", calcWeeks); ds.addEventListener("change", calcWeeks);
   const tas = {}; CAL_CATS.forEach(([k])=>{ tas[k]=calRichEd(arr(m[k])); });
   const err = h("div",{class:"err"});
-  const write = async next => S.db.doc(cal._col+"/"+calId).update({ months: next });
+  const write = async (next, entry) => S.db.doc(cal._col+"/"+calId).update(Object.assign({ months: next }, entry ? calStamp(cal, entry) : {}));
+  /* 防呆：邊打字邊檢查重複，重複的那一行會標黃色 */
+  const others = months.filter((_,i)=>i!==idx);
+  const dupBox = h("div",{class:"cal-dup",hidden:true});
+  const readData = () => { const d = { month:f.month.value.trim(), weeks:f.weeks.value.trim(), from:d0.value, to:d1.value }; CAL_CATS.forEach(([k])=>d[k]=calRichRead(tas[k])); return d; };
+  let dupOK = false, dupT = null;
+  const markLines = r => CAL_CATS.forEach(([k])=>{
+    const keys = new Set([...r.dupIdx[k]].map(i=>calKey(readData()[k][i])));
+    [...tas[k].children].forEach(div=>{ const kk = calKey(div.textContent); if (kk && keys.has(kk)) div.setAttribute("data-dup","1"); else div.removeAttribute("data-dup"); });
+  });
+  const runCheck = (forSave, saveFn) => {
+    const data = readData(), r = calDupCheck(data, others), mm = calMonthCheck(data, others), hard = [...mm, ...r.hard];
+    markLines(r);
+    const nDup = CAL_CATS.reduce((n,[k])=>n+r.dupIdx[k].size,0);
+    if (!hard.length && !r.soft.length){ dupBox.hidden = true; dupBox.replaceChildren(); return { data, block:false }; }
+    dupBox.hidden = false;
+    dupBox.replaceChildren(
+      h("div",{class:"cal-dup-h"}, hard.length ? "⚠️ 發現重複的內容" : "💡 可能重複，請確認"),
+      h("ul",null, hard.map(t=>h("li",{class:"hard"},t)), r.soft.map(t=>h("li",{class:"soft"},t))),
+      forSave && hard.length ? h("div",{class:"cal-dup-btns"},
+        nDup ? h("button",{type:"button",class:"btn sm primary",onclick:()=>{ CAL_CATS.forEach(([k])=>{ data[k] = data[k].filter((_,i)=>!r.dupIdx[k].has(i)); tas[k].innerHTML = (data[k].length?data[k]:[""]).map(t=>`<div>${calRich(t)||"<br>"}</div>`).join(""); }); dupOK = !mm.length; runCheck(false); if (dupOK) saveFn(); else toast("已刪掉重複的項目，月份的問題請再確認"); }},`🧹 刪掉重複的 ${nDup} 項再儲存`) : null,
+        h("button",{type:"button",class:"btn sm",onclick:()=>{ dupOK = true; saveFn(); }},"仍要儲存")) : null);
+    return { data, block: forSave && hard.length > 0 && !dupOK };
+  };
+  const live = () => { dupOK = false; clearTimeout(dupT); dupT = setTimeout(()=>runCheck(false), 400); };
+  CAL_CATS.forEach(([k])=>tas[k].addEventListener("input", live)); f.month.addEventListener("input", live); d0.addEventListener("change", live); d1.addEventListener("change", live);
+  setTimeout(()=>runCheck(false), 0);
   const save = h("button",{class:"btn primary",onclick:async()=>{
     if(!f.month.value.trim()){ err.textContent="請填寫月份。"; return; }
-    const data = { month:f.month.value.trim(), weeks:f.weeks.value.trim(), from:d0.value, to:d1.value }; CAL_CATS.forEach(([k])=>data[k]=calRichRead(tas[k]));
+    const chk = runCheck(true, ()=>save.click()); if (chk.block){ err.textContent = "請先處理上面的重複提醒，或按「仍要儲存」。"; dupBox.scrollIntoView({block:"nearest"}); return; }
+    err.textContent = "";
+    const data = chk.data;
     if (ds.value && ds.value!==str(cal.startDate)){ try{ await S.db.doc(cal._col+"/"+calId).update({ startDate: ds.value }); cal.startDate = ds.value; }catch(_){} }
+    /* 更新紀錄：比對修改前後，記下新增、刪除、修改的地方；新增的項目標示「新」 */
+    const old = idx>=0 ? m : {}, df = calDiff(old, data), now = Date.now();
+    const keep = new Set(CAL_CATS.flatMap(([k])=>data[k].map(calKey)));
+    const news = calNews(old).filter(x=>x && keep.has(x.k) && calIsNew(x.at));
+    CAL_CATS.forEach(([k])=>{ const a = arr(old[k]).map(calKey); data[k].forEach(t=>{ const kk = calKey(t); if (!a.includes(kk) && !news.some(x=>x.k===kk)) news.push({ k:kk, at:now }); }); });
+    data.news = idx>=0 ? news : [];          // 新增整個月份時不逐項標「新」，只標月份已更新
+    const touched = df.added.length || df.removed.length || df.changed.length || idx<0;
+    data.upd = touched ? now : num(old.upd);
     if (idx>=0) months[idx]=data; else months.push(data);
-    save.disabled=true; try{ await write(months); closeModal(); toast("已儲存"); }catch(e){ save.disabled=false; err.textContent=errText(e); }
+    const entry = touched ? { act: idx>=0 ? "修改月份" : "新增月份", month: data.month, added: df.added, removed: df.removed, changed: df.changed } : null;
+    save.disabled=true; try{ await write(months, entry); closeModal(); toast("已儲存"); }catch(e){ save.disabled=false; err.textContent=errText(e); }
   }},"儲存");
-  const del = idx>=0 ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(m.month)}」刪除後無法復原。`,"刪除",()=>write(months.filter((_,i)=>i!==idx)).then(()=>toast("已刪除")))},"刪除月份") : null;
-  const up = idx>0 ? h("button",{class:"btn",onclick:async()=>{ const t=months[idx-1]; months[idx-1]=months[idx]; months[idx]=t; try{ await write(months); closeModal(); }catch(e){ err.textContent=errText(e); } }},"↑ 往前移") : null;
+  const del = idx>=0 ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(m.month)}」刪除後無法復原。`,"刪除",()=>write(months.filter((_,i)=>i!==idx), { act:"刪除月份", month: str(m.month) }).then(()=>toast("已刪除")))},"刪除月份") : null;
+  const up = idx>0 ? h("button",{class:"btn",onclick:async()=>{ const t=months[idx-1]; months[idx-1]=months[idx]; months[idx]=t; try{ await write(months, { act:"調整月份順序", month: str(m.month) }); closeModal(); }catch(e){ err.textContent=errText(e); } }},"↑ 往前移") : null;
   openModal(h("div",null, h("div",{class:"mh"},h("h2",null,idx>=0?"編輯月份":"新增月份")),
     h("div",{class:"mb f"},
       h("div",{class:"cal-dates"}, h("div",{class:"cal-dl"},"📅 點選日期，自動算出月份和週次"),
         h("div",{class:"f3"}, h("label",{class:"fl"},"起始日",d0), h("label",{class:"fl"},"結束日（可不填，預設到月底）",d1), h("label",{class:"fl"},"第 1 週開始日（開學日）",ds)), wkInfo),
       h("div",{class:"f2"},h("label",{class:"fl"},"月份",f.month),h("label",{class:"fl"},"週次／日期（可自行修改）",f.weeks)),
       calRichBar(),
-      CAL_CATS.map(([k,l])=>h("div",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項，按 Enter 換下一項）")),tas[k])), err),
+      CAL_CATS.map(([k,l])=>h("div",{class:"fl"},h("span",null,l+" ",h("small",null,"（一行一項，按 Enter 換下一項）")),tas[k])), dupBox, err),
     h("div",{class:"mf"},del,up,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"取消"),save)));
 }
 
@@ -7375,11 +7562,14 @@ async function uploadBoard(col, cur, btn, status){
     const blob = await PdfUtil.htmlToPdf(html, po);
     btn.textContent = "上傳中…";
     const nm = (str(isS ? (cur.title||cur.name) : cur.title) || (isS?"作息表":"行事曆")).replace(/[\\/:*?"<>|]/g,"_") + ".pdf";
-    const j = await PdfUtil.upload(blob, { filename:nm, subfolder:"", folderId:fid });
+    /* 覆蓋舊檔：把上一次上傳的檔案 ID 一起送出，上傳程式會把同資料夾、同檔名的舊檔移到垃圾桶 */
+    const oldId = (String(cur.driveUrl||"").match(/\/d\/([\w-]{20,})/) || String(cur.driveUrl||"").match(/[?&]id=([\w-]{20,})/) || [])[1] || "";
+    const j = await PdfUtil.upload(blob, { filename:nm, subfolder:"", folderId:fid, replaceId:oldId, replaceName:str(cur.driveName) });
     const url = j.url || j.fileUrl || "";
     await S.db.doc(col+"/"+cur.id).update({ driveUrl:url, driveName:nm, driveAt:Date.now() });
-    toast("已上傳雲端硬碟 ✅");
-    if (url && confirm("已上傳到雲端硬碟 ✅\n檔名：" + nm + "\n要現在開啟檔案嗎？")) window.open(url, "_blank");
+    const repl = j.replaced ? "\n已覆蓋舊檔（舊檔移到雲端硬碟的垃圾桶）。" : (oldId ? "\n⚠️ 舊檔還在資料夾裡：雲端上傳程式還沒更新成可以覆蓋的版本，請管理者更新 Apps Script，或到資料夾手動刪除舊檔。" : "");
+    toast(j.replaced ? "已上傳並覆蓋舊檔 ✅" : "已上傳雲端硬碟 ✅");
+    if (url && confirm("已上傳到雲端硬碟 ✅\n檔名：" + nm + repl + "\n要現在開啟檔案嗎？")) window.open(url, "_blank");
   }catch(e){ console.error(e); status.textContent = "上傳失敗：" + (e.code || e.message); }
   finally{ btn.disabled = false; btn.textContent = label; }
 }
@@ -9100,7 +9290,16 @@ function sync(d, view){
   const key = d.currentUser.uid + "|" + !!d.isAdmin + "|" + !!d.isEditor + "|" + !!d.isOwner;
   if (isPage(view) && (view!==S.view || key!==subKey)){
     { const c0 = (typeof edCtx==="function") ? edCtx() : null; if (c0 && c0.h.dirty && S.view!==view) autoRun(c0); }
-    S.view = view; S.openAct = null; const L=document.getElementById("kb-layer"); if (L) L.replaceChildren();
+    /* 切換到其他頁面時，把正在編輯的視窗（例如活動計畫）先收起來；回到原頁面時原封不動放回去，不用重新編輯 */
+    const L = document.getElementById("kb-layer"), uid = d.currentUser.uid, sameUser = !subKey || subKey.split("|")[0]===uid;
+    if (!sameUser){ S._stash = null; S.openAct = null; if (L) L.replaceChildren(); }
+    if (view!==S.view){
+      if (L && L.firstChild && sameUser && S.view) S._stash = { view:S.view, uid, nodes:[...L.childNodes], openAct:S.openAct, flush:S._modalFlush };
+      else if (S._stash && S._stash.view===S.view) S._stash = null;
+      S.view = view; S.openAct = null; S._modalFlush = null; if (L) L.replaceChildren();
+      if (L && S._stash && S._stash.view===view && S._stash.uid===uid){ L.replaceChildren(...S._stash.nodes); S.openAct = S._stash.openAct; S._modalFlush = S._stash.flush || null; S._stash = null; }
+    }
+    /* 同一個帳號、同一頁，只是權限資料重新整理（例如切換視窗回來）：保留正在編輯的視窗 */
   }
   if (key !== subKey){
     unsubs.forEach(f=>{ try{ f(); }catch(_){} }); unsubs = [];
