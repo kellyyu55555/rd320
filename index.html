@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L77</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L78</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L77</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L78</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -7000,9 +7000,9 @@ ${flow.length?`<table class="flow"><colgroup><col style="width:7%"><col style="w
 ${fimgs.map(id=>`<div class="fimg"><img src="${pics[id]}" alt=""></div>`).join("")}</div>`:""}</div>
 ${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim()) ? `<div class="kvs">${kv("配合單位",a.partner)}${kv("參加人員",a.staff)}${kv("準備物品",a.prep)}${kv("執行與聯絡",a.contact)}</div>` : ""}
 <div class="money" style="margin-top:${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim())?"8px":"0"}">
-<div><div class="h">八、經費預算　　<u>收 入</u></div>${mon(a.income)}<div class="tot">總　計:${sumOf(a.income).toLocaleString("zh-TW")} 元</div></div>
+<div><div class="h">七、經費預算　　<u>收 入</u></div>${mon(a.income)}<div class="tot">總　計:${sumOf(a.income).toLocaleString("zh-TW")} 元</div></div>
 <div><div class="h" style="text-align:center"><u>支 出※</u></div>${mon(a.expense)}<div class="tot" style="text-align:center">總　計: ${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></div></div>
-<div class="sec last" style="border-top:0"><p>九、其他說明（是否為年度計畫、協辦單位、社會資源運用情形、需要本會協助事項等）</p><p class="chk">${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</p></div>
+<div class="sec last" style="border-top:0"><p>八、其他說明（是否為年度計畫、協辦單位、社會資源運用情形、需要本會協助事項等）</p><p class="chk">${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</p></div>
 ${str(a.notes).trim() ? `<div class="kv nt">${`<div class="k">注意事項</div><div class="v">${lines(a.notes)}</div>`}</div>` : ""}
 ${sign}
 </div>
