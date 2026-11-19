@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L79</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L81</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L79</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L81</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6209,6 +6209,10 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .act-last{font-size:12px;color:#7a7466;font-weight:normal;white-space:nowrap}
 #kb .act-last.in-meta{background:#f1ece1;border-radius:999px;padding:1px 9px}
 
+#kb .act-fixnotes{margin:2px 0 6px;padding-left:1.6em;color:#5f5a4e;font-size:14px}
+#kb .act-fixnotes li{margin:2px 0}
+#kb .act-fixnotes .fx{margin-left:8px;font-size:11px;background:#ece6d8;color:#7a7466;border-radius:6px;padding:0 6px}
+
 </style>
 <script>
 
@@ -6566,6 +6570,15 @@ function actLastEl(a, cls){
   const d = new Date(L.at), p = n=>String(n).padStart(2,"0");
   return h("span",{class:"act-last "+(cls||""),title:"最後修改"},`🕒 ${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`+(L.by?`　${L.by}`:""));
 }
+/* ---------- 注意事項：第 1、2 點固定，自己加的從第 3 點開始 ---------- */
+const ACT_FIXED_NOTES = ["請各班老師注意需要協助的特殊幼兒，務必安排人力支援。", "本計畫園長核可後實施，修正時亦同。"];
+const noteNorm = t => str(t).normalize("NFKC").replace(/[\s，,。.、；;：:]/g,"");
+/* 自己加的注意事項（每行一點）：去掉原本打的編號、項目符號，以及和固定兩點重複的內容 */
+function actNoteExtra(notes){
+  const fx = ACT_FIXED_NOTES.map(noteNorm);
+  return str(notes).split(/\n|(?=﹡)/).map(t=>t.replace(/^\s*(?:\d+\s*[.、．)）]|[（(]\d+[)）]|[﹡*•・●])\s*/,"").trim()).filter(t=>t && !fx.includes(noteNorm(t)));
+}
+const actNoteAll = notes => ACT_FIXED_NOTES.concat(actNoteExtra(notes));
 const statusPill = s => h("span",{class:"pill"+(s==="草稿"?" draft":s==="已核准"?" ok":"")},str(s)||"草稿");
 
 function renderActivities(app){
@@ -6700,7 +6713,7 @@ function showActivity(id){
   const flow = (Array.isArray(a.flow)?a.flow:[]).filter(x=>x&&typeof x==="object");
   openModal(h("div",null,
     h("div",{class:"mh"},h("div",{class:"m"},[typeOf(a),str(a.semester)].filter(Boolean).join("．")),h("h2",null,str(a.name)),
-      h("div",{class:"meta"},h("span",null,"呈報日期：",h("b",null,str(a.reportDate)||"—")),statusPill(a.status),
+      h("div",{class:"meta"},statusPill(a.status),
         a.driveUrl ? h("a",{href:str(a.driveUrl),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},"☁️ 已上傳雲端："+(str(a.driveName)||"開啟檔案")) : null, actLastEl(a,"in-meta"))),
     h("div",{class:"mb"},
       h("table",{class:"form"},h("tbody",null,
@@ -6713,7 +6726,7 @@ function showActivity(id){
         opt("準備物品",a.prep), opt("執行與聯絡",a.contact),
         tr("經費收入",items(a.income)+`\n總計：${money(sumOf(a.income))}`),
         tr("經費支出", h("div",null, expView(a), exReview(a))),
-        tr("計畫類別",str(a.planType)), opt("注意事項",a.notes))),
+        tr("計畫類別",str(a.planType)), tr("注意事項",actNoteAll(a.notes).map((t,i)=>`${i+1}.${t}`).join("\n")))),
       photoSection(a),
       typeof afSection==="function" ? afSection(a) : null,
       h("div",{class:"sign"},h("span",null,"承辦人：",str(a.handler)||"＿＿＿"),h("span",null,"園長：",str(a.director)||"＿＿＿"))),
@@ -6851,7 +6864,7 @@ function editActivity(id, copy, focus){
     type:h("select",{class:"in"},ACT_TYPES.map(o=>h("option",{selected:(a?typeOf(a):S.actType)===o},o))),
     location:inp("location"), date:h("input",{class:"in",type:"date",value:v("date")}), time:inp("time","例如：115年10月15日上午10:00-11:00"),
     purpose:h("textarea",{class:"in"}), target:ta("target",60), content:ta("content"),
-    notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:ta("notes"),
+    notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:(()=>{ const t=h("textarea",{class:"in",placeholder:"3.（要加的注意事項，一行一點，不用打編號）"}); t.value=actNoteExtra(v("notes")).join("\n"); return t; })(),
     income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow),
     planType:h("select",{class:"in"},["年度計畫","非年度計畫","全園性節慶活動"].map(o=>h("option",{selected:v("planType")===o},o))),
     status:h("select",{class:"in"},["草稿","已呈報","已核准"].map(o=>h("option",{selected:(copy?"草稿":(v("status")||"草稿"))===o},o))),
@@ -6869,6 +6882,7 @@ function editActivity(id, copy, focus){
     const data = keep ? Object.fromEntries(Object.entries(keep).filter(([k])=>k!=="id" && k[0]!=="_")) : {};
     for (const k of ["name","semester","type","location","date","time","target","content","notify","partner","staff","prep","contact","notes","planType","status","reportDate","handler","director"])
       data[k] = f[k].value.trim();
+    data.notes = actNoteExtra(f.notes.value).join("\n");
     data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read();
     const latest = docId ? S.activities.find(x=>x.id===docId) : null;
     data.photos = idsOf(latest && latest.photos); data.flowImages = idsOf(latest && latest.flowImages);
@@ -6907,11 +6921,13 @@ function editActivity(id, copy, focus){
       L("服務對象及人數",f.target), L("活動內容",f.content),
       L("配合單位",f.partner),
       h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
-      L("準備物品",f.prep), L("注意事項",f.notes),
+      L("準備物品",f.prep),
+      h("div",{class:"fl"}, h("span",null,"注意事項 ",h("small",null,"（第 1、2 點固定，自己加的從第 3 點開始，一行一點）")),
+        h("ol",{class:"act-fixnotes"}, ACT_FIXED_NOTES.map(t=>h("li",null,t,h("span",{class:"fx"},"固定")))), f.notes),
       L("活動流程與道具規劃",f.flow,"（可留空；流程表圖片請在檢視頁上傳）"),
       L("經費收入",f.income), L("經費支出",f.expense),
       h("div",{class:"f2"},L("計畫類別",f.planType),L("狀態",f.status)),
-      h("div",{class:"f2"},L("呈報日期",f.reportDate),L("承辦人",f.handler)),
+      L("承辦人",f.handler),
       L("園長",f.director), err),
     h("div",{class:"mf"},st,h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"關閉"),save)));
   setSt("☁️ 修改會自動儲存","ok");
@@ -6967,10 +6983,10 @@ function actPrintHtml(a, pics, pdf){
 body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.6;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
 .wrap{max-width:${pdf?"none":"178mm"};margin:0 auto}@media screen{.wrap{padding:${pdf?"0":"10mm 0"}}}
-.hd{text-align:center;line-height:1.35}.hd .o{font-size:17pt}.hd .t{font-size:12.5pt;margin-top:4px}.rd{text-align:right;font-size:11pt;margin:2px 0 4px}
+.hd{text-align:center;line-height:1.35;margin-bottom:6px}.hd .o{font-size:17pt}.hd .t{font-size:12.5pt;margin-top:4px}.rd{text-align:right;font-size:11pt;margin:2px 0 4px}
 .sec{border-top:1.5px solid #000;padding:5px 2px}.sec.last{border-bottom:1.5px solid #000}
 .sec p{margin:0}.ind{padding-left:1.6em}
-.kvs{border-top:1.5px solid #000}.kv{display:flex;padding:4px 2px;border-bottom:1px solid #000;break-inside:avoid}.kv .k{width:26mm;flex:none;font-weight:bold}.kv .v{flex:1}.kv.nt{border-bottom:1.5px solid #000}
+.kvs{border-top:1.5px solid #000}.kv{display:flex;padding:4px 2px;border-bottom:1px solid #000;break-inside:avoid}.kv .k{width:26mm;flex:none;font-weight:bold}.kv .v{flex:1}.kv.nt{border-bottom:1.5px solid #000}.kv.nt .nl{display:flex}.kv.nt .nl>span:first-child{flex:none;min-width:1.6em}
 .money{display:flex;border-top:1.5px solid #000;border-bottom:1.5px solid #000;min-height:34mm;break-inside:avoid}
 .money>div{flex:1;padding:4px 6px;display:flex;flex-direction:column}.money>div:first-child{border-right:1px solid #000}
 .money .h{margin-bottom:2px}.money .h u{text-decoration:underline}.money .tot{margin-top:auto;padding-top:8px}
@@ -6984,7 +7000,7 @@ table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px so
   const photoRows = [];
   for (let i=0;i<photos.length;i+=2) photoRows.push(`<tr>${[0,1].map(k=>`<td>${photos[i+k]?`<img src="${pics[photos[i+k]]}" alt="">`:""}</td>`).join("")}</tr>`);
   const head = `<div class="hd"><div class="o">桃園市仁德非營利幼兒園</div><div class="o">(委託社團法人宛靜文教協會辦理)</div>
-<div class="t">*-${esc(a.semester)}-${esc(a.name)}</div></div><div class="rd">呈報日期:${esc(a.reportDate)}</div>`;
+<div class="t">*-${esc(a.semester)}-${esc(a.name)}</div></div>`;
   const sign = `<div class="sign"><div>承辦人:${esc(a.handler)}</div><div>園長:${esc(a.director)}</div></div>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(actFileName(a).replace(/\.pdf$/,""))}</title><style>${css}</style></head><body>
 ${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」，勾選「背景圖形」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
@@ -7003,7 +7019,7 @@ ${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim()) ? `<div class="kvs
 <div><div class="h">七、經費預算　　<u>收 入</u></div>${mon(a.income)}<div class="tot">總　計:${sumOf(a.income).toLocaleString("zh-TW")} 元</div></div>
 <div><div class="h" style="text-align:center"><u>支 出※</u></div>${mon(a.expense)}<div class="tot" style="text-align:center">總　計: ${sumOf(a.expense).toLocaleString("zh-TW")} 元</div></div></div>
 <div class="sec last" style="border-top:0"><p>八、其他說明（是否為年度計畫、協辦單位、社會資源運用情形、需要本會協助事項等）</p><p class="chk">${chk("年度計畫")}　　${chk("非年度計畫")}　　${chk("全園性節慶活動")}</p></div>
-${str(a.notes).trim() ? `<div class="kv nt">${`<div class="k">注意事項</div><div class="v">${lines(a.notes)}</div>`}</div>` : ""}
+<div class="kv nt"><div class="k">注意事項</div><div class="v">${actNoteAll(a.notes).map((t,i)=>`<div class="nl"><span>${i+1}.</span><span>${esc(t)}</span></div>`).join("")}</div></div>
 ${sign}
 </div>
 ${photos.length ? `<div class="p3"><p class="st">活動照片</p><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table></div>`:""}
