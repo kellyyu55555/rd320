@@ -1784,7 +1784,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L78</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L79</footer>
     </div>
   </template>
 
@@ -4171,7 +4171,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L78</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L79</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6978,7 +6978,7 @@ body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC
 .sign{display:flex;gap:30mm;margin:10px 4px 0}
 table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all;text-align:left}
 .flow th{text-align:center;font-weight:normal}.flow td.n{text-align:center}
-.p2,.p3{break-before:page;page-break-before:always}.st{font-weight:bold;margin:0 0 6px}
+.p2,.p3{break-before:page;page-break-before:always}.p3{padding-top:10mm}.p3 .st{margin-bottom:8px}.st{font-weight:bold;margin:0 0 6px}
 .flowin{margin:6px 0 4px}.flowin .st{margin:4px 0}.flow tr{break-inside:avoid}.fimg{text-align:center;margin-top:8px}.fimg img{max-width:100%;max-height:240mm}
 .ph td{text-align:center;vertical-align:middle;padding:3px;height:70mm;border:0}.ph img{max-width:100%;max-height:66mm;display:block;margin:0 auto}.ph tr{break-inside:avoid}`;
   const photoRows = [];
@@ -7006,7 +7006,7 @@ ${[a.partner,a.staff,a.prep,a.contact].some(v=>str(v).trim()) ? `<div class="kvs
 ${str(a.notes).trim() ? `<div class="kv nt">${`<div class="k">注意事項</div><div class="v">${lines(a.notes)}</div>`}</div>` : ""}
 ${sign}
 </div>
-${photos.length ? `<div class="p3"><p class="st">活動照片</p><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table>${sign}</div>`:""}
+${photos.length ? `<div class="p3"><p class="st">活動照片</p><table class="ph"><colgroup><col style="width:50%"><col style="width:50%"></colgroup><tbody>${photoRows.join("")}</tbody></table></div>`:""}
 </div>${pdf?"":'<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},500)})<\/script>'}</body></html>`;
 }
 
