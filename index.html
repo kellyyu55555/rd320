@@ -1564,6 +1564,15 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
   <div data-hepanel="saved" hidden class="paper-card rounded-3xl p-6 shadow-card">
     <h3 class="font-heading font-bold text-sm">🗂️ 已儲存的衛教宣導 <span id="he-saved-sub" class="he-hint"></span></h3>
     <p class="he-hint mt-1">自己的紀錄可以開啟編輯、刪除；其他老師的紀錄只能檢視。每份都可以列印；管理員按「已閱」後才能上傳雲端硬碟。</p>
+    <div class="mt-3 flex flex-wrap items-center gap-2 text-sm"><span class="font-bold">排序：</span>
+      <select class="he-in" id="he-sort" style="width:auto;padding:.3rem .6rem">
+        <option value="date-desc">活動日期（新 → 舊）</option>
+        <option value="date-asc">活動日期（舊 → 新）</option>
+        <option value="upd">最近修改</option>
+        <option value="topic">宣導主題（筆畫）</option>
+        <option value="org">承辦人</option>
+        <option value="status">狀態（待審閱優先）</option>
+      </select></div>
     <div id="he-list" class="mt-3 space-y-2"></div>
   </div>
 
@@ -1795,7 +1804,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L88</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L92</footer>
     </div>
   </template>
 
@@ -2520,7 +2529,7 @@ function prevRef(L){
  return box(`<details open><summary style="cursor:pointer;font-weight:700;color:#375623">📖 參考上一份班級週誌（${esc(weekText(P))}｜${esc(roc(P.dateFrom))}${P.ownerName?"｜"+esc(P.ownerName):""}），寫上方「上次執行成效」用 <span style="font-weight:400;color:#7a6f57;font-size:.9em">（只在編輯時顯示，不會印出）</span></summary>${blk("【教學省思】老師發現的問題",P.lz&&P.lz.reflect)}${blk("引導說明",P.lz&&P.lz.guide)}</details>`);
 }
 function genStrat(raw){const s=plainOf(raw),sents=s.split(/[。！？!?；;\n]+/).map(x=>x.trim()).filter(Boolean),all=[];
- const lines=sents.map(t=>{const tg=tagsOf(t);tg.forEach(o=>{if(!all.includes(o))all.push(o)});if(!tg.length||SOPTS.some(o=>t.includes(o)))return t+"。";return tg.join("、")+":"+t+"。"});
+ const lines=sents.map(t=>{const tg=tagsOf(t);tg.forEach(o=>{if(!all.includes(o))all.push(o)});if(!tg.length||SOPTS.some(o=>t.includes(o)))return t.replace(new RegExp("("+SOPTS.join("|")+")\\s*:\\s*","g"),"$1：")+"。";return tg.join("、")+"："+t+"。"});
  return{opts:SOPTS.filter(o=>all.includes(o)),text:s,full:lines.map((l,k)=>(lines.length>1?(k+1)+".":"")+l).join("\n")}}
 const RT_FONTS=["標楷體","微軟正黑體","新細明體","Noto Sans TC","Arial","Times New Roman"],RT_SIZES=[10,11,12,14,16,18,20,24,28,32];
 const TXT_COL=[["#d32f2f","紅"],["#e65100","橘"],["#f9a825","黃"],["#2e7d32","綠"],["#1565c0","藍"],["#6a1b9a","紫"],["#6d4c41","咖啡"],["#616161","灰"],["#000000","黑"]];
@@ -4191,7 +4200,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L88</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L92</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -5631,7 +5640,21 @@ function kgApp() {
     const pend = list.filter(x => stOf(x) === 'submitted').length;
     $('#he-saved-sub').textContent = adm ? (pend ? `（待審閱 ${pend} 份）` : '') : '';
     const order = x => (adm && stOf(x) === 'submitted' ? 0 : x.uid === me ? 1 : 2);
-    $('#he-list').innerHTML = list.length ? list.slice().sort((a, b) => order(a) - order(b) || t(b) - t(a)).map(x => {
+    const sk = (() => { try { return localStorage.getItem('heSort') || 'date-desc'; } catch (e) { return 'date-desc'; } })();
+    { const sel = $('#he-sort'); if (sel && sel.value !== sk) sel.value = sk; }
+    /* 活動日期：「115年08月24日」「115 年 11 月 09 日」都換成 1150824 這樣的數字來比 */
+    const dn = x => { const m = String(x.date || '').match(/(\d{2,4})\s*[年\/.-]\s*(\d{1,2})\s*[月\/.-]\s*(\d{1,2})/); return m ? (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3]) : 0; };
+    const zh = (a, b) => String(a || '').localeCompare(String(b || ''), 'zh-Hant-TW-u-co-stroke');
+    const SO = { submitted: 0, returned: 1, draft: 2, read: 3 };
+    const cmp = {
+      'date-desc': (a, b) => (dn(b) - dn(a)) || t(b) - t(a),
+      'date-asc': (a, b) => ((dn(a) || 1e9) - (dn(b) || 1e9)) || t(b) - t(a),
+      'upd': (a, b) => t(b) - t(a),
+      'topic': (a, b) => zh(a.topic, b.topic) || (dn(b) - dn(a)),
+      'org': (a, b) => zh(a.organizer, b.organizer) || (dn(b) - dn(a)),
+      'status': (a, b) => (order(a) - order(b)) || ((SO[stOf(a)] ?? 9) - (SO[stOf(b)] ?? 9)) || (dn(b) - dn(a))
+    }[sk] || ((a, b) => dn(b) - dn(a));
+    $('#he-list').innerHTML = list.length ? list.slice().sort(cmp).map(x => {
       const mine = x.uid === me, can = mine || adm, st = stOf(x);
       return `<div class="he-item">
       <div><div>${badge(st)} <b>${esc(x.topic || '未命名')} 宣導</b>${mine ? ' <span class="he-hint">（我的）</span>' : ''}</div>
@@ -5680,7 +5703,8 @@ function kgApp() {
     const topic = o.topic || '　　　　', purpose = (o.purpose || '').split('\n').map(l => `<div>${esc(l) || '&nbsp;'}</div>`).join('') || '&nbsp;';
     const cell = i => `<td class="pc">${ph[i] ? `<img src="${ph[i]}" alt="">` : ''}</td>`;
     const cap = i => `<td class="cap">照片說明：${esc((o.captions || [])[i] || '')}</td>`;
-    const rows = [0, 2, 4].map(i => `<tr>${cell(i)}${cell(i + 1)}</tr><tr>${cap(i)}${cap(i + 1)}</tr>`).join('');
+    const has = i => !!(ph[i] || ((o.captions || [])[i] || '').trim());
+    const rows = Array.from({ length: Math.ceil(N / 2) }, (_, k) => k * 2).filter(i => i === 0 || has(i) || has(i + 1)).map(i => `<tr>${cell(i)}${cell(i + 1)}</tr><tr>${cap(i)}${cap(i + 1)}</tr>`).join('');
     const css = `@page{size:A4 portrait;margin:14mm 15mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font-size:12pt;line-height:1.55;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
@@ -5790,6 +5814,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
     $('[data-he="return"]').addEventListener('click', () => review('returned'));
     $('[data-he="new"]').addEventListener('click', () => { if ((isDirty || (!editing && collect().content)) && !confirm('要清空表單、新增一份新的衛教宣導嗎？（已儲存的內容不受影響）')) return; try { localStorage.removeItem(DRAFT); } catch (e) {} resetForm(false); setTab('fill'); say(''); });
     $('[data-he="cancel"]').addEventListener('click', () => { if (isDirty && !confirm('關閉？尚未按「更新」的修改不會保留。')) return; resetForm(false); say(''); });
+    { const so = $('#he-sort'); if (so) so.addEventListener('change', () => { try { localStorage.setItem('heSort', so.value); } catch (e) {} renderList(); }); }
     $('#he-list').addEventListener('click', async e => {
       const o = e.target.closest('[data-heopen]'), p = e.target.closest('[data-heprint]'), d = e.target.closest('[data-hedel]');
       try {
@@ -6247,6 +6272,16 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .act-fixnotes .fxl{display:flex;gap:6px;margin:2px 0}
 #kb .act-fixnotes .fxl b{flex:none;min-width:1.4em}
 #kb .act-fixnotes .fx{margin-left:8px;font-size:11px;background:#ece6d8;color:#7a7466;border-radius:6px;padding:0 6px}
+
+#kb .mt-tbl{border:1px dashed #cfc6b2;border-radius:10px;padding:8px 10px;margin:6px 0;background:#fffdf8}
+#kb .mt-gridw{overflow-x:auto}
+#kb table.mt-grid{border-collapse:collapse;min-width:100%}
+#kb table.mt-grid td{padding:2px;border:1px solid #e3dccb}
+#kb table.mt-grid td .in{min-width:70px;padding:4px 6px;font-size:14px}
+#kb table.mt-grid tr.hd .in{font-weight:700;background:#f4efe3}
+#kb table.mt-grid td.x{border:none;width:1%}
+#kb table.mt-grid tr.xr td{border:none;text-align:center}
+#kb table.mt-grid tr.xr .btn{font-size:11px;padding:1px 6px}
 
 </style>
 <script>
@@ -8635,6 +8670,32 @@ async function asUploadAll(btn, type, docs){
   alert(bad.length ? `上傳完成 ${done.length-bad.length} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已上傳 ${done.length} 份到「${S.as.cls}／${AS_T[type].label}」資料夾 ✅`);
 }
 
+/* ---------- 會議紀錄的表格（報告、議題內容裡可以放一個表格，第一列是標題列） ---------- */
+const MT_TBL_TPL = { "特教支持性服務": { cap:"附表：特殊教育幼兒已申請通過之支持性服務", rows:[["班級","幼兒姓名","巡迴輔導","物理治療","職能治療","語言治療","助理人員","輔具服務","備註"],["","","","","","","","",""]] } };
+function mtTbl(t){
+  if (!t || typeof t!=="object" || !Array.isArray(t.rows)) return null;
+  const rows = t.rows.map(r=>Array.isArray(r)?r.map(c=>str(c)):(r&&Array.isArray(r.c)?r.c.map(c=>str(c)):[])).filter(r=>r.length);
+  if (!rows.length) return null;
+  const w = Math.max(...rows.map(r=>r.length)); rows.forEach(r=>{ while (r.length<w) r.push(""); });
+  return { cap:str(t.cap), rows, after:str(t.after) };
+}
+/* Firestore 不能存「陣列裡的陣列」，存檔時把每一列包成 {c:[…]} */
+const mtTblSave = t => t ? { cap:t.cap, after:t.after||"", rows:t.rows.map(r=>({c:r})) } : null;
+/* 從 Word、Excel 或網頁複製的表格貼上：優先讀 HTML 表格，沒有就用 Tab 分隔的文字 */
+function mtTblFromClip(html, text){
+  if (html && /<table/i.test(html)){
+    const doc = new DOMParser().parseFromString(html,"text/html"), tb = doc.querySelector("table");
+    if (tb){ const rows = [...tb.rows].map(tr=>[...tr.cells].flatMap(td=>{ const v = td.textContent.replace(/\s+/g," ").trim(); return Array(Math.max(1,+td.colSpan||1)).fill("").map((_,k)=>k?"":v); })).filter(r=>r.some(c=>c));
+      if (rows.length) return mtTbl({rows}); }
+  }
+  const rows = String(text||"").replace(/\r/g,"").split("\n").filter(l=>l.trim()).map(l=>l.split("\t").map(c=>c.trim()));
+  return rows.length && rows.some(r=>r.length>1) ? mtTbl({rows}) : null;
+}
+function mtTblHtml(t){
+  if (!t || !t.rows.length) return "";
+  const nonEmpty = t.rows.filter((r,i)=>i===0 || r.some(c=>c.trim()));
+  return `${t.cap.trim()?`<div class="tcap">${esc(t.cap)}</div>`:""}<table class="mtt"><thead><tr>${nonEmpty[0].map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${nonEmpty.slice(1).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
 /* ---------- 會議紀錄：教保會議、園務會議、課發會、勞資會議 ---------- */
 const MT_COL = "meetingMinutes", MT_PH = "meetingPhotos";
 const MT_TYPES = [["教保會議","t1"],["園務會議","t2"],["課發會","t3"],["勞資會議","t4"]];
@@ -8660,8 +8721,8 @@ const mtRocDate = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); retu
 const mtTime = t => { const m=str(t).match(/^(\d{1,2}):(\d{2})/); return m ? `${+m[1]}時${m[2]}分` : ""; };
 function mtNorm(m){
   const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：" }, JSON.parse(JSON.stringify(m||{})));
-  o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body), photos:mtPh(r&&r.photos), fixed:!!(r&&r.fixed)}));
-  o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), resolution:str(r&&r.resolution), photos:mtPh(r&&r.photos), resPhotos:mtPh(r&&r.resPhotos), fixed:str(r&&r.fixed),
+  o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body), table:mtTbl(r&&r.table), photos:mtPh(r&&r.photos), fixed:!!(r&&r.fixed)}));
+  o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), table:mtTbl(r&&r.table), resolution:str(r&&r.resolution), photos:mtPh(r&&r.photos), resPhotos:mtPh(r&&r.resPhotos), fixed:str(r&&r.fixed),
     classes:(Array.isArray(r&&r.classes)?r.classes:[]).map(c=>({cls:str(c&&c.cls), items:(Array.isArray(c&&c.items)?c.items:[]).map(it=>({q:str(it&&it.q), by:str(it&&it.by), a:str(it&&it.a)}))}))}));
   const F = MT_FIXED[o.type] || {};
   (F.reports||[]).forEach(fx=>{ const r = o.reports.find(x=>mtKey(x.title)===mtKey(fx.title)); if (r){ r.fixed = true; r.title = fx.title; } else o.reports.push({title:fx.title, body:"", photos:[], fixed:true}); });
@@ -8754,6 +8815,7 @@ async function mtSave(btn, auto){
   if (!auto){ clearTimeout(M._at); M._timerOn=false; }
   const body = JSON.parse(JSON.stringify(d)); delete body.id; body.no = +body.no || 1; body.signRows = Math.max(0,Math.min(40,+body.signRows||0)); body.signCols = Math.max(1,Math.min(6,+body.signCols||3));
   if (body.autoTitle) body.title = ""; body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||"";
+  [...(body.reports||[]),...(body.issues||[])].forEach(r=>{ r.table = mtTblSave(mtTbl(r.table)); });   // 表格：陣列裡的陣列要轉換才能存
   if (auto){ const ref = M.edit==="__new" ? S.db.collection(MT_COL).doc() : S.db.doc(MT_COL+"/"+M.edit); M.edit = ref.id; d.id = ref.id; await ref.set(body);
     M.list = M.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); return true; }
   if (btn) btn.disabled = true;
@@ -8804,6 +8866,31 @@ function renderMeetingEditor(app){
           ask ? null : h("label",{class:"fl"},"給予策略與建議的老師",h("input",{class:"in",value:x.by,placeholder:"例如：Amber",oninput:e=>{ x.by=e.target.value; mark(); }})),
           ta(x,"a", ask?"回覆（選填）":"策略與建議", ask?2:4))))));
   };
+  const tblEd = it => {
+    const box = h("div",{class:"mt-tbl"});
+    if (!it.table){
+      const pa = h("textarea",{class:"in",placeholder:"在這裡按 Ctrl+V（手機長按→貼上）貼上從 Word／Excel 複製的表格",style:"min-height:44px",hidden:true});
+      pa.addEventListener("paste", e=>{ const cd = e.clipboardData; const t = mtTblFromClip(cd && cd.getData("text/html"), cd && cd.getData("text/plain")); e.preventDefault();
+        if (!t){ toast("沒有讀到表格，請在 Word 裡選取整個表格再複製"); return; } it.table = t; mark(); render(); toast(`已貼上表格：${t.rows.length} 列 × ${t.rows[0].length} 欄`); });
+      box.append(h("div",{class:"mt-ih"},h("b",null,"表格"),h("span",{class:"note",style:"font-size:12px"},"（選填，印在這段內容的文字下面）"),h("span",{class:"sp"}),
+        h("button",{class:"btn sm",onclick:()=>{ pa.hidden = false; pa.focus(); }},"📋 貼上 Word／Excel 表格"),
+        h("button",{class:"btn sm",onclick:()=>{ it.table = mtTbl(JSON.parse(JSON.stringify(MT_TBL_TPL["特教支持性服務"]))); mark(); render(); }},"＋ 特教支持性服務表格"),
+        h("button",{class:"btn sm",onclick:()=>{ it.table = mtTbl({rows:[["","",""],["","",""]]}); mark(); render(); }},"＋ 空白表格")), pa);
+      return box;
+    }
+    const t = it.table, W = t.rows[0].length;
+    const grid = h("table",{class:"mt-grid"}, h("tbody",null, t.rows.map((r,i)=>h("tr",{class:i===0?"hd":""},
+      r.map((c,j)=>h("td",null,h("input",{class:"in",value:c,placeholder:i===0?"標題":"",oninput:e=>{ t.rows[i][j]=e.target.value; mark(); }}))),
+      h("td",{class:"x"}, i>0 ? h("button",{class:"btn sm",title:"刪除這一列",onclick:()=>{ t.rows.splice(i,1); mark(); render(); }},"✕") : null))),
+      h("tr",{class:"xr"}, Array.from({length:W},(_,j)=>h("td",null, W>1 ? h("button",{class:"btn sm",title:"刪除這一欄",onclick:()=>{ if (!confirm(`刪除第 ${j+1} 欄「${t.rows[0][j]||""}」？`)) return; t.rows.forEach(r=>r.splice(j,1)); mark(); render(); }},"✕ 欄") : null)), h("td"))));
+    box.append(h("div",{class:"mt-ih"},h("b",null,"表格"),h("span",{class:"note",style:"font-size:12px"},"（第一列是標題列；整列空白不會印出）"),h("span",{class:"sp"}),
+        h("button",{class:"btn sm",onclick:()=>{ t.rows.push(Array(W).fill("")); mark(); render(); }},"＋ 列"),
+        h("button",{class:"btn sm",onclick:()=>{ t.rows.forEach(r=>r.push("")); mark(); render(); }},"＋ 欄"),
+        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除整個表格？")) return; it.table = null; mark(); render(); }},"刪除表格")),
+      h("label",{class:"fl"},"表格說明（印在表格上方，可留空）",h("input",{class:"in",value:t.cap,placeholder:"例如：附表：特殊教育幼兒已申請通過之支持性服務",oninput:e=>{ t.cap=e.target.value; mark(); }})),
+      h("div",{class:"mt-gridw"},grid));
+    return box;
+  };
   const listEd = (title, key, mk) => {
     const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},title));
     d[key].forEach((it,i)=>{ const lab = key==="reports" ? `報告${mtNum(i+1)}` : `議題${mtNum(i+1)}`;
@@ -8813,8 +8900,8 @@ function renderMeetingEditor(app){
           i<d[key].length-1 ? h("button",{class:"btn sm",onclick:()=>{ [d[key][i+1],d[key][i]]=[d[key][i],d[key][i+1]]; mark(); render(); }},"↓") : null,
           it.fixed ? null : h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除「"+lab+"」？")) return; d[key].splice(i,1); mark(); render(); }},"刪除")),
         it.fixed ? h("div",{class:"fl"},key==="reports"?"標題":"議題",h("div",{class:"mt-fixt"},it.title)) : h("label",{class:"fl"},key==="reports"?"標題（例如：地震演練時程）":"議題（例如：十月分學習區任務卡的執行計畫）",h("input",{class:"in",value:it.title,oninput:e=>{ it.title=e.target.value; mark(); }})),
-        key==="reports" ? [ta(it,"body","內容（可分行）",5), phEd(it.photos,"內容加照片")]
-          : [ta(it,"content","內容／討論（可分行）",6), phEd(it.photos,"內容加照片"), ta(it,"resolution","決議（可分行）",4), phEd(it.resPhotos,"決議加照片")]));
+        key==="reports" ? [ta(it,"body","內容（可分行）",5), tblEd(it), phEd(it.photos,"內容加照片")]
+          : [ta(it,"content","內容／討論（可分行）",6), tblEd(it), phEd(it.photos,"內容加照片"), ta(it,"resolution","決議（可分行）",4), phEd(it.resPhotos,"決議加照片")]));
     });
     sec.append(h("button",{class:"btn",onclick:()=>{ const n = mk(); const fi = d[key].findIndex(x=>x.fixed); if (fi>=0) d[key].splice(fi,0,n); else d[key].push(n); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
     return sec;
@@ -8860,11 +8947,12 @@ function mtBodyHtml(m, withImgs, forPdf){
   /* 固定項目只有標題、沒有內容時不列印；一般項目有填標題就印 */
   m.reports = m.reports.filter(r=>r.body.trim()||r.photos.length||(!r.fixed&&r.title.trim()));
   m.issues = m.issues.filter(r=>r.content.trim()||r.resolution.trim()||r.photos.length||r.resPhotos.length||(r.classes||[]).some(c=>(c.items||[]).some(x=>str(x.q).trim()||str(x.a).trim()))||(!r.fixed&&r.title.trim()));
-  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>${pg(r.photos)}`; });
+  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>${r.table?`<div class="tw">${mtTblHtml(r.table)}</div>`:""}${pg(r.photos)}`; });
   body += `<div class="row">六、議題討論：</div>`;
   m.issues.forEach((r,i)=>{
     body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>`;
     if (r.content.trim()) body += `<div class="txt">${r.fixed||r.content.trim().startsWith("內容")?"":"內容："}${ind(r.content)}</div>`;
+    if (r.table) body += `<div class="tw">${mtTblHtml(r.table)}</div>`;
     body += pg(r.photos);
     if (r.fixed==="ask"){ let n=0; r.classes.forEach(c=>c.items.filter(x=>x.q.trim()||x.a.trim()).forEach(x=>{ n++; body += `<div class="txt">${n}. ${esc(c.cls.replace(/班$/,""))}：${ind(x.q)}${x.a.trim()?`<br>回覆：${ind(x.a)}`:""}</div>`; })); }
     if (r.fixed==="help"){ r.classes.forEach(c=>{ const its=c.items.filter(x=>x.q.trim()||x.a.trim()); if (!its.length) return; body += `<div class="txt cls">【${esc(c.cls)}】</div>`;
@@ -8880,7 +8968,7 @@ const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;f
 .sub{margin:5px 0 0;font-weight:bold}.txt{margin:0 0 1px 2.4em;white-space:normal;line-height:1.5}
 .li{display:flex;align-items:flex-start}.li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em;white-space:nowrap}.li .lt{flex:1 1 auto;min-width:0}.lc{padding-left:1.95em}
 table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
-table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
+table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}.tw{margin:4px 0 8px 2.4em;page-break-inside:avoid;break-inside:avoid}.tw .tcap{margin-bottom:3px}table.mtt{width:100%;border-collapse:collapse;font-size:10pt}table.mtt th,table.mtt td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.35}table.mtt th{font-weight:normal}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
 function mtPrintHtml(m, forPdf){
   const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;color:#000;font-size:12pt;line-height:1.6}
 .wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:${forPdf?"0":"10mm 0"}}}table.pt tr,.sub{page-break-inside:avoid}.sub{page-break-after:avoid;break-after:avoid}table.pt,table.sgt{width:calc(100% - 2px)}` + MT_CSS;
@@ -8939,6 +9027,7 @@ function mtImport(){
         for (const r of (Array.isArray(m1.issues)?m1.issues:[])){ r.photos = await up(r.photos); r.resPhotos = await up(r.resPhotos); }
         const body = mtNorm(Object.assign({}, m1, { photos:[] })); delete body.id; body.photos = photos; body.no = +body.no||1; if (body.autoTitle) body.title="";
         body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||""; body.importedFrom = f.name;
+        [...body.reports,...body.issues].forEach(r=>{ r.table = mtTblSave(r.table); });
         const ref = S.db.collection(MT_COL).doc(); await ref.set(body); S.mt.list = S.mt.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); ok++;
       }catch(e){ bad.push(mtTitle(mtNorm(m0))+"（"+errText(e)+"）"); }
     }
