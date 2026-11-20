@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L104</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L105</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L104</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L105</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6352,6 +6352,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .stu-pk .stu-cks{gap:4px 12px}
 #kb .stu-pk .stu-ck{min-width:92px}
 #kb .stu-sort{display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
+#kb .btn.warn{border-color:#e0a800;background:#fff7dd;color:#8a5a00;font-weight:700}
 
 </style>
 <script>
@@ -9519,6 +9520,7 @@ function stuToolbar(T, list, title){
     h("button",{class:"btn primary",onclick:()=>stuEdit(null, T.tab==="class" ? T.cls : "")},"＋ 新增幼兒"),
     h("button",{class:"btn"+(T.inline?" primary":""),onclick:()=>{ T.inline=!T.inline; render(); }}, T.inline ? "✅ 完成表格編輯" : "✏️ 直接在表格中編輯"),
     h("button",{class:"btn",onclick:()=>stuImport(T)},"📥 從 Excel 匯入"),
+    (()=>{ const n = stuDupGroups(T.list).length; return h("button",{class:"btn"+(n?" warn":""),onclick:()=>stuDupView(T)}, n ? `⚠️ 重複資料 ${n} 組` : "🔍 檢查重複"); })(),
     h("button",{class:"btn",onclick:()=>stuExport(list, title)},"📤 匯出 Excel"),
     h("button",{class:"btn",onclick:()=>stuPrint(list, title, T)},"🖨️ 列印"),
     (()=>{ const st = h("span",{class:"err",style:"align-self:center"}); const b = h("button",{class:"btn",onclick:()=>stuUpload(list, title, T, b, st)},"☁️ 上傳雲端"); return [b, st]; })(),
@@ -9743,20 +9745,76 @@ function stuImport(T){
     if (!recs.length){ alert("檔案裡沒有幼兒資料。"); return; }
     const noCls = recs.filter(r=>!r.cls).length;
     if (noCls){ alert(`有 ${noCls} 位幼兒沒有班級。請在 Excel 加上「班級」欄，或先在「班級」分頁選好班級再匯入（會全部放進那一班）。`); return; }
-    const key = r => r.cls+"|"+r.name, old = new Map(T.list.map(o=>[key(o),o]));
-    const nNew = recs.filter(r=>!old.has(key(r))).length, nUpd = recs.length - nNew;
-    const byCls = {}; recs.forEach(r=>{ byCls[r.cls]=(byCls[r.cls]||0)+1; });
-    if (!confirm(`要匯入 ${T.year} 學年度幼生名冊嗎？\n共 ${recs.length} 位：新增 ${nNew} 位、更新 ${nUpd} 位（同班同名視為同一位）\n\n${Object.entries(byCls).map(([c,n])=>`・${c}：${n} 位`).join("\n")}\n\n讀到的欄位：${Object.keys(col).map(k=>({cls:"班級",no:"座號",name:"姓名",gender:"性別",birthday:"出生日期",idno:"身分證",ids:"身分別",grade:"班別",entry:"入園身分",fatherName:"父親姓名",fatherPhone:"父親電話",motherName:"母親姓名",motherPhone:"母親電話",otherName:"其他家人",otherRel:"其他家人關係",otherPhone:"其他家人電話",parent:"家長",relation:"關係",phone:"電話",phone2:"其他電話",address:"地址",enrollDate:"入學日期",enrollYear:"入學學年",status:"狀態",leaveDate:"離園日期",note:"備註"})[k]).join("、")}`)) return;
-    let ok = 0; const bad = []; const who = str(S.d.myName)||((S.d.currentUser||{}).email||""), now = Date.now();
-    for (const r of recs){
-      try{ const o = old.get(key(r));
-        if (o){ const up = {}; Object.entries(r).forEach(([k,val])=>{ if (Array.isArray(val) ? !(val.length===1&&val[0]==="一般生"&&col.ids==null) : (str(val)!=="" || k==="status")) up[k]=val; }); up.updatedAt=now; up.updatedBy=who+"（匯入）"; await S.db.doc(STU_COL+"/"+o.id).update(up); }
+    /* ① 檔案內重複：身分證相同，或姓名＋生日相同，只匯入第一筆 */
+    const fileDup = [], seen = new Map(), uniq = [];
+    recs.forEach((r,i)=>{ const ks = stuKeys(r); const hit = ks.map(k=>seen.get(k)).find(v=>v!=null);
+      if (hit!=null){ fileDup.push(`・${r.cls} ${r.name}（${stuRoc(r.birthday)}）與 ${uniq[hit].cls} ${uniq[hit].name} 重複`); return; }
+      ks.forEach(k=>seen.set(k, uniq.length)); uniq.push(r); });
+    /* ② 對應系統裡的舊資料：先比身分證，再比姓名＋生日，再比同班同名（換班也會找到同一位，直接覆蓋，不會多出一筆） */
+    const idx = new Map(); T.list.forEach(o=>stuKeys(o, true).forEach(k=>{ if (!idx.has(k)) idx.set(k,o); }));
+    const match = r => { for (const k of stuKeys(r, true)){ const o = idx.get(k); if (o) return o; } return null; };
+    const pairs = uniq.map(r=>[r, match(r)]), nUpd = pairs.filter(p=>p[1]).length, nNew = pairs.length - nUpd;
+    const moved = pairs.filter(([r,o])=>o && o.cls!==r.cls).map(([r,o])=>`・${r.name}：${o.cls} → ${r.cls}`);
+    const sysDup = stuDupGroups(T.list);
+    const byCls = {}; uniq.forEach(r=>{ byCls[r.cls]=(byCls[r.cls]||0)+1; });
+    const fieldsTxt = Object.keys(col).map(k=>({cls:"班級",no:"座號",name:"姓名",gender:"性別",birthday:"出生日期",idno:"身分證",ids:"身分別",grade:"班別",entry:"入園身分",fatherName:"父親姓名",fatherPhone:"父親電話",motherName:"母親姓名",motherPhone:"母親電話",otherName:"其他家人",otherRel:"其他家人關係",otherPhone:"其他家人電話",parent:"家長",relation:"關係",phone:"電話",phone2:"其他電話",address:"地址",enrollDate:"入學日期",enrollYear:"入學學年",status:"狀態",leaveDate:"離園日期",note:"備註"})[k]).join("、");
+    if (!confirm(`要匯入 ${T.year} 學年度幼生名冊嗎？\n\n共 ${uniq.length} 位：新增 ${nNew} 位、覆蓋舊資料 ${nUpd} 位\n（用身分證、姓名＋生日比對同一位幼兒，舊資料直接以檔案內容覆蓋；檔案裡空白的格子不會清掉系統原有的資料）\n\n${Object.entries(byCls).map(([c,n])=>`・${c}：${n} 位`).join("\n")}`
+      + (moved.length ? `\n\n🔀 換班 ${moved.length} 位：\n${moved.slice(0,10).join("\n")}${moved.length>10?"\n…":""}` : "")
+      + (fileDup.length ? `\n\n⚠️ 檔案裡有 ${fileDup.length} 筆重複（只匯入第一筆）：\n${fileDup.slice(0,10).join("\n")}${fileDup.length>10?"\n…":""}` : "\n\n✅ 檔案裡沒有重複的幼兒")
+      + `\n\n讀到的欄位：${fieldsTxt}`)) return;
+    let ok = 0; const bad = []; const who = stuWho(), now = Date.now();
+    for (const [r,o] of pairs){
+      try{
+        if (o){ const up = {}; Object.entries(r).forEach(([k,val])=>{ if (Array.isArray(val) ? !(val.length===1&&val[0]==="一般生"&&col.ids==null) : (str(val)!=="" || k==="status")) up[k]=val; });
+          up.updatedAt=now; up.updatedBy=who+"（匯入覆蓋）"; await S.db.doc(STU_COL+"/"+o.id).update(up); }
         else await S.db.collection(STU_COL).doc().set(Object.assign(r,{createdAt:now,updatedAt:now,updatedBy:who+"（匯入）"}));
         ok++; }catch(e){ bad.push(r.name+"（"+errText(e)+"）"); }
     }
-    alert(`已匯入 ${ok} 位幼兒。`+(bad.length?`\n\n失敗：\n${bad.join("\n")}`:""));
+    alert(`已匯入 ${ok} 位幼兒（新增 ${nNew}、覆蓋 ${nUpd}）。`+(fileDup.length?`\n檔案裡重複的 ${fileDup.length} 筆已略過。`:"")+(bad.length?`\n\n失敗：\n${bad.join("\n")}`:""));
+    /* ③ 系統裡原本就重複的資料：匯入後提醒整理 */
+    if (sysDup.length) setTimeout(()=>{ if (confirm(`⚠️ 名冊裡原本就有 ${sysDup.length} 組重複的幼兒資料（同一位幼兒有兩筆以上）。\n要現在檢查並刪除重複的嗎？`)) stuDupView(T); }, 600);
   });
   document.body.appendChild(inp); inp.click();
+}
+/* ---------- 重複檢查：身分證相同、或姓名＋生日相同，視為同一位幼兒 ---------- */
+function stuKeys(r, withCls){
+  const ks = [], id = str(r.idno).trim().toUpperCase(), nm = str(r.name).replace(/\s/g,"");
+  if (id) ks.push("id:"+id);
+  if (nm && str(r.birthday)) ks.push("nb:"+nm+"|"+str(r.birthday));
+  if (withCls && nm && str(r.cls)) ks.push("cn:"+str(r.cls)+"|"+nm);
+  return ks;
+}
+function stuDupGroups(list){
+  const par = list.map((_,i)=>i), f = i => par[i]===i ? i : (par[i] = f(par[i])), by = new Map();
+  list.forEach((x,i)=>stuKeys(x).forEach(k=>{ if (by.has(k)) par[f(i)] = f(by.get(k)); else by.set(k,i); }));
+  const g = {}; list.forEach((x,i)=>{ (g[f(i)] = g[f(i)] || []).push(x); });
+  return Object.values(g).filter(a=>a.length>1);
+}
+function stuDupView(T){
+  const groups = stuDupGroups(T.list);
+  const body = h("div",{class:"mb"});
+  if (!groups.length) body.append(h("p",{style:"margin:0"},"✅ 名冊裡沒有重複的幼兒資料。"));
+  else {
+    body.append(h("p",{class:"note",style:"margin:0 0 8px"},`找到 ${groups.length} 組重複（身分證相同，或姓名＋生日相同）。每組保留一筆，其餘刪除；建議保留「最後修改」最新、資料最完整的那一筆。`));
+    groups.forEach(arr=>{ arr.sort((a,b)=>num(b.updatedAt)-num(a.updatedAt));
+      body.append(h("div",{class:"stu-psec"}, h("b",null,`${str(arr[0].name)}（${stuRoc(arr[0].birthday)}）`),
+        h("table",{class:"stu-tb sm",style:"min-width:0;margin-top:4px"}, h("tbody",null, arr.map((x,i)=>h("tr",null,
+          h("td",null,str(x.cls)), h("td",{class:"c"},"座號 "+str(x.no)), h("td",null,str(x.idno)), h("td",null,str(x.status)||"在學"),
+          h("td",null,[x.fatherName,x.motherName,x.otherName].filter(Boolean).join("、")||"（無家長資料）"),
+          h("td",{class:"upd"}, num(x.updatedAt)?stuTime(x.updatedAt)+" "+str(x.updatedBy):"—"),
+          h("td",null, i===0 ? h("span",{class:"pill exs-ok"},"最新") : null,
+            h("button",{class:"btn sm danger",onclick:async e=>{ if (!confirm(`刪除「${str(x.cls)} ${str(x.name)}」這一筆？`)) return; e.target.disabled = true;
+              try{ await S.db.doc(STU_COL+"/"+x.id).delete(); toast("已刪除"); setTimeout(()=>stuDupView(T), 400); }catch(er){ e.target.disabled = false; toast(errText(er)); } }},"刪除這筆"))))))));
+    });
+  }
+  const keepNewest = groups.length ? h("button",{class:"btn primary",onclick:async()=>{
+    const del = groups.flatMap(a=>a.slice().sort((x,y)=>num(y.updatedAt)-num(x.updatedAt)).slice(1));
+    if (!confirm(`每組保留最後修改最新的一筆，刪除其他 ${del.length} 筆？\n刪除後無法復原。`)) return;
+    let n = 0; for (const x of del){ try{ await S.db.doc(STU_COL+"/"+x.id).delete(); n++; }catch(e){} }
+    closeModal(); toast(`已刪除 ${n} 筆重複資料`);
+  }},"🧹 每組保留最新的一筆，其餘刪除") : null;
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"🔍 檢查重複的幼兒資料")), body,
+    h("div",{class:"mf"}, h("span",{class:"sp"}), keepNewest, h("button",{class:"btn",onclick:closeModal},"關閉"))));
 }
 function stuExport(list, title){
   if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
