@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L103</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L104</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L103</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L104</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6351,6 +6351,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .stu-pg{border-top:1px dashed #e3dccb;padding-top:4px}
 #kb .stu-pk .stu-cks{gap:4px 12px}
 #kb .stu-pk .stu-ck{min-width:92px}
+#kb .stu-sort{display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
 
 </style>
 <script>
@@ -9456,6 +9457,26 @@ const stuFam = x => [["父",x.fatherName,x.fatherPhone],["母",x.motherName,x.mo
 const stuIds = x => (Array.isArray(x.ids) ? x.ids : str(x.ids).split(/[、,，\s]+/)).map(t=>str(t).trim()).filter(Boolean);
 const stuNo = x => { const n = parseInt(str(x.no),10); return isNaN(n) ? 999 : n; };
 const stuSort = (a,b) => stuClsIdx(a.cls) - stuClsIdx(b.cls) || stuNo(a) - stuNo(b) || str(a.name).localeCompare(str(b.name),"zh-Hant");
+/* 排序：座號、年齡、性別、班別、姓名、離園日期 */
+const STU_SORTS = [["no","座號"],["ageO","年齡（大 → 小）"],["ageY","年齡（小 → 大）"],["gm","性別（男生在前）"],["gf","性別（女生在前）"],["grade","班別（大 → 中 → 小 → 幼幼）"],["gradeR","班別（幼幼 → 小 → 中 → 大）"],["name","姓名筆畫"],["leave","離園日期（最近在前）"]];
+function stuCmp(T){
+  const k = (T.sort && !(T.sort==="leave" && T.tab!=="left")) ? T.sort : (T.tab==="left" ? "leave" : "no"), byCls = (a,b) => stuClsIdx(a.cls) - stuClsIdx(b.cls);
+  const seat = (a,b) => byCls(a,b) || stuNo(a) - stuNo(b) || str(a.name).localeCompare(str(b.name),"zh-Hant");
+  const bd = x => str(x.birthday) || "9999";
+  const gi = x => { const i = STU_GR.indexOf(stuGrade(x,T.year)); return i<0 ? 9 : i; };
+  const sx = (x,first) => x.gender===first ? 0 : (x.gender ? 1 : 2);
+  return ({
+    no: seat,
+    ageO: (a,b) => bd(a).localeCompare(bd(b)) || seat(a,b),
+    ageY: (a,b) => bd(b).localeCompare(bd(a)) || seat(a,b),
+    gm: (a,b) => (T.tab==="all" ? byCls(a,b) : 0) || sx(a,"男") - sx(b,"男") || stuNo(a) - stuNo(b),
+    gf: (a,b) => (T.tab==="all" ? byCls(a,b) : 0) || sx(a,"女") - sx(b,"女") || stuNo(a) - stuNo(b),
+    grade: (a,b) => gi(a) - gi(b) || seat(a,b),
+    gradeR: (a,b) => gi(b) - gi(a) || seat(a,b),
+    name: (a,b) => str(a.name).localeCompare(str(b.name),"zh-Hant-TW-u-co-stroke") || seat(a,b),
+    leave: (a,b) => str(b.leaveDate).localeCompare(str(a.leaveDate)) || seat(a,b)
+  })[k] || seat;
+}
 function stuClsList(){
   const T = S.stu, extra = [...new Set(T.list.map(x=>str(x.cls)).filter(Boolean))];
   return [...STU_CLS0, ...extra.filter(c=>!STU_CLS0.includes(c))];
@@ -9464,6 +9485,7 @@ const stuClsIdx = c => { const L = stuClsList(), i = L.indexOf(str(c)); return i
 
 function stuStart(){
   const T = S.stu = S.stu || { list:[], got:false, tab:"class", cls:"", q:"", st:"在學", year:stuNowYear(), unsub:null, uYear:null };
+  if (T.sort===undefined){ try{ T.sort = localStorage.getItem("stuSort") || ""; }catch(e){ T.sort = ""; } }
   if (T.unsub && T.uYear===T.year) return T;
   if (T.unsub) T.unsub();
   T.got = false; T.uYear = T.year;
@@ -9509,7 +9531,10 @@ function stuFilter(T, list){
 function stuFilterBar(T){
   const q = h("input",{class:"in",placeholder:"🔍 搜尋姓名、家長、電話、身分別",value:T.q,style:"max-width:280px"});
   q.addEventListener("input", ()=>{ T.q = q.value; clearTimeout(T.qt); T.qt = setTimeout(()=>{ render(); const n=$("#kb-app .stu-filter input"); if (n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }, 300); });
-  return h("div",{class:"stu-filter"}, q, T.tab!=="left" ? h("span",{class:"note",style:"align-self:center"},"只列在學幼兒；離園的幼兒在「🚪 已離園」分頁。") : null);
+  const cur = (T.sort && !(T.sort==="leave" && T.tab!=="left")) ? T.sort : (T.tab==="left" ? "leave" : "no");
+  const so = h("select",{class:"in",style:"width:auto",onchange:e=>{ T.sort = e.target.value; try{ localStorage.setItem("stuSort", T.sort); }catch(_){} render(); }},
+    STU_SORTS.filter(([k])=>k!=="leave" || T.tab==="left").map(([k,l])=>h("option",{value:k,selected:cur===k},l)));
+  return h("div",{class:"stu-filter"}, q, h("label",{class:"stu-sort"},"排序 ",so), T.tab!=="left" ? h("span",{class:"note",style:"align-self:center"},"只列在學幼兒；離園的幼兒在「🚪 已離園」分頁。") : null);
 }
 /* 直接在表格中編輯：改完離開欄位就自動儲存這一格 */
 function stuCell(x, k, opt){
@@ -9569,7 +9594,7 @@ function stuRenderClass(app, T){
   const L = stuClsList(); if (!T.cls || !L.includes(T.cls) || (!T.picked && !T.list.some(x=>x.cls===T.cls))) T.cls = L.find(c=>T.list.some(x=>x.cls===c)) || L[0];
   app.append(h("div",{class:"as-tabs stu-cls"}, L.map(c=>{ const n = T.list.filter(x=>x.cls===c && (str(x.status)||"在學")==="在學").length;
     return h("button",{class:"as-tab"+(T.cls===c?" on":""),onclick:()=>{ T.cls=c; T.picked=true; render(); }},`${c}（${n}）`); })));
-  const all = T.list.filter(x=>x.cls===T.cls).sort(stuSort), list = stuFilter(T, all), live = all.filter(x=>(str(x.status)||"在學")==="在學");
+  const all = T.list.filter(x=>x.cls===T.cls).sort(stuCmp(T)), list = stuFilter(T, all), live = all.filter(x=>(str(x.status)||"在學")==="在學");
   const g = s => live.filter(x=>x.gender===s).length;
   const gs = STU_GR.filter(gr=>live.some(x=>stuGrade(x,T.year)===gr)), n = (gr,sx) => live.filter(x=>stuGrade(x,T.year)===gr && (!sx || x.gender===sx)).length;
   app.append(h("div",{class:"stu-sum"}, h("b",null,T.cls), `在學 ${live.length} 人（男 ${g("男")}、女 ${g("女")}）`,
@@ -9599,13 +9624,13 @@ function stuRenderAll(app, T){
     h("div",{class:"stu-wrap"}, h("table",{class:"stu-tb stat"},
       h("thead",null,h("tr",null,["班級","男","女","合計",...cols.slice(1)].map(t=>h("th",null,t)))),
       h("tbody",null, usedCls.map(c=>rowOf(c, live.filter(x=>x.cls===c))), h("tr",{class:"tot"}, ...rowOf("全園合計", live).children)))));
-  const list = stuFilter(T, T.list.slice().sort(stuSort));
+  const list = stuFilter(T, T.list.slice().sort(stuCmp(T)));
   app.append(h("h2",{class:"stu-h2"},"🌳 全園幼生名單"), stuToolbar(T, list, `${T.year}學年度 全園幼生名冊`), stuFilterBar(T), stuTable(list, T, true));
 }
 
 function stuRenderLeft(app, T){
-  const all = T.list.filter(x=>!stuLive(x)).sort((a,b)=>str(b.leaveDate).localeCompare(str(a.leaveDate)) || stuSort(a,b)), list = stuFilter(T, all);
-  app.append(h("div",{class:"stu-sum"}, h("b",null,"🚪 已離園幼兒"), `共 ${all.length} 位`, h("span",{class:"note"},"　依離園日期排列（最近的在上面）。要復學請按「編輯」把狀態改回「在學」。")));
+  const all = T.list.filter(x=>!stuLive(x)).sort(stuCmp(T)), list = stuFilter(T, all);
+  app.append(h("div",{class:"stu-sum"}, h("b",null,"🚪 已離園幼兒"), `共 ${all.length} 位`, h("span",{class:"note"},"　預設依離園日期排列（最近的在上面），可以用「排序」改。要復學請按「編輯」把狀態改回「在學」。")));
   app.append(h("div",{class:"toolbar stu-tools"},
     h("button",{class:"btn",onclick:()=>stuExport(list, `${T.year}學年度 離園幼生名冊`)},"📤 匯出 Excel"),
     h("button",{class:"btn",onclick:()=>stuPrint(list, `${T.year}學年度 離園幼生名冊`, T)},"🖨️ 列印")), stuFilterBar(T));
