@@ -868,7 +868,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW) && (view!=='students' || isAdmin || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW) && (view!=='students' || isAdmin || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan'||view==='students')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L99</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L100</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L99</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L100</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
