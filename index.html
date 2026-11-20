@@ -16,6 +16,11 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-storage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+  /* 績效考評建議模組（個案追蹤、考核與專業成長、學習指標統計）的唯讀檢視帳號；可編輯的是 config/admins 的 owners */
+  window.KPI_VIEWERS = ["babyanitacvc@gmail.com"];
+  window.kpiSee = (u, owner) => !!u && (!!owner || window.KPI_VIEWERS.includes(String(u.email||"").toLowerCase()));
+</script>
+<script>
   // ★★★ 請把這裡換成您自己 Firebase 專案的設定值 ★★★
   const firebaseConfig = {
     apiKey: "AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU",
@@ -417,6 +422,18 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='workplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📑 工作計畫
+          </button><span class="nav-lab" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" style="align-self:center;font-size:12px;font-weight:700;color:#f5e0a8;padding:0 4px;margin-left:10px">📌 績效考評建議</span><button style="outline:2px dashed #d9a93a;outline-offset:-2px;" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='case'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='case' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🧩 個案追蹤
+          </button><button style="outline:2px dashed #d9a93a;outline-offset:-2px;" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='review'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='review' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            🏅 考核與專業成長
+          </button><button style="outline:2px dashed #d9a93a;outline-offset:-2px;" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='indstat'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='indstat' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            📈 指標統計
           </button>
         </nav>
       </header>
@@ -522,6 +539,21 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📑</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔒 工作計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每年的工作計畫、工作執行成效、檢核、工作報告（僅限本人使用）</p>
+          </button>
+          <button type="button" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='case'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🧩</span><span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" style="background:#fbf0d2;color:#7a5a12">績效考評建議</span></div>
+            <h3 class="font-heading font-black text-base mt-3">🔒 個案追蹤</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">觀察→介入→成效→調整、專業團隊入園、親師溝通與居家延伸活動</p>
+          </button>
+          <button type="button" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='review'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">🏅</span><span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" style="background:#fbf0d2;color:#7a5a12">績效考評建議</span></div>
+            <h3 class="font-heading font-black text-base mt-3">🔒 考核與專業成長</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">考核小組要點、自評他評與簽章、面談表揚、成長需求與培訓地圖</p>
+          </button>
+          <button type="button" x-show="kpiSee(currentUser, isOwner) && !restrictedPW" @click="view='indstat'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">📈</span><span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" style="background:#fbf0d2;color:#7a5a12">績效考評建議</span></div>
+            <h3 class="font-heading font-black text-base mt-3">🔒 學習指標運用統計</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各領域、班級的課綱指標使用次數與未使用指標，供課發會討論</p>
           </button>
           <button type="button" x-show="isAdmin" @click="view='admin'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📋</span><span x-show="adminPendingCount>0" class="px-2 py-0.5 rounded-full bg-coral text-paper text-xs font-bold whitespace-nowrap" x-text="`待處理 ${adminPendingCount}`"></span></div>
@@ -868,7 +900,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan'||view==='students')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students','case','review','indstat'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students','case','review','indstat'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan'||view==='students')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1814,7 +1846,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L113</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L114</footer>
     </div>
   </template>
 
@@ -4211,7 +4243,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L113</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L114</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6452,6 +6484,9 @@ function render(){
   if (S.view==="meeting") return renderMeeting(app);
   if (S.view==="workplan") return renderWorkplan(app);
   if (S.view==="students") return renderStudents(app);
+  if (S.view==="case") return renderCase(app);
+  if (S.view==="review") return renderReview(app);
+  if (S.view==="indstat") return renderIndstat(app);
   renderCourses(app);
 }
 
@@ -7382,7 +7417,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting" || v==="workplan" || v==="students";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting" || v==="workplan" || v==="students" || v==="case" || v==="review" || v==="indstat";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -10032,6 +10067,8 @@ function edCtx(){
   if (v==="workplan" && S.wp && S.wp.edit && S.wp.draft) return { h:S.wp, save:a=>wpSave(null,a) };
   if (v==="assess"   && S.as && S.as.open && S.as.draft) return { h:S.as, save:a=>asSave(null,a) };
   if (v==="patrol"   && S.patrol && S.patrol.edit && S.patrol.draft) return { h:S.patrol, save:a=>pSave(a) };
+  if (v==="case"     && S.cs && S.cs.edit && S.cs.draft && kpiEdit()) return { h:S.cs, save:a=>csSave(null,a) };
+  if (v==="review"   && S.rv && S.rv.edit && S.rv.draft && kpiEdit()) return { h:S.rv, save:a=>rvSave(null,a) };
   return null;
 }
 function autoSt(msg, kind){
@@ -10281,6 +10318,899 @@ window.LamUpload = async function(btn){
   });
   document.body.append(inp); inp.click();
 };
+/* ====================================================================
+   新增模組（114 學年度績效考評建議補強）：個案追蹤、考核與專業成長、學習指標運用統計
+   ==================================================================== */
+const CX_NOTE = (items) => h("p",{class:"note cx-kpi"},"📌 依「桃園市114學年度非營利幼兒園績效考評」委員建議新增"+(items?"（"+items+"）":""));
+/* 績效考評建議模組的權限：owners（config/admins）可新增、編輯、刪除；KPI_VIEWERS 只能檢視；其他人看不到 */
+const KPI_VIEWERS = (window.KPI_VIEWERS || ["babyanitacvc@gmail.com"]).map(x=>String(x).toLowerCase());
+const kpiEdit = () => !!(S.d && S.d.currentUser && S.d.isOwner);
+const kpiView = () => kpiEdit() || !!(S.d && S.d.currentUser && (KPI_VIEWERS.includes(cxMail()) || (S.kpiExtra||[]).includes(cxMail())));
+const CX_RO = () => kpiEdit() ? null : h("p",{class:"note cx-kpi",style:"background:#dfeef3;color:#1f4750"},"👀 唯讀檢視：可以查看與列印，不能新增、修改或刪除");
+const cxMail = () => str(((S.d&&S.d.currentUser)||{}).email).trim().toLowerCase();
+const cxUid = () => str(((S.d&&S.d.currentUser)||{}).uid);
+const cxName = () => str((S.d&&S.d.myName) || ((S.d&&S.d.currentUser)||{}).displayName || cxMail());
+const cxId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const cxToday = () => { const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; };
+const cxRoc = s => { const m = str(s).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${+m[1]-1911}/${m[2]}/${m[3]}` : str(s); };
+const cxYearOf = s => { const m = str(s).match(/^(\d{4})-(\d{2})/); if (!m) return String(wpY0()); const y=+m[1], mo=+m[2]; return String(y-1911-(mo<8?1:0)); };
+const cxCls = () => { try{ const c = asAllCls(); if (c.length) return c; }catch(_){} return mtCls(); };
+const cxRoster = c => { const r = (S.as && S.as.roster) || {}; return Array.isArray(r[c]) ? r[c] : []; };
+const cxSplit = v => str(v).split(/[,，、;；\n]/).map(x=>x.trim()).filter(Boolean);
+const cxT = s => esc(str(s));
+const cxNl = s => cxT(s).replace(/\n/g,"<br>");
+/* 讀 Excel／CSV：第一個工作表、第一列為標題 */
+async function cxReadRows(file){
+  if (typeof XLSX === "undefined") throw new Error("Excel 元件還沒載入，請重新整理頁面後再試");
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type:"array", cellDates:true });
+  const out = [];
+  wb.SheetNames.forEach(n => { XLSX.utils.sheet_to_json(wb.Sheets[n], { defval:"", raw:true }).forEach(r => out.push(Object.assign({ __sheet:n }, r))); });
+  return out;
+}
+/* 依多個可能的標題取值（忽略空白、全半形） */
+const cxKey = k => str(k).normalize("NFKC").replace(/\s|：|:|（.*?）|\(.*?\)/g,"").toLowerCase();
+function cxGet(row, names){
+  const m = row.__m || (row.__m = Object.fromEntries(Object.keys(row).map(k=>[cxKey(k), row[k]])));
+  for (const n of names){ const v = m[cxKey(n)]; if (v!=null && str(v).trim()!=="") return v instanceof Date ? stuDate(v) : str(v).trim(); }
+  return "";
+}
+function cxPickFile(accept, cb){
+  const inp = h("input",{type:"file",accept,style:"display:none"});
+  inp.addEventListener("change", async ()=>{ const f = inp.files && inp.files[0]; inp.remove(); if (!f) return; try{ await cb(f); }catch(e){ alert("匯入失敗："+(e && e.message || e)); } });
+  document.body.append(inp); inp.click();
+}
+function cxDownloadXlsx(name, sheets){
+  if (typeof XLSX === "undefined"){ alert("Excel 元件還沒載入，請重新整理頁面後再試"); return; }
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(([sn, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), sn));
+  XLSX.writeFile(wb, name);
+}
+/* 自己處理讀取錯誤：規則還沒更新時只影響這個頁面，不影響其他功能 */
+function cxListen(query, onData, onErr){
+  return query.onSnapshot(s => onData(s), e => onErr(e));
+}
+const cxErrMsg = (e, col) => e && e.code==="permission-denied" ? `沒有權限讀取資料：請到 Firebase 主控台把「${col}」加進 Firestore 規則（見新版 firestore.rules）。` : "讀取失敗，請稍後重新整理。";
+const CX_CSS = `
+#kb .cx-badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-right:4px;background:#f1ece2;color:#6b4527}
+#kb .cx-badge.red{background:#fbe3dc;color:#a43d22}#kb .cx-badge.blue{background:#dfeef3;color:#1f4750}#kb .cx-badge.green{background:#e3efdc;color:#3e6330}#kb .cx-badge.gold{background:#fbf0d2;color:#7a5a12}
+#kb .cx-ent{border:1px solid var(--line);border-left:6px solid #c8a27a;border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
+#kb .cx-ent.obs{border-left-color:#8fa37e}#kb .cx-ent.ther{border-left-color:#7c98a6}#kb .cx-ent.parent{border-left-color:#e3b23c}
+#kb .cx-eh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}#kb .cx-eh .sp{flex:1}
+#kb .cx-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+#kb .cx-prev{background:#f3f7f9;border:1px dashed #7c98a6;border-radius:10px;padding:8px 10px;font-size:13px;margin:6px 0;white-space:pre-wrap}
+#kb .cx-cks{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}#kb .cx-cks label{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;background:#fff}
+#kb .cx-cks label.on{background:#eaf5ea;border-color:#9cc59c}
+#kb .cx-sum{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}#kb .cx-sum div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:13px}#kb .cx-sum b{font-size:20px;display:block}
+#kb table.cx-t{border-collapse:collapse;width:100%;font-size:13px;background:#fff}#kb table.cx-t th,#kb table.cx-t td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}#kb table.cx-t th{background:#f6f1e7}
+#kb table.cx-t td.n{text-align:right;font-variant-numeric:tabular-nums}#kb .cx-bar{height:8px;background:#8fa37e;border-radius:4px;min-width:2px}
+#kb .cx-low{background:#fff4e5}#kb .cx-scores input{width:56px}
+#kb .cx-kpi{display:inline-block;margin-top:6px;background:#fbf0d2;color:#7a5a12;border-radius:8px;padding:3px 10px;font-weight:700}
+#kb .cx-view{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto}
+`;
+(function(){ const st = document.createElement("style"); st.textContent = CX_CSS; document.head.append(st); })();
+const CX_PRINT = `table{font-size:10.5pt}th{background:#eee}.lab{font-weight:bold}.sec{margin:10px 0 4px;font-weight:bold;font-size:1.05em}.sig{margin-top:18px;display:flex;gap:30px;flex-wrap:wrap}.sig span{display:inline-block;min-width:150px;border-bottom:1px solid #000;height:1.6em}tr{page-break-inside:avoid;break-inside:avoid}thead{display:table-header-group}.small{font-size:9.5pt;color:#333}`;
+function cxPrint(title, body, landscape){
+  openPrint(`<!doctype html><html><head><meta charset="utf-8"><title>${cxT(title)}</title><style>${PRINT_BASE}${CX_PRINT}@page{size:A4 ${landscape?"landscape":"portrait"};margin:12mm}.pg{padding:4px}</style></head><body><div class="bar"><button onclick="print()">🖨 列印</button><span>${cxT(title)}</span></div><div class="pg">${body}</div></body></html>`);
+}
+
+/* ---------- 個案追蹤＋專業團隊入園紀錄（績效考評建議：owners 可編輯，KPI_VIEWERS 唯讀，其他人看不到） ---------- */
+const CS_COL = "caseRecords";
+const CS_KINDS = [["obs","觀察與介入","obs"],["ther","專業團隊入園","ther"],["parent","親師溝通","parent"]];
+const CS_KNAME = { obs:"觀察與介入", ther:"專業團隊入園", parent:"親師溝通" };
+const CS_IDS = ["特殊教育","疑似特教","身心障礙","發展遲緩","疑似發展遲緩","其他需關注"];
+const CS_THER = ["物理治療","職能治療","語言治療","心理治療","特教巡迴輔導","社工","其他"];
+const CS_WAY = ["電話訪問","面談","聯絡簿","LINE／訊息","接送時","其他"];
+const csEnt = e => ({ id:str(e&&e.id)||cxId(), kind:CS_KNAME[e&&e.kind]?e.kind:"obs", date:str(e&&e.date)||cxToday(),
+  obs:str(e&&e.obs), act:str(e&&e.act), eff:str(e&&e.eff), adj:str(e&&e.adj),
+  therName:str(e&&e.therName), therType:str(e&&e.therType), advice:str(e&&e.advice), exec:str(e&&e.exec), review:str(e&&e.review),
+  way:str(e&&e.way), talk:str(e&&e.talk), bright:str(e&&e.bright),
+  home:str(e&&e.home), parentFb:str(e&&e.parentFb), by:str(e&&e.by) });
+function csNorm(d0){
+  const d = Object.assign({ year:String(wpY0()), cls:"", child:"", ident:[], iep:false, bg:"", goals:"", entries:[], sharedWith:[], uid:"", ownerEmail:"", ownerName:"" }, JSON.parse(JSON.stringify(d0||{})));
+  d.ident = arr(d.ident); d.sharedWith = arr(d.sharedWith).map(x=>x.toLowerCase()); d.iep = !!d.iep;
+  d.entries = (Array.isArray(d.entries)?d.entries:[]).map(csEnt);
+  ["year","cls","child","bg","goals","uid","ownerEmail","ownerName"].forEach(k=>d[k]=str(d[k]));
+  return d;
+}
+const csSorted = d => d.entries.slice().sort((a,b)=>str(a.date).localeCompare(str(b.date)));
+const csList = () => { const C=S.cs, m=new Map(); [...(C.own||[]), ...(C.shr||[])].forEach(x=>m.set(x.id,x)); return [...m.values()]; };
+const csMine = d => kpiEdit();
+const csCan = () => kpiView();
+function csSubscribe(d){
+  const C = S.cs;
+  if (!kpiView()){ C.got = true; return; }
+  unsubs.push(cxListen(d.db.collection(CS_COL), s=>{ C.own = s.docs.map(x=>({id:x.id,...x.data()})); C.shr=[]; C.got=true; C.err=""; if (S.view==="case" && !(C.edit && C.dirty)) render(); },
+    e=>{ C.err = cxErrMsg(e, CS_COL); C.got = true; if (S.view==="case") render(); }));
+}
+async function csLoadDir(){
+  const C = S.cs; if (C.dir) return C.dir;
+  try{ const sn = await S.db.collection("teacherDir").get(); C.dir = sn.docs.map(x=>x.data()).filter(x=>x && x.email).map(x=>({ email:str(x.email).toLowerCase(), name:str(x.name), classes:arr(x.classes) })); }
+  catch(_){ C.dir = []; }
+  return C.dir;
+}
+function renderCase(app){
+  const C = S.cs;
+  if (!csCan()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  if (C.err){ app.append(h("div",{class:"notice"},C.err)); return; }
+  if (!C.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "個案追蹤載入中…")); return; }
+  if (C.edit && kpiEdit()) return renderCaseEditor(app);
+  if (C.view) return renderCaseView(app);
+  const all = csList().map(x=>Object.assign(csNorm(x),{id:x.id,updatedAt:x.updatedAt}));
+  const years = [...new Set(all.map(x=>x.year).concat([String(wpY0())]))].sort((a,b)=>wpYNum(b)-wpYNum(a));
+  if (!C.year) C.year = String(wpY0());
+  const classes = [...new Set(all.map(x=>x.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  const q = str(C.q).trim();
+  const list = all.filter(x=>C.year==="all"||x.year===C.year).filter(x=>C.cls==="all"||x.cls===C.cls)
+    .filter(x=>!q || [x.child,x.cls,x.bg,x.goals,...x.entries.map(e=>Object.values(e).join(" "))].join(" ").includes(q))
+    .sort((a,b)=>a.cls.localeCompare(b.cls,"zh-Hant") || a.child.localeCompare(b.child,"zh-Hant"));
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"個案追蹤"),
+    h("p",{class:"note"},"特殊需求、發展遲緩及疑似個案的「觀察 → 介入 → 成效 → 調整」紀錄，以及專業團隊（治療師）入園、親師溝通、居家延伸活動與家長回饋。"),
+    h("p",{class:"note",style:"margin-top:4px"},"🔒 只限指定帳號：園方指定人員可編輯，檢視帳號只能查看，其他人都看不到。"), CX_RO(),
+    CX_NOTE("行政管理第1、2、4、5項：個案追蹤檔案、跨專業團隊、親師溝通亮點、特生居家策略"),
+    kpiEdit() && h("div",{class:"abs",style:"display:flex;gap:6px;flex-wrap:wrap"},
+      h("button",{class:"btn",onclick:()=>csTemplate()},"⬇️ 匯入範例檔"),
+      h("button",{class:"btn",onclick:()=>csImport()},"📥 匯入檔案"),
+      h("button",{class:"btn primary",onclick:()=>csNew()},"＋ 新增個案"))));
+  const yearSel = h("select",{class:"in",onchange:e=>{ C.year=e.target.value; render(); }}, [h("option",{value:"all",selected:C.year==="all"},"全部"), ...years.map(y=>h("option",{value:y,selected:C.year===y},y+" 學年"))]);
+  const clsSel = h("select",{class:"in",onchange:e=>{ C.cls=e.target.value; render(); }}, [h("option",{value:"all",selected:C.cls==="all"},"全部班級"), ...classes.map(c=>h("option",{value:c,selected:C.cls===c},c))]);
+  const qIn = h("input",{class:"in",type:"search",value:C.q||"",placeholder:"搜尋姓名或內容"});
+  qIn.addEventListener("input",()=>{ C.q=qIn.value; clearTimeout(C._qt); C._qt=setTimeout(()=>{ render(); const n=$("#kb-app .cx-q"); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } },300); });
+  qIn.classList.add("cx-q");
+  app.append(h("div",{class:"mt-sortbar"}, h("span",null,`共 ${list.length} 位`), h("label",null,"學年度：",yearSel), h("label",null,"班級：",clsSel), qIn));
+  const yAll = all.filter(x=>C.year==="all"||x.year===C.year);
+  app.append(h("div",{class:"cx-sum"},
+    h("div",null,h("b",null,String(yAll.length)),"位個案"),
+    h("div",null,h("b",null,String(yAll.reduce((n,x)=>n+x.entries.filter(e=>e.kind==="obs").length,0))),"筆觀察與介入"),
+    h("div",null,h("b",null,String(yAll.reduce((n,x)=>n+x.entries.filter(e=>e.kind==="ther").length,0))),"次專業團隊入園"),
+    h("div",null,h("b",null,String(yAll.reduce((n,x)=>n+x.entries.filter(e=>e.kind==="parent").length,0))),"次親師溝通（"+yAll.reduce((n,x)=>n+x.entries.filter(e=>e.kind==="parent"&&e.bright).length,0)+" 次有分享亮點）")));
+  if (!list.length){ app.append(h("div",{class:"notice"},"這裡還沒有個案，按「＋ 新增個案」開始，或用「📥 匯入檔案」匯入。")); return; }
+  app.append(h("div",{class:"list"}, list.map(d=>{
+    const es = csSorted(d), last = es[es.length-1];
+    const old = last ? (Date.now() - new Date(last.date+"T00:00:00").getTime())/864e5 : 999;
+    return h("div",{class:"card row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:240px"},
+        h("b",null,`${d.child}`), h("span",{class:"note"},`　${d.cls}　${d.year} 學年`),
+        h("div",{style:"margin-top:4px"}, d.ident.map(t=>h("span",{class:"cx-badge red"},t)), d.iep?h("span",{class:"cx-badge blue"},"IEP"):null,
+          h("span",{class:"cx-badge green"},`觀察介入 ${d.entries.filter(e=>e.kind==="obs").length}`),
+          h("span",{class:"cx-badge blue"},`專業團隊 ${d.entries.filter(e=>e.kind==="ther").length}`),
+          h("span",{class:"cx-badge gold"},`親師溝通 ${d.entries.filter(e=>e.kind==="parent").length}`)),
+        h("div",{class:"note",style:"font-size:13px"}, last ? `最近紀錄：${cxRoc(last.date)}（${CS_KNAME[last.kind]}）` : "尚無紀錄", old>31 && last ? "　⚠️ 超過一個月沒有新紀錄" : "", "")),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>{ C.view=d.id; render(); }},"檢視"),
+        kpiEdit() ? h("button",{class:"btn",onclick:()=>csEdit(d)},"編輯") : null,
+        h("button",{class:"btn",onclick:()=>csPrint(d)},"🖨 列印"),
+        csMine(d) ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這位個案？",`${d.cls} ${d.child}（${d.year} 學年）的所有紀錄刪除後無法復原。`,"刪除",async()=>{ await S.db.doc(CS_COL+"/"+d.id).delete(); C.own=(C.own||[]).filter(x=>x.id!==d.id); C.shr=(C.shr||[]).filter(x=>x.id!==d.id); toast("已刪除"); render(); })},"刪除") : null));
+  })));
+}
+function csEdit(d0){ const C=S.cs; C.draft = csNorm(d0); C.edit = d0.id; C.dirty=false; C.view=null; render(); }
+function csNew(){
+  const C = S.cs, d = csNorm({ year: C.year && C.year!=="all" ? C.year : String(wpY0()), cls: C.cls!=="all" ? C.cls : "" });
+  d.entries = [csEnt({ kind:"obs", by:cxName() })];
+  C.draft = d; C.edit = "__new"; C.dirty = false; C.view=null;
+  render();
+}
+async function csSave(btn, auto){
+  const C = S.cs, d = C.draft; if (!d) return true;
+  if (!kpiEdit()) return auto ? "這個帳號只能檢視" : alert("這個帳號只能檢視，不能修改。");
+  if (!auto){ clearTimeout(C._at); C._timerOn=false; }
+  const need = !str(d.cls).trim() ? "請選擇班級" : !str(d.child).trim() ? "請填寫幼兒姓名" : "";
+  if (need){ if (auto) return need; alert(need); return; }
+  const dup = csList().find(x=>x.id!==C.edit && str(x.year)===str(d.year).trim() && str(x.cls)===d.cls && str(x.child).trim()===str(d.child).trim());
+  if (dup && C.edit==="__new"){ if (auto) return `已經有「${d.cls} ${d.child}（${d.year} 學年）」的個案，請改用那一份，或按「💾 儲存」確認`; if (!confirm(`已經有「${d.cls} ${d.child}（${d.year} 學年）」的個案，仍要再建一份嗎？`)) return; }
+  const body = JSON.parse(JSON.stringify(csNorm(d))); delete body.id;
+  body.year = str(body.year).trim(); body.child = str(body.child).trim();
+  if (!body.uid){ body.uid = cxUid(); body.ownerEmail = cxMail(); body.ownerName = cxName(); }
+  body.updatedAt = Date.now(); body.updatedBy = cxMail();
+  if (btn) btn.disabled = true;
+  try{
+    const ref = C.edit==="__new" ? S.db.collection(CS_COL).doc() : S.db.doc(CS_COL+"/"+C.edit);
+    await ref.set(body); C.edit = ref.id; d.uid = body.uid; d.ownerEmail = body.ownerEmail; d.ownerName = body.ownerName; d.sharedWith = body.sharedWith;
+    const rec = {id:ref.id,...body};
+    C.own = (C.own||[]).filter(x=>x.id!==ref.id).concat([rec]);
+    if (auto) return true;
+    C.edit=null; C.draft=null; C.dirty=false; toast("已儲存"); render();
+  }catch(e){ if (btn) btn.disabled=false; if (auto) return errText(e); alert("儲存失敗："+errText(e)); }
+}
+function renderCaseEditor(app){
+  const C = S.cs, d = C.draft, mark = () => { C.dirty = true; };
+  const back = async () => { if (!(await edLeave(C))) return; C.edit=null; C.draft=null; C.dirty=false; render(); };
+  const ta = (o, f, l, rows, ph) => h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows||2),placeholder:ph||"",oninput:e=>{ o[f]=e.target.value; mark(); }},o[f]));
+  const tb = () => h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>csPrintTher(d)},"🖨 專業團隊建議追蹤表"),
+    h("button",{class:"btn",onclick:()=>csPrint(d)},"🖨 預覽列印"),
+    h("button",{class:"btn primary",onclick:e=>csSave(e.currentTarget)},"💾 儲存"));
+  app.append(tb());
+  const classes = [...new Set([...cxCls(), d.cls].filter(Boolean))];
+  const dl = h("datalist",{id:"cs-kids"}, cxRoster(d.cls).map(n=>h("option",{value:n})));
+  app.append(h("section",{class:"as-form mt-form"},
+    h("div",{class:"mt-sh"},"基本資料"),
+    h("div",{class:"f4"},
+      h("label",{class:"fl"},"學年度",h("input",{class:"in",value:d.year,oninput:e=>{ d.year=e.target.value; mark(); }})),
+      h("label",{class:"fl"},"班級",h("select",{class:"in",onchange:e=>{ d.cls=e.target.value; mark(); render(); }}, [h("option",{value:""},"請選擇班級"), ...classes.map(c=>h("option",{value:c,selected:d.cls===c},c))])),
+      h("label",{class:"fl"},"幼兒姓名",h("input",{class:"in",list:"cs-kids",value:d.child,placeholder:"可從班級名單選，或直接輸入",oninput:e=>{ d.child=e.target.value; mark(); }}), dl),
+      h("label",{class:"fl"},"IEP",h("label",{class:"wp-ck"+(d.iep?" on":"")},h("input",{type:"checkbox",checked:d.iep?true:null,onchange:e=>{ d.iep=e.target.checked; mark(); render(); }}),"有個別化教育計畫（IEP）"))),
+    h("div",{class:"fl",style:"margin-top:8px"},"身分／需求",
+      h("div",{class:"cx-cks"}, CS_IDS.map(t=>h("label",{class:d.ident.includes(t)?"on":""},h("input",{type:"checkbox",checked:d.ident.includes(t)?true:null,onchange:e=>{ d.ident = e.target.checked ? [...new Set([...d.ident,t])] : d.ident.filter(x=>x!==t); mark(); render(); }}),t)))),
+    h("div",{class:"cx-g2"}, ta(d,"bg","幼兒現況與需求",3,"例：精細動作發展較慢，握筆不穩；語言表達以短句為主…"), ta(d,"goals","個別目標（IEP 目標或本學期重點）",3,"一行一項"))));
+  /* 紀錄 */
+  const sec = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"追蹤紀錄（依日期排序）"),
+    h("div",{style:"display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"},
+      CS_KINDS.map(([k,l])=>h("button",{class:"btn",onclick:()=>{ d.entries.push(csEnt({kind:k, by:cxName()})); mark(); render(); setTimeout(()=>{ const n=document.querySelectorAll("#kb-app .cx-ent"); if (n.length) n[n.length-1].scrollIntoView({behavior:"smooth",block:"center"}); },50); }},"＋ "+l))));
+  const order = d.entries.map((e,i)=>[e,i]).sort((a,b)=>str(a[0].date).localeCompare(str(b[0].date)) || a[1]-b[1]);
+  order.forEach(([e])=>{
+    const del = () => { if (!confirm("刪除這筆紀錄？")) return; d.entries = d.entries.filter(x=>x!==e); mark(); render(); };
+    const head = h("div",{class:"cx-eh"},
+      h("b",null,CS_KNAME[e.kind]),
+      h("input",{class:"in",type:"date",value:e.date,style:"width:auto",onchange:ev=>{ e.date=ev.target.value; mark(); render(); }}),
+      h("select",{class:"in",style:"width:auto",onchange:ev=>{ e.kind=ev.target.value; mark(); render(); }}, CS_KINDS.map(([k,l])=>h("option",{value:k,selected:e.kind===k},l))),
+      h("input",{class:"in",value:e.by,placeholder:"記錄者",style:"width:110px",oninput:ev=>{ e.by=ev.target.value; mark(); }}),
+      h("span",{class:"sp"}),
+      e.home ? h("button",{class:"btn sm",onclick:()=>csPrintHome(d,e)},"🖨 居家活動單") : null,
+      h("button",{class:"btn sm danger",onclick:del},"刪除"));
+    let body;
+    if (e.kind==="obs"){
+      body = [ h("div",{class:"cx-g2"}, ta(e,"obs","觀察（幼兒表現）",3), ta(e,"act","介入策略",3,"例：增設黏土區、提供粗筆、口語提示…")),
+               h("div",{class:"cx-g2"}, ta(e,"eff","成效",2), ta(e,"adj","調整（下一步）",2)),
+               h("div",{class:"cx-g2"}, ta(e,"home","居家延伸活動（可列印給家長）",2), ta(e,"parentFb","家長回饋",2)) ];
+    } else if (e.kind==="ther"){
+      const prev = csSorted(d).filter(x=>x.kind==="ther" && x!==e && str(x.date)<=str(e.date)).pop();
+      body = [ h("div",{class:"f4"},
+                 h("label",{class:"fl"},"治療師／專業人員",h("input",{class:"in",value:e.therName,oninput:ev=>{ e.therName=ev.target.value; mark(); }})),
+                 h("label",{class:"fl"},"專業類別",h("select",{class:"in",onchange:ev=>{ e.therType=ev.target.value; mark(); }}, [h("option",{value:""},"請選擇"), ...CS_THER.map(t=>h("option",{value:t,selected:e.therType===t},t))]))),
+               prev ? h("div",{class:"cx-prev"}, h("b",null,`📌 上次入園（${cxRoc(prev.date)} ${prev.therName||""}${prev.therType?"／"+prev.therType:""}）的建議：`),"\n",prev.advice||"（未填）","\n",h("b",null,"老師執行情形："),"\n",prev.exec||"（未填）") : null,
+               prev ? ta(e,"review","上次建議的檢視結果（是否有效、要不要調整）",2) : null,
+               h("div",{class:"cx-g2"}, ta(e,"advice","本次建議策略",3), ta(e,"exec","老師執行情形與幼兒反應（執行後補寫）",3)),
+               h("div",{class:"cx-g2"}, ta(e,"home","居家延伸活動（轉知家長）",2), ta(e,"parentFb","家長回饋",2)) ];
+    } else {
+      body = [ h("div",{class:"f4"}, h("label",{class:"fl"},"溝通方式",h("select",{class:"in",onchange:ev=>{ e.way=ev.target.value; mark(); }}, [h("option",{value:""},"請選擇"), ...CS_WAY.map(t=>h("option",{value:t,selected:e.way===t},t))]))),
+               h("div",{class:"cx-g2"}, ta(e,"talk","溝通內容",3), ta(e,"bright","⭐ 本次分享的亮點（幼兒正向表現）",3,"例：今天主動收拾教具、第一次自己完成剪紙…")),
+               !e.bright ? h("p",{class:"note",style:"margin:2px 0;color:#a43d22"},"建議每次溝通都分享至少一個幼兒的亮點。") : null,
+               h("div",{class:"cx-g2"}, ta(e,"home","居家延伸活動",2), ta(e,"parentFb","家長回饋",2)) ];
+    }
+    sec.append(h("div",{class:"cx-ent "+e.kind}, head, body));
+  });
+  if (!d.entries.length) sec.append(h("p",{class:"note"},"還沒有紀錄，按上方按鈕新增。"));
+  app.append(sec);
+  app.append(tb());
+}
+function renderCaseView(app){
+  const C = S.cs, d0 = csList().find(x=>x.id===C.view); if (!d0){ C.view=null; return renderCase(app); }
+  const d = csNorm(d0);
+  app.append(h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:()=>{ C.view=null; render(); }},"← 返回清單"), h("span",{class:"sp"}),
+    kpiEdit() ? h("button",{class:"btn",onclick:()=>csEdit(d0)},"編輯") : null, h("button",{class:"btn",onclick:()=>csPrintTher(d)},"🖨 專業團隊建議追蹤表"), h("button",{class:"btn primary",onclick:()=>csPrint(d)},"🖨 列印")));
+  const box = h("div",{class:"cx-view"}); box.innerHTML = csBodyHtml(d); app.append(box);
+}
+function csEntHtml(e){
+  const L = (l,v) => v ? `<div><span class="lab">${l}：</span>${cxNl(v)}</div>` : "";
+  if (e.kind==="obs") return L("觀察",e.obs)+L("介入策略",e.act)+L("成效",e.eff)+L("調整",e.adj)+L("居家延伸活動",e.home)+L("家長回饋",e.parentFb);
+  if (e.kind==="ther") return L("治療師",[e.therName,e.therType].filter(Boolean).join("／"))+L("上次建議檢視",e.review)+L("本次建議策略",e.advice)+L("老師執行情形",e.exec)+L("居家延伸活動",e.home)+L("家長回饋",e.parentFb);
+  return L("方式",e.way)+L("溝通內容",e.talk)+L("亮點分享",e.bright)+L("居家延伸活動",e.home)+L("家長回饋",e.parentFb);
+}
+function csBodyHtml(d){
+  const es = csSorted(d);
+  return `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">幼兒個案追蹤紀錄</div></div>
+<table><colgroup><col style="width:14%"><col style="width:36%"><col style="width:14%"><col></colgroup>
+<tr><th>學年度</th><td>${cxT(d.year)}</td><th>班級</th><td>${cxT(d.cls)}</td></tr>
+<tr><th>幼兒姓名</th><td>${cxT(d.child)}</td><th>身分／需求</th><td>${cxT(d.ident.join("、"))}${d.iep?"（有 IEP）":""}</td></tr>
+<tr><th>現況與需求</th><td colspan="3">${cxNl(d.bg)}</td></tr>
+<tr><th>個別目標</th><td colspan="3">${cxNl(d.goals)}</td></tr></table>
+<div class="sec">追蹤紀錄（觀察 → 介入 → 成效 → 調整）</div>
+<table><colgroup><col style="width:13%"><col style="width:13%"><col><col style="width:10%"></colgroup><thead><tr><th>日期</th><th>類型</th><th>內容</th><th>記錄者</th></tr></thead>
+<tbody>${es.length ? es.map(e=>`<tr><td>${cxT(cxRoc(e.date))}</td><td>${CS_KNAME[e.kind]}</td><td>${csEntHtml(e)}</td><td>${cxT(e.by)}</td></tr>`).join("") : `<tr><td colspan="4" style="text-align:center">尚無紀錄</td></tr>`}</tbody></table>
+<div class="sig"><div>記錄教師：<span></span></div><div>教保組長：<span></span></div><div>園長：<span></span></div></div>`;
+}
+function csPrint(d){ d = csNorm(d); cxPrint(`${d.cls}_${d.child}_個案追蹤紀錄`, csBodyHtml(d)); }
+function csPrintTher(d){
+  d = csNorm(d); const es = csSorted(d).filter(e=>e.kind==="ther");
+  if (!es.length){ alert("這位幼兒還沒有專業團隊入園紀錄。"); return; }
+  const body = `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">專業團隊建議執行追蹤表</div></div>
+<p>班級：${cxT(d.cls)}　　幼兒：${cxT(d.child)}　　學年度：${cxT(d.year)}</p>
+<table><colgroup><col style="width:11%"><col style="width:13%"><col><col><col></colgroup><thead><tr><th>入園日期</th><th>治療師／類別</th><th>建議策略</th><th>老師執行情形與幼兒反應</th><th>下次入園檢視結果</th></tr></thead>
+<tbody>${es.map((e,i)=>`<tr><td>${cxT(cxRoc(e.date))}</td><td>${cxT([e.therName,e.therType].filter(Boolean).join("\n"))}</td><td>${cxNl(e.advice)}</td><td>${cxNl(e.exec)}</td><td>${cxNl((es[i+1]||{}).review||"")}</td></tr>`).join("")}</tbody></table>
+<p class="small">說明：「下次入園檢視結果」取自下一次入園時填寫的檢視內容，可於治療師入園前列印本表提供檢視。</p>`;
+  cxPrint(`${d.cls}_${d.child}_專業團隊建議追蹤表`, body, true);
+}
+function csPrintHome(d, e){
+  const body = `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">居家延伸活動單</div></div>
+<p>親愛的家長您好：以下是老師${e.kind==="ther"?"與專業團隊":""}為孩子設計的居家小活動，邀請您在家一起陪孩子玩，並在下方寫下孩子的表現，謝謝您！</p>
+<table><colgroup><col style="width:18%"><col></colgroup>
+<tr><th>幼兒姓名</th><td>${cxT(d.child)}（${cxT(d.cls)}）</td></tr><tr><th>日期</th><td>${cxT(cxRoc(e.date))}</td></tr>
+<tr><th>活動內容</th><td style="height:120px">${cxNl(e.home)}</td></tr>
+<tr><th>孩子在家的表現／家長回饋</th><td style="height:160px">${cxNl(e.parentFb)}</td></tr></table>
+<div class="sig"><div>家長簽名：<span></span></div><div>回條日期：<span></span></div></div>`;
+  cxPrint(`${d.child}_居家延伸活動單_${e.date}`, body);
+}
+/* 匯入：Excel／CSV（每列一筆紀錄）或 JSON */
+const CS_COLS = { year:["學年度","學年"], cls:["班級"], child:["幼兒姓名","姓名","幼兒"], ident:["身分","身分需求","需求類別"], iep:["IEP","有IEP"], bg:["現況與需求","現況"], goals:["個別目標","IEP目標"],
+  date:["日期","紀錄日期"], kind:["類型","紀錄類型"], obs:["觀察","觀察紀錄","幼兒表現"], act:["介入策略","介入","輔導策略"], eff:["成效"], adj:["調整","下一步"],
+  therName:["治療師","治療師姓名","專業人員"], therType:["專業類別","治療類別"], advice:["建議策略","治療師建議","本次建議"], exec:["執行情形","老師執行情形"], review:["檢視結果","上次建議檢視"],
+  way:["溝通方式","方式"], talk:["溝通內容"], bright:["亮點","亮點分享","正向表現"], home:["居家延伸活動","居家活動"], parentFb:["家長回饋"], by:["記錄者","老師"] };
+const csKindOf = v => { v = str(v); if (/治療|專業|團隊|巡輔/.test(v)) return "ther"; if (/親師|電訪|溝通|家長|面談/.test(v)) return "parent"; return "obs"; };
+function csTemplate(){
+  cxDownloadXlsx("個案追蹤_匯入範例.xlsx", [["個案紀錄", [
+    { 學年度:"115", 班級:"山茶花班", 幼兒姓名:"王小明", 身分:"疑似發展遲緩", IEP:"否", 現況與需求:"握筆不穩、精細動作較弱", 個別目標:"能用三指握筆畫線", 日期:"2026-09-15", 類型:"觀察與介入", 觀察:"操作剪刀時無法沿線剪", 介入策略:"美勞區增設黏土與彈簧剪刀", 成效:"兩週後可剪直線", 調整:"增加曲線剪紙", 治療師:"", 專業類別:"", 建議策略:"", 執行情形:"", 檢視結果:"", 溝通方式:"", 溝通內容:"", 亮點:"", 居家延伸活動:"在家用夾子夾豆子", 家長回饋:"", 記錄者:"游老師" },
+    { 學年度:"115", 班級:"山茶花班", 幼兒姓名:"王小明", 身分:"", IEP:"", 現況與需求:"", 個別目標:"", 日期:"2026-10-02", 類型:"專業團隊入園", 觀察:"", 介入策略:"", 成效:"", 調整:"", 治療師:"林治療師", 專業類別:"職能治療", 建議策略:"使用粗筆、桌面斜板", 執行情形:"已提供粗筆，幼兒較願意畫畫", 檢視結果:"", 溝通方式:"", 溝通內容:"", 亮點:"", 居家延伸活動:"", 家長回饋:"", 記錄者:"游老師" },
+    { 學年度:"115", 班級:"山茶花班", 幼兒姓名:"王小明", 身分:"", IEP:"", 現況與需求:"", 個別目標:"", 日期:"2026-10-05", 類型:"親師溝通", 觀察:"", 介入策略:"", 成效:"", 調整:"", 治療師:"", 專業類別:"", 建議策略:"", 執行情形:"", 檢視結果:"", 溝通方式:"電話訪問", 溝通內容:"說明治療師建議", 亮點:"今天主動收拾教具", 居家延伸活動:"", 家長回饋:"在家會試著用粗筆畫畫", 記錄者:"游老師" } ]],
+    ["欄位說明", [{ 欄位:"類型", 說明:"填「觀察與介入」「專業團隊入園」或「親師溝通」" }, { 欄位:"身分", 說明:"可填多個，用頓號分隔：特殊教育、疑似特教、身心障礙、發展遲緩、疑似發展遲緩、其他需關注" }, { 欄位:"日期", 說明:"西元 2026-09-15 或民國 115/09/15 都可以" }, { 欄位:"同一位幼兒", 說明:"同學年、同班、同姓名的列會併成同一份個案；已存在的個案會把新紀錄加進去，重複的紀錄自動略過" }]]]);
+}
+function csImport(){
+  if (!kpiEdit()) return;
+  cxPickFile(".xlsx,.xls,.csv,.json", async f => {
+    let docs = [];
+    if (/\.json$/i.test(f.name)){
+      const j = JSON.parse(await f.text());
+      docs = (Array.isArray(j) ? j : Array.isArray(j.caseRecords) ? j.caseRecords : [j]).filter(x=>x && x.child).map(csNorm);
+    } else {
+      const rows = await cxReadRows(f), map = new Map();
+      rows.forEach(r=>{
+        const G = k => cxGet(r, CS_COLS[k]);
+        const child = G("child"), cls = G("cls"); if (!child || !cls) return;
+        const date = stuDate(G("date")) || cxToday();
+        const year = (G("year").match(/\d+/)||[cxYearOf(date)])[0];
+        const key = [year, cls, child].join("|");
+        if (!map.has(key)) map.set(key, csNorm({ year, cls, child, entries:[] }));
+        const d = map.get(key);
+        cxSplit(G("ident")).forEach(t=>{ if (!d.ident.includes(t)) d.ident.push(t); });
+        if (/是|有|y|true|v|✓|1/i.test(G("iep"))) d.iep = true;
+        if (G("bg") && !d.bg) d.bg = G("bg"); if (G("goals") && !d.goals) d.goals = G("goals");
+        const e = csEnt({ kind: csKindOf(G("kind")), date });
+        ["obs","act","eff","adj","therName","therType","advice","exec","review","way","talk","bright","home","parentFb","by"].forEach(k=>e[k]=G(k));
+        if (!G("kind")) e.kind = (e.therName||e.advice) ? "ther" : (e.talk||e.bright||e.way) ? "parent" : "obs";
+        if ([e.obs,e.act,e.eff,e.adj,e.advice,e.exec,e.talk,e.bright,e.home,e.parentFb].some(Boolean)) d.entries.push(e);
+      });
+      docs = [...map.values()];
+    }
+    if (!docs.length){ alert("檔案裡沒有可以匯入的個案資料（至少要有「班級」和「幼兒姓名」欄位）。可以先按「⬇️ 匯入範例檔」看看格式。"); return; }
+    const all = csList();
+    const sig = e => [e.kind, e.date, (e.obs||e.advice||e.talk||e.act||e.home).slice(0,30)].join("|");
+    const plan = docs.map(d=>{ const old = all.find(x=>str(x.year)===d.year && str(x.cls)===d.cls && str(x.child)===d.child); return { d, old }; });
+    const lines = plan.map(({d,old})=>`・${d.cls} ${d.child}（${d.year}）：${d.entries.length} 筆紀錄${old?"（已有個案，新紀錄會加進去）":"（新個案）"}`);
+    if (!confirm(`要匯入 ${docs.length} 位幼兒的資料嗎？\n`+lines.slice(0,25).join("\n")+(lines.length>25?`\n…等共 ${lines.length} 位`:""))) return;
+    let ok=0, add=0, skip=0; const bad=[];
+    for (const {d,old} of plan){
+      try{
+        let body;
+        if (old){
+          body = csNorm(old); const have = new Set(body.entries.map(sig));
+          d.entries.forEach(e=>{ if (have.has(sig(e))) { skip++; return; } have.add(sig(e)); body.entries.push(e); add++; });
+          d.ident.forEach(t=>{ if (!body.ident.includes(t)) body.ident.push(t); }); if (d.iep) body.iep = true; if (!body.bg) body.bg = d.bg; if (!body.goals) body.goals = d.goals;
+        } else {
+          body = d; add += d.entries.length;
+          if (!body.uid){ body.uid = cxUid(); body.ownerEmail = cxMail(); body.ownerName = cxName(); }
+        }
+        body = JSON.parse(JSON.stringify(body)); delete body.id; body.updatedAt = Date.now(); body.updatedBy = cxMail(); body.importedFrom = f.name;
+        const ref = old ? S.db.doc(CS_COL+"/"+old.id) : S.db.collection(CS_COL).doc(); await ref.set(body);
+        const rec = {id:ref.id,...body};
+        S.cs.own = (S.cs.own||[]).filter(x=>x.id!==ref.id).concat([rec]);
+        ok++;
+      }catch(e){ bad.push(`${d.cls} ${d.child}（${errText(e)}）`); }
+    }
+    render(); alert(`已匯入 ${ok} 位幼兒、新增 ${add} 筆紀錄`+(skip?`，略過重複 ${skip} 筆`:"")+"。"+(bad.length?"\n\n失敗：\n"+bad.join("\n"):""));
+  });
+}
+
+/* ---------- 考核與專業成長（績效考評建議：owners 可編輯，KPI_VIEWERS 唯讀，其他人看不到） ---------- */
+const RV_COL = "staffReviews";
+const RV_KINDS = [["eval","考核表"],["rule","考核小組設置要點"],["need","專業成長需求"],["map","年度培訓地圖"]];
+const RV_KNAME = Object.fromEntries(RV_KINDS);
+const RV_JOBS = ["教保員","教師","助理教保員","廚工","行政人員","園長","其他"];
+const RV_PERIODS = ["第一學期平時考核","第二學期平時考核","年終考核"];
+const RV_SCALE = [["5","優"],["4","佳"],["3","普通"],["2","待加強"],["1","需改善"]];
+const RV_ITEMS = {
+  teach:["教保專業知能","課程規劃與實施","幼兒觀察與評量","班級經營","親師溝通","團隊合作","敬業態度","專業成長"],
+  cook:["餐點製作與衛生","食材驗收與管理","廚房環境清潔","團隊合作","敬業態度"],
+  admin:["業務執行","文書與資料管理","溝通協調","團隊合作","敬業態度"] };
+const rvItemsOf = job => /廚/.test(job) ? RV_ITEMS.cook : /行政/.test(job) ? RV_ITEMS.admin : RV_ITEMS.teach;
+const RV_TOPICS = ["課程設計與學習區規劃","幼兒觀察與評量","特殊需求幼兒輔導","正向管教與班級經營","親師溝通技巧","社區踏查課程設計","性別平等教育","兒少保護與通報","職場霸凌預防","緊急救護（CPR／AED）","環境安全與消防","幼兒園食品衛生與營養","資訊與數位工具","情緒與壓力調適","繪本與語文教學","藝術與美感教育","體能與出汗性活動"];
+/* 考核項目 → 對應的研習主題（平均分數偏低時列入培訓地圖） */
+const RV_ITEM2TOPIC = { "教保專業知能":"幼兒觀察與評量","課程規劃與實施":"課程設計與學習區規劃","幼兒觀察與評量":"幼兒觀察與評量","班級經營":"正向管教與班級經營","親師溝通":"親師溝通技巧","團隊合作":"情緒與壓力調適","專業成長":"課程設計與學習區規劃","餐點製作與衛生":"幼兒園食品衛生與營養","食材驗收與管理":"幼兒園食品衛生與營養","廚房環境清潔":"環境安全與消防","業務執行":"資訊與數位工具","文書與資料管理":"資訊與數位工具","溝通協調":"親師溝通技巧" };
+const RV_MUST = [["性別平等教育","全體","法定／教育政策"],["兒少保護與通報","全體","法定／教育政策"],["職場霸凌預防","全體","法定／教育政策"],["緊急救護（CPR／AED）","全體","法定／教育政策"],["環境安全與消防","全體","法定／教育政策"],["幼兒園食品衛生與營養","廚工","法定／教育政策"],["正向管教與班級經營","教保服務人員","法定／教育政策"]];
+const RV_FEATURE = [["社區踏查課程設計","教保服務人員","園所特色"],["課程設計與學習區規劃","教保服務人員","園所特色"]];
+const RV_RULE_TEXT = `一、目的：為公平、客觀評核本園教保服務人員及其他服務人員之工作表現，作為獎勵、輔導與專業成長規劃之依據，特訂定本要點。
+二、考核小組組成：由園長擔任召集人，成員包含教保組長、教保服務人員代表及行政人員代表，共＿＿人；必要時得邀請協會代表參與。
+三、考核對象：本園教保服務人員、廚工、行政人員及其他服務人員。
+四、考核方式：
+　（一）自評：受考核人員依考核項目自行評分並撰寫自評說明。
+　（二）他評：由同儕或直屬主管依考核項目評分並提供回饋。
+　（三）考核小組評定：考核小組參酌自評、他評及平時紀錄（巡堂紀錄、週誌、會議紀錄等）綜合評定。
+五、考核項目：教保專業知能、課程規劃與實施、幼兒觀察與評量、班級經營、親師溝通、團隊合作、敬業態度、專業成長等（廚工、行政人員依職務調整）。
+六、考核時程：每學期末辦理平時考核，學年末辦理年終考核。
+七、考核結果運用：
+　（一）考核結果由考核小組成員、受考核人及園長簽名（或蓋章）以示負責。
+　（二）考核完成後由園長與受考核人進行回饋面談，並針對值得表揚之亮點於教保會議公開分享。
+　（三）考核結果作為擬定年度專業成長需求與培訓地圖之依據。
+八、本要點經園務會議通過後實施，修正時亦同。`;
+function rvNorm(d0){
+  const d = Object.assign({ kind:"eval", year:String(wpY0()) }, JSON.parse(JSON.stringify(d0||{})));
+  d.kind = RV_KNAME[d.kind] ? d.kind : "eval"; d.year = str(d.year);
+  if (d.kind==="eval"){
+    Object.assign(d, Object.assign({ period:RV_PERIODS[2], staff:"", job:"教保員", items:null, selfNote:"", peerNote:"", groupNote:"", peerBy:"", signSelf:"", signPeer:"", signGroup:"", signDirector:"", signDate:"", ivDate:"", ivContent:"", ivPlan:"", praise:"", praiseShare:false }, d));
+    if (!Array.isArray(d.items) || !d.items.length) d.items = rvItemsOf(d.job).map(n=>({ name:n }));
+    d.items = d.items.map(x=>({ name:str(x&&x.name), self:str(x&&x.self), peer:str(x&&x.peer), group:str(x&&x.group) }));
+    ["period","staff","job","selfNote","peerNote","groupNote","peerBy","signSelf","signPeer","signGroup","signDirector","signDate","ivDate","ivContent","ivPlan","praise"].forEach(k=>d[k]=str(d[k]));
+    d.praiseShare = !!d.praiseShare;
+  } else if (d.kind==="rule"){
+    Object.assign(d, Object.assign({ title:"考核小組設置要點", content:RV_RULE_TEXT, members:[], passDate:"", passMeeting:"" }, d));
+    d.members = (Array.isArray(d.members)?d.members:[]).map(m=>({ name:str(m&&m.name), role:str(m&&m.role) }));
+    ["title","content","passDate","passMeeting"].forEach(k=>d[k]=str(d[k]));
+  } else if (d.kind==="need"){
+    Object.assign(d, Object.assign({ staff:"", job:"教保員", topics:[], other:"", way:"", note:"" }, d));
+    d.topics = arr(d.topics); ["staff","job","other","way","note"].forEach(k=>d[k]=str(d[k]));
+  } else {
+    Object.assign(d, Object.assign({ rows:[], note:"" }, d));
+    d.rows = (Array.isArray(d.rows)?d.rows:[]).map(r=>({ topic:str(r&&r.topic), target:str(r&&r.target), basis:str(r&&r.basis), count:str(r&&r.count), month:str(r&&r.month), way:str(r&&r.way) }));
+    d.note = str(d.note);
+  }
+  return d;
+}
+const rvAvg = (d, k) => { const v = d.items.map(x=>+x[k]).filter(n=>n>0); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length) : 0; };
+const rvLabel = d => d.kind==="eval" ? `${d.year} 學年 ${d.staff||"（未填姓名）"}　${d.period}` : d.kind==="need" ? `${d.year} 學年 ${d.staff||"（未填姓名）"}（${d.job}）` : `${d.year} 學年 ${RV_KNAME[d.kind]}`;
+const rvCan = () => kpiView();
+function rvSubscribe(d){
+  const R = S.rv;
+  if (!kpiView()){ R.got = true; return; }
+  unsubs.push(cxListen(d.db.collection(RV_COL), s=>{ R.list = s.docs.map(x=>({id:x.id,...x.data()})); R.got = true; R.err=""; if (S.view==="review" && !(R.edit && R.dirty)) render(); },
+    e=>{ R.err = cxErrMsg(e, RV_COL); R.got = true; if (S.view==="review") render(); }));
+}
+function renderReview(app){
+  const R = S.rv;
+  if (!rvCan()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  if (R.err){ app.append(h("div",{class:"notice"},R.err)); return; }
+  if (!R.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "考核資料載入中…")); return; }
+  if (R.edit && kpiEdit()) return renderReviewEditor(app);
+  if (R.view) return renderReviewView(app);
+  if (!R.year) R.year = String(wpY0());
+  const years = [...new Set(R.list.map(x=>str(x.year)).concat([String(wpY0())]))].sort((a,b)=>wpYNum(b)-wpYNum(a));
+  const inY = x => R.year==="all" || str(x.year)===R.year;
+  const list = R.list.filter(x=>x.kind===R.tab && inY(x)).map(x=>Object.assign(rvNorm(x),{id:x.id,updatedAt:x.updatedAt}))
+    .sort((a,b)=>wpYNum(b.year)-wpYNum(a.year) || str(a.staff).localeCompare(str(b.staff),"zh-Hant") || str(a.period).localeCompare(str(b.period),"zh-Hant"));
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"考核與專業成長"),
+    h("p",{class:"note"},"🔒 只限指定帳號：園方指定人員可編輯，檢視帳號只能查看，其他人（包含其他管理員）都看不到"), CX_RO(),
+    h("p",{class:"note",style:"margin-top:4px"},"考核小組設置要點、自評／他評／小組評定與簽章、考核後面談與亮點表揚、專業成長需求調查，以及依需求與考核結果產生的年度培訓地圖。"),
+    CX_NOTE("行政管理第13、14、15、16項：考核小組規章與簽章、考核後輔導與表揚、研習對應政策、專業成長需求與培訓地圖"),
+    h("div",{class:"as-tabs"}, RV_KINDS.map(([k,l])=>h("button",{class:"as-tab"+(R.tab===k?" on":""),onclick:()=>{ R.tab=k; render(); }},`${l}（${R.list.filter(x=>x.kind===k && inY(x)).length}）`))),
+    kpiEdit() && h("div",{class:"abs",style:"display:flex;gap:6px;flex-wrap:wrap"},
+      R.tab==="need"||R.tab==="eval" ? h("button",{class:"btn",onclick:()=>rvTemplate(R.tab)},"⬇️ 匯入範例檔") : null,
+      h("button",{class:"btn",onclick:()=>rvImport()},"📥 匯入檔案"),
+      R.tab==="map" ? h("button",{class:"btn primary",onclick:()=>rvGenMap()},"✨ 依需求調查與考核結果產生") : h("button",{class:"btn primary",onclick:()=>rvNew(R.tab)},"＋ 新增"+RV_KNAME[R.tab]))));
+  const bar = [h("span",null,`共 ${list.length} 份`),
+    h("label",null,"學年度：",h("select",{class:"in",onchange:e=>{ R.year=e.target.value; render(); }}, [h("option",{value:"all",selected:R.year==="all"},"全部"), ...years.map(y=>h("option",{value:y,selected:R.year===y},y+" 學年"))]))];
+  if (R.tab==="eval") bar.push(h("button",{class:"btn",onclick:()=>rvPrintPraise()},"⭐ 列印亮點表揚彙整"), h("button",{class:"btn",onclick:()=>rvPrintSummary()},"📋 列印考核總表"));
+  if (R.tab==="need") bar.push(h("button",{class:"btn",onclick:()=>rvPrintNeedSum()},"📋 列印需求統計"));
+  app.append(h("div",{class:"mt-sortbar"}, bar));
+  if (R.tab==="eval" && R.year!=="all"){
+    const ev = list; const noSign = ev.filter(d=>!(d.signGroup && d.signDirector)); const noIv = ev.filter(d=>!d.ivContent);
+    if (ev.length) app.append(h("div",{class:"cx-sum"},
+      h("div",null,h("b",null,String(ev.length)),"份考核"),
+      h("div",{class:noSign.length?"cx-low":""},h("b",null,String(noSign.length)),"份尚未完成小組／園長簽章"),
+      h("div",{class:noIv.length?"cx-low":""},h("b",null,String(noIv.length)),"份尚未記錄回饋面談"),
+      h("div",null,h("b",null,String(ev.filter(d=>d.praise).length)),"份有亮點表揚")));
+  }
+  if (!list.length){ app.append(h("div",{class:"notice"}, R.tab==="map" ? "還沒有培訓地圖，按「✨ 依需求調查與考核結果產生」自動建立。" : "這裡還沒有資料，按「＋ 新增」開始，或用「📥 匯入檔案」匯入。")); return; }
+  app.append(h("div",{class:"list"}, list.map(d=>{
+    let info = "";
+    if (d.kind==="eval"){ const a=rvAvg(d,"group")||rvAvg(d,"peer")||rvAvg(d,"self"); info = `${d.job}　平均 ${a?a.toFixed(2):"—"}　${d.signGroup&&d.signDirector?"✅ 已簽章":"✍️ 未完成簽章"}　${d.ivContent?"✅ 已面談":"⬜ 未面談"}${d.praise?"　⭐ 有亮點表揚":""}`; }
+    else if (d.kind==="need") info = d.topics.join("、") || "（未勾選主題）";
+    else if (d.kind==="rule") info = d.passDate ? `${cxRoc(d.passDate)} ${d.passMeeting||""}通過` : "⚠️ 尚未填寫通過日期／會議";
+    else info = `${d.rows.length} 項培訓主題`;
+    return h("div",{class:"card row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:240px"}, h("b",null,rvLabel(d)), h("div",{class:"note",style:"font-size:13px"}, info, d.updatedAt ? "　更新："+new Date(d.updatedAt).toLocaleDateString("zh-TW") : "")),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>{ R.view=d.id; render(); }},"檢視"),
+        kpiEdit() ? h("button",{class:"btn",onclick:()=>rvEdit(d)},"編輯") : null,
+        h("button",{class:"btn",onclick:()=>rvPrint(d)},"🖨 列印"),
+        !kpiEdit() ? null : h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份資料？",`${rvLabel(d)} 刪除後無法復原。`,"刪除",async()=>{ await S.db.doc(RV_COL+"/"+d.id).delete(); R.list=R.list.filter(x=>x.id!==d.id); toast("已刪除"); render(); })},"刪除")));
+  })));
+}
+function rvEdit(d0){ const R=S.rv; R.draft = rvNorm(d0); R.edit = d0.id; R.dirty=false; R.view=null; render(); }
+function rvNew(kind){
+  const R = S.rv, y = R.year && R.year!=="all" ? R.year : String(wpY0());
+  let d = rvNorm({ kind, year:y });
+  if (kind==="rule"){ const prev = R.list.filter(x=>x.kind==="rule").sort((a,b)=>wpYNum(b.year)-wpYNum(a.year))[0]; if (prev){ const p=rvNorm(prev); d.content=p.content; d.members=p.members; toast(`已帶入 ${p.year} 學年的設置要點，記得修改後儲存`); } }
+  R.draft = d; R.edit = "__new"; R.dirty = kind==="rule"; R.view=null; render();
+}
+async function rvSave(btn, auto){
+  const R = S.rv, d = R.draft; if (!d) return true;
+  if (!kpiEdit()) return auto ? "這個帳號只能檢視" : alert("這個帳號只能檢視，不能修改。");
+  if (!auto){ clearTimeout(R._at); R._timerOn=false; }
+  if (!str(d.year).trim()){ if (auto) return "請填寫學年度"; alert("請填寫學年度"); return; }
+  if ((d.kind==="eval"||d.kind==="need") && !str(d.staff).trim()){ if (auto) return "請填寫姓名"; alert("請填寫姓名"); return; }
+  const body = JSON.parse(JSON.stringify(rvNorm(d))); delete body.id; body.year = str(body.year).trim();
+  body.updatedAt = Date.now(); body.updatedBy = cxMail();
+  if (btn) btn.disabled = true;
+  try{ const ref = R.edit==="__new" ? S.db.collection(RV_COL).doc() : S.db.doc(RV_COL+"/"+R.edit); await ref.set(body); R.edit = ref.id;
+    R.list = R.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]);
+    if (auto) return true;
+    R.edit=null; R.draft=null; R.dirty=false; R.tab=body.kind; toast("已儲存"); render();
+  }catch(e){ if (btn) btn.disabled=false; if (auto) return errText(e); alert("儲存失敗："+errText(e)); }
+}
+function renderReviewEditor(app){
+  const R = S.rv, d = R.draft, mark = () => { R.dirty = true; };
+  const back = async () => { if (!(await edLeave(R))) return; R.edit=null; R.draft=null; R.dirty=false; render(); };
+  const ta = (o, f, l, rows, ph) => h("label",{class:"fl"},l,h("textarea",{class:"in",rows:String(rows||2),placeholder:ph||"",oninput:e=>{ o[f]=e.target.value; mark(); }},o[f]));
+  const ti = (o, f, l, type, ph) => h("label",{class:"fl"},l,h("input",{class:"in",type:type||"text",value:o[f],placeholder:ph||"",oninput:e=>{ o[f]=e.target.value; mark(); }}));
+  const sel = (o, f, l, opts, rr) => h("label",{class:"fl"},l,h("select",{class:"in",onchange:e=>{ o[f]=e.target.value; mark(); if (rr) rr(); }}, opts.map(v=>h("option",{value:v,selected:o[f]===v},v))));
+  const tb = () => h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:back},"← 返回清單"), h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>rvPrint(d)},"🖨 預覽列印"), h("button",{class:"btn primary",onclick:e=>rvSave(e.currentTarget)},"💾 儲存"));
+  app.append(tb());
+  if (d.kind==="eval"){
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"考核表　基本資料"),
+      h("div",{class:"f4"}, ti(d,"year","學年度"), sel(d,"period","考核期別",[...new Set([...RV_PERIODS,d.period])]), ti(d,"staff","受考核人姓名"),
+        sel(d,"job","職稱",[...new Set([...RV_JOBS,d.job])], ()=>{ if (!d.items.some(x=>x.self||x.peer||x.group) && confirm("要依職稱換成預設的考核項目嗎？")){ d.items = rvItemsOf(d.job).map(n=>({name:n,self:"",peer:"",group:""})); } render(); }))));
+    const sc = (x,k) => h("select",{class:"in",onchange:e=>{ x[k]=e.target.value; mark(); render(); }}, [h("option",{value:""},"—"), ...RV_SCALE.map(([v,l])=>h("option",{value:v,selected:x[k]===v},`${v} ${l}`))]);
+    const tbl = h("table",{class:"cx-t cx-scores"}, h("thead",null,h("tr",null, h("th",null,"考核項目"), h("th",null,"自評"), h("th",null,"他評"), h("th",null,"考核小組評定"), h("th",null,""))),
+      h("tbody",null, d.items.map((x,i)=>h("tr",null,
+        h("td",null,h("input",{class:"in",value:x.name,oninput:e=>{ x.name=e.target.value; mark(); }})), h("td",null,sc(x,"self")), h("td",null,sc(x,"peer")), h("td",null,sc(x,"group")),
+        h("td",null,h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這個項目？")) return; d.items.splice(i,1); mark(); render(); }},"刪除")))),
+        h("tr",null, h("th",null,"平均"), ...["self","peer","group"].map(k=>h("th",null, rvAvg(d,k)?rvAvg(d,k).toFixed(2):"—")), h("th",null,""))));
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"考核項目與評分（5 優、4 佳、3 普通、2 待加強、1 需改善）"), tbl,
+      h("button",{class:"btn",style:"margin-top:8px",onclick:()=>{ d.items.push({name:"",self:"",peer:"",group:""}); mark(); render(); }},"＋ 新增項目"),
+      h("div",{class:"cx-g2",style:"margin-top:8px"}, ta(d,"selfNote","自評說明",3), ta(d,"peerNote","他評回饋",3)),
+      h("div",{class:"cx-g2"}, ti(d,"peerBy","他評者"), ta(d,"groupNote","考核小組綜合評語",3))));
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"簽章（以示負責）"),
+      h("p",{class:"note",style:"margin:0 0 6px"},"可直接輸入簽名者姓名作為紀錄；列印後亦留有親簽欄位。"),
+      h("div",{class:"f4"}, ti(d,"signSelf","受考核人"), ti(d,"signPeer","他評者"), ti(d,"signGroup","考核小組成員（用頓號分隔）"), ti(d,"signDirector","園長"), ti(d,"signDate","簽章日期","date"))));
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"考核後回饋面談與亮點表揚"),
+      h("div",{class:"f4"}, ti(d,"ivDate","面談日期","date")),
+      h("div",{class:"cx-g2"}, ta(d,"ivContent","面談內容（優點肯定、待成長之處）",3), ta(d,"ivPlan","後續輔導與專業成長計畫",3)),
+      ta(d,"praise","⭐ 值得表揚的亮點（例：成功解決幼兒情緒問題、優良親師溝通案例）",3),
+      h("label",{class:"wp-ck"+(d.praiseShare?" on":""),style:"margin-top:6px"},h("input",{type:"checkbox",checked:d.praiseShare?true:null,onchange:e=>{ d.praiseShare=e.target.checked; mark(); render(); }}),"已於教保會議公開分享表揚")));
+  } else if (d.kind==="rule"){
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"考核小組設置要點"),
+      h("div",{class:"f4"}, ti(d,"year","學年度"), ti(d,"title","標題"), ti(d,"passDate","通過日期","date"), ti(d,"passMeeting","通過會議","text","例：115學年度第一學期第1次園務會議")),
+      ta(d,"content","要點內容",18)));
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"考核小組成員"),
+      h("table",{class:"cx-t"}, h("thead",null,h("tr",null,h("th",null,"姓名"),h("th",null,"職稱／角色"),h("th",null,""))),
+        h("tbody",null, d.members.map((m,i)=>h("tr",null, h("td",null,h("input",{class:"in",value:m.name,oninput:e=>{ m.name=e.target.value; mark(); }})), h("td",null,h("input",{class:"in",value:m.role,placeholder:"例：召集人（園長）",oninput:e=>{ m.role=e.target.value; mark(); }})),
+          h("td",null,h("button",{class:"btn sm danger",onclick:()=>{ d.members.splice(i,1); mark(); render(); }},"刪除")))))),
+      h("button",{class:"btn",style:"margin-top:8px",onclick:()=>{ d.members.push({name:"",role:""}); mark(); render(); }},"＋ 新增成員")));
+  } else if (d.kind==="need"){
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"專業成長需求"),
+      h("div",{class:"f4"}, ti(d,"year","學年度"), ti(d,"staff","姓名"), sel(d,"job","職稱",[...new Set([...RV_JOBS,d.job])]), ti(d,"way","偏好的研習方式","text","例：實作工作坊、線上課程、觀摩")),
+      h("div",{class:"fl",style:"margin-top:8px"},"想加強的主題（可複選）",
+        h("div",{class:"cx-cks"}, [...new Set([...RV_TOPICS, ...d.topics])].map(t=>h("label",{class:d.topics.includes(t)?"on":""},h("input",{type:"checkbox",checked:d.topics.includes(t)?true:null,onchange:e=>{ d.topics = e.target.checked ? [...new Set([...d.topics,t])] : d.topics.filter(x=>x!==t); mark(); render(); }}),t)))),
+      h("div",{class:"cx-g2"}, ta(d,"other","其他需求",2), ta(d,"note","備註（例：主管觀察到的成長需求）",2))));
+  } else {
+    app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"年度培訓地圖"),
+      h("div",{class:"f4"}, ti(d,"year","學年度")),
+      h("p",{class:"note"},"依據欄可註明來源：需求調查、考核結果、園所特色、法定／教育政策。"),
+      h("table",{class:"cx-t"}, h("thead",null,h("tr",null,["培訓主題","對象","依據","需求人數","預計月份","辦理方式",""].map(x=>h("th",null,x)))),
+        h("tbody",null, d.rows.map((r,i)=>h("tr",null, ["topic","target","basis","count","month","way"].map(k=>h("td",null,h("input",{class:"in",value:r[k],oninput:e=>{ r[k]=e.target.value; mark(); }}))),
+          h("td",null, h("button",{class:"btn sm",title:"上移",onclick:()=>{ if(i<1)return; [d.rows[i-1],d.rows[i]]=[d.rows[i],d.rows[i-1]]; mark(); render(); }},"↑"), h("button",{class:"btn sm danger",onclick:()=>{ d.rows.splice(i,1); mark(); render(); }},"刪除")))))),
+      h("button",{class:"btn",style:"margin-top:8px",onclick:()=>{ d.rows.push({topic:"",target:"",basis:"",count:"",month:"",way:""}); mark(); render(); }},"＋ 新增一列"),
+      ta(d,"note","說明（印在表格下方）",3)));
+  }
+  app.append(tb());
+}
+function renderReviewView(app){
+  const R = S.rv, d0 = R.list.find(x=>x.id===R.view); if (!d0){ R.view=null; return renderReview(app); }
+  const d = rvNorm(d0);
+  app.append(h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:()=>{ R.view=null; render(); }},"← 返回清單"), h("span",{class:"sp"}),
+    kpiEdit() ? h("button",{class:"btn",onclick:()=>rvEdit(d0)},"編輯") : null, h("button",{class:"btn primary",onclick:()=>rvPrint(d)},"🖨 列印")));
+  const box = h("div",{class:"cx-view"}); box.innerHTML = rvBodyHtml(d); app.append(box);
+}
+function rvBodyHtml(d){
+  const top = t => `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">${cxT(t)}</div></div>`;
+  if (d.kind==="eval"){
+    const lab = v => { const x = RV_SCALE.find(s=>s[0]===v); return x ? `${x[0]}（${x[1]}）` : ""; };
+    return top(`${d.year}學年度 教職員${d.period}表`)+`
+<table><colgroup><col style="width:15%"><col><col style="width:15%"><col></colgroup><tr><th>受考核人</th><td>${cxT(d.staff)}</td><th>職稱</th><td>${cxT(d.job)}</td></tr></table>
+<div class="sec">考核項目與評分</div>
+<table><thead><tr><th>考核項目</th><th style="width:16%">自評</th><th style="width:16%">他評</th><th style="width:18%">考核小組評定</th></tr></thead>
+<tbody>${d.items.map(x=>`<tr><td>${cxT(x.name)}</td><td style="text-align:center">${lab(x.self)}</td><td style="text-align:center">${lab(x.peer)}</td><td style="text-align:center">${lab(x.group)}</td></tr>`).join("")}
+<tr><th>平均</th>${["self","peer","group"].map(k=>`<th>${rvAvg(d,k)?rvAvg(d,k).toFixed(2):""}</th>`).join("")}</tr></tbody></table>
+<table style="margin-top:8px"><colgroup><col style="width:18%"><col></colgroup>
+<tr><th>自評說明</th><td>${cxNl(d.selfNote)}</td></tr><tr><th>他評回饋${d.peerBy?`<br>（${cxT(d.peerBy)}）`:""}</th><td>${cxNl(d.peerNote)}</td></tr><tr><th>考核小組綜合評語</th><td>${cxNl(d.groupNote)}</td></tr>
+<tr><th>回饋面談${d.ivDate?`<br>${cxT(cxRoc(d.ivDate))}`:""}</th><td>${cxNl(d.ivContent)}</td></tr><tr><th>後續輔導與成長計畫</th><td>${cxNl(d.ivPlan)}</td></tr>
+<tr><th>亮點表揚</th><td>${cxNl(d.praise)}${d.praiseShare?"<br>（已於教保會議公開分享）":""}</td></tr></table>
+<div class="sec">簽章${d.signDate?`（${cxT(cxRoc(d.signDate))}）`:""}</div>
+<table><tr><th>受考核人</th><th>他評者</th><th>考核小組成員</th><th>園長</th></tr><tr style="height:60px"><td>${cxT(d.signSelf)}</td><td>${cxT(d.signPeer)}</td><td>${cxT(d.signGroup)}</td><td>${cxT(d.signDirector)}</td></tr></table>`;
+  }
+  if (d.kind==="rule") return top(`${d.title||"考核小組設置要點"}`)+`<div style="white-space:pre-wrap;line-height:1.8">${cxT(d.content)}</div>
+${d.members.length?`<div class="sec">考核小組成員</div><table><thead><tr><th>姓名</th><th>職稱／角色</th><th style="width:28%">簽名</th></tr></thead><tbody>${d.members.map(m=>`<tr style="height:34px"><td>${cxT(m.name)}</td><td>${cxT(m.role)}</td><td></td></tr>`).join("")}</tbody></table>`:""}
+<p class="small">${d.passDate?`本要點於 ${cxT(cxRoc(d.passDate))} ${cxT(d.passMeeting)} 通過。`:"通過日期：＿＿＿＿　通過會議：＿＿＿＿＿＿＿＿"}</p>`;
+  if (d.kind==="need") return top(`${d.year}學年度 專業成長需求調查`)+`
+<table><colgroup><col style="width:18%"><col></colgroup><tr><th>姓名</th><td>${cxT(d.staff)}</td></tr><tr><th>職稱</th><td>${cxT(d.job)}</td></tr>
+<tr><th>想加強的主題</th><td>${cxT(d.topics.join("、"))}</td></tr><tr><th>其他需求</th><td>${cxNl(d.other)}</td></tr><tr><th>偏好研習方式</th><td>${cxT(d.way)}</td></tr><tr><th>備註</th><td>${cxNl(d.note)}</td></tr></table>`;
+  return top(`${d.year}學年度 教保服務人員及其他服務人員年度培訓地圖`)+`
+<table><thead><tr><th style="width:5%">序</th><th>培訓主題</th><th style="width:14%">對象</th><th style="width:20%">依據</th><th style="width:8%">需求人數</th><th style="width:10%">預計月份</th><th style="width:14%">辦理方式</th></tr></thead>
+<tbody>${d.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${cxT(r.topic)}</td><td>${cxT(r.target)}</td><td>${cxT(r.basis)}</td><td style="text-align:center">${cxT(r.count)}</td><td>${cxT(r.month)}</td><td>${cxT(r.way)}</td></tr>`).join("")}</tbody></table>
+${d.note?`<p style="white-space:pre-wrap">${cxT(d.note)}</p>`:""}`;
+}
+function rvPrint(d){ d = rvNorm(d); cxPrint(rvLabel(d).replace(/\s+/g,"_"), rvBodyHtml(d), d.kind==="map"); }
+function rvYearList(kind){ const R=S.rv, y = R.year==="all" ? null : R.year; return R.list.filter(x=>x.kind===kind && (!y || str(x.year)===y)).map(rvNorm); }
+function rvPrintPraise(){
+  const ev = rvYearList("eval").filter(d=>d.praise);
+  if (!ev.length){ alert("這個學年還沒有填寫亮點表揚的考核表。"); return; }
+  cxPrint("亮點表揚彙整", `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">教保服務人員亮點表揚彙整</div></div>
+<table><thead><tr><th style="width:14%">姓名</th><th style="width:14%">職稱</th><th>值得表揚的亮點</th><th style="width:14%">會議分享</th></tr></thead><tbody>${ev.map(d=>`<tr><td>${cxT(d.staff)}</td><td>${cxT(d.job)}</td><td>${cxNl(d.praise)}</td><td>${d.praiseShare?"已分享":""}</td></tr>`).join("")}</tbody></table>`);
+}
+function rvPrintSummary(){
+  const ev = rvYearList("eval");
+  if (!ev.length){ alert("這個學年還沒有考核表。"); return; }
+  cxPrint("考核總表", `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">教職員考核總表</div></div>
+<table><thead><tr><th>姓名</th><th>職稱</th><th>期別</th><th>自評平均</th><th>他評平均</th><th>小組評定平均</th><th>簽章</th><th>面談</th></tr></thead><tbody>${ev.map(d=>`<tr><td>${cxT(d.staff)}</td><td>${cxT(d.job)}</td><td>${cxT(d.period)}</td>${["self","peer","group"].map(k=>`<td style="text-align:center">${rvAvg(d,k)?rvAvg(d,k).toFixed(2):""}</td>`).join("")}<td>${d.signGroup&&d.signDirector?"已完成":"未完成"}</td><td>${d.ivContent?cxT(cxRoc(d.ivDate)||"已面談"):"未面談"}</td></tr>`).join("")}</tbody></table>`, true);
+}
+function rvNeedCount(){
+  const m = new Map();
+  rvYearList("need").forEach(d=>d.topics.forEach(t=>{ if (!m.has(t)) m.set(t,{n:0,jobs:new Set(),who:[]}); const o=m.get(t); o.n++; o.jobs.add(d.job); o.who.push(d.staff); }));
+  return [...m.entries()].sort((a,b)=>b[1].n-a[1].n);
+}
+function rvPrintNeedSum(){
+  const c = rvNeedCount(); if (!c.length){ alert("這個學年還沒有專業成長需求資料。"); return; }
+  cxPrint("專業成長需求統計", `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">專業成長需求統計分析</div></div>
+<p>填答人數：${rvYearList("need").length} 人</p><table><thead><tr><th>主題</th><th style="width:10%">人數</th><th style="width:20%">職稱</th><th>填答者</th></tr></thead><tbody>${c.map(([t,o])=>`<tr><td>${cxT(t)}</td><td style="text-align:center">${o.n}</td><td>${cxT([...o.jobs].join("、"))}</td><td>${cxT(o.who.join("、"))}</td></tr>`).join("")}</tbody></table>`);
+}
+function rvGenMap(){
+  if (!kpiEdit()) return;
+  const R = S.rv, y = R.year==="all" ? String(wpY0()) : R.year;
+  const rows = new Map();
+  const add = (topic, target, basis, count) => { if (!rows.has(topic)) rows.set(topic,{topic,target:new Set(),basis:new Set(),count:0}); const r=rows.get(topic); if (target) target.split("、").forEach(t=>r.target.add(t)); r.basis.add(basis); if (count) r.count = Math.max(r.count, count); };
+  const needs = R.list.filter(x=>x.kind==="need" && str(x.year)===y).map(rvNorm);
+  const m = new Map(); needs.forEach(d=>d.topics.forEach(t=>{ if (!m.has(t)) m.set(t,{n:0,jobs:new Set()}); m.get(t).n++; m.get(t).jobs.add(/廚/.test(d.job)?"廚工":/行政/.test(d.job)?"行政人員":"教保服務人員"); }));
+  [...m.entries()].sort((a,b)=>b[1].n-a[1].n).forEach(([t,o])=>add(t,[...o.jobs].join("、"),"需求調查",o.n));
+  const evs = R.list.filter(x=>x.kind==="eval" && str(x.year)===y).map(rvNorm), sum = new Map();
+  evs.forEach(d=>d.items.forEach(x=>{ const v = +(x.group||x.peer||x.self); if (!v) return; if (!sum.has(x.name)) sum.set(x.name,{s:0,n:0,jobs:new Set()}); const o=sum.get(x.name); o.s+=v; o.n++; o.jobs.add(/廚/.test(d.job)?"廚工":/行政/.test(d.job)?"行政人員":"教保服務人員"); }));
+  [...sum.entries()].filter(([,o])=>o.s/o.n < 3.5).forEach(([name,o])=>add(RV_ITEM2TOPIC[name]||name, [...o.jobs].join("、"), `考核結果（${name}平均 ${(o.s/o.n).toFixed(1)}）`));
+  RV_FEATURE.forEach(([t,g,b])=>add(t,g,b)); RV_MUST.forEach(([t,g,b])=>add(t,g,b));
+  const old = R.list.find(x=>x.kind==="map" && str(x.year)===y), keep = old ? rvNorm(old).rows : [];
+  const d = rvNorm({ kind:"map", year:y });
+  d.rows = [...rows.values()].map(r=>{ const k = keep.find(x=>x.topic===r.topic) || {}; return { topic:r.topic, target:[...r.target].join("、"), basis:[...r.basis].join("；"), count:r.count?String(r.count):"", month:k.month||"", way:k.way||"" }; });
+  d.note = `本培訓地圖依 ${y} 學年度專業成長需求調查（${needs.length} 人填答）、考核結果（${evs.length} 份）、園所特色（社區踏查、學習區）及法定／教育政策研習（性別平等、兒少保護、職場霸凌預防等）彙整。`;
+  if (!needs.length && !evs.length) toast("這個學年還沒有需求調查或考核資料，先列出園所特色與法定研習主題");
+  R.tab = "map"; R.draft = d; R.edit = old ? old.id : "__new"; R.dirty = true; R.view=null; render();
+  toast("已產生培訓地圖，請填寫預計月份與辦理方式後儲存");
+}
+function rvTemplate(kind){
+  if (kind==="need") cxDownloadXlsx("專業成長需求_匯入範例.xlsx", [["需求調查", [
+    { 學年度:"115", 姓名:"王老師", 職稱:"教保員", 想加強的主題:"特殊需求幼兒輔導、親師溝通技巧", 其他需求:"希望有實作工作坊", 偏好的研習方式:"實作工作坊" },
+    { 學年度:"115", 姓名:"陳阿姨", 職稱:"廚工", 想加強的主題:"幼兒園食品衛生與營養", 其他需求:"", 偏好的研習方式:"線上課程" } ]],
+    ["主題清單", RV_TOPICS.map(t=>({ 可用的主題:t }))], ["說明", [{ 說明:"Google 表單的回覆試算表也可以直接匯入：只要有「姓名」和含「主題」或「需求」的欄位即可；多個主題用逗號或頓號分隔。" }]]]);
+  else cxDownloadXlsx("考核表_匯入範例.xlsx", [["考核評分", [
+    { 學年度:"115", 期別:"年終考核", 姓名:"王老師", 職稱:"教保員", 考核項目:"班級經營", 自評:4, 他評:4, 小組評定:4 },
+    { 學年度:"115", 期別:"年終考核", 姓名:"王老師", 職稱:"教保員", 考核項目:"親師溝通", 自評:5, 他評:4, 小組評定:4 } ]],
+    ["說明", [{ 說明:"一列一個考核項目；同學年、同期別、同姓名會併成一份考核表。評分 1–5（5 優、4 佳、3 普通、2 待加強、1 需改善）。" }]]]);
+}
+function rvImport(){
+  if (!kpiEdit()) return;
+  cxPickFile(".xlsx,.xls,.csv,.json", async f => {
+    const R = S.rv; let docs = [];
+    if (/\.json$/i.test(f.name)){
+      const j = JSON.parse(await f.text());
+      docs = (Array.isArray(j) ? j : Array.isArray(j.staffReviews) ? j.staffReviews : [j]).filter(x=>x && RV_KNAME[x.kind]).map(rvNorm);
+    } else {
+      const rows = await cxReadRows(f);
+      if (!rows.length) throw new Error("檔案是空的");
+      const keys = Object.keys(rows[0]).map(cxKey);
+      const isEval = keys.some(k=>/考核項目|^項目$/.test(k)) && keys.some(k=>/自評|他評|小組/.test(k));
+      const map = new Map();
+      rows.forEach(r=>{
+        const G = n => cxGet(r, n);
+        const staff = G(["姓名","受考核人","您的姓名","填答者"]); if (!staff) return;
+        const year = (G(["學年度","學年"]).match(/\d+/)||[String(wpY0())])[0], job = G(["職稱","職務"]) || "教保員";
+        if (isEval){
+          const period = G(["期別","考核期別"]) || RV_PERIODS[2], key = [year,period,staff].join("|");
+          if (!map.has(key)) { const d = rvNorm({ kind:"eval", year, period, staff, job, items:[{name:"x"}] }); d.items = []; map.set(key, d); }
+          const d = map.get(key), name = G(["考核項目","項目"]); if (!name) return;
+          const sv = v => (str(v).match(/[1-5]/)||[""])[0];
+          d.items.push({ name, self:sv(G(["自評"])), peer:sv(G(["他評"])), group:sv(G(["小組評定","考核小組評定","小組"])) });
+          ["selfNote:自評說明","peerNote:他評回饋","groupNote:綜合評語","praise:亮點表揚"].forEach(p=>{ const [k,l]=p.split(":"); const v=G([l]); if (v && !d[k]) d[k]=v; });
+        } else {
+          const key = [year,staff].join("|");
+          const topicCols = Object.keys(r).filter(k=>/主題|需求|研習/.test(k) && !/其他|方式/.test(k));
+          const topics = [...new Set(topicCols.flatMap(k=>cxSplit(r[k])))];
+          const d = map.get(key) || rvNorm({ kind:"need", year, staff, job });
+          d.topics = [...new Set([...d.topics, ...topics])];
+          d.other = d.other || G(["其他需求","其他"]); d.way = d.way || G(["偏好的研習方式","研習方式","方式"]);
+          map.set(key, d);
+        }
+      });
+      docs = [...map.values()];
+    }
+    if (!docs.length){ alert("檔案裡沒有可以匯入的資料。可以先按「⬇️ 匯入範例檔」看看格式。"); return; }
+    const dupOf = d => R.list.find(x=>x.kind===d.kind && str(x.year)===d.year && (d.kind==="eval" ? str(x.staff)===d.staff && str(x.period)===d.period : d.kind==="need" ? str(x.staff)===d.staff : true));
+    if (!confirm(`要匯入 ${docs.length} 份資料嗎？\n`+docs.slice(0,25).map(d=>`・${RV_KNAME[d.kind]}：${rvLabel(d)}${dupOf(d)?"（已存在，會覆蓋）":""}`).join("\n")+(docs.length>25?`\n…等共 ${docs.length} 份`:""))) return;
+    let ok=0; const bad=[];
+    for (const d of docs){
+      try{ const body = JSON.parse(JSON.stringify(rvNorm(d))); delete body.id; body.updatedAt=Date.now(); body.updatedBy=cxMail(); body.importedFrom=f.name;
+        const old = dupOf(d); const ref = old ? S.db.doc(RV_COL+"/"+old.id) : S.db.collection(RV_COL).doc(); await ref.set(body);
+        R.list = R.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); ok++;
+      }catch(e){ bad.push(`${rvLabel(d)}（${errText(e)}）`); }
+    }
+    R.tab = docs[0].kind; render(); alert(`已匯入 ${ok} 份。`+(bad.length?"\n\n失敗：\n"+bad.join("\n"):""));
+  });
+}
+
+/* ---------- 學習指標運用統計（績效考評建議：owners 可重新統計與儲存；KPI_VIEWERS 只看已儲存的統計） ---------- */
+const IS_COL = "indicatorStats";
+const IS_DOM = [["身","身體動作與健康"],["認","認知"],["語","語文"],["社","社會"],["情","情緒"],["美","美感"]];
+const IS_DNAME = Object.fromEntries(IS_DOM);
+const IS_AGE = [["幼","幼幼班（2-3歲）"],["小","小班（3-4歲）"],["中","中班（4-5歲）"],["大","大班（5-6歲）"]];
+const IS_SRC = { obs:"學習區觀察表", plan:"課程規劃", weekly:"週誌", import:"匯入檔案" };
+const IS_RE = /[身認語社情美]-[幼小中大]-\d-\d-\d/g, IS_RE1 = /[身認語社情美]-[幼小中大]-\d-\d-\d/;
+const isInd = () => (window.PLAN_DATA && window.PLAN_DATA.ind) || {};
+function isSem(v, date){
+  const s = str(v).normalize("NFKC");
+  let m = s.match(/(\d{2,3})\s*-\s*([12])(?!\d)/); if (m) return `${m[1]}-${m[2]}`;
+  m = s.match(/(\d{2,3})\s*學年度?\s*(?:第)?\s*([一二上下12])/); if (m) return `${m[1]}-${/[一上1]/.test(m[2])?1:2}`;
+  const d = str(date).match(/^(\d{4})-(\d{2})/); if (!d) return "";
+  const y=+d[1], mo=+d[2]; return mo>=8 ? `${y-1911}-1` : mo===1 ? `${y-1912}-1` : `${y-1912}-2`;
+}
+const isSemLabel = k => { const a = str(k).split("-"); return a.length===2 ? `${a[0]} 學年度${a[1]==="1"?"上":"下"}學期` : (k||"未標學期"); };
+function isCodes(obj){
+  const set = new Set(), txt = JSON.stringify(obj||{}, (k,v)=> (typeof v==="string" && v.length>20000) ? "" : v);
+  (txt.match(IS_RE)||[]).forEach(c=>set.add(c));
+  /* 觀察表只存指標文字時，用年齡層＋文字對回代碼 */
+  const it = obj && obj.indicator;
+  if (it && it.item && !IS_RE1.test(str(it.item))){
+    const a = /幼|2/.test(str(it.age)) ? "幼" : /小/.test(str(it.age)) ? "小" : /中/.test(str(it.age)) ? "中" : /大/.test(str(it.age)) ? "大" : "";
+    const t = str(it.item).replace(/^\s*[\d\-\.]+\s*/,"").trim();
+    Object.entries(isInd()).forEach(([c,x])=>{ if (x===t && (!a || c.split("-")[1]===a)) set.add(c); });
+  }
+  return [...set];
+}
+const isCan = () => kpiView();
+function isSubscribe(d){
+  const I = S.is;
+  if (!kpiView()){ I.gotSnap = true; return; }
+  unsubs.push(cxListen(d.db.collection(IS_COL).orderBy("createdAt","desc").limit(20), s=>{ I.snaps = s.docs.map(x=>({id:x.id,...x.data()})); I.gotSnap = true; I.snapErr=""; if (S.view==="indstat" && !I.busy) render(); },
+    e=>{ I.snapErr = cxErrMsg(e, IS_COL); I.gotSnap = true; if (S.view==="indstat") render(); }));
+}
+async function isLoadLive(){
+  const I = S.is; if (!kpiEdit() || I.busy) return;
+  I.busy = true; I.srcErr = {}; render();
+  const recs = [], db = S.db;
+  const grab = async (src, q, map) => { try{ const sn = await q.get(); sn.docs.forEach(x=>{ const r = map(x.data()); if (r) recs.push(Object.assign({ src }, r)); }); }catch(e){ I.srcErr[src] = e && e.code==="permission-denied" ? "沒有讀取權限（需要管理員帳號）" : "讀取失敗"; } };
+  await Promise.all([
+    grab("obs", db.collection("learningObservations"), x=>({ cls:str(x.className), sem:isSem(x.semester, x.observationDate), codes:isCodes(x) })),
+    grab("plan", db.collection("teachingPlans"), x=>({ cls:str(x.cls), sem:isSem(x.sem, x.at && str(x.at).slice(0,10)), codes:isCodes(x) })),
+    grab("weekly", db.collection("weeklyLogs"), x=>({ cls:str(x.cls), sem:isSem(x.sem, x.dateFrom), codes:isCodes(x) }))
+  ]);
+  I.live = { recs, at:Date.now() }; I.mode = "live"; I.busy = false;
+  if (!I.sem){ const ss = [...new Set(recs.map(r=>r.sem).filter(Boolean))].sort().reverse(); I.sem = ss[0] || "all"; }
+  render();
+}
+function isRecs(){
+  const I = S.is;
+  if (I.mode==="live" && I.live) return I.live.recs.concat(I.extra||[]);
+  const sn = (I.snaps||[]).find(x=>x.id===I.snapId) || (I.snaps||[])[0];
+  return sn ? (Array.isArray(sn.recs)?sn.recs:[]) : [];
+}
+function isCompute(recs){
+  const I = S.is;
+  const f = recs.filter(r=>(I.sem==="all"||r.sem===I.sem) && (I.cls==="all"||r.cls===I.cls) && I.src[r.src]!==false);
+  const by = {}, dom = {}, domCls = {}, domAge = {}, ages = new Set();
+  IS_DOM.forEach(([k])=>{ dom[k]=0; domCls[k]={}; domAge[k]={}; });
+  f.forEach(r=>(r.codes||[]).forEach(c=>{ const [d,a] = c.split("-"); if (!dom.hasOwnProperty(d)) return;
+    by[c]=(by[c]||0)+1; dom[d]++; domCls[d][r.cls||"未填班級"]=(domCls[d][r.cls||"未填班級"]||0)+1; domAge[d][a]=(domAge[d][a]||0)+1; ages.add(a); }));
+  const total = Object.values(dom).reduce((a,b)=>a+b,0);
+  const classes = [...new Set(f.map(r=>r.cls||"未填班級"))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  const ind = isInd();
+  const unused = {}; IS_DOM.forEach(([k])=>{ unused[k] = Object.keys(ind).filter(c=>c.startsWith(k+"-") && ages.has(c.split("-")[1]) && !by[c]); });
+  return { f, by, dom, domCls, domAge, total, classes, ages:[...ages], unused, withCode:f.filter(r=>(r.codes||[]).length).length };
+}
+function renderIndstat(app){
+  const I = S.is;
+  if (!isCan()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  app.append(h("section",{class:"intro"},
+    h("h1",null,"學習指標運用統計"),
+    h("p",{class:"note"},"彙整學習區觀察表、課程規劃與週誌中使用的課綱學習指標，依學期、班級統計各領域的使用次數，找出較少用到的領域與指標，供課發會或教學會議討論。"),
+    h("p",{class:"note",style:"margin-top:4px"},"🔒 只限指定帳號：園方指定人員可重新統計、儲存，檢視帳號只能查看已儲存的統計。"), CX_RO(),
+    CX_NOTE("教保服務第4、6項：每學期檢視課綱指標運用情形、課程規劃與幼兒評量的關聯"),
+    h("div",{class:"abs",style:"display:flex;gap:6px;flex-wrap:wrap"},
+      kpiEdit() ? h("button",{class:"btn",onclick:()=>isImport()},"📥 匯入其他紀錄") : null,
+      kpiEdit() ? h("button",{class:"btn primary",disabled:I.busy?true:null,onclick:()=>isLoadLive()}, I.busy ? "統計中…" : "🔄 重新統計（讀取最新資料）") : null)));
+  if (I.snapErr) app.append(h("div",{class:"notice"},I.snapErr));
+  /* 資料來源選擇：即時統計或已儲存的統計 */
+  const snaps = I.snaps || [];
+  const modeBar = h("div",{class:"mt-sortbar"},
+    h("label",null,"資料：", h("select",{class:"in",onchange:e=>{ const v=e.target.value; if (v==="live"){ I.mode="live"; } else { I.mode="snap"; I.snapId=v; } render(); }},
+      [I.live ? h("option",{value:"live",selected:I.mode==="live"},`本次統計（${new Date(I.live.at).toLocaleString("zh-TW")}）`) : null,
+       ...snaps.map(x=>h("option",{value:x.id,selected:I.mode!=="live"&&(I.snapId?I.snapId===x.id:x===snaps[0])},`已儲存：${x.title||new Date(x.createdAt).toLocaleString("zh-TW")}`))])),
+    kpiEdit() && I.mode==="live" && I.live ? h("button",{class:"btn",onclick:e=>isSaveSnap(e.currentTarget)},"💾 儲存這次統計（供檢視帳號查看）") : null,
+    kpiEdit() && I.mode!=="live" && snaps.length ? h("button",{class:"btn danger",onclick:()=>{ const sn = snaps.find(x=>x.id===I.snapId)||snaps[0]; confirmBox("刪除這份已儲存的統計？", sn.title||"", "刪除", async()=>{ await S.db.doc(IS_COL+"/"+sn.id).delete(); I.snapId=null; toast("已刪除"); }); }},"刪除這份統計") : null);
+  if (!I.live && !snaps.length){
+    if (!I.gotSnap){ app.append(h("div",{class:"notice"},"載入中…")); return; }
+    app.append(h("div",{class:"notice"}, kpiEdit() ? "按「🔄 重新統計」開始；統計完可以儲存，讓檢視帳號也看得到。" : "目前還沒有已儲存的統計結果。"));
+    return;
+  }
+  if (I.mode!=="live" && !snaps.length) I.mode = "live";
+  if (I.mode==="live" && !I.live) I.mode = "snap";
+  app.append(modeBar);
+  if (I.mode==="live" && Object.keys(I.srcErr||{}).length) app.append(h("p",{class:"note",style:"color:#a43d22"}, "部分資料沒有讀到：", Object.entries(I.srcErr).map(([k,v])=>`${IS_SRC[k]}（${v}）`).join("、")));
+  const recs = isRecs();
+  const sems = [...new Set(recs.map(r=>r.sem).filter(Boolean))].sort().reverse();
+  if (!I.sem || (I.sem!=="all" && !sems.includes(I.sem))) I.sem = sems[0] || "all";
+  const allCls = [...new Set(recs.map(r=>r.cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  app.append(h("div",{class:"mt-sortbar"},
+    h("label",null,"學期：",h("select",{class:"in",onchange:e=>{ I.sem=e.target.value; render(); }}, [h("option",{value:"all",selected:I.sem==="all"},"全部學期"), ...sems.map(s=>h("option",{value:s,selected:I.sem===s},isSemLabel(s)))])),
+    h("label",null,"班級：",h("select",{class:"in",onchange:e=>{ I.cls=e.target.value; render(); }}, [h("option",{value:"all",selected:I.cls==="all"},"全部班級"), ...allCls.map(c=>h("option",{value:c,selected:I.cls===c},c))])),
+    h("span",{class:"cx-cks"}, Object.entries(IS_SRC).filter(([k])=>recs.some(r=>r.src===k)).map(([k,l])=>h("label",{class:I.src[k]!==false?"on":""},h("input",{type:"checkbox",checked:I.src[k]!==false?true:null,onchange:e=>{ I.src[k]=e.target.checked; render(); }}),l))),
+    h("span",{class:"sp"}),
+    h("button",{class:"btn",onclick:()=>isPrint()},"🖨 列印（課發會用）"),
+    h("button",{class:"btn",onclick:()=>isExport()},"⬇️ 匯出 Excel")));
+  const R = isCompute(recs);
+  app.append(h("div",{class:"cx-sum"},
+    h("div",null,h("b",null,String(R.f.length)),"筆紀錄"),
+    h("div",null,h("b",null,String(R.withCode)),"筆有標示學習指標"),
+    h("div",null,h("b",null,String(R.total)),"次指標使用"),
+    h("div",null,h("b",null,`${Object.keys(R.by).length}`),`個不同指標`)));
+  if (!R.total){ app.append(h("div",{class:"notice"},"這個條件下沒有找到學習指標（代碼格式如「社-大-2-2-1」）。")); return; }
+  const max = Math.max(...Object.values(R.dom), 1), avg = R.total/IS_DOM.length;
+  const low = k => R.dom[k] < avg*0.5;
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"各領域使用次數"),
+    h("table",{class:"cx-t"}, h("thead",null,h("tr",null, h("th",null,"領域"), ...R.classes.map(c=>h("th",null,c)), h("th",null,"合計"), h("th",null,"占比"), h("th",{style:"width:22%"},""))),
+      h("tbody",null, IS_DOM.map(([k,n])=>h("tr",{class:low(k)?"cx-low":""}, h("td",null,n, low(k)?h("span",{class:"cx-badge red",style:"margin-left:6px"},"較少使用"):null),
+        ...R.classes.map(c=>h("td",{class:"n"},String(R.domCls[k][c]||0))), h("td",{class:"n"},h("b",null,String(R.dom[k]))), h("td",{class:"n"},(R.dom[k]/R.total*100).toFixed(1)+"%"),
+        h("td",null,h("div",{class:"cx-bar",style:`width:${R.dom[k]/max*100}%`})))))),
+    h("p",{class:"note"},"「較少使用」：低於六大領域平均次數的一半，建議在課發會討論是否於下學期課程規劃中加強。")));
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"各領域 × 年齡層"),
+    h("table",{class:"cx-t"}, h("thead",null,h("tr",null, h("th",null,"領域"), ...IS_AGE.filter(([a])=>R.ages.includes(a)).map(([,l])=>h("th",null,l)))),
+      h("tbody",null, IS_DOM.map(([k,n])=>h("tr",null, h("td",null,n), ...IS_AGE.filter(([a])=>R.ages.includes(a)).map(([a])=>h("td",{class:"n"},String(R.domAge[k][a]||0)))))))));
+  const ind = isInd();
+  const top = Object.entries(R.by).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"最常使用的指標（前 15）"),
+    h("table",{class:"cx-t"}, h("thead",null,h("tr",null,h("th",null,"代碼"),h("th",null,"指標內容"),h("th",null,"次數"))),
+      h("tbody",null, top.map(([c,n])=>h("tr",null,h("td",null,c),h("td",null,ind[c]||""),h("td",{class:"n"},String(n))))))));
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"尚未使用的指標（依目前紀錄出現的年齡層）"),
+    IS_DOM.map(([k,n])=>{ const u = R.unused[k]; return h("details",{style:"margin:4px 0"}, h("summary",null,`${n}：${u.length} 個未使用`),
+      u.length ? h("table",{class:"cx-t",style:"margin:6px 0"}, h("tbody",null, u.map(c=>h("tr",null,h("td",{style:"width:120px"},c),h("td",null,ind[c]||""))))) : h("p",{class:"note"},"都有使用到 👍")); })));
+}
+async function isSaveSnap(btn){
+  const I = S.is; if (!kpiEdit() || !I.live) return;
+  const recs = I.live.recs.concat(I.extra||[]).map(r=>({ src:r.src, cls:str(r.cls), sem:str(r.sem), codes:(r.codes||[]) })).filter(r=>r.codes.length);
+  const title = `${new Date().toLocaleDateString("zh-TW")} 統計（${recs.length} 筆有指標的紀錄）`;
+  const body = { title, createdAt:Date.now(), by:cxMail(), recs, counts:Object.fromEntries(Object.keys(IS_SRC).map(k=>[k, recs.filter(r=>r.src===k).length])) };
+  if (JSON.stringify(body).length > 900000){ alert("資料太多，無法存成一份統計。請先用學期篩選後匯出 Excel 保存。"); return; }
+  btn.disabled = true;
+  try{ const ref = await S.db.collection(IS_COL).add(body); I.mode = "snap"; I.snapId = ref.id; toast("已儲存，檢視帳號可以看到這份統計"); render(); }
+  catch(e){ btn.disabled = false; alert("儲存失敗："+errText(e)); }
+}
+function isRows(R){
+  const ind = isInd();
+  return {
+    dom: IS_DOM.map(([k,n])=>Object.assign({ 領域:n }, Object.fromEntries(R.classes.map(c=>[c, R.domCls[k][c]||0])), { 合計:R.dom[k], 占比:(R.dom[k]/R.total*100).toFixed(1)+"%" })),
+    det: Object.entries(R.by).sort((a,b)=>a[0].localeCompare(b[0])).map(([c,n])=>({ 代碼:c, 領域:IS_DNAME[c[0]], 年齡層:(IS_AGE.find(x=>x[0]===c.split("-")[1])||[,""])[1], 指標內容:ind[c]||"", 使用次數:n })),
+    un: IS_DOM.flatMap(([k,n])=>R.unused[k].map(c=>({ 領域:n, 代碼:c, 指標內容:ind[c]||"" })))
+  };
+}
+const isTitle = () => { const I=S.is; return `${I.sem==="all"?"全部學期":isSemLabel(I.sem)}${I.cls==="all"?" 全園":" "+I.cls} 學習指標運用統計`; };
+function isExport(){ const R = isCompute(isRecs()), X = isRows(R); cxDownloadXlsx(isTitle().replace(/\s+/g,"_")+".xlsx", [["各領域統計",X.dom],["指標明細",X.det],["尚未使用的指標",X.un]]); }
+function isPrint(){
+  const R = isCompute(isRecs()), X = isRows(R), avg = R.total/IS_DOM.length;
+  const tbl = (rows, cols) => `<table><thead><tr>${cols.map(c=>`<th>${cxT(c)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${cxT(r[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const lows = IS_DOM.filter(([k])=>R.dom[k] < avg*0.5).map(([,n])=>n);
+  cxPrint(isTitle(), `<div class="hd"><div class="t">${cxT(ORG_NAME)}</div><div class="t" style="font-size:1.15em">${cxT(isTitle())}</div></div>
+<p>資料來源：${Object.entries(IS_SRC).filter(([k])=>S.is.src[k]!==false && R.f.some(r=>r.src===k)).map(([,l])=>l).join("、")}　紀錄 ${R.f.length} 筆，指標使用 ${R.total} 次，共 ${Object.keys(R.by).length} 個不同指標。</p>
+<div class="sec">一、各領域使用次數</div>${tbl(X.dom, ["領域",...R.classes,"合計","占比"])}
+<p>${lows.length ? `較少使用的領域：<b>${cxT(lows.join("、"))}</b>（低於六大領域平均次數的一半）。` : "六大領域使用情形尚屬均衡。"}</p>
+<div class="sec">二、課發會討論與下學期調整</div>
+<table><colgroup><col style="width:22%"><col></colgroup><tr><th>檢討發現</th><td style="height:70px"></td></tr><tr><th>下學期課程規劃調整</th><td style="height:70px"></td></tr><tr><th>負責人／期程</th><td style="height:40px"></td></tr></table>
+<div class="sec">三、尚未使用的指標</div>${X.un.length ? tbl(X.un, ["領域","代碼","指標內容"]) : "<p>無</p>"}`);
+}
+function isImport(){
+  if (!kpiEdit()) return;
+  cxPickFile(".xlsx,.xls,.csv,.json", async f => {
+    let rows;
+    if (/\.json$/i.test(f.name)){ const j = JSON.parse(await f.text()); rows = Array.isArray(j) ? j : [j]; }
+    else rows = await cxReadRows(f);
+    const add = [];
+    rows.forEach(r=>{
+      const codes = isCodes(r); if (!codes.length) return;
+      const cls = r.cls || cxGet(r, ["班級","className"]), sem = isSem(r.sem || cxGet(r, ["學期","學年度","semester"]), stuDate(cxGet(r, ["日期","date","observationDate"])));
+      add.push({ src:"import", cls:str(cls), sem, codes });
+    });
+    if (!add.length){ alert("檔案裡沒有找到學習指標代碼（格式如「社-大-2-2-1」）。"); return; }
+    S.is.extra = (S.is.extra||[]).concat(add);
+    if (!S.is.live) S.is.live = { recs:[], at:Date.now() };
+    S.is.mode = "live"; render();
+    alert(`已加入 ${add.length} 筆紀錄到本次統計（尚未儲存；按「💾 儲存這次統計」才會保存）。`);
+  });
+}
+
 /* ---------- boot ---------- */
 function subscribe(query, gotObj, key, map){
   const timer = setTimeout(()=>{ if(!gotObj[key]){ S.stale=true; render(); } },10000);
@@ -10343,6 +11273,15 @@ function sync(d, view){
     S.wp = { list:[], got:false, kind:"plan", year:"all", view:null, edit:null, draft:null, dirty:false };
     if (d.isOwner) unsubs.push(subscribe(d.db.collection("workPlans"), S.wp, "got", snap=>{ S.wp.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
     else S.wp.got = true;
+    /* 績效考評建議模組：個案追蹤、考核與專業成長、學習指標運用統計 */
+    S.kpiExtra = [];
+    S.cs = { own:[], shr:[], got:false, err:"", year:"", cls:"all", q:"", view:null, edit:null, draft:null, dirty:false };
+    S.rv = { list:[], got:false, err:"", tab:"eval", year:"", view:null, edit:null, draft:null, dirty:false };
+    S.is = { snaps:[], gotSnap:false, snapErr:"", live:null, extra:[], mode:"snap", snapId:null, sem:"", cls:"all", src:{}, busy:false, srcErr:{} };
+    const kpiStart = () => { csSubscribe(d); rvSubscribe(d); isSubscribe(d); };
+    if (kpiView()) kpiStart();
+    else d.db.doc("config/admins").get().then(x=>{ const l = x.exists ? ((x.data()||{}).kpiViewers||[]) : []; S.kpiExtra = (Array.isArray(l)?l:[]).map(v=>String(v).trim().toLowerCase()); if (kpiView() && subKey===key){ kpiStart(); render(); } }).catch(()=>{});
+    S.cs.got = S.cs.got || !kpiView(); S.rv.got = S.rv.got || !kpiView();
     }
     S.got.activities = false; S.activities = [];
     if (S.realAdmin || S.isEditor || d.restrictedPW) unsubs.push(subscribe(d.db.collection(ACT_COL),S.got,"activities",snap=>{
