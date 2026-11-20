@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L112</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L113</footer>
     </div>
   </template>
 
@@ -4211,7 +4211,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L112</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L113</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -4814,26 +4814,41 @@ function kgApp() {
   }
 
   /* ---- 清除自己匯入 PDF 時重複的頁面（同班、同檔名、同頁碼只保留一筆；優先保留已指定姓名的） ---- */
-  async function cleanDupPdf() {
+  async function cleanDupPdf(clsArg) {
     const u = fbUser(); if (!u) { rosterMsg('請先登入。', true); return; }
     const db = firebase.firestore();
-    rosterMsg('檢查重複的頁面…');
-    const adm = isAdm(), cls = curCls();
-    if (adm && !cls) { rosterMsg('管理員請先在上方選擇要檢查的班級。', true); return; }
-    let docs; try { docs = (await (adm ? db.collection('learningObservations').where('className', '==', cls) : db.collection('learningObservations').where('uid', '==', u.uid)).where('source', '==', 'pdf-import').get()).docs; }
-    catch (e) { rosterMsg('讀取失敗：' + (e.code || e.message), true); return; }
-    const grp = {};
-    docs.forEach(x => { const v = x.data(); const k = [v.uid, v.className, v.pdfName, v.pdfPage].join('|'); (grp[k] = grp[k] || []).push({ id: x.id, v }); });
+    const say = (t, bad) => { rosterMsg(t, bad); if (clsArg) { const st = document.getElementById('obs-dupst'); if (st) st.textContent = t; } };
+    say('檢查重複的頁面…');
+    const adm = isAdm(), cls = (typeof clsArg === 'string' && clsArg) ? clsArg : curCls();
+    if (adm && !cls) { say('管理員請先在上方選擇要檢查的班級。', true); return; }
+    let docs; try { docs = (await (adm ? db.collection('learningObservations').where('className', '==', cls) : db.collection('learningObservations').where('uid', '==', u.uid)).get()).docs; }
+    catch (e) { say('讀取失敗：' + (e.code || e.message), true); return; }
+    /* 判斷同一頁：① PDF 頁面指紋（pageHash）相同 ② 同一個 PDF 檔名的同一頁 ③ 沒有姓名的紀錄：同日期、同儲存人、第一張照片完全一樣 */
+    const recs = docs.map(x => ({ id: x.id, v: x.data() }));
+    const par = recs.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i])), seen = new Map();
+    const link = (k, i) => { if (!k) return; if (seen.has(k)) par[f(i)] = f(seen.get(k)); else seen.set(k, i); };
+    recs.forEach((r, i) => { const v = r.v;
+      if (v.pageHash) link('h|' + v.className + '|' + v.pageHash, i);
+      if (v.pdfName && v.pdfPage) link('p|' + v.className + '|' + String(v.pdfName).replace(/\s*\(\d+\)(?=\.pdf$)/i, '') + '|' + v.pdfPage, i); });
+    const noName = recs.map((r, i) => [r, i]).filter(([r]) => !r.v.childName);
+    for (let k = 0; k < noName.length; k++) { const [r, i] = noName[k];
+      if (k % 10 === 0) say('比對沒有姓名的紀錄照片… ' + (k + 1) + '／' + noName.length);
+      try { const ps = await db.collection('learningObservations').doc(r.id).collection('photos').limit(1).get();
+        const d0 = ps.docs[0] && String((ps.docs[0].data() || {}).data || ''); if (!d0) continue;
+        let hh = 0; for (let q = 0; q < d0.length; q += 7) hh = (hh * 31 + d0.charCodeAt(q)) | 0;
+        link('f|' + r.v.className + '|' + (r.v.observationDate || '') + '|' + (r.v.uid || '') + '|' + d0.length + '|' + hh, i); } catch (e) {}
+    }
+    const grp = {}; recs.forEach((r, i) => { (grp[f(i)] = grp[f(i)] || []).push(r); });
     const del = [];
     Object.values(grp).forEach(g => { if (g.length < 2) return;
       g.sort((a, b) => (b.v.childName ? 1 : 0) - (a.v.childName ? 1 : 0) || ((a.v.createdAt && a.v.createdAt.seconds) || 0) - ((b.v.createdAt && b.v.createdAt.seconds) || 0));
       del.push(...g.slice(1)); });
-    if (!del.length) { rosterMsg((adm ? '「' + cls + '」' : '') + '沒有重複匯入的頁面 ✓'); return; }
+    if (!del.length) { say((adm ? '「' + cls + '」' : '') + '沒有重複的紀錄 ✓'); return; }
     const named = del.filter(x => x.v.childName).length;
-    if (!confirm((adm ? '「' + cls + '」' : '') + '找到 ' + del.length + ' 筆重複匯入的頁面（同一份 PDF 的同一頁匯入了不只一次）。\n每一頁只保留一筆（優先保留已指定姓名的那筆），其餘刪除' + (named ? '，其中 ' + named + ' 筆已指定姓名的重複紀錄也會一起移除進度標示' : '') + '。\n\n要刪除嗎？刪除後無法復原。')) { rosterMsg(''); return; }
+    if (!confirm((adm ? '「' + cls + '」' : '') + '找到 ' + del.length + ' 筆重複的紀錄（同一頁匯入了不只一次，或照片、日期、儲存人完全相同）。\n每一頁只保留一筆（優先保留已指定姓名的那筆），其餘刪除' + (named ? '，其中 ' + named + ' 筆已指定姓名的重複紀錄也會一起移除進度標示' : '') + '。\n\n要刪除嗎？刪除後無法復原。')) { rosterMsg(''); return; }
     let n = 0;
     for (const x of del) {
-      rosterMsg('刪除重複頁面中… ' + (n + 1) + '／' + del.length);
+      say('刪除重複紀錄中… ' + (n + 1) + '／' + del.length);
       try {
         const ref = db.collection('learningObservations').doc(x.id);
         const ms = await db.collection('observationMarks').where('obsId', '==', x.id).get();
@@ -4842,7 +4857,7 @@ function kgApp() {
         await ref.delete(); n++;
       } catch (e) { console.error(e); }
     }
-    rosterMsg('已刪除 ' + n + ' 筆重複的頁面 ✓');
+    say('已刪除 ' + n + ' 筆重複的紀錄 ✓');
     refreshPendingCount();
   }
   function renderAdmin() {
@@ -4868,6 +4883,7 @@ function kgApp() {
       if (!names.length) return; any = true;
       const sec = document.createElement('div'); sec.className = 'obs-acls';
       const h = document.createElement('h4'); h.textContent = c + '（' + recs.length + ' 筆｜' + new Set(recs.map(x => x.childName)).size + '／' + (roster[c] || []).length + ' 位幼兒有紀錄）'; sec.appendChild(h);
+      if (c !== '（未填班級）') { const db2 = document.createElement('button'); db2.type = 'button'; db2.className = 'obs-btn'; db2.style.cssText = 'margin:0 0 6px;font-size:13px'; db2.textContent = '🧹 刪除這班重複的紀錄'; db2.title = '同一頁匯入了不只一次，或照片、日期、儲存人完全相同的紀錄，只保留一筆'; const st2 = document.createElement('span'); st2.style.cssText = 'margin-left:8px;font-size:13px;color:#7a6f57'; db2.addEventListener('click', async () => { document.querySelectorAll('#obs-dupst').forEach(e => e.removeAttribute('id')); st2.id = 'obs-dupst'; db2.disabled = true; try { await cleanDupPdf(c); } finally { db2.disabled = false; } }); sec.append(db2, st2); }
       const tb = document.createElement('table'); tb.className = 'obs-atab';
       tb.innerHTML = '<thead><tr><th>幼兒</th><th>觀察紀錄（日期・儲存人）</th></tr></thead>';
       const body = document.createElement('tbody');
