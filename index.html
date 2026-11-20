@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L105</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L107</footer>
     </div>
   </template>
 
@@ -2626,10 +2626,10 @@ const wsSheet=()=>{L.ws=L.ws||{slots:[{id:"",cap:""},{id:"",cap:""}]};const S=L.
   const band=t=>`<tr class="band"><th colspan="12">${t}</th></tr>`,sec=t=>`<tr><th colspan="12" style="text-align:left">${t}</th></tr>`;
   const hd2=`<tr><th colspan="4">項目</th><th>達成</th><th>改進</th><th colspan="4">項目</th><th>達成</th><th>改進</th></tr>`;
   const two=(a,p)=>[0,1,2].map(i=>`<tr><td colspan="4">${a[i][0]} ${a[i][1]}</td>${ev(p+a[i][0])}<td colspan="4">${a[i+3][0]} ${a[i+3][1]}</td>${ev(p+a[i+3][0])}</tr>`).join("");
-  if(mode==="print"&&dupOn()&&(h.match(/class="fw"/g)||[]).length%2===1)h+=`<div class="fw"><section class="sheet sh fit" style="height:3mm;border:0">&nbsp;</section></div>`;
+  if(mode==="print"&&dupOn()&&(h.match(/class="fw"/g)||[]).length%2===1)h+=`<div class="fw"><section class="sheet sh fit" style="height:3mm;border:0"><div style="font-size:9px;color:#bbb;text-align:center">（此頁空白：雙面列印用，讓學習區從正面開始）</div></section></div>`;
   h+=`<section class="sheet sh lzdup">${head("green","學習區","#548235")}${band("師生互動及正向態度")}<tr><td colspan="12">${RT_("lz.interact",5)}</td></tr>${band("教保服務人員-教學省思自評表")}${sec("教學前省思")}<tr><th colspan="4" style="text-align:left">1、課程規劃</th><th>達成</th><th>改進</th><th colspan="4" style="text-align:left">2、活動設計</th><th>達成</th><th>改進</th></tr>${[0,1,2].map(i=>`<tr><td colspan="4">${EV_PRE[0][i][0]} ${EV_PRE[0][i][1]}</td>${ev("p"+EV_PRE[0][i][0])}<td colspan="4">${EV_PRE[1][i][0]} ${EV_PRE[1][i][1]}</td>${ev("p"+EV_PRE[1][i][0])}</tr>`).join("")}${sec("教學中省思-師生互動")}${hd2}${two(EV_MID,"m")}${sec("教學後省思-課程統整、協同教學")}${hd2}${two(EV_POST,"a")}<tr><td colspan="12"><b>【教學省思】</b>${E?`<b style="color:#c0392b;margin-left:8px;font-size:.95em">💡 老師發現的問題</b>`:""}<br>${RT_("lz.reflect",5)}</td></tr><tr><td colspan="2" class="lb"><u>本次</u>引導重點</td><td colspan="10">${stratCell()}</td></tr>${band("上次執行成效")}<tr><td colspan="12">${RT_("lz.effect",4)}</td></tr>${E?prevRef(L):""}<tr><td colspan="4">紀錄老師：${I("lz.recorder")}</td><td colspan="4">教保組長：${I("lz.leader")}</td><td colspan="4">園長：${I("lz.director")}</td></tr></table></section>`}
  return `<div class="wk">${h}</div>`}
-const dupOn=()=>{try{return localStorage.getItem("wkDuplex")!=="0"}catch(e){return true}};
+const dupOn=()=>false;
 const FIT_JS=`(function(){var maxH=Math.floor((297-20)*96/25.4)-6;
 function fitGm(s,w){s.style.transform="none";s.style.width="100%";var imgs=s.querySelectorAll("td.ph img"),pads=s.querySelectorAll("td.ph");
 function set(cm,pad){for(var i=0;i<imgs.length;i++){imgs[i].style.maxHeight=cm+"cm";imgs[i].style.maxWidth="98%"}for(var j=0;j<pads.length;j++){pads[j].style.paddingTop=pad+"px";pads[j].style.paddingBottom=pad+"px"}}
@@ -2865,7 +2865,7 @@ function rvCardEd(){const L=cur;if(!d.isAdmin||L.uid===(d.currentUser||{}).uid)r
 function editorHtml(){if(viewOnly)return viewerHtml();if(cur.kind==="ext")return extEditorHtml()+undoBar();return editorHtml0()+undoBar()}
 function editorHtml0(){const L=cur;if(!L.ws)L.ws={slots:[{id:"",cap:""},{id:"",cap:""}]};if(L.t1==null&&L.t2==null){const a=String(L.teachers||"").split(/[、,，]/);L.t1=(a[0]||"").trim();L.t2=(a[1]||"").trim()}const L2=L,wm=Object.keys(WALK[L.walk.src]||{}),gm=Object.keys(gmOf(L));
  const opts=(arr,v,f)=>arr.map(m=>`<option value="${m}" ${String(v)===String(m)?"selected":""}>${f?f(m):m+"月"}</option>`).join("");
- return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><label class="wkb" style="display:inline-flex;gap:4px;align-items:center;cursor:pointer" title="學習區觀察紀錄用雙面列印版面：必要時補一頁空白頁，讓學習區從正面開始"><input type="checkbox" id="wkdup" ${dupOn()?"checked":""}>學習區雙面列印</label><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}${d.isAdmin&&L.uid!==(d.currentUser||{}).uid?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
+ return `<div class="wkbar"><button class="wkb" data-back="1">← 返回清單</button><button class="wkb" data-undo="1" title="復原上一步（Ctrl+Z）">↶ 復原</button><button class="wkb" data-redo="1" title="重做（Ctrl+Y）">↷ 重做</button><button class="wkb on" data-printcur="1">🖨️ 列印（A4 直式）</button><button class="wkb" data-updf="cur">☁️ 上傳 PDF 到雲端硬碟</button>${folderLink(L.cls)}${d.isAdmin&&L.uid!==(d.currentUser||{}).uid?"":`<button class="wkb" data-submit="1" style="background:#c0392b;color:#fff;border-color:#c0392b">${L.status==='submitted'||L.status==='reviewed'?"📤 重新送出":"📤 完成，送出給管理員"}</button>`}${L.status&&L.status!=='draft'?badge(L):""}<span id="wkst" style="font-size:13px;color:#5b7a4a;font-weight:700">已儲存 ✓</span></div>
  ${cur.status==="reviewed"&&cur.reviewNote?`<div style="background:#e2efda;border:1px solid #5b7a4a;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">✅ ${esc(cur.reviewedBy||"管理員")} 已閱，說明：${esc(cur.reviewNote)}</div>`:""}${cur.uid!==(d.currentUser||{}).uid&&!d.isAdmin?`<div style="background:#e3ecf9;border:1px solid #2f5597;color:#1f3d7a;border-radius:10px;padding:6px 12px;margin-bottom:10px;font-weight:700;font-size:13px">👥 這份週誌是 ${esc(cur.ownerName||cur.ownerEmail||"")} 分享給您的，修改會直接更新同一份內容。</div>`:""}${cur.status==="returned"?`<div style="background:#fdebd0;border:1px solid #d35400;color:#a04000;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-weight:700">↩ ${esc(cur.returnedBy||"管理員")} 退回修改（退回給：${esc(cur.returnedToName||who(cur))}）：${esc(cur.returnReason||"")}（修改完請再按「送出給管理員」）</div>`:""}
  ${rvCardEd()}<div class="wkset"><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
   <div><label>班級</label><select data-k="cls" style="min-width:150px">${clsOpts(L.cls)}</select><datalist id="wkcls">${allClsList().map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L105</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L107</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
