@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L108</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L110</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L108</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L110</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -9410,7 +9410,7 @@ const STU_COL = "students", STU_UP_COL = "studentUploads";
 const STU_FOLDER = "https://drive.google.com/drive/folders/1iEJl3No3irxFpIqSd97Gjmhvqn3QxMJA";
 const STU_CLS0 = ["梔子花班","山茶花班","風鈴草班","仙草花班","幸運草班"];
 const STU_GR = ["大班","中班","小班","幼幼班"];
-const STU_ID = ["一般生","特殊教育","疑似特教","經濟弱勢","低收入戶","中低收入戶","原住民","新住民子女","身心障礙","其他"];
+const STU_ID = ["一般生","特殊教育（IEP）","疑似特教","特殊境遇","低收入戶","中低收入戶","原住民","新住民子女","身心障礙","其他"];
 const STU_ST = ["在學","離園"];
 const stuNowYear = () => { const d = new Date(); return d.getFullYear() - 1911 - (d.getMonth() < 7 ? 1 : 0); };
 /* 日期：西元 2021-03-05、民國 110/03/05、110.3.5、Excel 序號 都換成 YYYY-MM-DD */
@@ -9456,7 +9456,8 @@ const stuTime = ms => { const d = new Date(num(ms)), p = n=>String(n).padStart(2
 const stuLive = x => (str(x.status)||"在學")!=="離園";
 const stuWho = () => str(S.d.myName)||((S.d.currentUser||{}).email||"");
 const stuFam = x => [["父",x.fatherName,x.fatherPhone],["母",x.motherName,x.motherPhone],[str(x.otherRel)||"其他",x.otherName||x.parent,x.otherPhone||x.phone]].filter(r=>str(r[1])||str(r[2]));
-const stuIds = x => (Array.isArray(x.ids) ? x.ids : str(x.ids).split(/[、,，\s]+/)).map(t=>str(t).trim()).filter(Boolean);
+/* 身分別；舊資料的「經濟弱勢」一律顯示為「特殊境遇」 */
+const stuIds = x => [...new Set((Array.isArray(x.ids) ? x.ids : str(x.ids).split(/[、,，\s]+/)).map(t=>str(t).trim()).filter(Boolean).map(t=>t==="經濟弱勢"?"特殊境遇":(t==="特殊教育"||/^特殊教育[(（]?IEP[)）]?$/i.test(t))?"特殊教育（IEP）":t))];
 const stuNo = x => { const n = parseInt(str(x.no),10); return isNaN(n) ? 999 : n; };
 const stuSort = (a,b) => stuClsIdx(a.cls) - stuClsIdx(b.cls) || stuNo(a) - stuNo(b) || str(a.name).localeCompare(str(b.name),"zh-Hant");
 /* 排序：座號、年齡、性別、班別、姓名、離園日期 */
@@ -9611,7 +9612,7 @@ function stuRenderClass(app, T){
 function stuRenderAll(app, T){
   const L = stuClsList(), live = T.list.filter(x=>(str(x.status)||"在學")==="在學");
   const cnt = (arr, f) => arr.filter(f).length;
-  const cols = ["一般生以外","特殊教育","疑似特教","經濟弱勢","低收入戶","中低收入戶","原住民","新住民子女","身心障礙"];
+  const cols = ["一般生以外","特殊教育（IEP）","疑似特教","特殊境遇","低收入戶","中低收入戶","原住民","新住民子女","身心障礙"];
   const rowOf = (lab, arr) => h("tr",null, h("td",{class:"nm"},lab), h("td",{class:"c"},cnt(arr,x=>x.gender==="男")), h("td",{class:"c"},cnt(arr,x=>x.gender==="女")), h("td",{class:"c b"},arr.length),
     cols.slice(1).map(k=>h("td",{class:"c"},cnt(arr,x=>stuIds(x).includes(k))||"")));
   const usedCls = L.filter(c=>T.list.some(x=>x.cls===c));
