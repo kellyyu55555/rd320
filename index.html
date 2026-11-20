@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L110</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L111</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L110</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L111</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -9423,6 +9423,9 @@ function stuDate(v){
   let y = +m[1]; if (y < 1911) y += 1911;
   return `${y}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
 }
+/* 出生日期：民國＋西元，例如 110.08.12 ／ 2021.08.12 */
+const stuAd = s => { const m = str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}.${m[2]}.${m[3]}` : ""; };
+const stuBirthEl = b => str(b) ? h("div",null, stuRoc(b), stuAd(b) ? h("div",{class:"note",style:"font-size:11px"},"西元 "+stuAd(b)) : null) : h("span",{class:"note"},"—");
 const stuRoc = s => { const m = str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}.${m[2]}.${m[3]}` : str(s); };
 /* 足歲：以該學年度 9 月 1 日計算，寫成「4歲3個月」 */
 function stuAge(b, year){
@@ -9587,7 +9590,7 @@ function stuTable(list, T, withCls){
     h("tbody",null,list.map(x=>h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
       h("td",{class:"c"},str(x.no)), ...(withCls?[h("td",null,str(x.cls))]:[]),
       h("td",{class:"nm"},str(x.name), str(x.entry)?h("div",{class:"note",style:"font-size:11px;font-weight:400"},str(x.entry)):null), h("td",{class:"c"},str(x.gender)), h("td",{class:"c"},h("span",{class:"stu-gr g"+STU_GR.indexOf(stuGrade(x,T.year))},stuGrade(x,T.year))),
-      h("td",{class:"c"},stuRoc(x.birthday)), h("td",{class:"c idno"},str(x.idno)||h("span",{class:"note"},"—")), h("td",{class:"c"},stuAgeNow(x.birthday)),
+      h("td",{class:"c"},stuBirthEl(x.birthday)), h("td",{class:"c idno"},str(x.idno)||h("span",{class:"note"},"—")), h("td",{class:"c"},stuAgeNow(x.birthday)),
       h("td",{class:"c"}, stuEnrollYear(x) ? h("div",null,stuEnrollYear(x)+" 學年") : h("span",{class:"note"},"—"), str(x.enrollDate) ? h("div",{class:"note",style:"font-size:11px"},stuRoc(x.enrollDate)) : null),
       h("td",null,fam(x.fatherName,x.fatherPhone)), h("td",null,fam(x.motherName,x.motherPhone)), h("td",null,fam(x.otherName||x.parent,x.otherPhone||x.phone,str(x.otherRel)||str(x.relation))),
       h("td",null,stuIds(x).filter(t=>t!=="一般生").map(t=>h("span",{class:"stu-tag"},t))),
@@ -9644,7 +9647,7 @@ function stuRenderLeft(app, T){
     h("tbody",null,list.map(x=>h("tr",null,
       h("td",{class:"c b"}, str(x.leaveDate) ? stuRoc(x.leaveDate) : h("span",{class:"err"},"未填")),
       h("td",null,str(x.cls)), h("td",{class:"c"},str(x.no)), h("td",{class:"nm"},str(x.name)), h("td",{class:"c"},str(x.gender)),
-      h("td",{class:"c"},stuGrade(x,T.year)), h("td",{class:"c"},stuRoc(x.birthday)),
+      h("td",{class:"c"},stuGrade(x,T.year)), h("td",{class:"c"},stuBirthEl(x.birthday)),
       h("td",{class:"c"}, stuEnrollYear(x) ? stuEnrollYear(x)+" 學年" : "—", str(x.enrollDate) ? h("div",{class:"note",style:"font-size:11px"},stuRoc(x.enrollDate)) : null),
       h("td",null, stuFam(x).map(([r,n,p])=>h("div",null,`${r}：${str(n)} ${str(p)}`))),
       h("td",null,str(x.note)),
@@ -9820,13 +9823,13 @@ function stuDupView(T){
 }
 function stuExport(list, title){
   if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
-  const rows = list.map(x=>({ 班級:str(x.cls), 座號:str(x.no), 姓名:str(x.name), 性別:str(x.gender), 班別:stuGrade(x,x.year), 出生日期:stuRoc(x.birthday), 今天年紀:stuAgeNow(x.birthday), 身分證字號:str(x.idno),
+  const rows = list.map(x=>({ 班級:str(x.cls), 座號:str(x.no), 姓名:str(x.name), 性別:str(x.gender), 班別:stuGrade(x,x.year), 出生日期:stuRoc(x.birthday), "出生日期（西元）":stuAd(x.birthday), 今天年紀:stuAgeNow(x.birthday), 身分證字號:str(x.idno),
     入園身分:str(x.entry), 身分別:stuIds(x).join("、"), 父親姓名:str(x.fatherName), 父親電話:str(x.fatherPhone), 母親姓名:str(x.motherName), 母親電話:str(x.motherPhone),
     其他家人:str(x.otherName||x.parent), 其他家人關係:str(x.otherRel||x.relation), 其他家人電話:str(x.otherPhone||x.phone), 地址:str(x.address),
     入學學年:String(stuEnrollYear(x)||""), 入學日期:stuRoc(x.enrollDate), 狀態:str(x.status)||"在學", 離園日期:stuRoc(x.leaveDate), 備註:str(x.note) }));
   if (!rows.length){ toast("沒有資料可以匯出"); return; }
   const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new();
-  ws["!cols"] = [8,5,9,5,6,10,10,12,7,12,9,13,9,13,9,8,13,30,10,6,10,20].map(w=>({wch:w}));
+  ws["!cols"] = [8,5,9,5,6,10,12,10,12,7,12,9,13,9,13,9,8,13,30,10,6,10,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, "幼生名冊"); XLSX.writeFile(wb, title.replace(/[\\\/:*?"<>|]/g,"_")+".xlsx");
 }
 /* ---------- 列印：可以勾選要印的幼兒和欄位 ---------- */
@@ -9836,7 +9839,7 @@ const STU_PCOLS = [
   { k:"name", l:"姓名", w:18, v:x=>esc(x.name) },
   { k:"gender", l:"性別", w:9, v:x=>esc(x.gender) },
   { k:"grade", l:"班別", w:13, v:(x,T)=>esc(stuGrade(x,T.year)) },
-  { k:"birthday", l:"出生日期", w:21, v:x=>esc(stuRoc(x.birthday)) },
+  { k:"birthday", l:"出生日期", w:21, v:x=>`${esc(stuRoc(x.birthday))}${stuAd(x.birthday)?`<div class="ph">${stuAd(x.birthday)}</div>`:""}` },
   { k:"age", l:"今天年紀", w:22, v:x=>esc(stuAgeNow(x.birthday)) },
   { k:"idno", l:"身分證字號", w:24, v:x=>esc(x.idno) },
   { k:"enrollYear", l:"入學學年", w:15, v:x=>esc(stuEnrollYear(x)) },
