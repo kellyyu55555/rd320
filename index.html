@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L97</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L98</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L97</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L98</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6324,7 +6324,24 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb table.stu-tb.stat.sm{min-width:0}
 #kb table.stu-tb.grd th.gh{text-align:center;border-left:1px solid var(--line)}
 #kb table.stu-tb.grd td.sub{background:#faf6ec;font-weight:700}
-#kb table.stu-tb{min-width:1050px}
+/* 全園幼生名冊：整頁完整顯示 */
+#kb table.stu-tb{min-width:980px}
+@media (min-width:900px){
+  #kb .stu-wrap.stu-full{width:calc(100vw - 40px);max-width:1700px;position:relative;left:50%;transform:translateX(-50%);overflow-x:auto}
+  #kb .stu-wrap.stu-full table.stu-tb{min-width:0}
+}
+#kb table.stu-tb.inl{font-size:13px;min-width:1250px}
+#kb table.stu-tb.inl td{padding:3px 3px;vertical-align:middle}
+#kb .stu-ci{width:100%;min-width:92px;border:1px solid #e3dccb;border-radius:6px;padding:4px 5px;font-size:13px;background:#fffdf8;font-family:inherit}
+#kb .stu-ci.xs{min-width:38px;width:46px;text-align:center}
+#kb .stu-ci.sm{min-width:56px}
+#kb .stu-ci.md{min-width:70px}
+#kb select.stu-ci{min-width:60px}
+#kb .stu-ci:focus{outline:2px solid #7fa36a;background:#fff}
+#kb .stu-ci.saving{background:#fff7dd}
+#kb .stu-ci.saved{background:#e3f3e8;border-color:#7fa36a}
+#kb .stu-ci.bad{background:#fde8e1;border-color:#d9534f}
+#kb table.stu-tb td .btn{white-space:nowrap}
 
 </style>
 <script>
@@ -9431,7 +9448,7 @@ function stuStart(){
   if (T.unsub && T.uYear===T.year) return T;
   if (T.unsub) T.unsub();
   T.got = false; T.uYear = T.year;
-  T.unsub = S.db.collection(STU_COL).where("year","==",T.year).onSnapshot(s=>{ T.list = s.docs.map(x=>({id:x.id,...x.data()})); T.got = true; T.err = ""; if (S.view==="students" && !$("#kb-layer .modal")) render(); },
+  T.unsub = S.db.collection(STU_COL).where("year","==",T.year).onSnapshot(s=>{ T.list = s.docs.map(x=>({id:x.id,...x.data()})); T.got = true; T.err = ""; if (S.view==="students" && !$("#kb-layer .modal") && !(T.inline && document.activeElement && document.activeElement.classList.contains("stu-ci"))) render(); },
     e=>{ T.got = true; T.err = errText(e); if (S.view==="students") render(); });
   return T;
 }
@@ -9455,6 +9472,7 @@ function renderStudents(app){
 function stuToolbar(T, list, title){
   return h("div",{class:"toolbar stu-tools"},
     h("button",{class:"btn primary",onclick:()=>stuEdit(null, T.tab==="class" ? T.cls : "")},"＋ 新增幼兒"),
+    h("button",{class:"btn"+(T.inline?" primary":""),onclick:()=>{ T.inline=!T.inline; render(); }}, T.inline ? "✅ 完成表格編輯" : "✏️ 直接在表格中編輯"),
     h("button",{class:"btn",onclick:()=>stuImport(T)},"📥 從 Excel 匯入"),
     h("button",{class:"btn",onclick:()=>stuExport(list, title)},"📤 匯出 Excel"),
     h("button",{class:"btn",onclick:()=>stuPrint(list, title, T)},"🖨️ 列印"));
@@ -9469,11 +9487,46 @@ function stuFilterBar(T){
   return h("div",{class:"stu-filter"}, q,
     h("select",{class:"in",style:"max-width:130px",onchange:e=>{ T.st=e.target.value; render(); }}, ["在學","離園","全部"].map(v=>h("option",{value:v,selected:T.st===v},v==="全部"?"全部狀態":v))));
 }
+/* 直接在表格中編輯：改完離開欄位就自動儲存這一格 */
+function stuCell(x, k, opt){
+  opt = opt || {};
+  const val = k==="grade" ? str(x.grade) : str(x[k]);
+  let el;
+  if (opt.sel) el = h("select",{class:"stu-ci"}, opt.sel.map(([v,l])=>h("option",{value:v,selected:val===v},l)));
+  else el = h("input",{class:"stu-ci"+(opt.w?" "+opt.w:""),type:opt.type||"text",value:k==="birthday"?stuDate(val):val,placeholder:opt.ph||""});
+  const save = async () => {
+    let nv = el.value.trim(); if (k==="birthday") nv = stuDate(nv);
+    if (nv===val) return;
+    if (k==="name" && !nv){ el.value = val; toast("姓名不能空白"); return; }
+    el.classList.add("saving");
+    try{ await S.db.doc(STU_COL+"/"+x.id).update({ [k]:nv, updatedAt:Date.now(), updatedBy:str(S.d.myName)||((S.d.currentUser||{}).email||"") }); x[k] = nv; el.classList.remove("saving"); el.classList.add("saved"); setTimeout(()=>el.classList.remove("saved"),1200); }
+    catch(e){ el.classList.remove("saving"); el.classList.add("bad"); toast("儲存失敗："+errText(e)); }
+  };
+  el.addEventListener("change", save);
+  if (!opt.sel) el.addEventListener("keydown", e=>{ if (e.key==="Enter"){ e.preventDefault(); el.blur(); } });
+  return el;
+}
+function stuTableInline(list, T, withCls){
+  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","今天年紀","父親姓名","父親電話","母親姓名","母親電話","其他家人","關係","其他家人電話","狀態",""];
+  return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb inl"},
+    h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
+    h("tbody",null,list.map(x=>h("tr",{class:str(x.status)==="離園"?"left":""},
+      h("td",null,stuCell(x,"no",{w:"xs"})), ...(withCls?[h("td",null,stuCell(x,"cls",{sel:stuClsList().map(c=>[c,c])}))]:[]),
+      h("td",null,stuCell(x,"name",{w:"md"})), h("td",null,stuCell(x,"gender",{sel:[["男","男"],["女","女"]]})),
+      h("td",null,stuCell(x,"grade",{sel:[["","自動："+stuGrade(Object.assign({},x,{grade:""}),T.year)],...STU_GR.map(g=>[g,g])]})),
+      h("td",null,stuCell(x,"birthday",{type:"date"})), h("td",{class:"c"},stuAgeNow(x.birthday)),
+      h("td",null,stuCell(x,"fatherName",{w:"md"})), h("td",null,stuCell(x,"fatherPhone",{type:"tel"})),
+      h("td",null,stuCell(x,"motherName",{w:"md"})), h("td",null,stuCell(x,"motherPhone",{type:"tel"})),
+      h("td",null,stuCell(x,"otherName",{w:"md"})), h("td",null,stuCell(x,"otherRel",{w:"sm",ph:"祖母"})), h("td",null,stuCell(x,"otherPhone",{type:"tel"})),
+      h("td",null,stuCell(x,"status",{sel:STU_ST.map(v=>[v,v])})),
+      h("td",{class:"c"}, h("button",{class:"btn sm",title:"其他欄位（身分別、地址、備註…）",onclick:()=>stuEdit(x)},"更多")))))));
+}
 function stuTable(list, T, withCls){
   if (!list.length) return h("div",{class:"notice"},"沒有符合的幼兒資料。");
+  if (T.inline) return stuTableInline(list, T, withCls);
   const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","今天年紀","父親","母親","其他家人","身分別","狀態",""];
   const fam = (n,p,r) => (str(n)||str(p)) ? h("div",{class:"stu-fam"}, r?h("small",null,r+"　"):null, h("b",null,str(n)||"—"), str(p)?h("div",{class:"ph"},"📞 "+str(p)):null) : h("span",{class:"note"},"—");
-  return h("div",{class:"stu-wrap"}, h("table",{class:"stu-tb"},
+  return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb"},
     h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
     h("tbody",null,list.map(x=>h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
       h("td",{class:"c"},str(x.no)), ...(withCls?[h("td",null,str(x.cls))]:[]),
@@ -9510,7 +9563,7 @@ function stuRenderAll(app, T){
   const gRow = (lab, arr, cls) => h("tr",{class:cls||""}, h("td",{class:"nm"},lab), STU_GR.flatMap(gr=>[h("td",{class:"c"},gn(arr,gr,"男")||""),h("td",{class:"c"},gn(arr,gr,"女")||""),h("td",{class:"c sub"},gn(arr,gr)||"")]),
     h("td",{class:"c"},cnt(arr,x=>x.gender==="男")), h("td",{class:"c"},cnt(arr,x=>x.gender==="女")), h("td",{class:"c b"},arr.length));
   app.append(h("h2",{class:"stu-h2"},"📊 各班大中小班男女人數（在學）"),
-    h("div",{class:"stu-wrap"}, h("table",{class:"stu-tb stat grd"},
+    h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb stat grd"},
       h("thead",null, h("tr",null, h("th",{rowSpan:2},"班級"), STU_GR.map(gr=>h("th",{colSpan:3,class:"gh"},gr)), h("th",{colSpan:3,class:"gh"},"合計")),
         h("tr",null, [...STU_GR,"x"].flatMap(()=>["男","女","計"]).map(t=>h("th",null,t)))),
       h("tbody",null, usedCls.map(c=>gRow(c, live.filter(x=>x.cls===c))), gRow("全園合計", live, "tot")))));
