@@ -389,12 +389,12 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
           
         
-          <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && isOwner)) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
+          <div class="nav-sep" x-show="currentUser" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
           <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor || restrictedPW)" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
-          </button><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="isAdmin || restrictedPW" @click="view='students'"
+          </button><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="currentUser" @click="view='students'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='students' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             👧 全園幼生名冊
@@ -503,10 +503,10 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">🔑 活動計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德、親職教育活動計畫（僅管理者）</p>
           </button>
-          <button type="button" x-show="isAdmin || restrictedPW" @click="view='students'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="currentUser" @click="view='students'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">👧</span></div>
-            <h3 class="font-heading font-black text-base mt-3">🔑 全園幼生名冊</h3>
-            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班及全園幼生資料、人數統計，可匯入／匯出 Excel（僅管理者）</p>
+            <h3 class="font-heading font-black text-base mt-3">👧 幼生名冊</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班及全園幼生資料、人數統計；老師可以查看自己班上的幼兒</p>
           </button>
           <button type="button" x-show="currentUser && isOwner" @click="view='patrol'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
@@ -868,7 +868,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW) && (view!=='students' || isAdmin || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan'||view==='students')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan' || view==='students') && (view!=='actplan' || isAdmin || isEditor || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan'||view==='students')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L111</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L112</footer>
     </div>
   </template>
 
@@ -3010,7 +3010,7 @@ function kgApp() {
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
-    isEditor: false, isOwner: false, homeLineBound: null, homeLineAsked: false, weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
+    isEditor: false, isOwner: false, isStuViewer: false, homeLineBound: null, homeLineAsked: false, weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
     teacherPick: '', pairs: [], newPairTeacher: '', newPairClass: '', pairPick: '',
     genres: ['遊戲書','韻文','故事','散文','知識概念','文化類'], cultureSubs: ['新年','母親節','端午節','中秋節','聖誕節'],
     exportGenres: [], exportSubs: [], classifyAll: false, classifyMore: false,
@@ -3069,7 +3069,7 @@ function kgApp() {
 
       this.auth.onAuthStateChanged(async (user) => {
         this.unsubs.forEach(fn => fn()); this.unsubs = [];
-        this.currentUser = user; this.isAdmin = false; this.isEditor = false; this.isOwner = false;
+        this.currentUser = user; this.isAdmin = false; this.isEditor = false; this.isOwner = false; this.isStuViewer = false;
         this.openGroups = {}; this.itemSearchText = ''; // 每次登入／登出都重置，讓各學習區預設為收合
         this.clearIdleTimer();
         if (user) {
@@ -3080,6 +3080,7 @@ function kgApp() {
             this.isAdmin = !!mail && emails.some(m => String(m).trim().toLowerCase() === mail);
             this.isOwner = !!mail && (adminDoc.exists ? [].concat(adminDoc.data().owners || [], adminDoc.data().owner || []) : []).some(m => String(m).trim().toLowerCase() === mail);
             this.isEditor = !this.isAdmin && !!mail && (adminDoc.exists ? (adminDoc.data().editors || []) : []).some(m => String(m).trim().toLowerCase() === mail);
+            try { const sa = await this.db.collection('config').doc('studentAccess').get(); this.isStuViewer = !this.isAdmin && !!mail && sa.exists && (sa.data().viewers || []).some(m => String(m).trim().toLowerCase() === mail); } catch (e2) { this.isStuViewer = false; }
           } catch (e) {
             this.isAdmin = false;
             if (!e || e.code !== 'permission-denied') {
@@ -4210,7 +4211,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L111</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L112</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6354,6 +6355,11 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .stu-sort{display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
 #kb .btn.warn{border-color:#e0a800;background:#fff7dd;color:#8a5a00;font-weight:700}
 #kb .stu-tb td.idno{font-family:ui-monospace,Consolas,monospace;font-size:13px;letter-spacing:.3px;white-space:nowrap}
+#kb .stu-sped{display:flex;gap:4px;flex-wrap:wrap}
+#kb .stu-chip{border:1.5px solid #c9bfa8;background:#fff;border-radius:999px;padding:1px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
+#kb .stu-chip.on{background:#fde8e1;border-color:#d9534f;color:#9a3a24;font-weight:700}
+#kb .stu-acc{margin:0;padding-left:18px}
+#kb .stu-acc li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #e3dccb}
 
 </style>
 <script>
@@ -9484,6 +9490,7 @@ function stuCmp(T){
   })[k] || seat;
 }
 function stuClsList(){
+  if (stuTch()) return stuMyCls();
   const T = S.stu, extra = [...new Set(T.list.map(x=>str(x.cls)).filter(Boolean))];
   return [...STU_CLS0, ...extra.filter(c=>!STU_CLS0.includes(c))];
 }
@@ -9495,32 +9502,61 @@ function stuStart(){
   if (T.unsub && T.uYear===T.year) return T;
   if (T.unsub) T.unsub();
   T.got = false; T.uYear = T.year;
+  if (stuTch()){
+    /* 老師：每個班級各自讀取（安全規則只允許讀自己班級的幼兒） */
+    const cs = stuMyCls(), part = {}, seen = new Set();
+    const subs = cs.map(c=>S.db.collection(STU_COL).where("year","==",T.year).where("cls","==",c).onSnapshot(s=>{
+      part[c] = s.docs.map(x=>({id:x.id,...x.data()})); seen.add(c);
+      T.list = [].concat(...Object.values(part)); T.got = seen.size>=cs.length; T.err = ""; if (S.view==="students" && !$("#kb-layer .modal")) render(); },
+      e=>{ T.got = true; T.err = errText(e); if (S.view==="students") render(); }));
+    T.unsub = () => subs.forEach(f=>f());
+    if (!cs.length){ T.got = true; T.list = []; }
+    return T;
+  }
   T.unsub = S.db.collection(STU_COL).where("year","==",T.year).onSnapshot(s=>{ T.list = s.docs.map(x=>({id:x.id,...x.data()})); T.got = true; T.err = ""; if (S.view==="students" && !$("#kb-layer .modal") && !(T.inline && document.activeElement && document.activeElement.classList.contains("stu-ci"))) render(); },
     e=>{ T.got = true; T.err = errText(e); if (S.view==="students") render(); });
-  if (!T.upUnsub) T.upUnsub = S.db.collection(STU_UP_COL).onSnapshot(s=>{ T.ups = {}; s.docs.forEach(d=>{ T.ups[d.id] = d.data(); }); if (S.view==="students" && !$("#kb-layer .modal") && !(document.activeElement && document.activeElement.classList.contains("stu-ci"))) render(); }, ()=>{ T.ups = T.ups || {}; });
+  if (!T.upUnsub && !stuRO()) T.upUnsub = S.db.collection(STU_UP_COL).onSnapshot(s=>{ T.ups = {}; s.docs.forEach(d=>{ T.ups[d.id] = d.data(); }); if (S.view==="students" && !$("#kb-layer .modal") && !(document.activeElement && document.activeElement.classList.contains("stu-ci"))) render(); }, ()=>{ T.ups = T.ups || {}; });
   return T;
 }
 
+/* 名冊檢視者（config/studentAccess 的 viewers）：可以看全園幼兒，只能編輯 IEP／疑似特教 */
+const STU_SPED = ["特殊教育（IEP）","疑似特教"];
+const stuAdm = () => !!S.realAdmin || !!(S.d && S.d.restrictedPW);
+const stuVw = () => !stuAdm() && !!(S.d && S.d.isStuViewer);            // 名冊檢視者：全園
+const stuTch = () => !stuAdm() && !stuVw();                              // 一般老師：只看自己班
+const stuRO = () => !stuAdm();
+/* 老師的班級：管理者後台「老師／班級配對」中，名字和自己的帳號姓名相同的班級 */
+function stuMyCls(){
+  const nm = t => String(t||"").replace(/\s+/g,"").replace(/老師$/,""), me = nm(S.d && S.d.myName);
+  if (!me) return [];
+  return [...new Set((S.d.pairObjs||[]).filter(p=>nm(p.t)===me).map(p=>String(p.c||"").trim()).filter(Boolean))];
+}
 function renderStudents(app){
-  if (!S.realAdmin && !(S.d && S.d.restrictedPW)){ app.append(h("div",{class:"notice"},"全園幼生名冊只有管理員可以查看。")); return; }
+  if (stuTch() && !stuMyCls().length){ app.append(h("section",{class:"intro"}, h("h1",null,"幼生名冊"), h("p",{class:"note"},"老師可以在這裡查看自己班上的幼兒資料。"),
+    h("div",{class:"notice"},`目前找不到「${str(S.d && S.d.myName)||"您"}」的班級。請管理者到「管理者後台 → 老師／班級配對」加上您的姓名和班級，重新整理後就能看到。`))); return; }
   const T = stuStart();
   const years = [...new Set([stuNowYear()+1, stuNowYear(), stuNowYear()-1, stuNowYear()-2, T.year])].sort((a,b)=>b-a);
   app.append(h("section",{class:"intro"},
     h("p",{class:"note"},ORG_NAME),
     h("h1",null,"全園幼生名冊"),
-    h("p",{class:"note"},"🔑 只有管理員看得到，老師看不到。可以手動新增，或從 Excel 匯入。「今天年紀」以今天日期計算；「班別」依出生日期與該學年度 9 月 1 日自動判斷（也可以手動指定）。"),
+    stuTch() ? h("p",{class:"note",style:"color:#2f5597;font-weight:700"},`👀 您可以查看自己班上（${stuMyCls().join("、")}）的幼兒資料；如需修改請告訴管理員。`) : null,
+    stuVw() ? h("p",{class:"note",style:"color:#2f5597;font-weight:700"},"👀 檢視權限：可以查看全園幼兒資料，並勾選或取消每位幼兒的「IEP」「疑似特教」。其他資料只有管理員可以修改。") : null,
+    stuRO() ? null : h("p",{class:"note"},"🔑 只有管理員看得到，老師看不到。可以手動新增，或從 Excel 匯入。「今天年紀」以今天日期計算；「班別」依出生日期與該學年度 9 月 1 日自動判斷（也可以手動指定）。"),
+    (S.realAdmin && !(S.d && S.d.restrictedPW)) ? h("button",{class:"btn sm",style:"margin-top:6px",onclick:()=>stuAccessView()},"👥 名冊檢視權限設定") : null,
     h("div",{class:"stu-top"},
       h("label",{class:"stu-yr"},"學年度 ", h("select",{class:"in",onchange:e=>{ T.year=+e.target.value; render(); }}, years.map(y=>h("option",{value:y,selected:y===T.year},y+" 學年度")))),
-      h("div",{class:"as-tabs"}, [["class","🏫 班級"],["all","🌳 全園"],["left",`🚪 已離園（${T.list.filter(x=>str(x.status)==="離園").length}）`]].map(([k,l])=>h("button",{class:"as-tab"+(T.tab===k?" on":""),onclick:()=>{ T.tab=k; render(); }},l))))));
+      h("div",{class:"as-tabs"}, (stuTch() ? [["class","🏫 班級"]] : [["class","🏫 班級"],["all","🌳 全園"],["left",`🚪 已離園（${T.list.filter(x=>str(x.status)==="離園").length}）`]]).map(([k,l])=>h("button",{class:"as-tab"+(T.tab===k?" on":""),onclick:()=>{ T.tab=k; render(); }},l))))));
   if (T.err){ app.append(h("div",{class:"notice"},"讀取名冊失敗：",T.err,"（如果顯示沒有權限，請先部署最新的 firestore.rules）")); return; }
   if (!T.got){ app.append(h("div",{class:"notice"},"讀取中…")); return; }
   /* 最新修改：整份名冊最近一次的修改日期與人員 */
   const last = T.list.filter(x=>num(x.updatedAt)>0).sort((a,b)=>num(b.updatedAt)-num(a.updatedAt))[0];
   if (last) app.append(h("div",{class:"stu-last"},"🕒 名冊最新修改：", h("b",null,stuTime(last.updatedAt)), str(last.updatedBy)?`　${str(last.updatedBy)}`:"", h("span",{class:"note"},`（${str(last.cls)} ${str(last.name)}）`)));
+  if (stuTch()) T.tab = "class";
   return T.tab==="all" ? stuRenderAll(app, T) : T.tab==="left" ? stuRenderLeft(app, T) : stuRenderClass(app, T);
 }
 
 function stuToolbar(T, list, title){
+  if (stuRO()) return h("div",{class:"toolbar stu-tools"}, h("button",{class:"btn",onclick:()=>stuPrint(list, title, T)},"🖨️ 列印"));
   return h("div",{class:"toolbar stu-tools"},
     h("button",{class:"btn primary",onclick:()=>stuEdit(null, T.tab==="class" ? T.cls : "")},"＋ 新增幼兒"),
     h("button",{class:"btn"+(T.inline?" primary":""),onclick:()=>{ T.inline=!T.inline; render(); }}, T.inline ? "✅ 完成表格編輯" : "✏️ 直接在表格中編輯"),
@@ -9582,7 +9618,7 @@ function stuTableInline(list, T, withCls){
 }
 function stuTable(list, T, withCls){
   if (!list.length) return h("div",{class:"notice"},"沒有符合的幼兒資料。");
-  if (T.inline) return stuTableInline(list, T, withCls);
+  if (T.inline && !stuRO()) return stuTableInline(list, T, withCls);
   const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","身分證字號","今天年紀","入學學年／日期","父親","母親","其他家人","身分別","最後修改",""];
   const fam = (n,p,r) => (str(n)||str(p)) ? h("div",{class:"stu-fam"}, r?h("small",null,r+"　"):null, h("b",null,str(n)||"—"), str(p)?h("div",{class:"ph"},"📞 "+str(p)):null) : h("span",{class:"note"},"—");
   return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb"},
@@ -9593,9 +9629,9 @@ function stuTable(list, T, withCls){
       h("td",{class:"c"},stuBirthEl(x.birthday)), h("td",{class:"c idno"},str(x.idno)||h("span",{class:"note"},"—")), h("td",{class:"c"},stuAgeNow(x.birthday)),
       h("td",{class:"c"}, stuEnrollYear(x) ? h("div",null,stuEnrollYear(x)+" 學年") : h("span",{class:"note"},"—"), str(x.enrollDate) ? h("div",{class:"note",style:"font-size:11px"},stuRoc(x.enrollDate)) : null),
       h("td",null,fam(x.fatherName,x.fatherPhone)), h("td",null,fam(x.motherName,x.motherPhone)), h("td",null,fam(x.otherName||x.parent,x.otherPhone||x.phone,str(x.otherRel)||str(x.relation))),
-      h("td",null,stuIds(x).filter(t=>t!=="一般生").map(t=>h("span",{class:"stu-tag"},t))),
+      h("td",null, stuRO() ? stuSpedChips(x) : stuIds(x).filter(t=>t!=="一般生").map(t=>h("span",{class:"stu-tag"},t))),
       h("td",{class:"upd"}, num(x.updatedAt) ? [h("div",null,stuTime(x.updatedAt)), h("div",{class:"note"},str(x.updatedBy))] : h("span",{class:"note"},"—")),
-      h("td",{class:"c act"}, h("button",{class:"btn sm",onclick:()=>stuEdit(x)},"編輯")))))));
+      h("td",{class:"c act"}, stuRO() ? null : h("button",{class:"btn sm",onclick:()=>stuEdit(x)},"編輯")))))));
 }
 function stuRenderClass(app, T){
   const L = stuClsList(); if (!T.cls || !L.includes(T.cls) || (!T.picked && !T.list.some(x=>x.cls===T.cls))) T.cls = L.find(c=>T.list.some(x=>x.cls===c)) || L[0];
@@ -9635,11 +9671,39 @@ function stuRenderAll(app, T){
   app.append(h("h2",{class:"stu-h2"},"🌳 全園幼生名單"), stuToolbar(T, list, `${T.year}學年度 全園幼生名冊`), stuFilterBar(T), stuTable(list, T, true));
 }
 
+/* 檢視者：點一下切換 IEP／疑似特教（只改「身分別」這一欄） */
+function stuSpedChips(x){
+  const cur = stuIds(x);
+  const other = cur.filter(t=>t!=="一般生" && !STU_SPED.includes(t));
+  return h("div",{class:"stu-sped"}, STU_SPED.map(t=>{ const on = cur.includes(t);
+    return h("button",{type:"button",class:"stu-chip"+(on?" on":""),title:on?"按一下取消":"按一下勾選",onclick:async e=>{
+      const nx = on ? cur.filter(v=>v!==t) : [...cur.filter(v=>v!=="一般生"), t];
+      e.target.disabled = true;
+      try{ await S.db.doc(STU_COL+"/"+x.id).update({ ids: nx.length ? nx : ["一般生"], updatedAt:Date.now(), updatedBy:stuWho() }); toast(`${str(x.name)}：${on?"取消":"勾選"}「${t}」`); }
+      catch(er){ e.target.disabled = false; toast("儲存失敗："+errText(er)); }
+    }}, (on?"☑ ":"☐ ")+(t==="特殊教育（IEP）"?"IEP":t)); }), other.map(t=>h("span",{class:"stu-tag"},t)));
+}
+/* 管理員：設定哪些帳號可以檢視名冊（存在 config/studentAccess） */
+function stuAccessView(){
+  const ref = S.db.doc("config/studentAccess"), box = h("div"), inp = h("input",{class:"in",type:"email",placeholder:"輸入要開放的 Google 帳號 Email"}), err = h("div",{class:"err"});
+  let list = [];
+  const draw = () => box.replaceChildren(list.length ? h("ul",{class:"stu-acc"}, list.map(m=>h("li",null, h("span",null,m), h("button",{class:"btn sm danger",onclick:async()=>{ if (!confirm(`取消「${m}」的名冊檢視權限？`)) return; list = list.filter(v=>v!==m); await save(); }},"移除")))) : h("p",{class:"note"},"目前沒有開放給其他帳號。"));
+  const save = async () => { try{ await ref.set({ viewers:list, updatedAt:Date.now(), updatedBy:stuWho() }, {merge:true}); draw(); toast("已更新名冊檢視權限"); }catch(e){ err.textContent = "儲存失敗："+errText(e)+"（如果是沒有權限，請先部署最新的 firestore.rules）"; } };
+  ref.get().then(d=>{ list = (d.exists && Array.isArray(d.data().viewers)) ? d.data().viewers.map(v=>String(v).trim().toLowerCase()).filter(Boolean) : []; draw(); }).catch(e=>{ err.textContent = "讀取失敗："+errText(e); });
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"👥 名冊檢視權限")),
+    h("div",{class:"mb"},
+      h("p",{class:"note",style:"margin:0 0 8px"},"這裡列出的帳號可以在「👧 全園幼生名冊」查看全園幼兒資料，並勾選或取消「IEP」「疑似特教」；不能新增、刪除幼兒，也不能修改其他欄位。對方登入後重新整理頁面就會看到。"),
+      box, h("div",{style:"display:flex;gap:8px;margin-top:8px"}, inp, h("button",{class:"btn primary",onclick:async()=>{
+        const m = inp.value.trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){ err.textContent = "請輸入正確的 Email。"; return; }
+        if (list.includes(m)){ err.textContent = "這個帳號已經在名單裡了。"; return; }
+        err.textContent = ""; list.push(m); inp.value = ""; await save(); }},"＋ 開放")), err),
+    h("div",{class:"mf"},h("span",{class:"sp"}),h("button",{class:"btn",onclick:closeModal},"關閉"))));
+}
 function stuRenderLeft(app, T){
   const all = T.list.filter(x=>!stuLive(x)).sort(stuCmp(T)), list = stuFilter(T, all);
   app.append(h("div",{class:"stu-sum"}, h("b",null,"🚪 已離園幼兒"), `共 ${all.length} 位`, h("span",{class:"note"},"　預設依離園日期排列（最近的在上面），可以用「排序」改。要復學請按「編輯」把狀態改回「在學」。")));
   app.append(h("div",{class:"toolbar stu-tools"},
-    h("button",{class:"btn",onclick:()=>stuExport(list, `${T.year}學年度 離園幼生名冊`)},"📤 匯出 Excel"),
+    stuRO() ? null : h("button",{class:"btn",onclick:()=>stuExport(list, `${T.year}學年度 離園幼生名冊`)},"📤 匯出 Excel"),
     h("button",{class:"btn",onclick:()=>stuPrint(list, `${T.year}學年度 離園幼生名冊`, T)},"🖨️ 列印")), stuFilterBar(T));
   if (!list.length){ app.append(h("div",{class:"notice"},"目前沒有離園的幼兒。")); return; }
   app.append(h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb"},
@@ -9652,7 +9716,7 @@ function stuRenderLeft(app, T){
       h("td",null, stuFam(x).map(([r,n,p])=>h("div",null,`${r}：${str(n)} ${str(p)}`))),
       h("td",null,str(x.note)),
       h("td",{class:"upd"}, num(x.updatedAt) ? [h("div",null,stuTime(x.updatedAt)), h("div",{class:"note"},str(x.updatedBy))] : "—"),
-      h("td",{class:"c"}, h("button",{class:"btn sm",onclick:()=>stuEdit(x)},"編輯"))))))));
+      h("td",{class:"c"}, stuRO() ? null : h("button",{class:"btn sm",onclick:()=>stuEdit(x)},"編輯"))))))));
 }
 function stuEdit(x, cls){
   const T = S.stu, v = k => x ? str(x[k]) : "";
