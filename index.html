@@ -387,12 +387,17 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           
           
           
+          
         
           <div class="nav-sep" x-show="(isAdmin || isEditor || (currentUser && isOwner)) && !restrictedPW || isAdmin" style="flex-basis:100%;height:0;border-top:1px dashed rgba(255,255,255,.35);margin:4px 0 2px"></div>
           <span class="nav-lab" x-show="isAdmin || isEditor" style="align-self:center;font-size:12px;font-weight:700;color:#f3d27a;padding:0 4px">🔑 管理員專用</span><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="(isAdmin || isEditor || restrictedPW)" @click="view='actplan'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='actplan' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗓️ 活動計畫
+          </button><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="isAdmin && !restrictedPW" @click="view='students'"
+            class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
+            :class="view==='students' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
+            👧 全園幼生名冊
           </button><button style="outline:2px solid #d9a93a;outline-offset:-2px;" x-show="isAdmin" @click="view='admin'"
             x-effect="if (!titleTimer) document.title = (isAdmin && (adminPendingCount+weeklyPendingCount+healthPending.length)>0 ? `(${adminPendingCount+weeklyPendingCount+healthPending.length}) ` : '') + baseTitle"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
@@ -497,6 +502,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗓️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔑 活動計畫</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">社區、研習、仁德、親職教育活動計畫（僅管理者）</p>
+          </button>
+          <button type="button" x-show="isAdmin && !restrictedPW" @click="view='students'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+            <div class="flex items-start justify-between gap-2"><span class="text-4xl">👧</span></div>
+            <h3 class="font-heading font-black text-base mt-3">🔑 全園幼生名冊</h3>
+            <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">各班及全園幼生資料、人數統計，可匯入／匯出 Excel（僅管理者）</p>
           </button>
           <button type="button" x-show="currentUser && isOwner" @click="view='patrol'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">📝</span></div>
@@ -858,7 +868,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
         </section>
 
         <!-- ============ 社區踏查／出汗性大肌肉／活動計畫 ============ -->
-        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view) && currentUser && (!restrictedPW || view==='actplan') && (view!=='actplan' || isAdmin || isEditor || restrictedPW)" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
+        <section x-show="['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view) && currentUser && (!restrictedPW || view==='actplan') && (view!=='actplan' || isAdmin || isEditor || restrictedPW) && (view!=='students' || (isAdmin && !restrictedPW))" x-effect="if(['walk','motor','actplan','schedule','calendar','patrol','assess','meeting','workplan','students'].includes(view)&&currentUser&&(!restrictedPW||view==='actplan')&&window.KbUI) KbUI.sync($data, view, isAdmin, isEditor)" class="space-y-4">
           <div id="kb" class="paper-card rounded-3xl p-6 shadow-card"><div id="kb-app"></div><div id="kb-layer"></div><div id="kb-toast" class="toast"></div></div>
         </section>
 
@@ -1804,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L95</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L96</footer>
     </div>
   </template>
 
@@ -4200,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L95</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L96</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6088,7 +6098,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .as-tabs{gap:8px}
 #kb .as-tab{border:2px solid var(--tc,#8a7a55);background:var(--tb,#fff);color:var(--tc,#5a4a2a);font-weight:700;font-size:15px;border-radius:999px;padding:8px 18px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06)}
 #kb .as-tab:hover{filter:brightness(.97);transform:translateY(-1px)}
-#kb .as-tab.on{background:var(--tc);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+#kb .as-tab.on{background:var(--tc,#6b5a3a);color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18)}
 #kb .as-tab.t-routine{--tc:#c26a1b;--tb:#fff3e6}
 #kb .as-tab.t-summative{--tc:#2f6b4f;--tb:#e9f5ee}
 #kb .as-tab.t-roster{--tc:#2f5597;--tb:#eaf0fb}
@@ -6283,6 +6293,31 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb table.mt-grid tr.xr td{border:none;text-align:center}
 #kb table.mt-grid tr.xr .btn{font-size:11px;padding:1px 6px}
 
+#kb .stu-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+#kb .stu-yr{display:flex;align-items:center;gap:6px;font-weight:700}
+#kb .stu-yr select{width:auto}
+#kb .stu-cls{margin:4px 0 10px}
+#kb .stu-sum{background:#f4efe3;border-radius:10px;padding:8px 12px;margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+#kb .stu-tools{flex-wrap:wrap;gap:8px}
+#kb .stu-filter{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+#kb .stu-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+#kb table.stu-tb{border-collapse:collapse;width:100%;font-size:14px;min-width:860px}
+#kb table.stu-tb.stat{min-width:720px}
+#kb .stu-tb th{background:#f1ece1;font-weight:700;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+#kb .stu-tb td{padding:6px;border-bottom:1px solid #f0ebe0;vertical-align:top;white-space:pre-wrap}
+#kb .stu-tb td.c,#kb .stu-tb th:not(:first-child){text-align:center}
+#kb .stu-tb td.nm{font-weight:700;white-space:nowrap}
+#kb .stu-tb td.b{font-weight:800}
+#kb .stu-tb tr.left td{color:#9a9384;text-decoration:line-through}
+#kb .stu-tb tr.left td.act{text-decoration:none}
+#kb .stu-tb tr.tot td{background:#faf6ec;font-weight:800;border-top:2px solid var(--line)}
+#kb .stu-tag{display:inline-block;font-size:12px;background:#fde8e1;color:#9a3a24;border-radius:6px;padding:0 6px;margin:1px 3px 1px 0}
+#kb .stu-h2{font-size:17px;margin:14px 0 6px}
+#kb .stu-cks{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px}
+#kb .stu-ck{display:flex;align-items:center;gap:4px;font-weight:400}
+#kb .stu-top .as-tab,#kb .stu-cls .as-tab{--tc:#2f6b4f;--tb:#f1f8f3}
+#kb .stu-top .as-tabs{margin-top:0}
+
 </style>
 <script>
 /* ---------- 園所全名（所有畫面與列印都用這裡，避免錯字、少字、多字） ---------- */
@@ -6357,6 +6392,7 @@ function render(){
   if (S.view==="assess") return renderAssess(app);
   if (S.view==="meeting") return renderMeeting(app);
   if (S.view==="workplan") return renderWorkplan(app);
+  if (S.view==="students") return renderStudents(app);
   renderCourses(app);
 }
 
@@ -7287,7 +7323,7 @@ function copyDoc(col, cur, field, label, select){
       h("label",{class:"fl"},"新的名稱",name), err),
     h("div",{class:"mf"},h("button",{class:"btn",onclick:closeModal},"取消"),go)), true);
 }
-const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting" || v==="workplan";
+const isPage = v => isKind(v) || v==="activities" || v==="schedule" || v==="calendar" || v==="patrol" || v==="assess" || v==="meeting" || v==="workplan" || v==="students";
 
 function renderSchedule(app){
   const sc = S.sch;
@@ -9331,6 +9367,237 @@ function wpImport(){
     render(); alert(`已匯入 ${ok} 份。`+(bad.length?"\n\n失敗：\n"+bad.join("\n"):""));
   });
   document.body.append(inp); inp.click();
+}
+/* ---------- 全園幼生名冊（僅管理員；老師看不到） ---------- */
+const STU_COL = "students";
+const STU_CLS0 = ["兩歲專班","梔子花班","風鈴草班","山茶花班","幸運草班","仙草花班"];
+const STU_ID = ["一般生","特殊教育","疑似特教","經濟弱勢","低收入戶","中低收入戶","原住民","新住民子女","身心障礙","其他"];
+const STU_ST = ["在學","離園"];
+const stuNowYear = () => { const d = new Date(); return d.getFullYear() - 1911 - (d.getMonth() < 7 ? 1 : 0); };
+/* 日期：西元 2021-03-05、民國 110/03/05、110.3.5、Excel 序號 都換成 YYYY-MM-DD */
+function stuDate(v){
+  if (v==null || v==="") return "";
+  if (v instanceof Date && !isNaN(v)){ const d = new Date(v.getTime() + 12*36e5); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }   // Excel 日期加半天避免時區差一天
+  if (typeof v==="number" && v > 20000 && v < 80000){ const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0,10); }
+  const s = String(v).normalize("NFKC").trim(), m = s.match(/(\d{2,4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})/);
+  if (!m) return s;
+  let y = +m[1]; if (y < 1911) y += 1911;
+  return `${y}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
+}
+const stuRoc = s => { const m = str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}.${m[2]}.${m[3]}` : str(s); };
+/* 足歲：以該學年度 9 月 1 日計算，寫成「4歲3個月」 */
+function stuAge(b, year){
+  const m = str(b).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return "";
+  const ref = new Date((+year||stuNowYear()) + 1911, 8, 1), bd = new Date(+m[1], +m[2]-1, +m[3]);
+  let mo = (ref.getFullYear()-bd.getFullYear())*12 + ref.getMonth()-bd.getMonth(); if (ref.getDate() < bd.getDate()) mo--;
+  return mo < 0 ? "" : `${Math.floor(mo/12)}歲${mo%12}個月`;
+}
+const stuIds = x => (Array.isArray(x.ids) ? x.ids : str(x.ids).split(/[、,，\s]+/)).map(t=>str(t).trim()).filter(Boolean);
+const stuNo = x => { const n = parseInt(str(x.no),10); return isNaN(n) ? 999 : n; };
+const stuSort = (a,b) => stuClsIdx(a.cls) - stuClsIdx(b.cls) || stuNo(a) - stuNo(b) || str(a.name).localeCompare(str(b.name),"zh-Hant");
+function stuClsList(){
+  const T = S.stu, extra = [...new Set(T.list.map(x=>str(x.cls)).filter(Boolean))];
+  return [...STU_CLS0, ...extra.filter(c=>!STU_CLS0.includes(c))];
+}
+const stuClsIdx = c => { const L = stuClsList(), i = L.indexOf(str(c)); return i < 0 ? 99 : i; };
+
+function stuStart(){
+  const T = S.stu = S.stu || { list:[], got:false, tab:"class", cls:"", q:"", st:"在學", year:stuNowYear(), unsub:null, uYear:null };
+  if (T.unsub && T.uYear===T.year) return T;
+  if (T.unsub) T.unsub();
+  T.got = false; T.uYear = T.year;
+  T.unsub = S.db.collection(STU_COL).where("year","==",T.year).onSnapshot(s=>{ T.list = s.docs.map(x=>({id:x.id,...x.data()})); T.got = true; T.err = ""; if (S.view==="students" && !$("#kb-layer .modal")) render(); },
+    e=>{ T.got = true; T.err = errText(e); if (S.view==="students") render(); });
+  return T;
+}
+
+function renderStudents(app){
+  if (!S.realAdmin || (S.d && S.d.restrictedPW)){ app.append(h("div",{class:"notice"},"全園幼生名冊只有管理員可以查看。")); return; }
+  const T = stuStart();
+  const years = [...new Set([stuNowYear()+1, stuNowYear(), stuNowYear()-1, stuNowYear()-2, T.year])].sort((a,b)=>b-a);
+  app.append(h("section",{class:"intro"},
+    h("p",{class:"note"},ORG_NAME),
+    h("h1",null,"全園幼生名冊"),
+    h("p",{class:"note"},"🔑 只有管理員看得到，老師看不到。可以手動新增，或從 Excel 匯入；年齡以該學年度 9 月 1 日計算足歲。"),
+    h("div",{class:"stu-top"},
+      h("label",{class:"stu-yr"},"學年度 ", h("select",{class:"in",onchange:e=>{ T.year=+e.target.value; render(); }}, years.map(y=>h("option",{value:y,selected:y===T.year},y+" 學年度")))),
+      h("div",{class:"as-tabs"}, [["class","🏫 班級"],["all","🌳 全園"]].map(([k,l])=>h("button",{class:"as-tab"+(T.tab===k?" on":""),onclick:()=>{ T.tab=k; render(); }},l))))));
+  if (T.err){ app.append(h("div",{class:"notice"},"讀取名冊失敗：",T.err,"（如果顯示沒有權限，請先部署最新的 firestore.rules）")); return; }
+  if (!T.got){ app.append(h("div",{class:"notice"},"讀取中…")); return; }
+  return T.tab==="all" ? stuRenderAll(app, T) : stuRenderClass(app, T);
+}
+
+function stuToolbar(T, list, title){
+  return h("div",{class:"toolbar stu-tools"},
+    h("button",{class:"btn primary",onclick:()=>stuEdit(null, T.tab==="class" ? T.cls : "")},"＋ 新增幼兒"),
+    h("button",{class:"btn",onclick:()=>stuImport(T)},"📥 從 Excel 匯入"),
+    h("button",{class:"btn",onclick:()=>stuExport(list, title)},"📤 匯出 Excel"),
+    h("button",{class:"btn",onclick:()=>stuPrint(list, title, T)},"🖨️ 列印"));
+}
+function stuFilter(T, list){
+  const q = str(T.q).trim();
+  return list.filter(x=>(T.st==="全部" || (str(x.status)||"在學")===T.st) && (!q || [x.name,x.parent,x.phone,x.cls,stuIds(x).join("、")].some(v=>str(v).includes(q))));
+}
+function stuFilterBar(T){
+  const q = h("input",{class:"in",placeholder:"🔍 搜尋姓名、家長、電話、身分別",value:T.q,style:"max-width:280px"});
+  q.addEventListener("input", ()=>{ T.q = q.value; clearTimeout(T.qt); T.qt = setTimeout(()=>{ render(); const n=$("#kb-app .stu-filter input"); if (n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }, 300); });
+  return h("div",{class:"stu-filter"}, q,
+    h("select",{class:"in",style:"max-width:130px",onchange:e=>{ T.st=e.target.value; render(); }}, ["在學","離園","全部"].map(v=>h("option",{value:v,selected:T.st===v},v==="全部"?"全部狀態":v))));
+}
+function stuTable(list, T, withCls){
+  if (!list.length) return h("div",{class:"notice"},"沒有符合的幼兒資料。");
+  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","出生日期","足歲","身分別","家長／監護人","聯絡電話","狀態",""];
+  return h("div",{class:"stu-wrap"}, h("table",{class:"stu-tb"},
+    h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
+    h("tbody",null,list.map(x=>h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
+      h("td",{class:"c"},str(x.no)), ...(withCls?[h("td",null,str(x.cls))]:[]),
+      h("td",{class:"nm"},str(x.name)), h("td",{class:"c"},str(x.gender)), h("td",{class:"c"},stuRoc(x.birthday)), h("td",{class:"c"},stuAge(x.birthday, x.year||T.year)),
+      h("td",null,stuIds(x).filter(t=>t!=="一般生").map(t=>h("span",{class:"stu-tag"},t))),
+      h("td",null,str(x.parent)+(str(x.relation)?`（${str(x.relation)}）`:"")), h("td",null,[x.phone,x.phone2].map(str).filter(Boolean).join("\n")),
+      h("td",{class:"c"},str(x.status)||"在學"),
+      h("td",{class:"c act"}, h("button",{class:"btn sm",onclick:()=>stuEdit(x)},"編輯")))))));
+}
+function stuRenderClass(app, T){
+  const L = stuClsList(); if (!T.cls || !L.includes(T.cls) || (!T.picked && !T.list.some(x=>x.cls===T.cls))) T.cls = L.find(c=>T.list.some(x=>x.cls===c)) || L[0];
+  app.append(h("div",{class:"as-tabs stu-cls"}, L.map(c=>{ const n = T.list.filter(x=>x.cls===c && (str(x.status)||"在學")==="在學").length;
+    return h("button",{class:"as-tab"+(T.cls===c?" on":""),onclick:()=>{ T.cls=c; T.picked=true; render(); }},`${c}（${n}）`); })));
+  const all = T.list.filter(x=>x.cls===T.cls).sort(stuSort), list = stuFilter(T, all), live = all.filter(x=>(str(x.status)||"在學")==="在學");
+  const g = s => live.filter(x=>x.gender===s).length;
+  app.append(h("div",{class:"stu-sum"}, h("b",null,T.cls), `在學 ${live.length} 人（男 ${g("男")}、女 ${g("女")}）`,
+    live.filter(x=>stuIds(x).some(t=>t!=="一般生")).length ? h("span",{class:"note"},`　其中特殊身分 ${live.filter(x=>stuIds(x).some(t=>t!=="一般生")).length} 人`) : null));
+  app.append(stuToolbar(T, list, `${T.year}學年度 ${T.cls} 幼生名冊`), stuFilterBar(T), stuTable(list, T, false));
+}
+function stuRenderAll(app, T){
+  const L = stuClsList(), live = T.list.filter(x=>(str(x.status)||"在學")==="在學");
+  const cnt = (arr, f) => arr.filter(f).length;
+  const cols = ["一般生以外","特殊教育","疑似特教","經濟弱勢","低收入戶","中低收入戶","原住民","新住民子女","身心障礙"];
+  const rowOf = (lab, arr) => h("tr",null, h("td",{class:"nm"},lab), h("td",{class:"c"},cnt(arr,x=>x.gender==="男")), h("td",{class:"c"},cnt(arr,x=>x.gender==="女")), h("td",{class:"c b"},arr.length),
+    cols.slice(1).map(k=>h("td",{class:"c"},cnt(arr,x=>stuIds(x).includes(k))||"")));
+  const usedCls = L.filter(c=>T.list.some(x=>x.cls===c));
+  app.append(h("h2",{class:"stu-h2"},"📊 各班人數統計（在學）"),
+    h("div",{class:"stu-wrap"}, h("table",{class:"stu-tb stat"},
+      h("thead",null,h("tr",null,["班級","男","女","合計",...cols.slice(1)].map(t=>h("th",null,t)))),
+      h("tbody",null, usedCls.map(c=>rowOf(c, live.filter(x=>x.cls===c))), h("tr",{class:"tot"}, ...rowOf("全園合計", live).children)))));
+  const list = stuFilter(T, T.list.slice().sort(stuSort));
+  app.append(h("h2",{class:"stu-h2"},"🌳 全園幼生名單"), stuToolbar(T, list, `${T.year}學年度 全園幼生名冊`), stuFilterBar(T), stuTable(list, T, true));
+}
+
+function stuEdit(x, cls){
+  const T = S.stu, v = k => x ? str(x[k]) : "";
+  const inp = (k, ph, type) => h("input",{class:"in",type:type||"text",value:k==="birthday"||k==="enrollDate"||k==="leaveDate" ? stuDate(v(k)) : v(k),placeholder:ph||""});
+  const sel = (k, opts, def) => h("select",{class:"in"}, opts.map(o=>h("option",{value:o,selected:(v(k)||def)===o},o)));
+  const L = stuClsList();
+  const f = { cls: h("select",{class:"in"}, L.map(c=>h("option",{value:c,selected:(v("cls")||cls||T.cls)===c},c))),
+    no: inp("no","例如 1"), name: inp("name","幼兒姓名"), gender: sel("gender",["男","女"],"男"), birthday: inp("birthday","","date"), idno: inp("idno","（選填）"),
+    parent: inp("parent"), relation: inp("relation","例如 母、父"), phone: inp("phone"), phone2: inp("phone2","（選填）第二支電話"),
+    address: inp("address"), enrollDate: inp("enrollDate","","date"), status: sel("status",STU_ST,"在學"), leaveDate: inp("leaveDate","","date"),
+    note: h("textarea",{class:"in",style:"min-height:56px"}) };
+  f.note.value = v("note");
+  const cur = x ? stuIds(x) : ["一般生"];
+  const ids = STU_ID.map(t=>{ const c = h("input",{type:"checkbox",value:t,checked:cur.includes(t)}); return h("label",{class:"stu-ck"},c,t); });
+  const err = h("div",{class:"err"});
+  const L2 = (lab, el) => h("label",{class:"fl"},lab,el);
+  const save = h("button",{class:"btn primary",onclick:async()=>{
+    const name = f.name.value.trim(); if (!name){ err.textContent = "請填寫幼兒姓名。"; return; }
+    const clsV = f.cls.value, dup = T.list.find(o=>o.id!==(x&&x.id) && o.cls===clsV && str(o.name)===name);
+    if (dup && !confirm(`${clsV} 已經有「${name}」了，確定還要再存一筆嗎？`)) return;
+    let idsV = ids.map(l=>l.querySelector("input")).filter(c=>c.checked).map(c=>c.value); if (idsV.length>1) idsV = idsV.filter(t=>t!=="一般生");   // 有其他身分就不再標「一般生」
+    const d = { year:T.year, cls:clsV, no:f.no.value.trim(), name, gender:f.gender.value, birthday:f.birthday.value, idno:f.idno.value.trim().toUpperCase(),
+      ids: idsV.length ? idsV : ["一般生"], parent:f.parent.value.trim(), relation:f.relation.value.trim(), phone:f.phone.value.trim(), phone2:f.phone2.value.trim(),
+      address:f.address.value.trim(), enrollDate:f.enrollDate.value, status:f.status.value, leaveDate:f.leaveDate.value, note:f.note.value.trim(),
+      updatedAt:Date.now(), updatedBy:str(S.d.myName)||((S.d.currentUser||{}).email||"") };
+    save.disabled = true;
+    try{ if (x) await S.db.doc(STU_COL+"/"+x.id).update(d);
+         else await S.db.collection(STU_COL).doc().set(Object.assign(d,{createdAt:Date.now()}));
+         closeModal(); toast("已儲存"); }
+    catch(e){ save.disabled = false; err.textContent = errText(e); }
+  }},"儲存");
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null, x ? "編輯幼兒資料："+str(x.name) : "新增幼兒")),
+    h("div",{class:"mb f"},
+      h("div",{class:"f2"}, L2("班級",f.cls), L2("座號",f.no)),
+      h("div",{class:"f2"}, L2("姓名",f.name), L2("性別",f.gender)),
+      h("div",{class:"f2"}, L2("出生日期",f.birthday), L2("身分證字號",f.idno)),
+      h("div",{class:"fl"}, h("span",null,"身分別 ",h("small",null,"（可複選）")), h("div",{class:"stu-cks"},ids)),
+      h("div",{class:"f2"}, L2("家長／監護人",f.parent), L2("關係",f.relation)),
+      h("div",{class:"f2"}, L2("聯絡電話",f.phone), L2("其他電話",f.phone2)),
+      L2("地址",f.address),
+      h("div",{class:"f2"}, L2("入園日期",f.enrollDate), L2("狀態",f.status)),
+      L2("離園日期（狀態為離園時填寫）",f.leaveDate),
+      L2("備註",f.note), err),
+    h("div",{class:"mf"},
+      x ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這位幼兒？",`「${str(x.cls)} ${str(x.name)}」的資料會刪除，無法復原。若只是離園，建議把狀態改成「離園」保留紀錄。`,"刪除",()=>S.db.doc(STU_COL+"/"+x.id).delete().then(()=>toast("已刪除")))},"刪除") : null,
+      h("span",{class:"sp"}), h("button",{class:"btn",onclick:closeModal},"取消"), save)));
+}
+
+/* ---------- Excel 匯入／匯出 ---------- */
+const STU_HEAD = { cls:["班級","班別"], no:["座號","號碼","編號"], name:["姓名","幼兒姓名","學生姓名","幼生姓名"], gender:["性別"], birthday:["出生日期","生日","出生年月日"],
+  idno:["身分證","身分證字號","身分證號"], ids:["身分別","身份別","身分","特殊身分"], parent:["家長","家長姓名","監護人","家長／監護人","家長/監護人","聯絡人"], relation:["關係","稱謂"],
+  phone:["電話","聯絡電話","手機","家長電話","連絡電話"], phone2:["其他電話","電話2","市話"], address:["地址","住址","通訊地址","戶籍地址"], enrollDate:["入園日期","入學日期"],
+  status:["狀態","在學狀態"], leaveDate:["離園日期"], note:["備註","說明"] };
+function stuImport(T){
+  if (!window.XLSX){ alert("Excel 讀取元件還沒載入，請重新整理頁面後再試。"); return; }
+  const inp = h("input",{type:"file",accept:".xlsx,.xls,.csv",style:"display:none"});
+  inp.addEventListener("change", async()=>{
+    const file = inp.files && inp.files[0]; inp.remove(); if (!file) return;
+    let rows;
+    try{ const wb = XLSX.read(await file.arrayBuffer(), {type:"array", cellDates:true}); const ws = wb.Sheets[wb.SheetNames[0]]; rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:"", raw:true}); }
+    catch(e){ alert("讀不到這個檔案："+e.message); return; }
+    /* 找標題列：前 10 列中有「姓名」的那一列 */
+    const norm = t => str(t).normalize("NFKC").replace(/\s/g,"");
+    const hi = rows.slice(0,10).findIndex(r=>r.some(c=>STU_HEAD.name.includes(norm(c))));
+    if (hi < 0){ alert("找不到「姓名」欄位。請確認 Excel 第一列（或前幾列）有「姓名」、「班級」等標題。"); return; }
+    const head = rows[hi].map(norm), col = {};
+    Object.entries(STU_HEAD).forEach(([k,alts])=>{ const i = head.findIndex(c=>alts.map(norm).includes(c)); if (i>=0) col[k] = i; });
+    const defCls = T.tab==="class" ? T.cls : "";
+    const recs = rows.slice(hi+1).map(r=>{ const g = k => col[k]==null ? "" : r[col[k]];
+      const name = str(g("name")).trim(); if (!name) return null;
+      let gender = str(g("gender")).trim(); gender = /女|F/i.test(gender) ? "女" : (/男|M/i.test(gender) ? "男" : gender);
+      let ids = str(g("ids")).split(/[、,，\/\s]+/).map(t=>t.trim()).filter(Boolean); if (ids.length>1) ids = ids.filter(t=>t!=="一般生");
+      return { year:T.year, cls:str(g("cls")).trim()||defCls, no:str(g("no")).trim(), name, gender, birthday:stuDate(g("birthday")), idno:str(g("idno")).trim().toUpperCase(),
+        ids: ids.length ? ids : ["一般生"], parent:str(g("parent")).trim(), relation:str(g("relation")).trim(), phone:str(g("phone")).trim(), phone2:str(g("phone2")).trim(),
+        address:str(g("address")).trim(), enrollDate:stuDate(g("enrollDate")), status:/離/.test(str(g("status"))) ? "離園" : "在學", leaveDate:stuDate(g("leaveDate")), note:str(g("note")).trim() };
+    }).filter(Boolean);
+    if (!recs.length){ alert("檔案裡沒有幼兒資料。"); return; }
+    const noCls = recs.filter(r=>!r.cls).length;
+    if (noCls){ alert(`有 ${noCls} 位幼兒沒有班級。請在 Excel 加上「班級」欄，或先在「班級」分頁選好班級再匯入（會全部放進那一班）。`); return; }
+    const key = r => r.cls+"|"+r.name, old = new Map(T.list.map(o=>[key(o),o]));
+    const nNew = recs.filter(r=>!old.has(key(r))).length, nUpd = recs.length - nNew;
+    const byCls = {}; recs.forEach(r=>{ byCls[r.cls]=(byCls[r.cls]||0)+1; });
+    if (!confirm(`要匯入 ${T.year} 學年度幼生名冊嗎？\n共 ${recs.length} 位：新增 ${nNew} 位、更新 ${nUpd} 位（同班同名視為同一位）\n\n${Object.entries(byCls).map(([c,n])=>`・${c}：${n} 位`).join("\n")}\n\n讀到的欄位：${Object.keys(col).map(k=>({cls:"班級",no:"座號",name:"姓名",gender:"性別",birthday:"出生日期",idno:"身分證",ids:"身分別",parent:"家長",relation:"關係",phone:"電話",phone2:"其他電話",address:"地址",enrollDate:"入園日期",status:"狀態",leaveDate:"離園日期",note:"備註"})[k]).join("、")}`)) return;
+    let ok = 0; const bad = []; const who = str(S.d.myName)||((S.d.currentUser||{}).email||""), now = Date.now();
+    for (const r of recs){
+      try{ const o = old.get(key(r));
+        if (o){ const up = {}; Object.entries(r).forEach(([k,val])=>{ if (Array.isArray(val) ? !(val.length===1&&val[0]==="一般生"&&col.ids==null) : (str(val)!=="" || k==="status")) up[k]=val; }); up.updatedAt=now; up.updatedBy=who+"（匯入）"; await S.db.doc(STU_COL+"/"+o.id).update(up); }
+        else await S.db.collection(STU_COL).doc().set(Object.assign(r,{createdAt:now,updatedAt:now,updatedBy:who+"（匯入）"}));
+        ok++; }catch(e){ bad.push(r.name+"（"+errText(e)+"）"); }
+    }
+    alert(`已匯入 ${ok} 位幼兒。`+(bad.length?`\n\n失敗：\n${bad.join("\n")}`:""));
+  });
+  document.body.appendChild(inp); inp.click();
+}
+function stuExport(list, title){
+  if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
+  const rows = list.map(x=>({ 班級:str(x.cls), 座號:str(x.no), 姓名:str(x.name), 性別:str(x.gender), 出生日期:stuRoc(x.birthday), 足歲:stuAge(x.birthday,x.year), 身分證字號:str(x.idno),
+    身分別:stuIds(x).join("、"), "家長／監護人":str(x.parent), 關係:str(x.relation), 聯絡電話:str(x.phone), 其他電話:str(x.phone2), 地址:str(x.address),
+    入園日期:stuRoc(x.enrollDate), 狀態:str(x.status)||"在學", 離園日期:stuRoc(x.leaveDate), 備註:str(x.note) }));
+  if (!rows.length){ toast("沒有資料可以匯出"); return; }
+  const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new();
+  ws["!cols"] = [8,5,9,5,10,9,12,14,12,6,13,13,30,10,6,10,20].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, "幼生名冊"); XLSX.writeFile(wb, title.replace(/[\\\/:*?"<>|]/g,"_")+".xlsx");
+}
+function stuPrint(list, title, T){
+  if (!list.length){ toast("沒有資料可以列印"); return; }
+  const withCls = T.tab==="all";
+  const css = PRINT_BASE + `@page{size:A4 landscape;margin:10mm}.wrap{padding:0 2mm;font-size:10.5pt;line-height:1.35}@media screen{.wrap{width:277mm;margin:0 auto;padding:6mm 2mm}}
+th,td{text-align:center;vertical-align:middle;padding:3px 3px}th{font-weight:normal;background:#f1f1f1}td.l{text-align:left}tr{break-inside:avoid}.sub{margin:2px 0 6px;display:flex;justify-content:space-between}`;
+  const live = list.filter(x=>(str(x.status)||"在學")==="在學"), g = s => live.filter(x=>x.gender===s).length;
+  openPrint(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 橫式。內含個人資料，列印後請妥善保管。</span></div>
+<div class="wrap"><div class="hd"><div>${ORG_NAME}</div><div class="t">${esc(title)}</div></div>
+<div class="sub"><span>在學 ${live.length} 人（男 ${g("男")}、女 ${g("女")}）</span><span>列印日期：${(d=>`${d.getFullYear()-1911}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`)(new Date())}</span></div>
+<table><colgroup><col style="width:9mm">${withCls?'<col style="width:20mm">':""}<col style="width:20mm"><col style="width:9mm"><col style="width:20mm"><col style="width:18mm"><col style="width:26mm"><col style="width:26mm"><col style="width:28mm"><col><col style="width:12mm"></colgroup>
+<thead><tr><th>座號</th>${withCls?"<th>班級</th>":""}<th>姓名</th><th>性別</th><th>出生日期</th><th>足歲</th><th>身分別</th><th>家長／監護人</th><th>聯絡電話</th><th>地址</th><th>狀態</th></tr></thead>
+<tbody>${list.map(x=>`<tr><td>${esc(x.no)}</td>${withCls?`<td>${esc(x.cls)}</td>`:""}<td>${esc(x.name)}</td><td>${esc(x.gender)}</td><td>${esc(stuRoc(x.birthday))}</td><td>${esc(stuAge(x.birthday,x.year||T.year))}</td><td>${esc(stuIds(x).filter(t=>t!=="一般生").join("、"))}</td><td>${esc(x.parent)}${x.relation?`（${esc(x.relation)}）`:""}</td><td>${esc([x.phone,x.phone2].filter(Boolean).join("\n"))}</td><td class="l">${esc(x.address)}</td><td>${esc(x.status||"在學")}</td></tr>`).join("")}</tbody></table></div></body></html>`);
 }
 /* ---------- 編輯畫面自動儲存（會議紀錄、工作計畫、教學評量、巡堂紀錄） ---------- */
 const AUTO_MS = 1200;
