@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L107</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L108</footer>
     </div>
   </template>
 
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L107</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L108</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6353,6 +6353,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .stu-pk .stu-ck{min-width:92px}
 #kb .stu-sort{display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
 #kb .btn.warn{border-color:#e0a800;background:#fff7dd;color:#8a5a00;font-weight:700}
+#kb .stu-tb td.idno{font-family:ui-monospace,Consolas,monospace;font-size:13px;letter-spacing:.3px;white-space:nowrap}
 
 </style>
 <script>
@@ -9528,10 +9529,10 @@ function stuToolbar(T, list, title){
 }
 function stuFilter(T, list){
   const q = str(T.q).trim();
-  return list.filter(x=>(T.tab==="left" ? !stuLive(x) : stuLive(x)) && (!q || [x.name,x.parent,x.phone,x.cls,stuIds(x).join("、")].some(v=>str(v).includes(q))));
+  return list.filter(x=>(T.tab==="left" ? !stuLive(x) : stuLive(x)) && (!q || [x.name,x.idno,x.fatherName,x.motherName,x.otherName,x.fatherPhone,x.motherPhone,x.otherPhone,x.parent,x.phone,x.cls,stuIds(x).join("、")].some(v=>str(v).includes(q))));
 }
 function stuFilterBar(T){
-  const q = h("input",{class:"in",placeholder:"🔍 搜尋姓名、家長、電話、身分別",value:T.q,style:"max-width:280px"});
+  const q = h("input",{class:"in",placeholder:"🔍 搜尋姓名、身分證、家長、電話、身分別",value:T.q,style:"max-width:280px"});
   q.addEventListener("input", ()=>{ T.q = q.value; clearTimeout(T.qt); T.qt = setTimeout(()=>{ render(); const n=$("#kb-app .stu-filter input"); if (n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }, 300); });
   const cur = (T.sort && !(T.sort==="leave" && T.tab!=="left")) ? T.sort : (T.tab==="left" ? "leave" : "no");
   const so = h("select",{class:"in",style:"width:auto",onchange:e=>{ T.sort = e.target.value; try{ localStorage.setItem("stuSort", T.sort); }catch(_){} render(); }},
@@ -9546,7 +9547,7 @@ function stuCell(x, k, opt){
   if (opt.sel) el = h("select",{class:"stu-ci"}, opt.sel.map(([v,l])=>h("option",{value:v,selected:val===v},l)));
   else el = h("input",{class:"stu-ci"+(opt.w?" "+opt.w:""),type:opt.type||"text",value:(k==="birthday"||k==="enrollDate")?stuDate(val):val,placeholder:opt.ph||""});
   const save = async () => {
-    let nv = el.value.trim(); if (k==="birthday"||k==="enrollDate"||k==="leaveDate") nv = stuDate(nv);
+    let nv = el.value.trim(); if (k==="birthday"||k==="enrollDate"||k==="leaveDate") nv = stuDate(nv); if (k==="idno") nv = nv.toUpperCase();
     if (nv===val) return;
     if (k==="name" && !nv){ el.value = val; toast("姓名不能空白"); return; }
     el.classList.add("saving");
@@ -9560,14 +9561,14 @@ function stuCell(x, k, opt){
   return el;
 }
 function stuTableInline(list, T, withCls){
-  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","今天年紀","入學學年","入學日期","父親姓名","父親電話","母親姓名","母親電話","其他家人","關係","其他家人電話","狀態",""];
+  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","身分證字號","今天年紀","入學學年","入學日期","父親姓名","父親電話","母親姓名","母親電話","其他家人","關係","其他家人電話","狀態",""];
   return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb inl"},
     h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
     h("tbody",null,list.map(x=>h("tr",{class:str(x.status)==="離園"?"left":""},
       h("td",null,stuCell(x,"no",{w:"xs"})), ...(withCls?[h("td",null,stuCell(x,"cls",{sel:stuClsList().map(c=>[c,c])}))]:[]),
       h("td",null,stuCell(x,"name",{w:"md"})), h("td",null,stuCell(x,"gender",{sel:[["男","男"],["女","女"]]})),
       h("td",null,stuCell(x,"grade",{sel:[["","自動："+stuGrade(Object.assign({},x,{grade:""}),T.year)],...STU_GR.map(g=>[g,g])]})),
-      h("td",null,stuCell(x,"birthday",{type:"date"})), h("td",{class:"c"},stuAgeNow(x.birthday)),
+      h("td",null,stuCell(x,"birthday",{type:"date"})), h("td",null,stuCell(x,"idno",{w:"md",ph:"A123456789"})), h("td",{class:"c"},stuAgeNow(x.birthday)),
       h("td",null,stuCell(x,"enrollYear",{w:"xs",ph:String(stuEnrollYear(Object.assign({},x,{enrollYear:""}))||"")})), h("td",null,stuCell(x,"enrollDate",{type:"date"})),
       h("td",null,stuCell(x,"fatherName",{w:"md"})), h("td",null,stuCell(x,"fatherPhone",{type:"tel"})),
       h("td",null,stuCell(x,"motherName",{w:"md"})), h("td",null,stuCell(x,"motherPhone",{type:"tel"})),
@@ -9578,14 +9579,14 @@ function stuTableInline(list, T, withCls){
 function stuTable(list, T, withCls){
   if (!list.length) return h("div",{class:"notice"},"沒有符合的幼兒資料。");
   if (T.inline) return stuTableInline(list, T, withCls);
-  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","今天年紀","入學學年／日期","父親","母親","其他家人","身分別","最後修改",""];
+  const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","身分證字號","今天年紀","入學學年／日期","父親","母親","其他家人","身分別","最後修改",""];
   const fam = (n,p,r) => (str(n)||str(p)) ? h("div",{class:"stu-fam"}, r?h("small",null,r+"　"):null, h("b",null,str(n)||"—"), str(p)?h("div",{class:"ph"},"📞 "+str(p)):null) : h("span",{class:"note"},"—");
   return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb"},
     h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
     h("tbody",null,list.map(x=>h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
       h("td",{class:"c"},str(x.no)), ...(withCls?[h("td",null,str(x.cls))]:[]),
       h("td",{class:"nm"},str(x.name), str(x.entry)?h("div",{class:"note",style:"font-size:11px;font-weight:400"},str(x.entry)):null), h("td",{class:"c"},str(x.gender)), h("td",{class:"c"},h("span",{class:"stu-gr g"+STU_GR.indexOf(stuGrade(x,T.year))},stuGrade(x,T.year))),
-      h("td",{class:"c"},stuRoc(x.birthday)), h("td",{class:"c"},stuAgeNow(x.birthday)),
+      h("td",{class:"c"},stuRoc(x.birthday)), h("td",{class:"c idno"},str(x.idno)||h("span",{class:"note"},"—")), h("td",{class:"c"},stuAgeNow(x.birthday)),
       h("td",{class:"c"}, stuEnrollYear(x) ? h("div",null,stuEnrollYear(x)+" 學年") : h("span",{class:"note"},"—"), str(x.enrollDate) ? h("div",{class:"note",style:"font-size:11px"},stuRoc(x.enrollDate)) : null),
       h("td",null,fam(x.fatherName,x.fatherPhone)), h("td",null,fam(x.motherName,x.motherPhone)), h("td",null,fam(x.otherName||x.parent,x.otherPhone||x.phone,str(x.otherRel)||str(x.relation))),
       h("td",null,stuIds(x).filter(t=>t!=="一般生").map(t=>h("span",{class:"stu-tag"},t))),
@@ -9851,7 +9852,7 @@ const STU_PCOLS = [
   { k:"upd", l:"最後修改", w:26, v:x=>num(x.updatedAt)?`${stuTime(x.updatedAt)}<div class="ph">${esc(x.updatedBy)}</div>`:"" },
   { k:"blank", l:"簽名／備註欄", w:0, v:()=>"" }
 ];
-const STU_PDEF = ["no","cls","name","gender","grade","birthday","age","enrollYear","father","mother","other","ids","status"];
+const STU_PDEF = ["no","cls","name","gender","grade","birthday","idno","age","enrollYear","father","mother","other","ids","status"];
 const stuPFam = (nm,ph) => (str(nm)||str(ph)) ? `${esc(nm)}${ph?`<div class="ph">${esc(ph)}</div>`:""}` : "";
 function stuPrint(list, title, T){
   if (!list.length){ toast("沒有資料可以列印"); return; }
