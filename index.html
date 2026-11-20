@@ -1814,7 +1814,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L100</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L101</footer>
     </div>
   </template>
 
@@ -3308,12 +3308,12 @@ function kgApp() {
       if (this.isAdmin) {
         let memFirst = true;
         let wkFirst = true;
-        this.unsubs.push(this.db.collection('weeklyLogs').where('status', '==', 'submitted').onSnapshot(s => {
+        if (!this.restrictedPW) this.unsubs.push(this.db.collection('weeklyLogs').where('status', '==', 'submitted').onSnapshot(s => {
           if (!wkFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('週誌已送出', `${x.cls || ''}｜${x.submittedByName || x.ownerName || x.ownerEmail || x.teachers || '（未知帳號）'} 送出了一份週誌`); } });
           this.submittedWeekly = s.docs.map(d => d.id); wkFirst = false;
         }, this.snapErr('讀取週誌狀態發生問題')));
         let heFirst = true;
-        this.unsubs.push(this.db.collection('healthEducation').where('status', '==', 'submitted').onSnapshot(s => {
+        if (!this.restrictedPW) this.unsubs.push(this.db.collection('healthEducation').where('status', '==', 'submitted').onSnapshot(s => {
           if (!heFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const x = c.doc.data(); this.notifyAdmin('衛教宣導已送出', `${x.submittedByName || x.userName || x.userEmail || '（未知帳號）'} 送出了「${x.topic || ''} 宣導」`); } });
           this.healthPending = s.docs.map(d => d.id); heFirst = false;
         }, e => console.warn('讀取衛教宣導狀態失敗', e)));
@@ -4210,7 +4210,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L100</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L101</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
