@@ -1846,7 +1846,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 </section>
       </main>
 
-      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L116</footer>
+      <footer class="text-center text-xs text-wood-dark/40 py-6">by Kelly 2026.08　｜　版本 1114-L119</footer>
     </div>
   </template>
 
@@ -2784,7 +2784,10 @@ const folderBar=cs=>{const a=cs.filter(c=>FD()[c]).map(folderLink).join("");retu
 const nmN=x=>{const t=String(x||"").replace(/\s+/g,"").replace(/老師$/,"");return (d.fixName&&d.fixName(t))||t};const pairCls=()=>{const me=nmN(tName());if(!me)return[];return [...new Set((d.pairObjs||[]).filter(p=>{const t=nmN(p.t);return t&&(t===me||(me.length>=2&&t.length>=2&&(t.includes(me)||me.includes(t))))}).map(p=>String(p.c||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"))};const myClasses=()=>[...new Set([...logs.filter(l=>l.uid===(d.currentUser||{}).uid).map(l=>l.cls),prefs&&prefs.cls].filter(Boolean))];
 const tm=ts=>ts?new Date(ts).toLocaleString("zh-TW",{hour12:false}):"";
 const tms=ts=>{const v=ts&&ts.seconds?ts.seconds*1000:+ts;if(!v)return "";const t=new Date(v),p=n=>String(n).padStart(2,"0");return `${t.getFullYear()-1911}.${p(t.getMonth()+1)}.${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`};
-const ownLine=l=>{const me=l.uid===(d.currentUser||{}).uid,nm=String(l.ownerName||l.ownerEmail||"").trim()||"（不明）";return `<div style="font-size:12px;color:#7a6f57;margin-bottom:2px">✍️ 建檔：<b style="color:${me?"#2f6b4f":"#2f5597"}">${esc(nm)}${me?"（我）":""}</b>${l.createdAt?`　${tms(l.createdAt)}`:""}${l.updatedAt&&tms(l.updatedAt)!==tms(l.createdAt)?`　｜　最後修改 ${tms(l.updatedAt)}`:""}</div>`};
+/* 每位老師固定一種顏色（同一個名字永遠同色） */
+const NMC=[["#e3f0ff","#1f4e8c","#9dbbe6"],["#e6f5ea","#22663f","#9fd0b0"],["#fff0d9","#8a5300","#efc27a"],["#fbe4ee","#9a2457","#eaa3c2"],["#efe7fb","#5b3596","#c3aee8"],["#e2f6f6","#16676a","#94d3d4"],["#fde8e1","#a3361f","#efab97"],["#f3f1d8","#6b6311","#d6cf86"],["#e8ecf5","#36466b","#aab6d1"],["#f9e5d6","#8c4318","#e8b08c"],["#e4f2dc","#3f6b1d","#b0d398"],["#f6e2f6","#80307f","#dca5db"]];
+const nmColor=n=>{let h=0;const k=String(n||"").replace(/\s|老師$/g,"");for(let i=0;i<k.length;i++)h=(h*131+k.charCodeAt(i))>>>0;return NMC[h%NMC.length]};
+const ownLine=l=>{const me=l.uid===(d.currentUser||{}).uid,nm=String(l.ownerName||l.ownerEmail||"").trim()||"（不明）";const C=nmColor(nm);return `<div style="font-size:12px;color:#7a6f57;margin-bottom:3px">✍️ 建檔：<b style="background:${C[0]};color:${C[1]};border:1px solid ${C[2]};border-radius:999px;padding:0 9px;font-size:12.5px">${esc(nm)}${me?"（我）":""}</b>${l.createdAt?`　${tms(l.createdAt)}`:""}${l.updatedAt&&tms(l.updatedAt)!==tms(l.createdAt)?`　｜　最後修改 ${tms(l.updatedAt)}`:""}</div>`};
 const tabs=()=>d.isAdmin?`<div class="wkbar"><button class="wkb ${mode==="mine"?"on":""}" data-mode="mine">📝 我的週誌</button><button class="wkb ${mode==="all"?"on":""}" data-mode="all">🗂️ 全部老師週誌</button></div>`:"";
 const hid=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h).toString(36)};
 const seedCol=()=>d.db.collection("weeklySeeds");
@@ -4255,7 +4258,7 @@ function kgApp() {
   };
 }
 </script>
-<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L116</div>
+<div style="position:fixed;right:6px;bottom:4px;font-size:10px;color:#999;opacity:.6;pointer-events:none;z-index:9999">版本 1114-L119</div>
 <script id="learning-observation-script">
 /* 學習區觀察紀錄表前端行為：由 Alpine 在分頁建立時呼叫 LearningObservation.sync()，
    因為分頁位於 x-if 樣板內，頁面載入當下 DOM 還不存在，不能在載入時直接綁定。 */
@@ -6538,6 +6541,8 @@ function renderCourses(app){
   const list = k.courses.filter(c=>c.program===k.program).sort((a,b)=>num(a.order)-num(b.order));
   app.append(h("div",{class:"toolbar"},
     h("h2",null,`${cfg.unit}（${list.length}）`), h("span",{class:"sp"}),
+    list.length ? h("button",{class:"btn",onclick:()=>printCourses(S.view)},"🖨 列印全部月份") : null,
+    list.length ? h("button",{class:"btn",onclick:()=>printCoursesPick(S.view)},"🖨 選擇月份列印") : null,
     S.isAdmin ? h("button",{class:"btn primary", onclick:()=>editCourse(null)},"＋ 新增月份") : null));
   if (!list.length){ app.append(h("div",{class:"notice"},"這個班級還沒有月份資料。")); return; }
   app.append(h("div",{class:"kgrid"}, list.map(c =>
@@ -6620,10 +6625,11 @@ function showCourse(id){
   openModal(h("div",null,
     h("div",{class:"mh"},h("div",{class:"m"},`${cfg.label}．${str(k.programs[c.program]?.name)}．${str(c.month)}`),h("h2",null,str(c.title))),
     h("div",{class:"mb"},body),
-    S.isAdmin ? h("div",{class:"mf"},
-      h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(c.month)}｜${str(c.title)}」刪除後無法復原。`,"刪除",()=>S.db.doc(cfg.courseCol+"/"+c.id).delete().then(()=>toast("已刪除")))},"刪除"),
+    h("div",{class:"mf"},
+      h("button",{class:"btn",onclick:()=>printCourses(S.view,[c.id])},"🖨 列印這個月"),
+      S.isAdmin ? [h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這個月份？",`「${str(c.month)}｜${str(c.title)}」刪除後無法復原。`,"刪除",()=>S.db.doc(cfg.courseCol+"/"+c.id).delete().then(()=>toast("已刪除")))},"刪除"),
       h("span",{class:"sp"}),
-      h("button",{class:"btn primary",onclick:()=>editCourse(c.id)},"編輯")) : null));
+      h("button",{class:"btn primary",onclick:()=>editCourse(c.id)},"編輯")] : null)));
 }
 
 function stationEditor(list){
@@ -7405,6 +7411,43 @@ function semester2Btn(){
   }},"＋ 建立115學年度第二學期行事曆（草稿）");
 }
 
+/* ---------- 行事曆：匯入（JSON）。同標題的行事曆會覆蓋月份；沒有就建立成草稿（老師看不到） ---------- */
+function calImportBtn(){
+  if (!S.isAdmin) return null;
+  const inp = h("input",{type:"file",accept:".json,application/json",style:"display:none"});
+  inp.onchange = async()=>{
+    const f = inp.files && inp.files[0]; inp.value = ""; if (!f) return;
+    let d; try{ d = JSON.parse(await f.text()); }catch(e){ toast("檔案不是正確的 JSON。"); return; }
+    if (Array.isArray(d)) d = { months:d };
+    const months = (Array.isArray(d && d.months) ? d.months : []).filter(m=>m && typeof m==="object" && str(m.month));
+    if (!months.length){ toast("檔案裡沒有月份資料。"); return; }
+    const clean = months.map(m=>{ const o = { month:str(m.month), weeks:str(m.weeks) }; if (str(m.from)) o.from = str(m.from); if (str(m.to)) o.to = str(m.to);
+      CAL_CATS.forEach(([k])=>{ o[k] = arr(m[k]).map(str).filter(t=>t.trim()); }); return o; });
+    const title = str(d.title).trim() || "匯入的行事曆";
+    const cnt = clean.reduce((n,m)=>n+CAL_CATS.reduce((a,[k])=>a+m[k].length,0),0);
+    const same = calAll().find(x=>calNorm(x.title)===calNorm(title));
+    const summary = clean.map(m=>`${m.month}：${CAL_CATS.reduce((a,[k])=>a+m[k].length,0)} 項`);
+    const go = async()=>{
+      try{
+        if (same){
+          await S.db.doc(same._col+"/"+same.id).update(Object.assign({ months:clean }, d.startDate ? { startDate:str(d.startDate) } : {}, calStamp(same, { act:"匯入行事曆（覆蓋）", changed:["從檔案「"+f.name+"」匯入，共 "+clean.length+" 個月、"+cnt+" 項"], added:summary })));
+          S.cal.sel = same.id; toast(`已匯入「${title}」（${same._col===CALD_COL?"仍是草稿，老師看不到":"已開放的行事曆"}）`);
+        } else {
+          const ref = S.db.collection(CALD_COL).doc();
+          const doc = Object.assign({ title, note: orgFix(str(d.note)) || ORG_NAME, order: calMaxOrder()+1, months:clean }, d.startDate ? { startDate:str(d.startDate) } : {});
+          await ref.set(Object.assign(doc, calStamp({}, { act:"匯入行事曆", changed:["從檔案「"+f.name+"」匯入，共 "+clean.length+" 個月、"+cnt+" 項"], added:summary })));
+          S.cal.sel = ref.id; toast(`已匯入「${title}」（草稿，老師看不到）`);
+        }
+        render();
+      }catch(e){ toast(errText(e)); }
+    };
+    confirmBox(same ? "覆蓋這份行事曆？" : "匯入行事曆？",
+      same ? `會用檔案內容（${clean.length} 個月、${cnt} 項）取代「${str(same.title)}」現有的所有月份${same._col===CALD_COL?"，匯入後仍是草稿，老師看不到":""}。` : `會建立「${title}」（${clean.length} 個月、${cnt} 項），先存成草稿，老師看不到。`,
+      same ? "覆蓋" : "匯入", go);
+  };
+  return h("span",null, inp, h("button",{class:"kchip",onclick:()=>inp.click()},"📥 匯入行事曆"));
+}
+
 const SCH_GROUPS = [["three5","3-5歲班"],["two","兩歲專班"],["coteach","協同教學"]];
 const DAYS = ["星期一","星期二","星期三","星期四","星期五"];
 const CAL_CATS = [["festival","節慶"],["admin","行政"],["care","教保暨全園活動"],["health","健康安全"],["community","多元文化暨社區活動／協力服務"]];
@@ -7471,6 +7514,7 @@ function renderSchedule(app){
     driveLink(cur),
     h("div",{class:"abs",style:"display:flex;gap:8px"},
       h("button",{class:"btn",onclick:()=>printSchedule(cur)},"🖨 列印"),
+      h("button",{class:"btn",title:"這一類作息表全部一起列印，每份一頁 A4 直式",onclick:()=>printAllSched(cur.group)},"🖨 列印全部"),
       uploadBtn(SCH_COL, cur),
       S.isAdmin ? h("button",{class:"btn",onclick:()=>editSchedule(cur.id)},"編輯") : null,
       S.isAdmin ? h("button",{class:"btn",onclick:()=>copyDoc(SCH_COL,cur,"name","作息表",id=>{ S.sch.sel[cur.group]=id; })},"複製") : null,
@@ -7578,14 +7622,14 @@ function renderCalendar(app){
   const list = calAll().sort((a,b)=>num(b.order)-num(a.order));
   if (!list.length){
     app.append(h("div",{class:"notice"},"還沒有行事曆。",
-      S.isAdmin ? h("div",{style:"margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"},h("button",{class:"btn",onclick:()=>editCalendar(null)},"＋ 新增行事曆"),semester2Btn()) : null, seedButton()));
+      S.isAdmin ? h("div",{style:"margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"},h("button",{class:"btn",onclick:()=>editCalendar(null)},"＋ 新增行事曆"),semester2Btn(),calImportBtn()) : null, seedButton()));
     return;
   }
   if (!list.some(x=>x.id===cc.sel)) cc.sel = list[0].id;
   const cur = list.find(x=>x.id===cc.sel);
   if (list.length>1 || S.isAdmin) app.append(h("div",{class:"subtabs"}, list.map(x =>
     h("button",{class:"kchip","aria-pressed":String(x.id===cur.id), onclick:()=>{ cc.sel=x.id; render(); }}, (str(x.title)||"行事曆")+(x._col===CALD_COL?"（草稿）":""))),
-    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editCalendar(null)},"＋ 新增行事曆") : null, semester2Btn()));
+    S.isAdmin ? h("button",{class:"kchip",onclick:()=>editCalendar(null)},"＋ 新增行事曆") : null, semester2Btn(), calImportBtn()));
   if (S.isAdmin) app.append(cur._col===CALD_COL
     ? h("div",{class:"pubbar draft"},h("span",null,"🔒 草稿：目前只有管理員和編輯者看得到，老師看不到。"),h("span",{class:"sp"}),
         h("button",{class:"btn primary",onclick:()=>confirmBox("開放老師檢視？",`開放後，所有老師都能看到「${str(cur.title)}」。`,"開放",()=>calPublish(cur,true))},"✅ 開放老師檢視"))
@@ -7722,7 +7766,7 @@ const calNorm = t => str(t).normalize("NFKC").toLowerCase().replace(/[\s ]+/g,"
 const calDates = t => [...calPlain(t).normalize("NFKC").matchAll(/(\d{1,2})\s*[\/月.．]\s*(\d{1,2})/g)].map(m=>(+m[1])+"/"+(+m[2])).join(",");
 const calKey = t => { const d = calDates(t), n = calName(t); return d || n ? d + "|" + n : ""; };                    // 日期＋名稱都一樣（不管星期幾、空白、標點）
 const calName = t => calNorm(calPlain(t).replace(CAL_DATE_RE," "));    // 拿掉日期後的活動名稱
-const calHasDate = t => { CAL_DATE_RE.lastIndex = 0; return CAL_DATE_RE.test(calPlain(t)); };
+const calHasDate = t => !!calDates(t) && !/每(月|週|周|天|日)/.test(calPlain(t));   // 有「月/日」才算；「每月25日」這類例行事務不算
 const calCatLabel = k => (CAL_CATS.find(c=>c[0]===k)||[k,k])[1];
 /* data＝這個月份（各分類的陣列）；others＝同一份行事曆的其他月份。回傳 {hard:[…], soft:[…], dupIdx:{分類:Set(要移除的位置)}} */
 function calDupCheck(data, others){
@@ -8077,6 +8121,10 @@ function renderCoteach(app, cur){
     str(cur.note) ? h("p",{class:"note",style:"margin-top:6px"},orgFix(cur.note)) : null,
     h("div",{class:"abs",style:"display:flex;gap:8px;flex-wrap:wrap"},
       h("button",{class:"btn",onclick:()=>printCoteach(cur)},"🖨 列印"),
+      h("button",{class:"btn",title:"自動縮放成一頁 A4 直式",onclick:()=>printCoteachOne(cur)},"🖨 縮成一頁列印"),
+      h("button",{class:"btn",title:"所有協同教學一起列印，每份從新的一頁開始",onclick:()=>printAllSched("coteach")},"🖨 列印全部"),
+      h("button",{class:"btn",onclick:()=>coteachExport(cur)},"📤 匯出 Excel"),
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>coteachImport(cur)},"📥 匯入協同教學") : null,
       h("button",{class:"btn",onclick:e=>downloadCoteach(cur,e.currentTarget)},"⬇️ 下載 PDF"),
       S.isAdmin ? [h("button",{class:"btn",onclick:()=>editCoteach(cur.id)},"編輯"),
       h("button",{class:"btn",onclick:()=>copyDoc(SCH_COL,cur,"name","協同教學",id=>{ S.sch.sel.coteach=id; })},"複製"),
@@ -8112,7 +8160,7 @@ function coteachSeedButton(){
       S.sch.sel.coteach = "co-three5"; st.textContent=""; toast("已匯入協同教學"); render(); }
     catch(e){ b.disabled=false; st.textContent=errText(e); }
   }},"匯入協同教學原始資料");
-  return h("div",{style:"margin-top:12px"}, b, st);
+  return h("div",{style:"margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"}, b, h("button",{class:"btn",onclick:()=>coteachImport(null)},"📥 從 Excel 匯入協同教學"), st);
 }
 function editCoteach(id){
   const sc = S.sch, cur = id ? sc.list.find(x=>x.id===id) : null;
@@ -10330,6 +10378,151 @@ window.LamUpload = async function(btn){
   });
   document.body.append(inp); inp.click();
 };
+/* ---------- 作息表／協同教學：全部列印（A4 直式，每份一頁起）；協同教學匯入／匯出 Excel ---------- */
+/* 把單份列印頁的 <style> 與 .wrap 取出，合併成一份多頁的列印文件 */
+function mergePrint(htmls, title, fitOne){
+  const css = (htmls[0].match(/<style>([\s\S]*?)<\/style>/)||[,""])[1];
+  const bodies = htmls.map(x=>{ const i = x.indexOf('<div class="wrap"'), j = x.lastIndexOf("</div>", x.indexOf("<script") > 0 ? x.indexOf("<script") : x.length); return x.slice(i, j+6).replace(' id="w"',""); });
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}
+@page{size:A4 portrait}.wrap{break-after:page;page-break-after:always}.wrap:last-child{break-after:auto;page-break-after:auto}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 直式，每一份從新的一頁開始${fitOne?"，並自動縮放成一頁":""}。列印時「縮放」請選「預設」，勾選「背景圖形」。</span></div>
+${bodies.join("\n")}
+<script>(function(){var pageH=277*96/25.4-4;
+function fit(w){var fs=parseFloat(getComputedStyle(w).fontSize)*0.75||12;w.style.fontSize=fs+"pt";while(w.scrollHeight>pageH&&fs>8){fs-=.25;w.style.fontSize=fs+"pt"}if(w.scrollHeight>pageH){w.style.zoom=(pageH/w.scrollHeight*0.97).toFixed(3)}}
+window.addEventListener("load",function(){${fitOne?'document.querySelectorAll(".wrap").forEach(fit);':""}setTimeout(function(){window.focus();window.print()},400)})})()<\/script></body></html>`;
+}
+function printAllSched(group){
+  const list = S.sch.list.filter(x=>x.group===group).sort((a,b)=>num(a.order)-num(b.order));
+  if (!list.length){ toast("沒有可以列印的資料"); return; }
+  if (group==="coteach") openPrint(mergePrint(list.map(c=>coteachHtml(c,false)), "協同教學（全部）", false));
+  else openPrint(mergePrint(list.map(c=>scheduleHtml(c,false)), "作息表（全部）", true));
+}
+/* 協同教學縮成一頁 A4 直式 */
+function printCoteachOne(cur){ openPrint(mergePrint([coteachHtml(cur,false)], str(cur.title)||str(cur.name)+" 協同教學", true)); }
+
+/* ---------- 協同教學 Excel：每個時段兩列（活動、分工），可以匯出後修改再匯入 ---------- */
+function coteachExport(cur){
+  if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
+  const rows = [["時段","時間","星期一","星期二","星期三","星期四","星期五","類型"]];
+  (Array.isArray(cur.rows)?cur.rows:[]).filter(r=>r&&typeof r==="object").forEach(r=>{
+    const d = DAYS.map((_,k)=>str((Array.isArray(r.days)?r.days:[])[k])), du = DAYS.map((_,k)=>str((Array.isArray(r.duties)?r.duties:[])[k]));
+    rows.push([str(r.period), str(r.time), ...d, "活動"]); rows.push([str(r.period), str(r.time), ...du, "分工"]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows), wb = XLSX.utils.book_new();
+  ws["!cols"] = [6,12,34,34,34,34,34,6].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, "協同教學");
+  const ws2 = XLSX.utils.aoa_to_sheet([["分工與其他工作（【標題】單獨一行，下面一行一項）"], ...str(cur.notes).split("\n").map(l=>[l])]);
+  ws2["!cols"] = [{wch:60}]; XLSX.utils.book_append_sheet(wb, ws2, "其他工作");
+  XLSX.writeFile(wb, (str(cur.title)||str(cur.name)+" 協同教學").replace(/[\\\/:*?"<>|]/g,"_") + ".xlsx");
+}
+/* 讀 Excel：合併儲存格會展開；有「類型」欄就照類型，沒有就把「有時間的列＝活動、緊接的下一列＝分工」 */
+function coteachParse(wb){
+  const ws = wb.Sheets[wb.SheetNames.find(n=>/協同/.test(n)) || wb.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:"", raw:false});
+  (ws["!merges"]||[]).forEach(m=>{ const v = (aoa[m.s.r]||[])[m.s.c]; for (let r=m.s.r;r<=m.e.r;r++){ aoa[r] = aoa[r]||[]; for (let c=m.s.c;c<=m.e.c;c++) if (aoa[r][c]===""||aoa[r][c]==null) aoa[r][c] = v; } });
+  const norm = t => String(t||"").replace(/\s/g,"");
+  const hi = aoa.findIndex(r=>r.some(c=>/^(星期一|週一|一)$/.test(norm(c))));
+  if (hi < 0) throw new Error("找不到「星期一～星期五」的標題列");
+  const H = aoa[hi].map(norm), ci = re => H.findIndex(c=>re.test(c));
+  const cP = ci(/^時段$/), cT = ci(/^時間$/), cK = ci(/^類型$/), cD = ["一","二","三","四","五"].map(x=>ci(new RegExp("^(星期|週)"+x+"$")));
+  if (cD.some(i=>i<0)) throw new Error("星期一～星期五的欄位不完整");
+  const body = aoa.slice(hi+1).filter(r=>r.some(c=>String(c).trim()));
+  const out = []; let last = null, prevP = "";
+  body.forEach(r=>{
+    const per = cP>=0 ? String(r[cP]||"").trim() || prevP : prevP; prevP = per;
+    const tm = cT>=0 ? String(r[cT]||"").trim() : "", vals = cD.map(i=>String(r[i]||"").replace(/\r/g,"").trim());
+    const kind = cK>=0 ? norm(r[cK]) : "";
+    const isDuty = kind ? /分工/.test(kind) : (last && !last._d && (!tm || tm===last.time));
+    if (isDuty && last && !last._d){ last.duties = vals; last._d = true; }
+    else { last = { period:per, time:tm, days:vals, duties:["","","","",""] }; out.push(last); }
+  });
+  out.forEach(x=>delete x._d);
+  let notes = "";
+  const n2 = wb.SheetNames.find(n=>/其他|分工與/.test(n));
+  if (n2){ const a2 = XLSX.utils.sheet_to_json(wb.Sheets[n2], {header:1, defval:"", raw:false}); notes = a2.slice(1).map(r=>String(r[0]||"")).join("\n").replace(/\n+$/,""); }
+  return { rows: out.filter(x=>x.time || x.days.some(Boolean)), notes };
+}
+function coteachImport(cur){
+  if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
+  const inp = h("input",{type:"file",accept:".xlsx,.xls",style:"display:none"});
+  inp.addEventListener("change", async()=>{
+    const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+    let res; try{ res = coteachParse(XLSX.read(await f.arrayBuffer(), {type:"array"})); }catch(e){ alert("讀不到協同教學的內容："+e.message+"\n\n建議先按「📤 匯出 Excel」取得格式，修改後再匯入。"); return; }
+    if (!res.rows.length){ alert("檔案裡沒有時段資料。"); return; }
+    const name = f.name.replace(/\.(xlsx|xls)$/i,"").replace(/\s*協同教學\s*$/,"");
+    const err = h("div",{class:"err"});
+    const go = async (mode) => {
+      try{
+        if (mode==="over"){ await S.db.doc(SCH_COL+"/"+cur.id).update({ rows:res.rows, ...(res.notes?{notes:res.notes}:{}), importedFrom:f.name, updatedAt:Date.now() }); toast(`已覆蓋「${str(cur.title||cur.name)}」：${res.rows.length} 個時段`); }
+        else { const order = S.sch.list.filter(x=>x.group==="coteach").reduce((m,x)=>Math.max(m,num(x.order)),0)+1;
+          const ref = S.db.collection(SCH_COL).doc(); await ref.set({ group:"coteach", level:str(cur&&cur.level), name, title:name+" 協同教學", order, rows:res.rows, notes:res.notes, importedFrom:f.name, createdAt:Date.now() });
+          S.sch.sel.coteach = ref.id; toast(`已新增「${name} 協同教學」：${res.rows.length} 個時段`); }
+        closeModal(); render();
+      }catch(e){ err.textContent = errText(e); }
+    };
+    openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"📥 匯入協同教學")),
+      h("div",{class:"mb"},
+        h("p",{style:"margin:0 0 6px"},`檔案「${f.name}」讀到 ${res.rows.length} 個時段：`),
+        h("ul",{style:"margin:0 0 8px;max-height:30vh;overflow:auto"}, res.rows.map(r=>h("li",null,`${r.period}　${r.time}　${r.days.filter(Boolean)[0]||""}`))),
+        res.notes ? h("p",{class:"note",style:"margin:0"},"另外讀到「分工與其他工作」的內容。") : null, err),
+      h("div",{class:"mf"}, h("button",{class:"btn",onclick:closeModal},"取消"), h("span",{class:"sp"}),
+        cur ? h("button",{class:"btn danger",onclick:()=>go("over")},`覆蓋目前「${str(cur.title||cur.name)}」`) : null,
+        h("button",{class:"btn primary",onclick:()=>go("new")},`新增一份「${name}」`))));
+  });
+  document.body.appendChild(inp); inp.click();
+}
+
+/* ---------- 社區踏查／出汗性大肌肉：列印單月或全部月份（A4 直式） ---------- */
+function coursePrintHtml(kind, prog, courses){
+  const motor = kind==="motor", cfg = KINDS[kind];
+  const ul = a => arr(a).length ? `<ul>${arr(a).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="em">未填寫</p>`;
+  const tx = t => str(t).trim() ? `<p>${lines(t)}</p>` : `<p class="em">未填寫</p>`;
+  const sec = (t, inner) => `<div class="sec"><h3>${t}</h3>${inner}</div>`;
+  const page = c => {
+    let b = "";
+    if (motor){
+      const w = partOf(c.warmup), cd = partOf(c.cooldown), st = stationsOf(c);
+      b = sec("教學資源", arr(c.resources).length ? `<p>${arr(c.resources).map(esc).join("、")}</p>` : `<p class="em">未填寫</p>`)
+        + sec("課程發展目標", ul(c.goals)) + sec("學習指標", ul(c.indicators))
+        + sec("一、暖身活動（5分鐘）"+(str(w.title)?"｜"+esc(w.title):""), tx(w.content))
+        + sec(`二、循環體能闖關（30分鐘）共${st.length}關`, st.length ? `<table><colgroup><col style="width:16%"><col style="width:18%"><col><col style="width:22%"></colgroup><thead><tr><th>關卡</th><th>器材</th><th>玩法</th><th>培養能力</th></tr></thead><tbody>${st.map((s,i)=>`<tr><td><b>第${"一二三四五六七八九十"[i]||i+1}關</b><br>${esc(s.name)}</td><td>${esc(s.equipment)}</td><td class="l">${lines(s.play)}</td><td class="l">${lines(s.ability)}</td></tr>`).join("")}</tbody></table>` : `<p class="em">未填寫</p>`)
+        + sec("三、收操（5分鐘）"+(str(cd.title)?"｜"+esc(cd.title):""), tx(cd.content));
+    } else {
+      b = sec("活動目標", ul(c.goals)) + sec("活動內容", tx(c.content)) + sec("教師省思", tx(c.reflection))
+        + sec("學習區延伸", arr(c.areas).length ? `<ul>${arr(c.areas).map(a=>{ const i=a.indexOf("："); return `<li>${i>0?`<b>${esc(a.slice(0,i))}</b>：${esc(a.slice(i+1))}`:esc(a)}</li>`; }).join("")}</ul>` : `<p class="em">未填寫</p>`);
+    }
+    return `<div class="wrap"><div class="hd"><div>${ORG_NAME}</div><div class="t">${esc(str(prog.title)||cfg.label)}</div><div class="mo">${esc(c.month)}｜${esc(c.title)}</div></div>${b}</div>`;
+  };
+  const css = PRINT_BASE + `@page{size:A4 portrait;margin:12mm 14mm}.wrap{width:182mm;margin:0 auto;font-size:11.5pt;line-height:1.55;break-after:page;page-break-after:always}.wrap:last-child{break-after:auto;page-break-after:auto}
+@media screen{.wrap{padding:8mm 0;border-bottom:2px dashed #ccc;margin-bottom:8mm}}.hd .mo{font-size:13pt;font-weight:bold;margin-top:4px}
+.sec{margin:8px 0;break-inside:avoid}.sec h3{font-size:12pt;margin:0 0 3px;border-left:4px solid #555;padding-left:6px}.sec p{margin:2px 0 2px 1em}.sec ul{margin:2px 0;padding-left:2.2em}.em{color:#999}
+th,td{padding:4px 5px;vertical-align:top;text-align:center}th{background:#f2f2f2;font-weight:bold}td.l{text-align:left}tr{break-inside:avoid}`;
+  const t = `${str(prog.title)||cfg.label}${courses.length===1?"_"+str(courses[0].month):"（全部月份）"}`;
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(t)}</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>A4 直式，共 ${courses.length} 個月，每個月從新的一頁開始。</span></div>
+${courses.map(page).join("\n")}
+<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},400)})<\/script></body></html>`;
+}
+function printCourses(kind, ids){
+  const k = S.k[kind], prog = k.programs[k.program] || {};
+  const list = k.courses.filter(c=>c.program===k.program && (!ids || ids.includes(c.id))).sort((a,b)=>num(a.order)-num(b.order));
+  if (!list.length){ toast("沒有可以列印的月份"); return; }
+  openPrint(coursePrintHtml(kind, prog, list));
+}
+function printCoursesPick(kind){
+  const k = S.k[kind], list = k.courses.filter(c=>c.program===k.program).sort((a,b)=>num(a.order)-num(b.order));
+  if (!list.length){ toast("這個班級還沒有月份資料"); return; }
+  const cbs = list.map(c=>{ const cb = h("input",{type:"checkbox",checked:true,value:c.id}); return h("label",{class:"stu-ck",style:"min-width:200px"},cb,`${str(c.month)}｜${str(c.title)}`); });
+  const err = h("div",{class:"err"});
+  openModal(h("div",null, h("div",{class:"mh"},h("h2",null,`🖨 列印${KINDS[kind].label}`)),
+    h("div",{class:"mb"},
+      h("div",{style:"display:flex;gap:8px;margin-bottom:6px"},
+        h("button",{type:"button",class:"btn sm",onclick:()=>cbs.forEach(l=>l.querySelector("input").checked=true)},"全選"),
+        h("button",{type:"button",class:"btn sm",onclick:()=>cbs.forEach(l=>l.querySelector("input").checked=false)},"全不選")),
+      h("div",{class:"stu-cks",style:"display:grid;gap:6px"}, cbs), err),
+    h("div",{class:"mf"}, h("span",{class:"sp"}), h("button",{class:"btn",onclick:closeModal},"取消"),
+      h("button",{class:"btn primary",onclick:()=>{ const ids = cbs.map(l=>l.querySelector("input")).filter(c=>c.checked).map(c=>c.value); if (!ids.length){ err.textContent="請至少勾選一個月份。"; return; } closeModal(); printCourses(kind, ids); }},"🖨 預覽列印"))), true);
+}
 /* ====================================================================
    新增模組（114 學年度績效考評建議補強）：個案追蹤、考核與專業成長、學習指標運用統計
    ==================================================================== */
