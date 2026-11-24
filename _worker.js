@@ -180,7 +180,7 @@ async function webhook(request, env) {
   for (const ev of (data.events || [])) {
     const uid = ev.source && ev.source.userId;
     if (ev.type === 'follow') {
-      await lineReply(env, ev.replyToken, '歡迎加入仁德幼兒園的教具借還系統通知 👋\n如要接收週誌退件通知，請先在系統「📝 週誌」按「取得綁定碼」，再把「綁定 123456」這段文字傳給我。');
+      await lineReply(env, ev.replyToken, '歡迎加入仁德幼兒園的教具借還系統通知 👋\n如要接收週誌、班刊的退件通知，請先在系統「📝 週誌」按「取得綁定碼」，再把「綁定 123456」這段文字傳給我。');
     } else if (ev.type === 'message' && ev.message && ev.message.type === 'text' && uid) {
       const m = String(ev.message.text).trim().match(/^(?:綁定\s*)?(\d{6})$/);
       if (!m) continue;
@@ -189,7 +189,7 @@ async function webhook(request, env) {
       if (!rec || rec.exp < Date.now()) { await lineReply(env, ev.replyToken, '❌ 綁定碼無效或已過期，請回到系統重新取得綁定碼。'); continue; }
       await k.put('email:' + rec.email, JSON.stringify({ userId: uid, at: Date.now() }));
       await k.delete('code:' + m[1]);
-      await lineReply(env, ev.replyToken, '✅ 綁定成功！之後您的週誌若被管理員退回，會直接傳 LINE 通知您。');
+      await lineReply(env, ev.replyToken, '✅ 綁定成功！之後您的週誌或班刊若被管理員退回，會直接傳 LINE 通知您。');
     }
   }
   return json(200, { ok: true });
@@ -213,3 +213,4 @@ export default {
     return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not Found', { status: 404 });
   },
 };
+
