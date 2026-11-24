@@ -8268,7 +8268,7 @@ function renderCoteach(app, cur){
       h("button",{class:"btn",title:"自動縮放成一頁 A4 直式",onclick:()=>printCoteachOne(cur)},"🖨 縮成一頁列印"),
       h("button",{class:"btn",title:"所有協同教學一起列印，每份從新的一頁開始",onclick:()=>printAllSched("coteach")},"🖨 列印全部"),
       h("button",{class:"btn",onclick:()=>coteachExport(cur)},"📤 匯出 Excel"),
-      S.isAdmin ? h("button",{class:"btn",onclick:()=>coteachImport(cur)},"📥 匯入協同教學") : null,
+      S.isAdmin ? h("button",{class:"btn",onclick:()=>coteachImport(cur)},"📥 匯入協同教學（Excel／PDF）") : null,
       h("button",{class:"btn",onclick:e=>downloadCoteach(cur,e.currentTarget)},"⬇️ 下載 PDF"),
       S.isAdmin ? [h("button",{class:"btn",onclick:()=>editCoteach(cur.id)},"編輯"),
       h("button",{class:"btn",onclick:()=>copyDoc(SCH_COL,cur,"name","協同教學",id=>{ S.sch.sel.coteach=id; })},"複製"),
@@ -8304,7 +8304,7 @@ function coteachSeedButton(){
       S.sch.sel.coteach = "co-three5"; st.textContent=""; toast("已匯入協同教學"); render(); }
     catch(e){ b.disabled=false; st.textContent=errText(e); }
   }},"匯入協同教學原始資料");
-  return h("div",{style:"margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"}, b, h("button",{class:"btn",onclick:()=>coteachImport(null)},"📥 從 Excel 匯入協同教學"), st);
+  return h("div",{style:"margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"}, b, h("button",{class:"btn",onclick:()=>coteachImport(null)},"📥 從 Excel／PDF 匯入協同教學"), st);
 }
 function editCoteach(id){
   const sc = S.sch, cur = id ? sc.list.find(x=>x.id===id) : null;
@@ -10586,14 +10586,62 @@ function coteachParse(wb){
   if (n2){ const a2 = XLSX.utils.sheet_to_json(wb.Sheets[n2], {header:1, defval:"", raw:false}); notes = a2.slice(1).map(r=>String(r[0]||"")).join("\n").replace(/\n+$/,""); }
   return { rows: out.filter(x=>x.time || x.days.some(Boolean)), notes };
 }
+/* 協同教學：從 PDF 匯入（表格欄位：時間／活動內容／執行重點，其他頁面當作「分工與其他工作」） */
+async function coteachPdfPages(f){
+  if (!window.pdfjsLib){
+    await new Promise((ok,bad)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; s.onload=ok; s.onerror=()=>bad(new Error("PDF 讀取元件載入失敗，請檢查網路後再試")); document.head.appendChild(s); });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+  const doc = await window.pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise, pages=[];
+  for (let i=1;i<=doc.numPages;i++){ const pg=await doc.getPage(i), vp=pg.getViewport({scale:1}), c=await pg.getTextContent();
+    pages.push(c.items.filter(x=>x.str&&x.str.trim()).map(x=>({s:x.str, x:x.transform[4], y:vp.height-x.transform[5], w:x.width||0}))); }
+  return pages;
+}
+function coteachParsePdf(pages){
+  const lineOf = items => { const L=[]; items.slice().sort((a,b)=>a.y-b.y||a.x-b.x).forEach(it=>{ const l=L.find(l=>Math.abs(l.y-it.y)<3.5); if(l) l.items.push(it); else L.push({y:it.y,items:[it]}); }); L.forEach(l=>{ l.items.sort((a,b)=>a.x-b.x); const m=[]; l.items.forEach(it=>{ const p=m[m.length-1]; if (p && it.x-(p.x+p.w)<2.5) { p.s+=it.s; p.w=it.x+it.w-p.x; } else m.push({...it}); }); l.items=m; }); return L.sort((a,b)=>a.y-b.y); };
+  const txt = its => its.map(i=>i.s).join(" ").replace(/\s+/g," ").replace(/(?<=[^\x00-\x7f])\s(?=[^\x00-\x7f])/g,"").trim();
+  const isFoot = t => /Page\s*\d+\s*of\s*\d+/i.test(t) || /^第\s*\d+\s*頁/.test(t);
+  const TIME = /^(\d{1,2})\s*[:：]\s*(\d{2})(?:\s*[-~～－–—至]\s*(\d{1,2})\s*[:：]\s*(\d{2}))?\s*(以後|之後|後)?/;
+  const rows=[], noteLines=[]; let cols=null, cur=null, title="";
+  pages.forEach(items=>{
+    const lines = lineOf(items); let hi=-1;
+    lines.forEach((l,i)=>{ if (hi<0 && l.items.some(it=>/^時間/.test(it.s.trim())) && l.items.some(it=>/活動|內容/.test(it.s))) hi=i; });
+    if (hi>=0){
+      const H=lines[hi].items, xa=(H.find(it=>/活動|內容/.test(it.s))||{}).x, xn=(H.find(it=>/執行|重點|提醒|分工|注意|說明|備註/.test(it.s))||{}).x;
+      cols={a:xa-4, n:xn!=null?xn-4:Infinity};
+      if (!title) title = txt((lines.slice(0,hi)[0]||{items:[]}).items);
+    }
+    if (!cols || hi<0 && !rows.length){ lines.forEach(l=>{ const t=txt(l.items); if(t&&!isFoot(t)) noteLines.push(t); }); return; }
+    if (hi<0){ // 沒有表頭的頁面：如果第一行是時間就接著表格，否則當作備註
+      const first = lines.find(l=>!isFoot(txt(l.items)));
+      if (!first || !TIME.test(txt(first.items.filter(it=>it.x<cols.a)))){ lines.forEach(l=>{ const t=txt(l.items); if(t&&!isFoot(t)) noteLines.push(t); }); return; }
+    }
+    lines.slice(hi+1).forEach(l=>{
+      const all = txt(l.items); if (!all || isFoot(all)) return;
+      const tT = txt(l.items.filter(it=>it.x<cols.a)), tA = txt(l.items.filter(it=>it.x>=cols.a&&it.x<cols.n)), tN = txt(l.items.filter(it=>it.x>=cols.n));
+      const m = tT.match(TIME);
+      if (m){ const h1=+m[1]; cur={ period: h1<12?"上午":"下午", time: m[3]?`${m[1].padStart(2,"0")}:${m[2]}~${m[3].padStart(2,"0")}:${m[4]}`:`${m[1].padStart(2,"0")}:${m[2]}${m[5]?" "+m[5]:""}`, act:"", note:"" }; rows.push(cur); }
+      else if (!cur) return;
+      if (tA) cur.act += (cur.act && /^[（(]/.test(tA) ? "\n" : "") + tA;
+      if (tN) cur.note += (cur.note ? (/^[•●·・\-－*]/.test(tN)?"\n":"") : "") + tN;
+    });
+  });
+  const out = rows.map(r=>{ const a=r.act, n=r.note.replace(/^[•●·・]\s*/gm,"• ").trim(); return { period:r.period, time:r.time, days:[a,a,a,a,a], duties:[n,n,n,n,n] }; });
+  // 備註：每一項「標題：內容」換行開始，換行斷字接回去
+  let notes=""; if (noteLines.length){ const items=[]; let head="";
+    noteLines.forEach((t,i)=>{ if (!head && i===0 && !/[：:]/.test(t) && t.length<=20){ head=t; return; } if (/^(?:[^：:]|:(?=\d)){1,30}(：|:(?!\d))/.test(t) || !items.length) items.push(t); else items[items.length-1]+=t; });
+    notes = (head?`【${head}】\n`:"") + items.join("\n"); }
+  return { rows: out, notes, title };
+}
 function coteachImport(cur){
-  if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
-  const inp = h("input",{type:"file",accept:".xlsx,.xls",style:"display:none"});
+  const inp = h("input",{type:"file",accept:".xlsx,.xls,.pdf,application/pdf",style:"display:none"});
   inp.addEventListener("change", async()=>{
     const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
-    let res; try{ res = coteachParse(XLSX.read(await f.arrayBuffer(), {type:"array"})); }catch(e){ alert("讀不到協同教學的內容："+e.message+"\n\n建議先按「📤 匯出 Excel」取得格式，修改後再匯入。"); return; }
-    if (!res.rows.length){ alert("檔案裡沒有時段資料。"); return; }
-    const name = f.name.replace(/\.(xlsx|xls)$/i,"").replace(/\s*協同教學\s*$/,"");
+    const isPdf = /\.pdf$/i.test(f.name) || f.type==="application/pdf";
+    if (!isPdf && !window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
+    let res; try{ res = isPdf ? coteachParsePdf(await coteachPdfPages(f)) : coteachParse(XLSX.read(await f.arrayBuffer(), {type:"array"})); }catch(e){ alert("讀不到協同教學的內容："+e.message+"\n\n"+(isPdf?"PDF 需要有「時間」「活動內容」兩欄的表格（文字要能選取，不能是掃描圖片）。":"建議先按「📤 匯出 Excel」取得格式，修改後再匯入。")); return; }
+    if (!res.rows.length){ alert(isPdf?"這個 PDF 裡找不到時段資料。\nPDF 需要有「時間」「活動內容」欄位的表格，而且文字要能選取（不能是掃描圖片）。":"檔案裡沒有時段資料。"); return; }
+    const name = f.name.replace(/\.(xlsx|xls|pdf)$/i,"").replace(/\s*協同教學\s*$/,"");
     const err = h("div",{class:"err"});
     const go = async (mode) => {
       try{
