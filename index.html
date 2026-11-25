@@ -12403,7 +12403,7 @@ function renderList(){
  if(!root)return;const u=me()||{};
  const rows=docs.filter(x=>!filt||x.tpl===filt);
  root.innerHTML=`<style>${EDIT_CSS}</style>
-<div class="ffcard"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:16px">🧩 特教業務表格</b><span style="font-size:12px;color:#7a6f57">老師填寫、自動儲存；${isAdm()?"您是特教業務管理員，可以看全部、刪除、列印與下載 PDF（A4 橫式）":"刪除、列印與下載 PDF 由特教業務管理員處理"}。</span></div>
+<div class="ffcard"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:16px">🧩 特教業務表格</b><a href="https://drive.google.com/drive/folders/1Om9g6C9NB0-mE3Rz4Oerpz37ZKkpHTk2" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;color:#2f5597;text-decoration:underline">📂 開啟特教業務雲端資料夾</a><span style="font-size:12px;color:#7a6f57">老師填寫、自動儲存；${isAdm()?"您是特教業務管理員，可以看全部、刪除、列印與下載 PDF（A4 橫式）":"刪除、列印與下載 PDF 由特教業務管理員處理"}。</span></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:10px">
 ${TPL.map(t=>`<div style="border:1px solid #e3d5b5;border-radius:14px;background:#fff;padding:10px"><div style="font-weight:800">${t.icon} ${esc(t.name)}</div><div style="font-size:12px;color:#7a6f57;margin:2px 0 8px">${esc(t.desc)}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-new="${t.id}">＋ 填寫新的</button>${isAdm()?`<button class="ffbtn" data-blank="${t.id}">🖨️ 印空白表</button>`:""}<button class="ffbtn" data-filt="${t.id}">看已填（${docs.filter(x=>x.tpl===t.id).length}）</button></div></div>`).join("")}
 </div></div>
@@ -12411,7 +12411,7 @@ ${TPL.map(t=>`<div style="border:1px solid #e3d5b5;border-radius:14px;background
 <button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${isAdm()?`<button class="ffbtn" data-imp="1">📥 匯入紀錄檔</button>`:""}${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}</div>
 ${listErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(listErr)}</p>`:""}
 <div style="display:flex;flex-direction:column;gap:6px">${rows.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　記錄老師：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
-<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-copy="${x.id}">📄 複製</button>${isAdm()?`<button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button>`:""}</div></div>`).join("")||`<p style="text-align:center;color:#9a917a;padding:18px 0">還沒有輔導紀錄，按上面的「＋ 填寫新的」開始</p>`}</div></div>`;
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-drive="${x.id}" title="${x.driveAt?"上次上傳："+fmt(x.driveAt):"上傳 PDF 到特教業務雲端資料夾"}">${x.driveAt?"☁️ 已上傳 ✓":"☁️ 上傳雲端"}</button>${x.driveUrl?`<a class="ffbtn" href="${esc(x.driveUrl)}" target="_blank" rel="noopener" style="text-decoration:none">📄 雲端檔案</a>`:""}<button class="ffbtn" data-copy="${x.id}">📄 複製</button>${isAdm()?`<button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button>`:""}</div></div>`).join("")||`<p style="text-align:center;color:#9a917a;padding:18px 0">還沒有輔導紀錄，按上面的「＋ 填寫新的」開始</p>`}</div></div>`;
 }
 
 /* ---------- 編輯畫面 ---------- */
@@ -12421,7 +12421,7 @@ function renderEdit(){
  root.innerHTML=`<style>${EDIT_CSS}</style>
 <div class="ffbar"><button class="ffbtn" data-back="1">← 回表格清單</button><span style="font-weight:800">${T.icon} ${esc(T.name)}</span>
 <input id="spTitle" value="${esc(cur.title)}" placeholder="這份紀錄的名稱（例如：小明 8月）">
-<button class="ffbtn on" data-save="1">💾 儲存</button>${isAdm()?`<button class="ffbtn" data-print-cur="1">🖨️ 列印（A4 橫式）</button><button class="ffbtn" data-pdf-cur="1">⬇️ 下載 PDF</button>`:""}
+<button class="ffbtn on" data-save="1">💾 儲存</button><button class="ffbtn" data-drive-cur="1">☁️ 上傳雲端</button>${isAdm()?`<button class="ffbtn" data-print-cur="1">🖨️ 列印（A4 橫式）</button><button class="ffbtn" data-pdf-cur="1">⬇️ 下載 PDF</button>`:""}
 <span id="spSt" style="font-size:12px;color:#7a6f57">${esc(stMsg)}</span></div>
 <div style="font-size:12px;color:#7a6f57;margin:0 0 4px 4px">黃色底的地方可以直接打字；點 ☐ 可以打勾。所有文字（包含項目名稱）都可以修改。</div>
 <div class="ffscroll"><div class="ffpage"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit")}</div></div>`;
@@ -12497,7 +12497,7 @@ function printHtml(tpl,vals,photos,title){
 async function printDoc(id){const x=docs.find(z=>z.id===id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}printHtml(x.tpl,x.data||{},ph,x.title)}
 
 function ldJs(u){return new Promise((ok,bad)=>{const x=document.createElement("script");x.src=u;x.onload=ok;x.onerror=()=>bad(new Error("無法載入 "+u));document.head.appendChild(x)})}
-async function makePdf(tpl,vals,photos,title){
+async function makePdf(tpl,vals,photos,title,ret){
  try{
   setSt&&root&&cur&&setSt("產生 PDF 中…");D&&D.showToast&&D.showToast("產生 PDF 中，請稍候…");
   if(!window.html2canvas)await ldJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
@@ -12512,9 +12512,27 @@ async function makePdf(tpl,vals,photos,title){
    const h=Math.min(pagePx,cv.height-y),c=document.createElement("canvas");c.width=cv.width;c.height=h;
    const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,h);g.drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
    if(i)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.92),"JPEG",m,m,W,h/pxPerMm)}
+  if(ret)return pdf.output("blob");
   pdf.save(String(title||TP[tpl].name).replace(/[\\/:*?"<>|]/g,"_")+".pdf");
   if(cur&&root)setSt("PDF 已下載 ✓");
- }catch(e){alert("PDF 產生失敗："+(e.message||e))}}
+ }catch(e){if(ret)throw e;alert("PDF 產生失敗："+(e.message||e))}}
+const SP_FOLDER="1Om9g6C9NB0-mE3Rz4Oerpz37ZKkpHTk2";
+async function uploadDrive(id,btn){
+ if(!window.PdfUtil){alert("上傳元件尚未載入，請重新整理頁面");return}
+ if(!window.__driveUrl){alert("管理員尚未設定雲端硬碟上傳網址（管理者後台 → ☁️ 雲端硬碟上傳設定）");return}
+ if(cur&&cur.id===id){await save(true);if(dirty){alert("還有內容沒有儲存成功，請稍後再上傳");return}}
+ const x=docs.find(z=>z.id===id);if(!x){alert("請先填寫內容，存檔後再上傳");return}
+ const lb=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent="產生 PDF 中…"}
+ try{let ph={};try{ph=await loadPhotos(id)}catch(e){}
+  const data=cur&&cur.id===id?cur.vals:(x.data||{}),title=cur&&cur.id===id?(cur.title||x.title):x.title;
+  const blob=await makePdf(x.tpl,data,ph,title,true);if(btn)btn.textContent="上傳中…";
+  const nm=String(title||TP[x.tpl].name).replace(/[\\/:*?"<>|]/g,"_")+".pdf";
+  const j=await PdfUtil.upload(blob,{filename:nm,subfolder:"",folderId:SP_FOLDER});
+  const url=(j&&(j.url||j.fileUrl))||"";
+  await db().collection("spedDocs").doc(id).update({driveUrl:url,driveAt:Date.now(),driveBy:(me()||{}).email||""});
+  D&&D.showToast&&D.showToast("已上傳到特教業務雲端資料夾 ✅");if(cur&&root)setSt("已上傳雲端 ✓")}
+ catch(e){alert("上傳失敗："+(e.message||e))}
+ finally{if(btn){btn.disabled=false;btn.textContent=lb}}}
 function importJson(){
  const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";
  inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
@@ -12543,6 +12561,8 @@ function onClick(e){
  if(ds.c!=null){const on=ds.on!=="1";ds.on=on?"1":"0";const cb=b.querySelector(".cb");if(cb)cb.textContent=on?"☑":"☐";if(ds.c.endsWith("On")){collect();renderEdit()}touch();return}
  if(ds.new)return newDoc(ds.new);
  if((ds.blank||ds.print||ds.del||ds.pdf||ds.printCur!=null||ds.pdfCur!=null)&&!isAdm())return alert("只有特教業務管理員可以列印、下載或刪除");
+ if(ds.drive)return uploadDrive(ds.drive,b);
+ if(ds.driveCur!=null){if(!cur)return;return (async()=>{await save(true);if(cur.id)uploadDrive(cur.id,b);else alert("請先填寫內容再上傳")})()}
  if(ds.imp){if(!isAdm())return;return importJson()}
  if(ds.pdf)return pdfDoc(ds.pdf);
  if(ds.pdfCur!=null){collect();return makePdf(cur.tpl,cur.vals,cur.photos,cur.title)}
