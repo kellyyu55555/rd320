@@ -6464,7 +6464,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 
 #kb .mt-lbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}#kb .mt-lbar .sp{flex:1}
 #kb .mt-lbar .btn.sm{padding:2px 8px;font-size:12px}
-#kb .mt-view .li{display:flex;align-items:flex-start}#kb .mt-view .li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em}#kb .mt-view .li .lt{flex:1}#kb .mt-view .lc{padding-left:1.95em}
+#kb .mt-view .li{display:flex;align-items:flex-start}#kb .mt-view .li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em}#kb .mt-view .li .lt{flex:1}#kb .mt-view .lc{padding-left:1.95em}.l2{margin-left:1.9em}
 #kb .mt-view,#kb .wp-view{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif}
 
 #kb .pill.exs-sub{background:#fff1c2;color:#8a5a00}
@@ -9044,7 +9044,12 @@ function mtTblFromClip(html, text){
 function mtTblHtml(t){
   if (!t || !t.rows.length) return "";
   const nonEmpty = t.rows.filter((r,i)=>i===0 || r.some(c=>c.trim()));
-  return `${t.cap.trim()?`<div class="tcap">${esc(t.cap)}</div>`:""}<table class="mtt"><thead><tr>${nonEmpty[0].map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${nonEmpty.slice(1).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  /* 欄寬依照內容長短分配；有長文字的欄整欄靠左 */
+  const len = c => Math.max(...str(c).split("\n").map(x=>x.replace(/\s/g,"").length), 0);
+  const W = nonEmpty[0].map((_,j)=>Math.max(...nonEmpty.map(r=>len(r[j]))));
+  const wt = W.map(x=>Math.max(3.6, Math.min(28, x))), sum = wt.reduce((a,b)=>a+b,0) || 1;
+  const left = W.map(x=>x>8);
+  return `${t.cap.trim()?`<div class="tcap">${esc(t.cap)}</div>`:""}<table class="mtt"><colgroup>${wt.map(x=>`<col style="width:${(x/sum*100).toFixed(1)}%">`).join("")}</colgroup><thead><tr>${nonEmpty[0].map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${nonEmpty.slice(1).map(r=>`<tr>${r.map((c,j)=>`<td${left[j]?' class="l"':""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 /* ---------- 會議紀錄：教保會議、園務會議、課發會、勞資會議 ---------- */
 const MT_COL = "meetingMinutes", MT_PH = "meetingPhotos";
@@ -9070,7 +9075,7 @@ const mtWd = s => { const t=new Date(str(s)+"T00:00:00"); return isNaN(t) ? "" :
 const mtRocDate = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}年${+m[2]}月${+m[3]}日(${mtWd(s)})` : ""; };
 const mtTime = t => { const m=str(t).match(/^(\d{1,2}):(\d{2})/); return m ? `${+m[1]}時${m[2]}分` : ""; };
 function mtNorm(m){
-  const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：" }, JSON.parse(JSON.stringify(m||{})));
+  const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：", chairReport:"", motions:"", photoTitle:"", sealPos:"end" }, JSON.parse(JSON.stringify(m||{})));
   o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body), table:mtTbl(r&&r.table), photos:mtPh(r&&r.photos), fixed:!!(r&&r.fixed)}));
   o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), table:mtTbl(r&&r.table), resolution:str(r&&r.resolution), photos:mtPh(r&&r.photos), resPhotos:mtPh(r&&r.resPhotos), fixed:str(r&&r.fixed),
     classes:(Array.isArray(r&&r.classes)?r.classes:[]).map(c=>({cls:str(c&&c.cls), items:(Array.isArray(c&&c.items)?c.items:[]).map(it=>({q:str(it&&it.q), by:str(it&&it.by), a:str(it&&it.a)}))}))}));
@@ -9237,13 +9242,15 @@ function renderMeetingEditor(app){
         h("button",{class:"btn sm",onclick:()=>{ t.rows.push(Array(W).fill("")); mark(); render(); }},"＋ 列"),
         h("button",{class:"btn sm",onclick:()=>{ t.rows.forEach(r=>r.push("")); mark(); render(); }},"＋ 欄"),
         h("button",{class:"btn sm",title:"先在上面「內容」裡點一下要放表格的位置，再按這個按鈕",onmousedown:e=>e.preventDefault(),onclick:e=>{
-          const tx = e.currentTarget.closest(".mt-item") && e.currentTarget.closest(".mt-item").querySelector("textarea"); if (!tx) return;
+          const itm = e.currentTarget.closest(".mt-item"); if (!itm) return; const tas = [...itm.querySelectorAll(":scope > .fl textarea, :scope > div > .fl textarea")].filter(x=>!x.closest(".mt-tbl"));
+          const tx = (window.__mtLastTa && itm.contains(window.__mtLastTa) && !window.__mtLastTa.closest(".mt-tbl")) ? window.__mtLastTa : (tas[0] || itm.querySelector("textarea")); if (!tx) return;
+          itm.querySelectorAll("textarea").forEach(o=>{ if (o!==tx && !o.closest(".mt-tbl") && /^[ \t]*【表格】[ \t]*$/m.test(o.value)){ o.value = o.value.replace(/^[ \t]*【表格】[ \t]*\n?/gm,""); o.dispatchEvent(new Event("input",{bubbles:true})); } });
           const v = tx.value.replace(/^[ \t]*【表格】[ \t]*\n?/gm,""), a = Math.min(tx.selectionStart||0, v.length), s0 = v.lastIndexOf("\n", a-1)+1, e0 = v.indexOf("\n", a), cut = e0<0 ? v.length : e0;
           const pos = (a===s0) ? s0 : cut; const pre = v.slice(0,pos), post = v.slice(pos);
           tx.value = pre + (pre && !pre.endsWith("\n") ? "\n" : "") + "【表格】" + (post.startsWith("\n") ? "" : "\n") + post;
-          tx.dispatchEvent(new Event("input",{bubbles:true})); toast("已把表格放在這個位置（內容裡的「【表格】」那一行）"); }},"📍 表格放在內容的游標位置"),
+          tx.dispatchEvent(new Event("input",{bubbles:true})); toast("已把表格放在這個位置（內容裡的「【表格】」那一行）"); }},"📍 表格放在游標位置"),
         h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除整個表格？")) return; it.table = null; mark(); render(); }},"刪除表格")),
-      h("p",{class:"note",style:"font-size:12px;margin:2px 0 6px"},"表格會印在「內容」裡「【表格】」那一行的位置，跟 Word 一樣夾在文字中間；內容裡沒有「【表格】」的話，表格印在內容最下面。"),
+      h("p",{class:"note",style:"font-size:12px;margin:2px 0 6px"},"先在「內容」或「決議」裡點一下要放表格的地方，再按「📍」。表格會印在「【表格】」那一行的位置，跟 Word 一樣夾在文字中間；沒有「【表格】」的話，表格印在內容最下面。"),
       h("label",{class:"fl"},"表格說明（印在表格上方，可留空）",h("input",{class:"in",value:t.cap,placeholder:"例如：附表：特殊教育幼兒已申請通過之支持性服務",oninput:e=>{ t.cap=e.target.value; mark(); }})),
       h("div",{class:"mt-gridw"},grid));
     return box;
@@ -9263,19 +9270,23 @@ function renderMeetingEditor(app){
     sec.append(h("button",{class:"btn",onclick:()=>{ const n = mk(); const fi = d[key].findIndex(x=>x.fixed); if (fi>=0) d[key].splice(fi,0,n); else d[key].push(n); mark(); render(); }},"＋ 新增"+(key==="reports"?"報告":"議題")));
     return sec;
   };
-  app.append(listEd("五、報告事項","reports",()=>({title:"",body:"",photos:[]})));
-  app.append(listEd("六、議題討論","issues",()=>({title:"",content:"",resolution:"",photos:[],resPhotos:[],fixed:"",classes:[]})));
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"主席報告（選填，有填才會印出，後面的編號會自動往後排）"), ta(d,"chairReport","主席報告內容（可分行）",4)));
+  app.append(listEd("報告事項","reports",()=>({title:"",body:"",photos:[]})));
+  app.append(listEd("議題討論","issues",()=>({title:"",content:"",resolution:"",photos:[],resPhotos:[],fixed:"",classes:[]})));
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"臨時動議（選填，例如：無）"), ta(d,"motions","臨時動議內容",2)));
   const ps = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"會議照片（開會現場）"),
     h("p",{class:"note",style:"font-size:13px;margin:0 0 8px"},"可以一次選多張，列印時每列兩張。"),
+    fld("影像紀錄標題（選填，印在照片上方，例如：115學年度第1次園務會議影像紀錄）",inp("photoTitle","")),
     h("div",{class:"mt-photos"}, d.photos.map((p,i)=>h("div",{class:"mt-ph"}, mtImg(p.id), h("input",{class:"in",value:p.cap,placeholder:"說明（選填）",oninput:e=>{ p.cap=e.target.value; mark(); }}),
       h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("移除這張照片？")) return; const [x]=d.photos.splice(i,1); mark(); S.db.collection(MT_PH).doc(x.id).delete().catch(()=>{}); render(); }},"移除")))));
   const st = h("span",{class:"err",style:"margin-left:8px"});
   ps.append(h("div",null,h("button",{class:"btn",onclick:()=>pickImages(true, async fs=>{ for (let i=0;i<fs.length;i++){ st.textContent=`上傳中… ${i+1}/${fs.length}`; try{ const data=await shrinkToDataUrl(fs[i]); const ref=S.db.collection(MT_PH).doc(); await ref.set({ data, name:str(fs[i].name), createdAt:Date.now() }); MTC[ref.id]=data; d.photos.push({id:ref.id,cap:""}); mark(); }catch(e){ st.textContent="上傳失敗："+errText(e); return; } } st.textContent=""; render(); })},"📷 從電腦上傳照片"),st));
   app.append(ps);
   app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"與會人員簽到表"),
-    h("div",{class:"f4"}, fld("列數",inp("signRows","5","number")), fld("欄數",inp("signCols","3","number")), fld("簽章欄文字",inp("signLabel","園長簽章：")), h("span"))));
+    h("div",{class:"f4"}, fld("列數",inp("signRows","5","number")), fld("欄數",inp("signCols","3","number")), fld("簽章欄文字",inp("signLabel","園長簽章：")), fld("簽章位置",h("select",{class:"in",onchange:e=>{ d.sealPos=e.target.value; mark(); }},[["end","最後面（簽到表下面）"],["body","會議內容後面（照片前面）"]].map(([v,l])=>h("option",{value:v,selected:(d.sealPos||"end")===v},l)))))));
   app.append(tb());
 }
+if (!window.__mtTaHook){ window.__mtTaHook = 1; document.addEventListener("focusin", e=>{ if (e.target && e.target.tagName==="TEXTAREA" && e.target.closest(".mt-item")) window.__mtLastTa = e.target; }); }
 function renderMeetingView(app){
   const M = S.mt, m0 = M.list.find(x=>x.id===M.view); if (!m0){ M.view=null; return renderMeeting(app); }
   const m = mtNorm(m0);
@@ -9299,7 +9310,9 @@ function mtBodyHtml(m, withImgs, forPdf){
   body += `<div class="row"><span class="no">二、</span>地點：${esc(m.place)}</div>`;
   body += `<div class="row"><span class="no">三、</span>主席：${esc(m.chair)}<span class="rec">記錄：${esc(m.recorder)}</span></div>`;
   body += `<div class="row"><span class="no">四、</span>出（列）席人員：${esc(m.attendees)}</div>`;
-  body += `<div class="row"><span class="no">五、</span>報告事項</div>`;
+  let sn = 5; const no = () => `<span class="no">${mtNum(sn++)}、</span>`;
+  if (str(m.chairReport).trim()) body += `<div class="row">${no()}主席報告</div><div class="txt">${ind(m.chairReport)}</div>`;
+  body += `<div class="row">${no()}報告事項</div>`;
   /* 內容／決議裡的照片、附件：不加框線；單獨一張（或最後落單的一張）用整個版面寬度，像貼在 Word 裡一樣清楚 */
   const pg = arr => { if (!arr || !arr.length) return ""; let t = `<table class="pt in">`;
     const td = (p, one) => `<td${one?' colspan="2" class="one"':''}><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`;
@@ -9313,26 +9326,30 @@ function mtBodyHtml(m, withImgs, forPdf){
     if (t && parts.length > 1) return `${parts[0].trim()||pre?`<div class="txt">${pre}${ind(parts[0])}</div>`:""}${tw}${parts.slice(1).join("\n").trim()?`<div class="txt">${ind(parts.slice(1).join("\n"))}</div>`:""}${aft}`;
     const all = parts.join("\n"); return `${all.trim()||pre?`<div class="txt">${pre}${ind(all)}</div>`:""}${tw}${aft}`; };
   m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div>${withTbl("", r.body, r.table)}${pg(r.photos)}`; });
-  body += `<div class="row">六、議題討論：</div>`;
+  body += `<div class="row">${no()}議題討論：</div>`;
   m.issues.forEach((r,i)=>{
-    body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>`;
-    if (r.content.trim() || r.table) body += withTbl(r.content.trim() && !(r.fixed||r.content.trim().startsWith("內容")) ? "內容：" : "", r.content, r.table);
+    body += `<div class="sub">議題${mtNum(i+1)}：${esc(r.title)}</div>`;
+    const resTbl = r.table && TBL_MK.test(r.resolution);
+    if (r.content.trim() || (r.table && !resTbl)) body += withTbl(r.content.trim() && !(r.fixed||/^(內容|說明)/.test(r.content.trim())) ? "內容：" : "", r.content, resTbl ? null : r.table);
     body += pg(r.photos);
     if (r.fixed==="ask"){ let n=0; r.classes.forEach(c=>c.items.filter(x=>x.q.trim()||x.a.trim()).forEach(x=>{ n++; body += `<div class="txt">${n}. ${esc(c.cls.replace(/班$/,""))}：${ind(x.q)}${x.a.trim()?`<br>回覆：${ind(x.a)}`:""}</div>`; })); }
     if (r.fixed==="help"){ r.classes.forEach(c=>{ const its=c.items.filter(x=>x.q.trim()||x.a.trim()); if (!its.length) return; body += `<div class="txt cls">【${esc(c.cls)}】</div>`;
       its.forEach((x,j)=>{ body += `<div class="txt qa"><b>Ｑ${fw(j+1)}：</b>${ind(x.q)}</div><div class="txt qa"><b>Ａ${fw(j+1)}${esc(x.by)}：</b>${ind(x.a)}</div>`; }); }); }
-    if (r.resolution.trim() || r.resPhotos.length) body += `<div class="txt"><b>決議：</b>${ind(r.resolution)}</div>${pg(r.resPhotos)}`; });
+    if (r.resolution.trim() || r.resPhotos.length) body += (resTbl ? withTbl("決議：", r.resolution, r.table) : `<div class="txt">決議：${ind(r.resolution)}</div>`) + pg(r.resPhotos); });
+  if (str(m.motions).trim()){ const mo = str(m.motions).trim(); body += /\n/.test(mo) ? `<div class="row">${no()}臨時動議：</div><div class="txt">${ind(mo)}</div>` : `<div class="row">${no()}臨時動議：${esc(mo)}</div>`; }
+  if (m.sealPos==="body") body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
+  if (m.photos.length && str(m.photoTitle).trim()) body += `<div class="ph-t"><div>${ORG_L1}</div><div>${ORG_L2.replace(/^\(/,"（").replace(/\)$/,"）")}</div><div>${esc(m.photoTitle)}</div></div>`;
   if (m.photos.length){ body += `<table class="pt">`; for (let i=0;i<m.photos.length;i+=2){ body += "<tr>"+[m.photos[i],m.photos[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:"<td></td>").join("")+"</tr>"; } body += `</table>`; }
   if (+m.signRows>0){ body += `<div class="sg">與會人員簽到表</div><table class="sgt">`+Array.from({length:+m.signRows},()=>"<tr>"+Array.from({length:Math.max(1,+m.signCols||3)},()=>"<td></td>").join("")+"</tr>").join("")+`</table>`; }
-  body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
+  if (m.sealPos!=="body") body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
   return body;
 }
 const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;font-size:1.25em;font-weight:bold;margin:4px 0 14px}
 .row{margin:8px 0;font-size:1.05em}.row .no{display:inline-block;width:2.4em}.row .rec{margin-left:6em}.row span.on{border:1.5px solid #000;padding:0 3px}
-.sub{margin:5px 0 0;font-weight:bold}.txt{margin:0 0 1px 2.4em;white-space:normal;line-height:1.5}
-.li{display:flex;align-items:flex-start}.li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em;white-space:nowrap}.li .lt{flex:1 1 auto;min-width:0}.lc{padding-left:1.95em}
+.sub{margin:5px 0 0}.ph-t{text-align:center;margin-top:14px}.ph-t div:last-child{margin-top:2px}.txt{margin:0 0 1px 2.4em;white-space:normal;line-height:1.5}
+.li{display:flex;align-items:flex-start}.li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em;white-space:nowrap}.li .lt{flex:1 1 auto;min-width:0}.lc{padding-left:1.95em}.l2{margin-left:1.9em}
 table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
-table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in td{border:none;padding:4px 3px}table.pt.in td.one img{width:100%;max-height:235mm}.tw{margin:4px 0 8px 2.4em;page-break-inside:avoid;break-inside:avoid}.tw .tcap{margin-bottom:3px}table.mtt{width:100%;border-collapse:collapse;font-size:10pt}table.mtt th,table.mtt td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.35}table.mtt th{font-weight:normal}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
+table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in td{border:none;padding:4px 3px}table.pt.in td.one img{width:100%;max-height:235mm}.tw{margin:4px 0 8px 2.4em;page-break-inside:avoid;break-inside:avoid}.tw .tcap{margin-bottom:3px}table.mtt{width:100%;border-collapse:collapse;font-size:10pt}table.mtt th,table.mtt td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.35;white-space:pre-line}table.mtt td.l{text-align:left;vertical-align:top;padding:3px 5px}table.mtt th{font-weight:normal}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
 function mtPrintHtml(m, forPdf){
   const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;color:#000;font-size:12pt;line-height:1.6}
 .wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:${forPdf?"0":"10mm 0"}}}table.pt tr,.sub{page-break-inside:avoid}.sub{page-break-after:avoid;break-after:avoid}table.pt,table.sgt{width:calc(100% - 2px)}` + MT_CSS;
@@ -9401,7 +9418,7 @@ function mtImport(){
 }
 
 /* ---------- 會議紀錄：編號／項目符號清單 ---------- */
-const MT_NUM_RE = /^(\s*)(?:(\d{1,2})\s*[.、．)）](?!\d)|[(（]\s*(\d+)\s*[)）]|([一二三四五六七八九十]+)\s*、|([①-⑳]))\s*/;
+const MT_NUM_RE = /^(\s*)(?:(\d{1,2})\s*[.、．)）](?!\d)|[(（]\s*(\d+|[一二三四五六七八九十]+)\s*[)）]|([一二三四五六七八九十]+)\s*、|([①-⑳]))\s*/;
 const MT_BUL_RE = /^(\s*)([•●○◆◇■□▪▸►‧・\-*＊])\s*/;
 /* 自動修正：全形數字、1、 1) （1） → 1.；- * ● → • */
 function mtListFix(text){
@@ -9443,15 +9460,18 @@ function mtListify(t, save){
   });
   t.addEventListener("blur", ()=>{ const f = mtListFix(t.value); if (f!==t.value){ t.value = f; save(f); } });
 }
+/* 清單層級：（一）、一、 是第一層；1. 是第二層；• 是第三層。比上一層「低」的符號會往右縮排，跟 Word 一樣 */
+const mtRank = mk => /^[(（]\s*[一二三四五六七八九十]+\s*[)）]$|^[一二三四五六七八九十]+\s*、$/.test(mk) ? 0 : /^[•●○◆◇■□▪▸►‧・\-*＊]$/.test(mk) ? 2 : 1;
 function mtListHtml(text, forPdf){
-  const L = str(text).split("\n"); let inList = false;
-  const wrap = (cls, inner) => forPdf ? `<span class="tool ${cls}" style="display:${cls==="li"?"flex":"block"}">${inner}</span>` : `<div class="${cls}">${inner}</div>`;
+  const L = str(text).split("\n"); let inList = false, top = null, deep = false;
+  const wrap = (cls, inner) => forPdf ? `<span class="tool ${cls}" style="display:${/^li\b/.test(cls)?"flex":"block"}">${inner}</span>` : `<div class="${cls}">${inner}</div>`;
   return L.map(line=>{
     const x = line.replace(/^[ \t　]+/,"");
     const m = MT_NUM_RE.exec(x) || MT_BUL_RE.exec(x);
-    if (m && x.slice(m[0].length).trim()){ inList = true; return wrap("li", `<span class="mk">${esc(m[0].trim())}</span><span class="lt">${esc(x.slice(m[0].length))}</span>`); }
-    if (!x.trim()){ inList = false; return forPdf ? wrap("pl","&nbsp;") : "<div>&nbsp;</div>"; }
-    return wrap(inList ? "lc" : "pl", esc(line));
+    if (m && x.slice(m[0].length).trim()){ inList = true; const rk = mtRank(m[0].trim()); if (top===null || rk<=top){ top = rk; deep = false; } else deep = true;
+      return wrap(deep ? "li l2" : "li", `<span class="mk">${esc(m[0].trim())}</span><span class="lt">${esc(x.slice(m[0].length))}</span>`); }
+    if (!x.trim()){ inList = false; top = null; deep = false; return forPdf ? wrap("pl","&nbsp;") : "<div>&nbsp;</div>"; }
+    return wrap(inList ? (deep ? "lc l2" : "lc") : "pl", esc(line));
   }).join("");
 }
 /* ---------- 工作計畫：工作計畫、工作執行成效、檢核、工作報告（本人專用） ---------- */
