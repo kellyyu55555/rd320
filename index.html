@@ -12578,17 +12578,25 @@ const extOf=n=>(String(n||"").match(/\.([a-z0-9]+)$/i)||[,""])[1].toLowerCase();
 const baseOf=n=>String(n||"").replace(/\.[a-z0-9]+$/i,"");
 const ficon=e=>e==="pdf"?"📕":/^docx?$|^odt$/.test(e)?"📘":/^xlsx?$/.test(e)?"📗":/^pptx?$/.test(e)?"📙":/^(jpe?g|png|gif|heic)$/.test(e)?"🖼️":"📄";
 const fsize=b=>b>=1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round((b||0)/1024))+" KB";
-const canF=f=>isAdm()||(f&&f.uid===(me()||{}).uid);
-function fSubscribe(){
+/* 特教助理員帳號：config/spedAides 的 emails（小寫）；只有特教助理員本人與管理員能看、能編輯這個分頁 */
+let aides=[],aUnsub=null;
+const myMail=()=>String((me()||{}).email||"").toLowerCase();
+const isAide=()=>aides.includes(myMail());
+const canAide=()=>isAdm()||isAide();
+const canF=f=>canAide();
+function aSubscribe(){if(aUnsub||!me())return;aUnsub=db().collection("config").doc("spedAides").onSnapshot(d=>{aides=((d.exists&&d.data().emails)||[]).map(x=>String(x).toLowerCase());if(tab!=="forms"&&!canAide())tab="forms";if(tab!=="forms")fSubscribe();if(!cur)renderList()},()=>{aides=[]})}
+async function setAides(list){try{await db().collection("config").doc("spedAides").set({emails:list,updatedAt:Date.now(),updatedBy:myMail()});D&&D.showToast&&D.showToast("已更新特教助理員帳號 ✅")}catch(e){alert("儲存失敗："+perr(e))}}
+function fSubscribe(){if(!canAide())return;
  const u=me();if(!u||(fUnsub&&fUid===u.uid))return;if(fUnsub)fUnsub();fUid=u.uid;
  fUnsub=db().collection(SF_COL).onSnapshot(s=>{files=s.docs.map(x=>({id:x.id,...x.data()}));fErr="";if(!cur&&tab!=="forms")renderList()},
   e=>{fErr=(e&&e.code==="permission-denied")?"讀取不到檔案：請管理員到 Firebase 主控台發布最新的「firestore.rules」權限規則（新增了 spedFiles）。":"讀取檔案發生問題（"+(e.code||e.message)+"）";if(!cur&&tab!=="forms")renderList()});
 }
 function tabsHtml(){
  const b=(id,label)=>`<button class="ffbtn${tab===id?" on":""}" data-tab="${id}" style="font-size:14px;padding:6px 14px">${label}</button>`;
- return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${b("forms","🧩 輔導紀錄表格")}${Object.entries(AREAS).map(([k,a])=>b(k,a.icon+" "+a.name)).join("")}</div>`}
+ return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${b("forms","🧩 輔導紀錄表格")}${Object.entries(AREAS).filter(()=>canAide()).map(([k,a])=>b(k,a.icon+" "+a.name)).join("")}</div>`}
 function catsOf(area){const A=AREAS[area],s=new Set(A.cats);fExtra.forEach(c=>s.add(c));files.filter(f=>f.area===area&&f.cat).forEach(f=>s.add(f.cat));return [...s]}
 function renderFiles(area){
+ if(!canAide()){tab="forms";return renderList()}
  const A=AREAS[area],cats=catsOf(area),all=files.filter(f=>f.area===area&&f.done!==false);
  if(!cats.includes(fCat))fCat=cats[0]||"";
  const upCat=fCat;
@@ -12604,7 +12612,9 @@ function renderFiles(area){
 <div style="display:flex;gap:6px;flex-wrap:wrap">${e==="pdf"||/^(jpe?g|png|gif|txt)$/.test(e)?`<button class="ffbtn on" data-fopen="${f.id}">👀 開啟</button>`:""}<button class="ffbtn" data-fdl="${f.id}">⬇️ 下載</button>${own?`<button class="ffbtn" data-fedit="${f.id}">✏️ 編輯</button><button class="ffbtn red" data-fdel="${f.id}">🗑 刪除</button>`:""}</div></div>`};
  root.innerHTML=`<style>${EDIT_CSS}</style>${tabsHtml()}
 <datalist id="spCatList">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-<div class="ffcard"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:16px">${A.icon} ${esc(A.name)}</b><span style="font-size:12px;color:#7a6f57">${esc(A.desc)}可上傳 PDF、Word、Excel、圖片（單檔 25MB 以內）；上傳的人和特教業務管理員可以編輯、換檔案、刪除。</span></div>
+<div class="ffcard"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:16px">${A.icon} ${esc(A.name)}</b><span style="font-size:12px;color:#7a6f57">${esc(A.desc)}可上傳 PDF、Word、Excel、圖片（單檔 25MB 以內）；只有特教助理員本人與管理員可以檢視、編輯。</span></div>
+${isAdm()?`<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:13px"><b>👤 特教助理員帳號：</b>${aides.map(m=>`<span style="border:1px solid #cdbf9e;border-radius:999px;padding:1px 4px 1px 10px;background:#fff">${esc(m)} <button class="ffbtn red" data-aidedel="${esc(m)}" style="padding:0 6px" title="移除">✕</button></span>`).join("")||`<span style="color:#9a917a">尚未設定</span>`}
+<input data-fv="aide" value="${esc(fUp.aide||"")}" placeholder="輸入特教助理員登入的 Email" style="border:1px solid #cdbf9e;border-radius:8px;padding:4px 8px;min-width:15rem"><button class="ffbtn on" data-aideadd="1">＋ 新增</button><span style="color:#7a6f57;font-size:12px">（帳號也要先在管理者後台核准）</span></div>`:""}
 <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;background:#fffaf0;border:1px solid #e3d5b5;border-radius:12px;padding:8px 10px">
 <b style="font-size:13px">⬆️ 上傳新檔案到「${esc(upCat)}」</b>
 <label style="font-size:13px">備註 <input data-fv="note" value="${esc(fUp.note)}" placeholder="（可不填）" style="border:1px solid #cdbf9e;border-radius:8px;padding:4px 8px;min-width:12rem"></label>
@@ -12699,8 +12709,10 @@ function importZip(){
   catch(e){fSt("");alert("匯入失敗："+perr(e))}};
  inp.click()}
 function onFileClick(ds){
- if(ds.tab!=null){tab=ds.tab;fEdit=null;try{localStorage.setItem("spTab",tab)}catch(e){}if(tab!=="forms")fSubscribe();renderList();return true}
+ if(ds.tab!=null){if(ds.tab!=="forms"&&!canAide())return true;tab=ds.tab;fEdit=null;try{localStorage.setItem("spTab",tab)}catch(e){}if(tab!=="forms")fSubscribe();renderList();return true}
  if(tab==="forms")return false;
+ if(ds.aideadd){if(!isAdm())return true;const m=String(fUp.aide||"").trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){alert("請輸入正確的 Email");return true}if(!aides.includes(m))setAides(aides.concat(m));fUp.aide="";return true}
+ if(ds.aidedel){if(!isAdm())return true;if(confirm(`移除特教助理員帳號「${ds.aidedel}」？`))setAides(aides.filter(x=>x!==ds.aidedel));return true}
  if(ds.fcat!=null){fCat=ds.fcat;fEdit=null;renderList();return true}
  if(ds.fnewcat){const n=(prompt("新分頁的名稱（例如：王小明 物理治療師）")||"").trim();if(n){if(!catsOf(tab).includes(n))fExtra.push(n);fCat=n;renderList()}return true}
  if(ds.fup)return uploadNew(),true;
@@ -12761,7 +12773,7 @@ function mount(){
 }
 function sync(d,on){
  D=d;const adm=d.isAdmin;if(!on)return;mount();if(!me())return;
- subscribe();if(tab!=="forms")fSubscribe();if(!cur)renderList();void adm;
+ subscribe();aSubscribe();if(tab!=="forms")fSubscribe();if(!cur)renderList();void adm;
 }
 window.SpedForm={sync,build,TPL};
 })();
