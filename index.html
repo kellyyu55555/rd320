@@ -12329,8 +12329,11 @@ function renderEdit(){
 <span id="spSt" style="font-size:12px;color:#7a6f57">${esc(stMsg)}</span></div>
 <div style="font-size:12px;color:#7a6f57;margin:0 0 4px 4px">黃色底的地方可以直接打字；點 ☐ 可以打勾。所有文字（包含項目名稱）都可以修改。</div>
 <div class="ffscroll"><div class="ffpage"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit")}</div></div>`;
- window.scrollTo(0,y);
+ fitPage();window.scrollTo(0,y);
 }
+/* 整頁顯示：橫式 A4 比畫面寬時，自動縮小到剛好放得下 */
+function fitPage(){const pg=root&&root.querySelector(".ffpage"),sc=root&&root.querySelector(".ffscroll");if(!pg||!sc)return;pg.style.zoom="";const k=Math.min(1,(sc.clientWidth-4)/pg.offsetWidth);if(k<1)pg.style.zoom=String(Math.floor(k*1000)/1000)}
+window.addEventListener("resize",()=>{clearTimeout(fitPage._t);fitPage._t=setTimeout(fitPage,150)});
 function collect(){
  if(!root||!cur)return;
  root.querySelectorAll("[data-k]").forEach(el=>{let v=el.innerText.replace(/ /g," ");v=el.classList.contains("fb")?v.replace(/\n$/,""):v.replace(/\n+$/,"");cur.vals[el.dataset.k]=v});
