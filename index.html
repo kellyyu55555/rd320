@@ -9236,7 +9236,14 @@ function renderMeetingEditor(app){
     box.append(h("div",{class:"mt-ih"},h("b",null,"表格"),h("span",{class:"note",style:"font-size:12px"},"（第一列是標題列；整列空白不會印出）"),h("span",{class:"sp"}),
         h("button",{class:"btn sm",onclick:()=>{ t.rows.push(Array(W).fill("")); mark(); render(); }},"＋ 列"),
         h("button",{class:"btn sm",onclick:()=>{ t.rows.forEach(r=>r.push("")); mark(); render(); }},"＋ 欄"),
+        h("button",{class:"btn sm",title:"先在上面「內容」裡點一下要放表格的位置，再按這個按鈕",onmousedown:e=>e.preventDefault(),onclick:e=>{
+          const tx = e.currentTarget.closest(".mt-item") && e.currentTarget.closest(".mt-item").querySelector("textarea"); if (!tx) return;
+          const v = tx.value.replace(/^[ \t]*【表格】[ \t]*\n?/gm,""), a = Math.min(tx.selectionStart||0, v.length), s0 = v.lastIndexOf("\n", a-1)+1, e0 = v.indexOf("\n", a), cut = e0<0 ? v.length : e0;
+          const pos = (a===s0) ? s0 : cut; const pre = v.slice(0,pos), post = v.slice(pos);
+          tx.value = pre + (pre && !pre.endsWith("\n") ? "\n" : "") + "【表格】" + (post.startsWith("\n") ? "" : "\n") + post;
+          tx.dispatchEvent(new Event("input",{bubbles:true})); toast("已把表格放在這個位置（內容裡的「【表格】」那一行）"); }},"📍 表格放在內容的游標位置"),
         h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除整個表格？")) return; it.table = null; mark(); render(); }},"刪除表格")),
+      h("p",{class:"note",style:"font-size:12px;margin:2px 0 6px"},"表格會印在「內容」裡「【表格】」那一行的位置，跟 Word 一樣夾在文字中間；內容裡沒有「【表格】」的話，表格印在內容最下面。"),
       h("label",{class:"fl"},"表格說明（印在表格上方，可留空）",h("input",{class:"in",value:t.cap,placeholder:"例如：附表：特殊教育幼兒已申請通過之支持性服務",oninput:e=>{ t.cap=e.target.value; mark(); }})),
       h("div",{class:"mt-gridw"},grid));
     return box;
@@ -9300,12 +9307,16 @@ function mtBodyHtml(m, withImgs, forPdf){
   /* 固定項目只有標題、沒有內容時不列印；一般項目有填標題就印 */
   m.reports = m.reports.filter(r=>r.body.trim()||r.photos.length||(!r.fixed&&r.title.trim()));
   m.issues = m.issues.filter(r=>r.content.trim()||r.resolution.trim()||r.photos.length||r.resPhotos.length||(r.classes||[]).some(c=>(c.items||[]).some(x=>str(x.q).trim()||str(x.a).trim()))||(!r.fixed&&r.title.trim()));
-  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div><div class="txt">${ind(r.body)}</div>${r.table?`<div class="tw">${mtTblHtml(r.table)}</div>`:""}${pg(r.photos)}`; });
+  const TBL_MK = /^[ \t　]*[【\[]表格[】\]][ \t　]*$/m;
+  const withTbl = (pre, text, t) => { const tw = t ? `<div class="tw">${mtTblHtml(t)}</div>` : "", aft = t && str(t.after).trim() ? `<div class="txt">${ind(t.after)}</div>` : "";
+    const parts = str(text).split(TBL_MK);
+    if (t && parts.length > 1) return `${parts[0].trim()||pre?`<div class="txt">${pre}${ind(parts[0])}</div>`:""}${tw}${parts.slice(1).join("\n").trim()?`<div class="txt">${ind(parts.slice(1).join("\n"))}</div>`:""}${aft}`;
+    const all = parts.join("\n"); return `${all.trim()||pre?`<div class="txt">${pre}${ind(all)}</div>`:""}${tw}${aft}`; };
+  m.reports.forEach((r,i)=>{ body += `<div class="sub">報告${mtNum(i+1)}：${esc(r.title)}</div>${withTbl("", r.body, r.table)}${pg(r.photos)}`; });
   body += `<div class="row">六、議題討論：</div>`;
   m.issues.forEach((r,i)=>{
     body += `<div class="sub">議題${mtNum(i+1)}、${esc(r.title)}</div>`;
-    if (r.content.trim()) body += `<div class="txt">${r.fixed||r.content.trim().startsWith("內容")?"":"內容："}${ind(r.content)}</div>`;
-    if (r.table) body += `<div class="tw">${mtTblHtml(r.table)}</div>`;
+    if (r.content.trim() || r.table) body += withTbl(r.content.trim() && !(r.fixed||r.content.trim().startsWith("內容")) ? "內容：" : "", r.content, r.table);
     body += pg(r.photos);
     if (r.fixed==="ask"){ let n=0; r.classes.forEach(c=>c.items.filter(x=>x.q.trim()||x.a.trim()).forEach(x=>{ n++; body += `<div class="txt">${n}. ${esc(c.cls.replace(/班$/,""))}：${ind(x.q)}${x.a.trim()?`<br>回覆：${ind(x.a)}`:""}</div>`; })); }
     if (r.fixed==="help"){ r.classes.forEach(c=>{ const its=c.items.filter(x=>x.q.trim()||x.a.trim()); if (!its.length) return; body += `<div class="txt cls">【${esc(c.cls)}】</div>`;
