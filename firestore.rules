@@ -1,0 +1,459 @@
+rules_version = '2';
+
+// 仁德非營利幼兒園・教具與繪本借還系統 — Firestore 權限規則（完整版）
+// 權限邏輯：
+//   - 只有「已核准的帳號」(members 文件 status = approved) 或管理者，才能讀取／使用資料
+//   - 新帳號第一次登入只能建立自己的「待核准」申請；管理員在後台核准後才能使用
+//   - 管理者 = config/admins 文件 emails 清單裡的人（只能在 Firebase 主控台編輯，Email 請用小寫）
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function myEmail() { return request.auth.token.email.lower(); }
+
+    // 全系統檢視帳號：所有資料都可以「讀取」（不能新增、修改、刪除；特教業務原本的權限不變）
+    function viewAll() {
+      return isSignedIn() && myEmail() in ['babyanitacvc@gmail.com'];
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        myEmail() in get(/databases/$(database)/documents/config/admins).data.emails;
+    }
+
+    // 不得使用「教學計畫」與「週誌」的帳號（例如園方管理者 rdrd320320@gmail.com）
+    // 週誌是否分享給目前登入者（sharedWith 為小寫 Email 清單）
+    function sharedToMe(data) {
+      return isSignedIn() && data.get('sharedWith', []).hasAny([myEmail()]);
+    }
+    // 同班老師：管理員「已閱」後，班級在自己的 teacherDir 班級清單裡的週誌可以檢視
+    function myDirClasses() {
+      return exists(/databases/$(database)/documents/teacherDir/$(myEmail())) ?
+        get(/databases/$(database)/documents/teacherDir/$(myEmail())).data.get('classes', []) : [];
+    }
+    function sameClass(data) {
+      return isSignedIn() && data.status == 'reviewed' &&
+        data.cls in myDirClasses();
+    }
+
+    function noPlan() {
+      return isSignedIn() && myEmail() == 'rdrd320320@gmail.com';
+    }
+
+    // 編輯者：config/admins 文件的 editors 清單（小寫 Email）。可編輯社區踏查、出汗性大肌肉、作息表、協同教學、行事曆、教學計畫、活動計畫
+    function isEditor() {
+      return isSignedIn() &&
+        myEmail() in get(/databases/$(database)/documents/config/admins).data.get('editors', []);
+    }
+    function canEdit() { return isAdmin() || isEditor(); }
+
+    function isMember() {
+      return isAdmin() || isEditor() || (isSignedIn() &&
+        exists(/databases/$(database)/documents/members/$(myEmail())) &&
+        get(/databases/$(database)/documents/members/$(myEmail())).data.status == 'approved');
+    }
+
+    // 管理者名單：只有已核准帳號（含管理者）能讀，用來判斷身分；只能在主控台手動編輯
+    match /config/admins {
+      allow read: if isMember() || viewAll();
+      allow write: if false;
+    }
+
+    // 帳號核准名單（doc ID = 小寫 Email）
+    match /members/{email} {
+      allow get: if isSignedIn() && (myEmail() == email || isAdmin() || viewAll());
+      allow list: if isAdmin() || viewAll();
+      allow create: if isAdmin() || (isSignedIn() && myEmail() == email && request.resource.data.status == 'pending');
+      allow update, delete: if isAdmin();
+    }
+
+    match /categories/{id}  { allow read: if isMember() || viewAll(); allow write: if isAdmin(); }
+    match /publishers/{id}  { allow read: if isMember() || viewAll(); allow write: if isAdmin(); }
+    // 班級、教師與幼兒名單：一般名冊仍由管理者維護；學習區觀察表匯入的幼兒名單，
+    // 允許已核准教師新增／更新 roster/children。
+    // 全園幼生名冊：所有管理員（含經費帳號）都可以讀寫，老師看不到
+    match /students/{id} {
+      allow read, write: if isAdmin() || noPlan();
+      // 名冊檢視者：可以看全園幼兒，只能修改「身分別」（IEP／疑似特教）
+      allow read: if viewAll() || stuViewer() || (isMember() && stuTeacher(resource.data.cls));
+      allow update: if stuViewer() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ids', 'updatedAt', 'updatedBy']);
+    }
+    // 名冊檢視者名單（管理員在名冊頁設定）
+    match /config/studentAccess {
+      allow read: if isMember() || isAdmin() || noPlan() || viewAll();
+      allow write: if isAdmin() && !noPlan();
+    }
+    // 幼生名冊上傳雲端的紀錄（用來提醒是否重複上傳）
+    match /studentUploads/{id} {
+      allow read: if viewAll();
+      allow read, write: if isAdmin() || noPlan();
+    }
+    match /roster/{id} {
+      allow read: if isMember() || viewAll();
+      allow write: if isAdmin() || (id == 'children' && isMember() && request.resource.data.list is map);
+    }
+
+    // 學習區觀察紀錄：老師只能建立、查看及修改自己的紀錄；管理者可管理全部紀錄。
+    // 學習區觀察進度標示（每人每學期 2 次）：已核准老師可讀，同班老師共用；只能新增自己的標示，本人或管理者可刪除
+    match /observationMarks/{id} {
+      allow read: if isMember() || viewAll();
+      allow create: if isMember() && request.resource.data.byUid == request.auth.uid;
+      allow delete: if isMember() && (resource.data.byUid == request.auth.uid || isAdmin());
+    }
+
+    // 學習區觀察表的個人設定（老師自訂的學習區清單）：只有本人能讀寫
+    match /obsPrefs/{uid} {
+      allow read: if viewAll();
+      allow read, write: if isMember() && request.auth.uid == uid;
+    }
+
+    match /learningObservations/{id} {
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      // 本人、管理者，以及被分享（sharedWith）的老師都能讀取
+      allow read: if viewAll() || (isMember() && (resource.data.uid == request.auth.uid || isAdmin() || sharedToMe(resource.data)));
+      // 本人、管理者可改；被分享的老師可以共同編輯內容，但不能更改擁有者與分享名單
+      allow update: if isMember() && (resource.data.uid == request.auth.uid || isAdmin() ||
+        (sharedToMe(resource.data) && request.resource.data.uid == resource.data.uid &&
+         request.resource.data.get('sharedWith', []) == resource.data.get('sharedWith', [])));
+      // 只有本人或管理者可刪除
+      allow delete: if isMember() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // 觀察紀錄的照片（壓縮後的圖片資料）：本人、管理者與被分享的老師可讀寫
+      match /photos/{pid} {
+        allow read: if viewAll();
+        allow read, write: if isMember() &&
+          (get(/databases/$(database)/documents/learningObservations/$(id)).data.uid == request.auth.uid || isAdmin() ||
+           sharedToMe(get(/databases/$(database)/documents/learningObservations/$(id)).data));
+      }
+    }
+
+    // 衛教宣導紀錄：
+    //   - 已核准老師都能檢視全部紀錄；只能新增自己的（狀態只能是草稿或送出）
+    //   - 老師只能修改／刪除自己的；不能自己改成「已閱」「退件」，也不能改退件說明
+    //   - 管理者可以新增、修改、刪除、審閱全部
+    function heStatus(d) { return d.get('status', 'draft'); }
+    match /healthEducation/{id} {
+      allow read: if isMember() || viewAll();
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid &&
+        (isAdmin() || heStatus(request.resource.data) in ['draft', 'submitted']);
+      allow update: if isMember() && (isAdmin() ||
+        (resource.data.uid == request.auth.uid &&
+         request.resource.data.uid == resource.data.uid &&
+         request.resource.data.get('reviewNote', '') == resource.data.get('reviewNote', '') &&
+         (heStatus(request.resource.data) == heStatus(resource.data) ||
+          heStatus(request.resource.data) in ['draft', 'submitted'])));
+      allow delete: if isMember() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // 照片（壓縮後的圖片資料，最多 6 張）：已核准老師都能看；本人與管理者可上傳、刪除
+      match /photos/{pid} {
+        allow read: if isMember() || viewAll();
+        allow write: if isMember() &&
+          (get(/databases/$(database)/documents/healthEducation/$(id)).data.uid == request.auth.uid || isAdmin());
+      }
+    }
+
+    match /items/{id} {
+      allow read: if isMember() || viewAll();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['remaining']));
+    }
+
+    match /records/{id} {
+      allow read: if viewAll();
+      allow read, create: if isMember();
+      allow update: if isMember() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['returnedQty','returnDate','returnTimestamp']);
+      allow delete: if isAdmin();
+    }
+
+    match /returnRequests/{id} {
+      allow read: if viewAll();
+      allow read, create: if isMember();
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || viewAll();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // 登入紀錄：已核准帳號登入時新增自己的紀錄，只有管理者可讀；只保留 20 天，管理者可刪除 20 天前的紀錄
+    match /loginLogs/{id} {
+      allow read: if isAdmin() || viewAll();
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() && resource.data.createdAt < request.time.toMillis() - 1728000000;
+    }
+
+    // 護貝膜
+    match /laminateStock/{id} { allow read: if isMember() || viewAll(); allow write: if isAdmin(); }
+    match /laminateRequests/{id} {
+      allow read: if isMember() || viewAll();
+      allow create: if isAdmin() || (isMember() && request.resource.data.status == 'pending');
+      allow update, delete: if isAdmin();
+    }
+
+    // 刪除紀錄（可還原）
+    match /deleteLogs/{id} {
+      allow read: if viewAll();
+      allow read, create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // 教學計畫
+    // 教學計畫的照片（從電腦上傳後壓縮存放）：已核准老師可讀，只有管理者能新增、刪除
+    // 課程規劃依年齡層開放：config/planAccess.ages = { 老師Email: ['兩歲專班', ...] }
+    function planAges() {
+      return exists(/databases/$(database)/documents/config/planAccess)
+        ? get(/databases/$(database)/documents/config/planAccess).data.get('ages', {}).get(myEmail(), [])
+        : [];
+    }
+    function planSems() {
+      return exists(/databases/$(database)/documents/config/planAccess)
+        ? get(/databases/$(database)/documents/config/planAccess).data.get('sems', ['115學年度下學期'])
+        : ['115學年度下學期'];
+    }
+    function planTeacher() { return isMember() && !noPlan() && planAges().size() > 0; }
+    match /config/planAccess {
+      allow read: if isMember() || viewAll();
+      allow write: if isAdmin();
+    }
+    match /planPhotos/{pid} {
+      allow read: if (isMember() && !noPlan()) || viewAll();
+      allow create: if (canEdit() || planTeacher()) && !noPlan();
+      allow delete: if canEdit() && !noPlan();
+      allow update: if false;
+    }
+
+    match /teachingPlans/{id} {
+      allow read: if viewAll() || (!noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems())));
+      allow create: if !noPlan() && (canEdit() || (isMember() && request.resource.data.cls in planAges() && request.resource.data.sem in planSems()));
+      allow update: if !noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems()
+                      && request.resource.data.cls in planAges() && request.resource.data.sem in planSems()));
+      allow delete: if canEdit() && !noPlan();
+    }
+    // 修改紀錄：可編輯的人都會寫入；只有管理員看得到
+    match /teachingPlanLogs/{id} {
+      allow read: if (isAdmin() && !noPlan()) || viewAll();
+      allow create: if (canEdit() || planTeacher()) && !noPlan();
+      allow update, delete: if false;
+    }
+
+    // 週誌：只有本人或管理者能讀寫（內容含幼兒資料與照片）
+    match /weeklyLogs/{id} {
+      allow read: if viewAll() || (isMember() && !noPlan() && (resource.data.uid == request.auth.uid || isAdmin() || sharedToMe(resource.data) || sameClass(resource.data)));
+      // 本人建立自己的週誌；管理員可以替老師匯入（建立成該老師的週誌）
+      allow create: if isMember() && !noPlan() && (request.resource.data.uid == request.auth.uid || isAdmin());
+      // 只有本人、管理員可修改；被分享的老師、同班老師只能查看
+      allow update: if isMember() && !noPlan() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if isMember() && !noPlan() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      match /photos/{pid} {
+        allow read: if viewAll() || isMember() && !noPlan() &&
+          (get(/databases/$(database)/documents/weeklyLogs/$(id)).data.uid == request.auth.uid || isAdmin() ||
+           sharedToMe(get(/databases/$(database)/documents/weeklyLogs/$(id)).data) ||
+           sameClass(get(/databases/$(database)/documents/weeklyLogs/$(id)).data));
+        allow write: if isMember() && !noPlan() &&
+          (get(/databases/$(database)/documents/weeklyLogs/$(id)).data.uid == request.auth.uid || isAdmin());
+      }
+    }
+
+    // 老師名單（供「分享週誌」選人用；每位老師只能寫自己的那一筆）
+    match /teacherDir/{email} {
+      allow read: if (isMember() && !noPlan()) || viewAll();
+      allow create, update: if isMember() && !noPlan() && myEmail() == email && request.resource.data.email == email;
+      allow delete: if isAdmin();
+    }
+
+    // 週誌的個人預設值（班級、年齡層、老師、背景說明、簽名）
+    match /weeklyPrefs/{uid} {
+      allow read: if viewAll();
+      allow read, write: if isMember() && !noPlan() && request.auth.uid == uid;
+    }
+
+    // 歷史週誌匯入資料（管理員一次性匯入，各班老師再匯入到自己的週誌）
+    match /weeklySeeds/{id} {
+      allow read: if (isMember() && !noPlan()) || viewAll();
+      allow write: if isAdmin() && !noPlan();
+      match /photos/{pid} {
+        allow read: if (isMember() && !noPlan()) || viewAll();
+        allow write: if isAdmin() && !noPlan();
+      }
+    }
+
+    // 課後延托接送登記：設定（幼兒名單、費用）已核准帳號可讀、僅管理者可改
+    match /pickup/{id} { allow read: if isMember() || viewAll(); allow write: if isAdmin(); }
+
+    // 接送紀錄（doc ID = 日期_幼兒ID）：已核准老師可讀、登記、更正；只有管理者可刪除
+    match /pickup_records/{id} {
+      allow read: if viewAll();
+      allow read, create, update: if isMember();
+      allow delete: if isAdmin();
+    }
+
+    // 臨時延托登記：已核准老師可讀、新增、更正；只有管理者可刪除
+    match /pickup_temp/{id} {
+      allow read: if viewAll();
+      allow read, create, update: if isMember();
+      allow delete: if isAdmin();
+    }
+
+    // 請假／未到登記：已核准老師可讀、新增、更正；只有管理者可刪除
+    match /pickup_absent/{id} {
+      allow read: if viewAll();
+      allow read, create, update: if isMember();
+      allow delete: if isAdmin();
+    }
+
+    // 月總表手動調整（doc ID = 月份_幼兒ID）：只有管理者可讀寫
+    match /pickup_adjust/{id} {
+      allow read: if viewAll();
+      allow read, write: if isAdmin();
+    }
+
+    // 社區踏查、出汗性大肌肉課程（含老師注意事項）：已核准老師可讀，管理者與編輯者可新增、修改、刪除（rdrd320320 不可使用）
+    match /walkPrograms/{id}  { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+    match /walkCourses/{id}   { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+    match /motorPrograms/{id} { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+    match /motorCourses/{id}  { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+
+    // 活動計畫（社區／研習／仁德）與活動照片、流程表圖片：管理者與編輯者可讀寫（rdrd320320 不可使用）
+    // 活動計畫：管理者、編輯者可讀寫；noPlan 帳號只能讀取，並只能修改「經費支出」
+    match /activityPlans/{id} {
+      allow read: if canEdit() || noPlan() || viewAll();
+      allow create, delete: if canEdit() && !noPlan();
+      allow update: if (canEdit() && !noPlan()) ||
+        (noPlan() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expense', 'expenseBy', 'expenseAt', 'expenseStatus', 'expenseSubmitAt', 'expenseSubmitBy', 'expenseSubmitEmail'])
+          && request.resource.data.get('expenseStatus', '') in ['', 'submitted', 'returned', 'checked']
+          && !(resource.data.get('expenseStatus', '') == 'checked' && request.resource.data.get('expenseStatus', '') != 'checked')
+          && !(request.resource.data.get('expenseStatus', '') == 'checked' && resource.data.get('expenseStatus', '') != 'checked')
+          && !(request.resource.data.get('expenseStatus', '') == 'returned' && resource.data.get('expenseStatus', '') != 'returned'));
+    }
+    match /activityPlanPhotos/{id} { allow read: if viewAll(); allow read, write: if canEdit() && !noPlan(); }
+    match /activityPlanFiles/{id}  { allow read: if viewAll(); allow read, write: if canEdit() && !noPlan(); }
+    match /activityPlanFileChunks/{id} { allow read: if viewAll(); allow read, write: if canEdit() && !noPlan(); }
+
+    // 作息表（含協同教學）、行事曆：已核准老師可讀，管理者與編輯者可新增、修改、刪除（rdrd320320 不可使用）
+    match /schedules/{id} { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+    match /calendars/{id} { allow read: if (isMember() && !noPlan()) || viewAll(); allow write: if canEdit() && !noPlan(); }
+    // 行事曆草稿：只有管理者與編輯者能看、能改；按「開放老師檢視」後才移到 calendars
+    match /calendarDrafts/{id} { allow read: if viewAll(); allow read, write: if canEdit() && !noPlan(); }
+    // 教學評量（例行性、總結性）與同班老師的分配：已核准的老師都可以讀寫（借還專用帳號除外）
+    match /assessments/{id} { allow read: if viewAll(); allow read, write: if isMember() && !noPlan(); }
+    match /assessAssign/{id} { allow read: if viewAll(); allow read, write: if isMember() && !noPlan(); }
+    // 各班老師：帳號姓名（members 的 name）和管理者後台「老師／班級配對」（roster/pairs）一致的班級，可以讀取該班幼兒
+    function stuTeacher(c) {
+      let nm0 = string(get(/databases/$(database)/documents/members/$(myEmail())).data.get('name', '')).replace('\\s', '');
+      let nm = nm0.replace('老師$', '');
+      let L = get(/databases/$(database)/documents/roster/pairs).data.get('list', []);
+      return nm != '' && ((nm + '／' + c) in L || (nm + '老師／' + c) in L || (nm0 + '／' + c) in L);
+    }
+    // 全園幼生名冊的檢視者：config/studentAccess 的 viewers 清單（小寫 Email）
+    function stuViewer() {
+      return isSignedIn() && exists(/databases/$(database)/documents/config/studentAccess) &&
+        myEmail() in get(/databases/$(database)/documents/config/studentAccess).data.get('viewers', []);
+    }
+    // 本人專用（巡堂紀錄、會議紀錄）：帳號 Email 要在 config/admins 的 owners 清單裡
+    function isOwner() {
+      return isSignedIn() && exists(/databases/$(database)/documents/config/admins) &&
+        myEmail() in get(/databases/$(database)/documents/config/admins).data.get('owners', []);
+    }
+    // 會議紀錄：owners 可編輯；指定的檢視帳號可以讀取（檢視、列印、下載 PDF）
+    function isMtViewer() {
+      return isOwner() || (isSignedIn() && myEmail() in ['mr.chris.d92@gmail.com']);
+    }
+    function mtRead() {
+      return isMtViewer() || viewAll();
+    }
+    match /meetingMinutes/{id} { allow read: if mtRead(); allow write: if isOwner(); }
+    match /meetingPhotos/{id} { allow read: if mtRead(); allow write: if isOwner(); }
+    // 會議紀錄上傳的 PDF 檔（切塊存放）：owners 與檢視帳號可上傳；上傳者本人或 owners 可刪除
+    match /meetingFiles/{id} {
+      allow read: if mtRead();
+      allow create: if isMtViewer() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isOwner() || (isMtViewer() && resource.data.uid == request.auth.uid);
+      match /chunks/{c} {
+        allow read: if mtRead();
+        allow write: if isOwner() || (isMtViewer() &&
+          get(/databases/$(database)/documents/meetingFiles/$(id)).data.uid == request.auth.uid);
+      }
+    }
+    match /workPlans/{id} { allow read: if isOwner() || viewAll(); allow write: if isOwner(); }
+    match /patrolRecords/{id} { allow read: if isOwner() || viewAll(); allow write: if isOwner(); }
+
+    // ===== 績效考評建議（114 學年度非營利幼兒園績效考評委員建議新增）=====
+    // 個案追蹤、考核與專業成長、學習指標運用統計：
+    //   - 可新增／編輯／刪除：config/admins 的 owners
+    //   - 只能檢視：下面的 Email，或 config/admins 的 kpiViewers 清單（小寫 Email）
+    //   - 其他人（包含其他管理員）都看不到
+    function kpiViewer() {
+      return isSignedIn() && (myEmail() in ['babyanitacvc@gmail.com'] ||
+        (exists(/databases/$(database)/documents/config/admins) &&
+         myEmail() in get(/databases/$(database)/documents/config/admins).data.get('kpiViewers', [])));
+    }
+    function kpiRead() { return isOwner() || kpiViewer() || viewAll(); }
+    match /caseRecords/{id}    { allow read: if kpiRead(); allow write: if isOwner(); }
+    match /staffReviews/{id}   { allow read: if kpiRead(); allow write: if isOwner(); }
+    match /indicatorStats/{id} { allow read: if kpiRead(); allow write: if isOwner(); }
+
+
+    // 各式表格（線上填寫）：本人填的自己看得到、可修改刪除；管理者可以看全部、修改、刪除
+    match /formDocs/{id} {
+      allow read: if viewAll() || (isMember() && (resource.data.uid == request.auth.uid || isAdmin()));
+      allow create: if isMember() && request.resource.data.uid == request.auth.uid;
+      allow update: if isMember() && (resource.data.uid == request.auth.uid || isAdmin()) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isMember() && (resource.data.uid == request.auth.uid || isAdmin());
+      match /photos/{pid} {
+        allow read: if viewAll();
+        allow read, write: if isMember() &&
+          (get(/databases/$(database)/documents/formDocs/$(id)).data.uid == request.auth.uid || isAdmin());
+      }
+    }
+
+    // 特教業務：老師可新增、編輯自己填的；特教業務管理員（與系統管理者）可看全部、編輯、刪除
+    function isSpedAdmin() {
+      return isAdmin() || (isSignedIn() && myEmail() in ['mr.chris.d92@gmail.com', 'babyanitacvc@gmail.com']);
+    }
+    match /spedDocs/{id} {
+      // 老師：看得到、可編輯自己填的，以及自己班級（teacherDir 的 classes）的紀錄
+      allow read: if isSpedAdmin() || (isMember() && (resource.data.uid == request.auth.uid || resource.data.get('cls', '') in myDirClasses()));
+      allow create: if (isMember() || isSpedAdmin()) && request.resource.data.uid == request.auth.uid;
+      allow update: if (isSpedAdmin() || (isMember() && (resource.data.uid == request.auth.uid || resource.data.get('cls', '') in myDirClasses())))
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if isSpedAdmin();
+      match /photos/{pid} {
+        allow read, write: if isSpedAdmin() || (isMember() &&
+          (get(/databases/$(database)/documents/spedDocs/$(id)).data.uid == request.auth.uid
+           || get(/databases/$(database)/documents/spedDocs/$(id)).data.get('cls', '') in myDirClasses()));
+      }
+    }
+
+    // 特教業務 → 特教助理員（育成、治療師早療輔導紀錄）的上傳檔案（切塊存放）：
+    //   只有特教助理員本人（config/spedAides 的 emails，小寫）與特教業務管理員／系統管理者可以檢視、上傳、編輯、刪除
+    function isSpedAide() {
+      return isSignedIn() && exists(/databases/$(database)/documents/config/spedAides) &&
+        myEmail() in get(/databases/$(database)/documents/config/spedAides).data.get('emails', []);
+    }
+    function canSpedFiles() { return isSpedAdmin() || isSpedAide(); }
+    match /config/spedAides {
+      allow read: if isSignedIn();
+      allow write: if isSpedAdmin();
+    }
+    match /spedFiles/{id} {
+      allow read, delete: if canSpedFiles();
+      allow create: if canSpedFiles() && request.resource.data.uid == request.auth.uid;
+      allow update: if canSpedFiles() && request.resource.data.uid == resource.data.uid;
+      match /chunks/{c} {
+        allow read, write: if canSpedFiles();
+      }
+    }
+
+    // 系統設定（雲端硬碟上傳網址與各班資料夾連結）：已核准帳號可讀，只有管理者可改
+    match /settings/{id} {
+      allow read: if isMember() || viewAll();
+      allow write: if isAdmin();
+    }
+  }
+}
