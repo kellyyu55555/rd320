@@ -12390,11 +12390,22 @@ const db=()=>firebase.firestore(),me=()=>firebase.auth().currentUser;
 const isAdm=()=>!!(D&&D.isAdmin)||SPED_ADM.includes(String((me()||{}).email||"").toLowerCase());
 function myName(){const u=me()||{};return (D&&D.myName)||u.displayName||u.email||""}
 
-function subscribe(){
- const u=me();if(!u)return;const adm=isAdm();if(unsub&&subUid===u.uid&&subAdm===adm)return;
- if(unsub)unsub();subUid=u.uid;subAdm=adm;
- const q=adm?db().collection("spedDocs"):db().collection("spedDocs").where("uid","==",u.uid);
- unsub=q.onSnapshot(s=>{docs=s.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));listErr="";if(!cur)renderList()},e=>{listErr=(e&&e.code==="permission-denied")?"讀取不到線上表格：請管理員到 Firebase 主控台更新「firestore.rules」權限規則。":"讀取線上表格發生問題（"+(e.code||e.message)+"）";if(!cur)renderList()});
+/* 權限：管理員看全部；老師看自己填的＋自己班級（teacherDir 的 classes）的紀錄 */
+const clsKey=v=>{let c=String((v&&v.cls)||"").trim().replace(/\s+/g,"");if(c&&!/班$/.test(c))c+="班";return c};
+let myCls=[],myClsAt=0,migrated=false;
+async function subscribe(){
+ const u=me();if(!u)return;const adm=isAdm();
+ if(!adm&&Date.now()-myClsAt>300000){myClsAt=Date.now();try{const t=await db().collection("teacherDir").doc(String(u.email||"").toLowerCase()).get();myCls=((t.exists&&t.data().classes)||[]).map(String).filter(Boolean)}catch(e){myCls=[]}}
+ const key=u.uid+"|"+adm+"|"+myCls.join(",");if(unsub&&subUid===key)return;
+ if(unsub)unsub();subUid=key;subAdm=adm;
+ const err=e=>{listErr=(e&&e.code==="permission-denied")?"讀取不到線上表格：請管理員到 Firebase 主控台更新「firestore.rules」權限規則。":"讀取線上表格發生問題（"+(e.code||e.message)+"）";if(!cur)renderList()};
+ const col=db().collection("spedDocs"),parts={};
+ const done=()=>{const m=new Map();Object.values(parts).forEach(sn=>sn.docs.forEach(x=>m.set(x.id,{id:x.id,...x.data()})));docs=[...m.values()].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));listErr="";
+  if(adm&&!migrated){migrated=true;docs.filter(x=>x.data&&clsKey(x.data)&&x.cls!==clsKey(x.data)).forEach(x=>col.doc(x.id).update({cls:clsKey(x.data)}).catch(()=>{}))}
+  if(!cur)renderList()};
+ const qs=adm?[["all",col]]:[["mine",col.where("uid","==",u.uid)]].concat(myCls.map(c=>["c:"+c,col.where("cls","==",c)]));
+ const us=qs.map(([k,q])=>q.onSnapshot(sn=>{parts[k]=sn;done()},err));
+ unsub=()=>us.forEach(f=>f());
 }
 
 /* ---------- 清單畫面 ---------- */
@@ -12407,7 +12418,7 @@ function renderList(){
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:10px">
 ${TPL.map(t=>`<div style="border:1px solid #e3d5b5;border-radius:14px;background:#fff;padding:10px"><div style="font-weight:800">${t.icon} ${esc(t.name)}</div><div style="font-size:12px;color:#7a6f57;margin:2px 0 8px">${esc(t.desc)}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-new="${t.id}">＋ 填寫新的</button>${isAdm()?`<button class="ffbtn" data-blank="${t.id}">🖨️ 印空白表</button>`:""}<button class="ffbtn" data-filt="${t.id}">看已填（${docs.filter(x=>x.tpl===t.id).length}）</button></div></div>`).join("")}
 </div></div>
-<div class="ffcard" style="margin-top:10px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px"><b style="font-size:15px">${isAdm()?"🗂️ 全部的輔導紀錄":"🗂️ 我填的輔導紀錄"}</b>
+<div class="ffcard" style="margin-top:10px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px"><b style="font-size:15px">${isAdm()?"🗂️ 全部的輔導紀錄":"🗂️ 我和本班的輔導紀錄"}</b>
 <button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${isAdm()?`<button class="ffbtn" data-imp="1">📥 匯入紀錄檔</button>`:""}${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}</div>
 ${listErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(listErr)}</p>`:""}
 <div style="display:flex;flex-direction:column;gap:6px">${rows.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　記錄老師：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
@@ -12446,7 +12457,7 @@ function touch(){dirty=true;setSt("尚未儲存…");clearTimeout(timer);timer=s
 
 async function ensureDoc(){
  if(cur.id)return;const u=me();
- const ref=await db().collection("spedDocs").add({tpl:cur.tpl,title:cur.title||TP[cur.tpl].name,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:cur.vals,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
+ const ref=await db().collection("spedDocs").add({cls:clsKey(cur.vals),tpl:cur.tpl,title:cur.title||TP[cur.tpl].name,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:cur.vals,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
  cur.id=ref.id;cur.uid=u.uid;
 }
 async function save(auto){
@@ -12456,7 +12467,7 @@ async function save(auto){
  try{
   if(!cur.title)cur.title=defTitle(cur.tpl,cur.vals);
   if(!cur.id)await ensureDoc();
-  else await db().collection("spedDocs").doc(cur.id).update({title:cur.title,data:cur.vals,updatedAt:Date.now(),updatedBy:(me()||{}).email||""});
+  else await db().collection("spedDocs").doc(cur.id).update({cls:clsKey(cur.vals),title:cur.title,data:cur.vals,updatedAt:Date.now(),updatedBy:(me()||{}).email||""});
   dirty=false;setSt("已儲存 ✓ "+fmt(Date.now()).split(" ")[1]);
   const ti=root&&root.querySelector("#spTitle");if(ti&&!ti.value)ti.value=cur.title;
  }catch(e){setSt("❌ 儲存失敗");if(!auto)alert("儲存失敗："+(e.code==="permission-denied"?"沒有權限（請管理員更新 firestore.rules）":(e.message||e)))}
@@ -12539,14 +12550,14 @@ function importJson(){
   try{const j=JSON.parse(await f.text());const arr=Array.isArray(j)?j:(j.docs||[]);if(!arr.length)throw new Error("檔案裡沒有紀錄");
    const have=new Set(docs.map(x=>x.title));const u=me();let n=0,skip=0;
    for(const x of arr){if(!x||!x.data)continue;const t=x.title||defTitle("sped",x.data);if(have.has(t)){skip++;continue}
-    await db().collection("spedDocs").add({tpl:"sped",title:t,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:String(x.data.tch||myName()),data:x.data,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||"",imported:true});n++}
+    await db().collection("spedDocs").add({cls:clsKey(x.data),tpl:"sped",title:t,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:String(x.data.tch||myName()),data:x.data,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||"",imported:true});n++}
    alert(`匯入完成：新增 ${n} 份`+(skip?`，略過 ${skip} 份（清單裡已經有同名的紀錄）`:""))}
   catch(e){alert("匯入失敗："+(e.code==="permission-denied"?"沒有權限（請先發布 firestore.rules）":(e.message||e)))}};
  inp.click()}
 async function pdfDoc(id){const x=docs.find(z=>z.id===id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}makePdf(x.tpl,x.data||{},ph,x.title)}
 async function copyDoc(id){
  const x=docs.find(z=>z.id===id);if(!x)return;const u=me();
- try{const ref=await db().collection("spedDocs").add({tpl:x.tpl,title:(x.title||TP[x.tpl].name)+"（複製）",uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:x.data||{},createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
+ try{const ref=await db().collection("spedDocs").add({cls:clsKey(x.data||{}),tpl:x.tpl,title:(x.title||TP[x.tpl].name)+"（複製）",uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:x.data||{},createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
   const ph=await loadPhotos(id);for(const k of Object.keys(ph))await ref.collection("photos").doc(k).set({data:ph[k],at:Date.now()});
   D.showToast&&D.showToast("已複製一份 ✅")}catch(e){alert("複製失敗："+(e.message||e))}}
 async function delDoc(id){
