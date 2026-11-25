@@ -179,7 +179,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 #learning-observation-page .obs-ch-title{margin:0!important;padding:3px 8px;border-bottom:1pt solid #222}
 #learning-observation-page .obs-areas{display:table;table-layout:fixed;width:100%;border-collapse:collapse}
 #learning-observation-page .obs-arow{display:table-row}
-#learning-observation-page .obs-area{display:table-cell;width:20%;vertical-align:top;padding:2px 4px 3px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
+#learning-observation-page .obs-area{display:table-cell;width:20%;vertical-align:top;padding:4px 7px 7px;border:1pt solid #222!important;border-radius:0;background:#fff!important}
 #learning-observation-page .obs-arow>.obs-area:first-child{border-left:0!important}#learning-observation-page .obs-arow>.obs-area:last-child{border-right:0!important}
 #learning-observation-page .obs-arow:first-child>.obs-area{border-top:0!important}#learning-observation-page .obs-arow:last-child>.obs-area{border-bottom:0!important}
 #learning-observation-page .obs-area .obs-chip span{justify-content:flex-start}
@@ -2349,7 +2349,7 @@ function exportDoc(pdf){if(!ed())return;
   const css=`@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact;--fs:16pt;--ps:5cm;--ts:5cm}body{font-family:"標楷體","DFKai-SB","Noto Serif CJK TC",serif;font-size:var(--fs);line-height:1.4;margin:0;color:#000}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:14px;align-items:center;flex-wrap:wrap}.bar button,.bar select{font-size:14px;padding:4px 10px}@media print{.bar{display:none}}
 h1{text-align:center;font-size:1.3em;margin:6px 0}h2{color:#fff;padding:4px 10px;font-size:1.1em;margin:8px 0 4px}.area{break-before:page;page-break-before:always;break-after:page;page-break-after:always}.area:first-of-type{break-before:auto;page-break-before:auto}.area:last-of-type{break-after:auto;page-break-after:auto}
-table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:6px}th,td{border:1px solid #555;padding:3px 5px;vertical-align:top;word-break:break-all}th{background:#d9e2f3;font-size:.9em}thead{display:table-header-group}
+table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:6px}th,td{border:1px solid #555;padding:5px 7px 7px;vertical-align:top;word-break:break-all}th{background:#d9e2f3;font-size:.9em}thead{display:table-header-group}
 tbody>tr{break-inside:avoid;page-break-inside:avoid}h2,.in-h,.in-title{break-after:avoid;page-break-after:avoid}.diff{break-before:avoid;page-break-before:avoid}@media screen{body{max-width:281mm;margin:0 auto}}td.act{background:#fbe4d5;font-weight:bold}td.ind{font-size:.8em}.lb{font-weight:bold;margin-top:4px;font-size:.85em;color:#333}.lk{font-size:.75em;color:#1a4a8a}
 .tool{display:flex;flex-direction:column;align-items:center;gap:.2cm;margin:4px 0;break-inside:avoid;text-align:center;line-height:1.2}.tool img{width:var(--ts);height:var(--ts);object-fit:contain;flex:none;display:block;margin:0}
 .ph{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}figure{margin:0;break-inside:avoid;text-align:center;max-width:calc(var(--ps) + 1cm)}figure img{width:var(--ps);height:var(--ps);max-width:100%;object-fit:contain;display:block;margin:auto}figcaption{font-size:.6em;margin-top:.2cm;line-height:1.2}.diff{font-size:.85em;margin:2px 0 6px}.intro{break-after:page;page-break-after:always}.in-title{text-align:center;font-size:1.2em;font-weight:bold;margin:6px 0}.in-h{font-weight:bold;margin:10px 0 3px}.in-p{line-height:1.6}.intro th{text-align:center}`;
@@ -2624,7 +2624,7 @@ const CSS=`.wk{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif TC",seri
 .wk h1{font-size:18pt;text-align:center;margin:0 0 10px;font-weight:bold;line-height:1.3}
 .wk h2{font-size:15pt;text-align:center;margin:0 0 14px;font-weight:bold;line-height:1.35}
 .wk table{width:100%;border-collapse:collapse;table-layout:fixed}
-.wk td,.wk th{border:1px solid #000;padding:3px 6px 7px;vertical-align:middle;font-size:12pt;font-weight:normal;word-break:break-word;overflow-wrap:anywhere}
+.wk td,.wk th{border:1px solid #000;padding:5px 8px 8px;vertical-align:middle;font-size:12pt;font-weight:normal;word-break:break-word;overflow-wrap:anywhere}
 .wk th{font-weight:bold;text-align:center}
 .wk .blue .hd th,.wk .blue .band th{background:#d9e2f3}
 .wk .orange .hd th,.wk .orange .band th{background:#fce4d6}
@@ -6004,12 +6004,12 @@ body{font-family:"標楷體","DFKai-SB","BiauKai","Noto Serif CJK TC",serif;font
 .wrap{max-width:${pdf ? 'none' : '176mm'};margin:0 auto}@media screen{.wrap{padding:${pdf ? '0' : '10mm 0'}}}
 .hd{text-align:center;margin-bottom:10px}.hd div{line-height:1.5}.hd u{padding:0 .3em}
 .info{display:grid;grid-template-columns:auto 1fr;margin:0 0 10px 1em}.info .k{white-space:nowrap}
-table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:5px 8px 8px;vertical-align:top;word-break:break-all}
 th{font-weight:normal;text-align:center;vertical-align:middle}
 .st td{vertical-align:middle}
 .p2{break-before:page;page-break-before:always}.p2h{margin:0 0 4px}
 .ph td{text-align:center}.ph th{padding:6px}.pc{vertical-align:bottom;padding:3px 3px 0;line-height:0}.pc img{width:auto;height:auto;max-width:100%;max-height:62mm;display:block;margin:0 auto}
-.ph td.cap{text-align:left;vertical-align:top;padding:2px 6px 3px;line-height:1.45}.ph tr{break-inside:avoid}
+.ph td.cap{text-align:left;vertical-align:top;padding:4px 8px 6px;line-height:1.45}.ph tr{break-inside:avoid}
 .sign{display:flex;justify-content:space-between;align-items:flex-end;margin:16px 2em 0}.sign>div{display:flex;align-items:flex-end;line-height:1.5}.sign span{display:inline-block;box-sizing:content-box;min-width:42mm;height:1.5em;line-height:1.5em;padding:0 4px 5px;border-bottom:1px solid #000;margin-left:4px;text-align:center}`;
     return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(fileName(o).replace(/\.pdf$/, ''))}</title><style>${css}</style></head><body>
 ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
@@ -7476,7 +7476,7 @@ body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC
 .money .h{margin-bottom:2px}.money .h u{text-decoration:underline}.money .tot{margin-top:auto;padding-top:8px}
 .chk{padding-left:1.6em;letter-spacing:.02em}
 .sign{display:flex;gap:30mm;margin:10px 4px 0}
-table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px;vertical-align:top;word-break:break-all;text-align:left}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:5px 8px 8px;vertical-align:top;word-break:break-all;text-align:left}
 .flow th{text-align:center;font-weight:normal}.flow td.n{text-align:center}
 .p2,.p3{break-before:page;page-break-before:always}.p3{padding-top:10mm}.p3 .st{margin-bottom:8px}.st{font-weight:bold;margin:0 0 6px}
 .flowin{margin:6px 0 4px}.flowin .st{margin:4px 0}.flow tr{break-inside:avoid}.fimg{text-align:center;margin-top:8px}.fimg img{max-width:100%;max-height:240mm}
@@ -8205,7 +8205,7 @@ function openPrint(html){
 const PRINT_BASE = `*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;margin:0;color:#000;background:#fff}
 .bar{background:#fff3cd;padding:8px 12px;font:14px sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.bar button{font-size:14px;padding:4px 12px}@media print{.bar{display:none}}
-table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:3px 5px;word-break:break-all;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #000;padding:4px 6px 6px;word-break:break-all;white-space:pre-wrap}
 .hd{text-align:center;margin-bottom:6px}.hd .t{font-size:1.35em;font-weight:bold}`;
 
 function scheduleHtml(cur, pdf){
@@ -8695,7 +8695,7 @@ body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC
 .wrap{width:100%;margin:0 auto;padding:0 1.5mm;font-size:10pt;line-height:1.3}@media screen{.wrap{width:281mm;padding:6mm 1.5mm}}
 table{border:1.5px solid #000}th,td{border:1px solid #000!important}
 .hd .t{font-size:1.25em;font-weight:bold;text-align:center}.sub{margin:4px 0 6px}.sub u{text-decoration:none;border-bottom:1px solid #000;padding:0 .8em}
-th,td{text-align:center;vertical-align:middle;padding:2px}th{font-weight:normal}
+th,td{text-align:center;vertical-align:middle;padding:3px 3px 4px}th{font-weight:normal}
 td.g{width:7mm;font-size:.95em}td.it{text-align:left;width:22mm;font-size:.92em}th.pd{font-size:.92em}th.pc{font-size:.78em;line-height:1.15}
 td.s{font-size:1em}th.dl,td.dl{border-left:2px solid #000!important}td.n{text-align:left;vertical-align:top;height:24mm;font-size:.9em}
 .legend{margin-top:5px;font-size:.92em}`;
@@ -9083,7 +9083,7 @@ function assessHtml(type, docs, forPdf){
 .sheet{width:190mm;margin:0 auto;font-size:10.5pt;line-height:1.35;page-break-after:always}.sheet:last-child{page-break-after:auto}@media screen{.sheet{border-bottom:2px dashed #bbb;margin-bottom:8mm}}
 .t1{text-align:center;font-weight:bold;font-size:12.5pt}.t2{text-align:center;font-weight:bold;font-size:12.5pt;margin:2px 0 6px}
 .inf{display:flex;justify-content:space-between;font-weight:bold;margin:4px 8mm}
-table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #000;padding:2px 4px;vertical-align:middle}th{font-weight:normal}
+table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #000;padding:3px 6px 5px;vertical-align:middle}th{font-weight:normal}
 td.g{text-align:center;width:9mm}td.it{text-align:left}td.c{text-align:center}th.s{font-size:9pt;line-height:1.2}
 .rt tr{page-break-inside:avoid}.box{border:1px solid #000;margin-top:8px;page-break-inside:avoid}.bh{text-align:center;font-weight:bold;border-bottom:1px solid #000;padding:3px}.bb{min-height:30mm;padding:6px 8px}.bb.tall{min-height:34mm}
 .sig{text-align:right;margin:10px 10mm 0;font-weight:bold}
@@ -12014,7 +12014,7 @@ const TP=Object.fromEntries(TPL.map(t=>[t.id,t]));
 const SHEET_CSS=`
 .ffs{font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC","Noto Serif TC","PMingLiU",serif;color:#000;font-size:11.5pt;line-height:1.45}
 .ffs table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:2mm}
-.ffs th,.ffs td{border:1px solid #000;padding:3px 5px;vertical-align:top;word-break:break-word}
+.ffs th,.ffs td{border:1px solid #000;padding:5px 8px 8px;vertical-align:top;word-break:break-word}
 .ffs th{font-weight:700;text-align:center;vertical-align:middle;background:#fff}
 .ffs td.c{text-align:center;vertical-align:middle}
 .ffs td.left{font-size:10.5pt}
@@ -12027,8 +12027,8 @@ const SHEET_CSS=`
 .ffs .sub{font-weight:700;margin-top:4mm}
 .ffs .intro{margin:2mm 0;white-space:pre-wrap}
 .ffs .pr{font-size:9.5pt;margin-top:1px;line-height:1.35}
-.ffs tr.tall td{height:7.6mm}
-.ffs tr.mid td{height:7.4mm;vertical-align:middle}
+.ffs tr.tall td{height:9mm}
+.ffs tr.mid td{height:9.6mm;vertical-align:middle}
 .ffs tr.sign td{height:16mm}
 .ffs .f{white-space:pre-wrap;display:inline-block;min-width:1em;vertical-align:baseline}
 .ffs .fb{white-space:pre-wrap;display:block}
@@ -12282,7 +12282,7 @@ const TPL=[
 <td>${col("r",["認知","語言","粗動作","精細動作","社會互動",["其他","："+h.t("rOther","",6)]])}</td>
 <td>${col("s",["入園（打招呼、拖鞋、放書包）","點心（餐具收拾、桌面整理）","大肌肉活動","學習區","午餐（餐具收拾、桌面整理）","如廁（洗手、穿脫衣褲、清潔）","午休（鋪睡袋／收拾）","整理書包、放學"])}</td>
 <td>${col("g",["口語提示","動作引導協助","示範","視覺提示"])}</td></tr>
-<tr class="dr"><td colspan="4" class="desc"><div>文字說明：</div>${h.b("desc","",280)}</td></tr>
+<tr class="dr"><td colspan="4" class="desc"><div>文字說明：</div>${h.b("desc","",250)}</td></tr>
 </table></div>`}}
 ];
 
@@ -12292,7 +12292,7 @@ const TP=Object.fromEntries(TPL.map(t=>[t.id,t]));
 const SHEET_CSS=`
 .ffs{font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC","Noto Serif TC","PMingLiU",serif;color:#000;font-size:11.5pt;line-height:1.45}
 .ffs table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:2mm}
-.ffs th,.ffs td{border:1px solid #000;padding:3px 5px;vertical-align:top;word-break:break-word}
+.ffs th,.ffs td{border:1px solid #000;padding:5px 8px 8px;vertical-align:top;word-break:break-word}
 .ffs th{font-weight:700;text-align:center;vertical-align:middle;background:#fff}
 .ffs td.c{text-align:center;vertical-align:middle}
 .ffs td.left{font-size:10.5pt}
@@ -12305,8 +12305,8 @@ const SHEET_CSS=`
 .ffs .sub{font-weight:700;margin-top:4mm}
 .ffs .intro{margin:2mm 0;white-space:pre-wrap}
 .ffs .pr{font-size:9.5pt;margin-top:1px;line-height:1.35}
-.ffs tr.tall td{height:7.6mm}
-.ffs tr.mid td{height:7.4mm;vertical-align:middle}
+.ffs tr.tall td{height:9mm}
+.ffs tr.mid td{height:9.6mm;vertical-align:middle}
 .ffs tr.sign td{height:16mm}
 .ffs .f{white-space:pre-wrap;display:inline-block;min-width:1em;vertical-align:baseline}
 .ffs .fb{white-space:pre-wrap;display:block}
@@ -12321,11 +12321,11 @@ const SHEET_CSS=`
 .sped .ttl{font-size:15pt;margin:1mm 0 2mm}
 .sped .hrow{display:flex;justify-content:space-between;gap:4mm;padding:0 2mm}
 .sped .hrow>span{white-space:nowrap}
-.sped tr.opts td{padding:3px 6px;line-height:1.75}
+.sped tr.opts td{padding:7px 9px 9px;line-height:1.75}
 .sped .spi{display:block}
 .sped .spi .ck{white-space:normal}
 .sped tr.dr{break-inside:auto;page-break-inside:auto}
-.sped td.desc{height:84mm}
+.sped td.desc{height:76mm;padding:7px 10px 10px}
 .ffs thead{display:table-header-group}
 .ffs tr{break-inside:avoid;page-break-inside:avoid}
 `;
