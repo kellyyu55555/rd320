@@ -7109,7 +7109,8 @@ function showActivity(id){
       h("table",{class:"form"},h("tbody",null,
         tr("活動地點",str(a.location)), tr("舉辦時間",str(a.time)),
         tr("宗旨或目的", arr(a.purpose).map((p,i)=>`${i+1}. ${p}`).join("\n")),
-        tr("服務對象及人數",str(a.target)), opt("活動內容",a.content))),
+        tr("服務對象及人數",str(a.target)), actSess(a).length ? tr("活動內容（第1天）",str(a.content)||"—") : opt("活動內容",a.content),
+        ...actSess(a).map((x,i)=>tr(`第${i+2}天`,[str(x.time)||str(x.date),str(x.location)&&str(x.location)!==str(a.location)?"地點："+str(x.location):"",str(x.content)].filter(Boolean).join("\n"))))),
       flowSection(a, flow),
       h("table",{class:"form",style:"margin-top:14px"},h("tbody",null,
         opt("配合單位",a.partner), opt("工作人員",a.staff),
@@ -7244,6 +7245,29 @@ function flowEditor(list){
   return wrap;
 }
 
+/* 同一系列、不同天的活動（第一天填在主表單；這裡是第二天之後） */
+const actSess = a => (Array.isArray(a&&a.sessions)?a.sessions:[]).filter(x=>x&&typeof x==="object"&&(str(x.time).trim()||str(x.content).trim()||str(x.date).trim()));
+function sessEditor(list){
+  const box = h("div",{class:"flowed"});
+  const renum = () => [...box.children].forEach((r,i)=>r.querySelector(".no").textContent=`第 ${i+2} 天`);
+  const add = (x={}) => {
+    const date=h("input",{class:"in",type:"date",value:str(x.date),title:"活動日期"});
+    const time=h("input",{class:"in",placeholder:"舉辦時間，例如：115年09月29日 星期二 晚上17:00-18:00",value:str(x.time)});
+    const loc=h("input",{class:"in",placeholder:"活動地點（和第一天一樣可以不填）",value:str(x.location)});
+    const content=h("textarea",{class:"in",placeholder:"這一天的活動內容",style:"min-height:110px"}); content.value=str(x.content);
+    const row = h("div",{class:"fr"},
+      h("div",{class:"hd"},h("span",{class:"no"}),h("span",{class:"sp"}),
+        h("button",{type:"button","aria-label":"上移",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } }},"↑"),
+        h("button",{type:"button","aria-label":"移除",onclick:()=>{ if((time.value.trim()||content.value.trim())&&!confirm("要移除這一天的活動嗎？")) return; row.remove(); renum(); }},"×")),
+      h("div",{class:"f2"},date,loc), time, content);
+    row._read = () => ({date:date.value,time:time.value.trim(),location:loc.value.trim(),content:content.value.trim()});
+    box.append(row); renum();
+  };
+  (Array.isArray(list)?list:[]).forEach(x=>add(x||{}));
+  const wrap = h("div",{class:"flowed"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增另一天的活動"));
+  wrap.read = () => [...box.children].map(r=>r._read()).filter(x=>x.date||x.time||x.location||x.content);
+  return wrap;
+}
 function editActivity(id, copy, focus){
   const a = id ? S.activities.find(x=>x.id===id) : null;
   const v = k => a ? str(a[k]) : "";
@@ -7255,7 +7279,7 @@ function editActivity(id, copy, focus){
     location:inp("location"), date:h("input",{class:"in",type:"date",value:v("date")}), time:inp("time","例如：115年10月15日上午10:00-11:00"),
     purpose:h("textarea",{class:"in"}), target:ta("target",60), content:ta("content"),
     notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:(()=>{ const t=h("textarea",{class:"in",placeholder:"3.（要加的注意事項，一行一點，不用打編號）"}); t.value=actNoteExtra(v("notes")).join("\n"); return t; })(),
-    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow),
+    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow), sessions:sessEditor(a&&a.sessions),
     planType:h("select",{class:"in"},["年度計畫","非年度計畫","全園性節慶活動"].map(o=>h("option",{selected:v("planType")===o},o))),
     status:h("select",{class:"in"},["草稿","已呈報","已核准"].map(o=>h("option",{selected:(copy?"草稿":(v("status")||"草稿"))===o},o))),
     reportDate:inp("reportDate","例如：115.08.01"), handler:inp("handler"), director:inp("director")
@@ -7273,7 +7297,7 @@ function editActivity(id, copy, focus){
     for (const k of ["name","semester","type","location","date","time","target","content","notify","partner","staff","prep","contact","notes","planType","status","reportDate","handler","director"])
       data[k] = f[k].value.trim();
     data.notes = actNoteExtra(f.notes.value).join("\n");
-    data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read();
+    data.purpose = linesOf(f.purpose.value); data.income = f.income.read(); data.expense = f.expense.read(); data.flow = f.flow.read(); data.sessions = f.sessions.read();
     const latest = docId ? S.activities.find(x=>x.id===docId) : null;
     data.photos = idsOf(latest && latest.photos); data.flowImages = idsOf(latest && latest.flowImages);
     data.attachments = (latest && Array.isArray(latest.attachments)) ? latest.attachments : [];
@@ -7308,7 +7332,8 @@ function editActivity(id, copy, focus){
       h("div",{class:"f2"},L("活動地點",f.location),L("活動日期（排序用）",f.date)),
       L("舉辦時間",f.time),
       L("宗旨或目的",f.purpose,"（一行一項）"),
-      L("服務對象及人數",f.target), L("活動內容",f.content),
+      L("服務對象及人數",f.target), L("活動內容",f.content,"（第一天）"),
+      L("同一系列的其他天",f.sessions,"（第二天之後的日期、時間和活動內容，列印時會接在第一天後面）"),
       L("配合單位",f.partner),
       h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
       L("準備物品",f.prep),
@@ -7395,10 +7420,12 @@ table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px so
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(actFileName(a).replace(/\.pdf$/,""))}</title><style>${css}</style></head><body>
 ${pdf?"":'<div class="bar"><button onclick="window.print()">🖨 列印／存成PDF</button><span>列印設定：紙張 A4、方向「直向」，勾選「背景圖形」。要存成 PDF：目的地選「另存為 PDF」。</span></div>'}
 <div class="wrap"><div class="pg1">${head}
-<div class="sec"><p>一、活動名稱：${esc(a.name)}</p><p>二、活動地點：${esc(a.location)}</p><p>三、舉辦時間：${esc(a.time)}</p></div>
+${(()=>{ const ss=actSess(a); if(!ss.length) return `<div class="sec"><p>一、活動名稱：${esc(a.name)}</p><p>二、活動地點：${esc(a.location)}</p><p>三、舉辦時間：${esc(a.time)}</p></div>`;
+  const locs=[...new Set([str(a.location)].concat(ss.map(x=>str(x.location))).map(x=>x.trim()).filter(Boolean))];
+  return `<div class="sec"><p>一、活動名稱：${esc(a.name)}</p><p>二、活動地點：${esc(locs.join("、"))}</p><p>三、舉辦時間：</p><p class="ind">第1天：${esc(a.time)}</p>${ss.map((x,i)=>`<p class="ind">第${i+2}天：${esc(str(x.time)||str(x.date))}${str(x.location)&&locs.length>1?"（"+esc(x.location)+"）":""}</p>`).join("")}</div>`; })()}
 <div class="sec"><p>四、舉辦宗旨或目的：</p>${arr(a.purpose).map((x,i)=>`<p class="ind">${i+1}.${esc(x)}</p>`).join("")}</div>
 <div class="sec"><p>五、服務對象及人數：</p><p class="ind">${lines(a.target)}</p></div>
-<div class="sec"><p>六、活動內容（必要時另附檔案說明內容）：</p>${str(a.content).trim()?`<p class="ind">${lines(a.content)}</p>`:(flow.length||fimgs.length?"":"<p>&nbsp;</p>")}
+<div class="sec"><p>六、活動內容（必要時另附檔案說明內容）：</p>${actSess(a).length ? [{time:a.time,content:a.content}].concat(actSess(a)).map((x,i)=>`<p class="ind">第${i+1}天${str(x.time)||str(x.date)?"（"+esc(str(x.time)||str(x.date))+"）":""}：</p>${str(x.content).trim()?`<p class="ind">${lines(x.content)}</p>`:""}`).join("") : (str(a.content).trim()?`<p class="ind">${lines(a.content)}</p>`:(flow.length||fimgs.length?"":"<p>&nbsp;</p>"))}
 ${flow.length||fimgs.length ? `<div class="flowin"><p class="st">活動流程與道具規劃</p>
 ${flow.length?`<table class="flow"><colgroup><col style="width:7%"><col style="width:20%"><col style="width:35%"><col style="width:22%"><col style="width:16%"></colgroup>
 <thead><tr><th></th><th>活動名稱</th><th>玩法說明</th><th>道具與器材需求</th><th>負責人員</th></tr></thead>
