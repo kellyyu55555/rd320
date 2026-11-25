@@ -7275,7 +7275,7 @@ function flowEditor(list){
 
 /* 同一系列、不同天的活動（第一天填在主表單；這裡是第二天之後） */
 const actSess = a => (Array.isArray(a&&a.sessions)?a.sessions:[]).filter(x=>x&&typeof x==="object"&&(str(x.time).trim()||str(x.content).trim()||str(x.date).trim()));
-function sessEditor(list){
+function sessEditor(list, onTop){
   const box = h("div",{class:"flowed"});
   const renum = () => [...box.children].forEach((r,i)=>r.querySelector(".no").textContent=`第 ${i+2} 天`);
   const add = (x={}) => {
@@ -7285,10 +7285,12 @@ function sessEditor(list){
     const content=h("textarea",{class:"in",placeholder:"這一天的活動內容",style:"min-height:110px"}); content.value=str(x.content);
     const row = h("div",{class:"fr"},
       h("div",{class:"hd"},h("span",{class:"no"}),h("span",{class:"sp"}),
-        h("button",{type:"button","aria-label":"上移",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } }},"↑"),
+        h("button",{type:"button","aria-label":"上移",title:"往前移一天（第 2 天按這裡會和第 1 天交換）",onclick:()=>{ if(row.previousElementSibling){ box.insertBefore(row,row.previousElementSibling); renum(); } else if(onTop) onTop(row); }},"↑"),
+        h("button",{type:"button","aria-label":"下移",title:"往後移一天",onclick:()=>{ if(row.nextElementSibling){ box.insertBefore(row.nextElementSibling,row); renum(); } }},"↓"),
         h("button",{type:"button","aria-label":"移除",onclick:()=>{ if((time.value.trim()||content.value.trim())&&!confirm("要移除這一天的活動嗎？")) return; row.remove(); renum(); }},"×")),
       h("div",{class:"f2"},date,loc), time, content);
     row._read = () => ({date:date.value,time:time.value.trim(),location:loc.value.trim(),content:content.value.trim()});
+    row._set = x => { date.value=str(x.date); time.value=str(x.time); loc.value=str(x.location); content.value=str(x.content); };
     box.append(row); renum();
   };
   (Array.isArray(list)?list:[]).forEach(x=>add(x||{}));
@@ -7307,12 +7309,17 @@ function editActivity(id, copy, focus){
     location:inp("location"), date:h("input",{class:"in",type:"date",value:v("date")}), time:inp("time","例如：115年10月15日上午10:00-11:00"),
     purpose:h("textarea",{class:"in"}), target:ta("target",60), content:ta("content"),
     notify:ta("notify",60), partner:inp("partner"), staff:ta("staff",60), prep:ta("prep"), contact:ta("contact",60), notes:(()=>{ const t=h("textarea",{class:"in",placeholder:"3.（要加的注意事項，一行一點，不用打編號）"}); t.value=actNoteExtra(v("notes")).join("\n"); return t; })(),
-    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow), sessions:sessEditor(a&&a.sessions),
+    income:moneyLines(a&&a.income), expense:moneyLines(a&&a.expense,{check:true}), flow:flowEditor(a&&a.flow), sessions:sessEditor(a&&a.sessions, row=>swapTop(row)),
     planType:h("select",{class:"in"},["年度計畫","非年度計畫","全園性節慶活動"].map(o=>h("option",{selected:v("planType")===o},o))),
     status:h("select",{class:"in"},["草稿","已呈報","已核准"].map(o=>h("option",{selected:(copy?"草稿":(v("status")||"草稿"))===o},o))),
     reportDate:inp("reportDate","例如：115.08.01"), handler:inp("handler"), director:inp("director")
   };
   f.purpose.value = a ? arr(a.purpose).join("\n") : "";
+  /* 第 1 天（主表單）和第 2 天交換 */
+  const swapTop = row => { const m={date:f.date.value,time:f.time.value,location:f.location.value,content:f.content.value}, x=row._read();
+    f.date.value=x.date; f.time.value=x.time; f.content.value=x.content;
+    if (x.location){ f.location.value=x.location; } row._set({date:m.date,time:m.time,location:x.location?m.location:"",content:m.content});
+    toast("已將第 1 天和第 2 天交換"); };
   if (copy){ f.name.value = v("name")+"（複本）"; }
   const err = h("div",{class:"err"});
   /* 自動儲存：停止輸入 1.2 秒後自動存；新增或複製的計畫第一次自動儲存後就有自己的編號，之後都存回同一份 */
