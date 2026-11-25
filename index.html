@@ -1043,7 +1043,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
                     <p x-show="req.fileNote" class="text-xs font-bold text-brand" x-text="`📄 檔案：${req.fileNote}`"></p>
                     <p class="text-[11px] text-wood-dark/40" x-text="`申請時間：${req.requestTimestamp || req.requestDate}`"></p>
                   </div>
-                  <button @click="confirmLaminateRequest(req)" class="px-4 py-2 rounded-xl bg-sage text-paper text-xs font-bold hover:bg-sage-dark whitespace-nowrap">✅ 確認</button>
+                  <button type="button" @click="confirmLaminateRequest(req, $event)" class="px-4 py-2 rounded-xl bg-sage text-paper text-xs font-bold hover:bg-sage-dark whitespace-nowrap">✅ 確認</button>
                   <button @click="rejectLaminateRequest(req)" class="px-3 py-2 rounded-xl bg-paper text-coral text-xs font-bold border border-coral/40 hover:bg-coral/10 whitespace-nowrap">取消</button>
                 </div>
               </template>
@@ -4254,20 +4254,37 @@ function kgApp() {
       } catch (e) { console.error(e); this.laminateError = `送出失敗（${e.code || e.message}），請確認 Firestore 規則後再試一次`; }
       this.submitting = false;
     },
-    async confirmLaminateRequest(req) {
+    async confirmLaminateRequest(req, ev) {
+      const btn = ev && ev.currentTarget; if (btn) { if (btn.disabled) return; btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '處理中…'; }
       const stockRef = this.db.collection('laminateStock').doc('main'), reqRef = this.db.collection('laminateRequests').doc(req.id);
+      const qty = Math.max(0, parseInt(req.qty, 10) || 0);
+      const msgOf = e => e.message === 'stock' ? '剩餘張數不足，請先在上方「調整剩餘張數」補貨後再確認。' : e.message === 'already' ? '這筆申請已經被處理過了。' : e.message === 'qty' ? '這筆申請的張數不正確，無法確認。' : (e.code === 'permission-denied' ? '沒有權限確認（您的帳號需要在管理者名單中）。' : `確認失敗（${e.code || e.message}），請重新整理後再試一次。`);
       try {
-        await this.db.runTransaction(async tx => {
-          const st = await tx.get(stockRef), rq = await tx.get(reqRef);
+        if (!qty) throw new Error('qty');
+        try {
+          await this.db.runTransaction(async tx => {
+            const st = await tx.get(stockRef), rq = await tx.get(reqRef);
+            if (!rq.exists || rq.data().status !== 'pending') throw new Error('already');
+            const remain = st.exists ? Number(st.data().remaining || 0) : 0;
+            if (remain < qty) throw new Error('stock');
+            tx.set(stockRef, { remaining: remain - qty }, { merge: true });
+            tx.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() });
+          });
+        } catch (e) {
+          if (['stock', 'already', 'qty'].includes(e.message) || e.code === 'permission-denied') throw e;
+          /* 交易失敗（網路不穩等）時改用一般寫入再試一次 */
+          const [st, rq] = await Promise.all([stockRef.get(), reqRef.get()]);
           if (!rq.exists || rq.data().status !== 'pending') throw new Error('already');
           const remain = st.exists ? Number(st.data().remaining || 0) : 0;
-          if (remain < req.qty) throw new Error('stock');
-          tx.update(stockRef, { remaining: remain - req.qty });
-          tx.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() });
-        });
-        this.showToast(`已確認：${req.borrower} 護貝膜 ${req.qty} 張`);
+          if (remain < qty) throw new Error('stock');
+          const bt = this.db.batch(); bt.set(stockRef, { remaining: remain - qty }, { merge: true }); bt.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() }); await bt.commit();
+        }
+        this.showToast(`已確認：${req.borrower} 護貝膜 ${qty} 張`);
       } catch (e) {
-        this.showToast(e.message === 'stock' ? '剩餘張數不足，請先補貨並調整庫存' : e.message === 'already' ? '此申請已被處理' : `確認失敗（${e.code || e.message}）`, 5000);
+        console.error('confirmLaminateRequest', e);
+        alert(msgOf(e));
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.t || '✅ 確認'; }
       }
     },
     async rejectLaminateRequest(req) {
