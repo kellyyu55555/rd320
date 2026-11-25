@@ -7296,6 +7296,7 @@ function sessEditor(list, onTop){
   (Array.isArray(list)?list:[]).forEach(x=>add(x||{}));
   const wrap = h("div",{class:"flowed"}, box, h("button",{type:"button",class:"btn",style:"justify-self:start",onclick:()=>add()},"＋ 新增另一天的活動"));
   wrap.read = () => [...box.children].map(r=>r._read()).filter(x=>x.date||x.time||x.location||x.content);
+  wrap.first = () => box.firstElementChild;
   return wrap;
 }
 function editActivity(id, copy, focus){
@@ -7367,7 +7368,8 @@ function editActivity(id, copy, focus){
       h("div",{class:"f2"},L("活動地點",f.location),L("活動日期（排序用）",f.date)),
       L("舉辦時間",f.time),
       L("宗旨或目的",f.purpose,"（一行一項）"),
-      L("服務對象及人數",f.target), L("活動內容",f.content,"（第一天）"),
+      L("服務對象及人數",f.target), h("label",{class:"fl"}, h("span",{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap"},"活動內容 ",h("small",null,"（第一天）"),
+        h("button",{type:"button",class:"btn sm",title:"把第 1 天的日期、時間、地點、內容和第 2 天交換",onclick:e=>{ e.preventDefault(); const fr=f.sessions.first(); if(!fr){ toast("還沒有第 2 天，請先按下面的「＋ 新增另一天的活動」"); return; } swapTop(fr); }},"↓ 和第 2 天交換")), f.content),
       L("同一系列的其他天",f.sessions,"（第二天之後的日期、時間和活動內容，列印時會接在第一天後面）"),
       L("配合單位",f.partner),
       h("div",{class:"f2"},L("工作人員",f.staff),L("執行與聯絡",f.contact)),
