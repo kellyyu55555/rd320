@@ -424,7 +424,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='patrol' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             📝 巡堂紀錄
-          </button><button style="outline:2px dashed #8e4fb8;outline-offset:-2px;" x-show="currentUser && isOwner" @click="view='meeting'"
+          </button><button style="outline:2px dashed #8e4fb8;outline-offset:-2px;" x-show="currentUser && (isOwner || ['mr.chris.d92@gmail.com'].includes(((currentUser&&currentUser.email)||'').toLowerCase()))" @click="view='meeting'"
             class="px-4 py-1 rounded-full font-heading font-bold text-sm transition-all"
             :class="view==='meeting' ? 'washi-tab-active' : 'bg-paper/20 text-paper/85 hover:bg-paper/30'">
             🗒️ 會議紀錄
@@ -550,7 +550,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <h3 class="font-heading font-black text-base mt-3">🔒 班級巡堂紀錄表</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">每週巡堂觀察紀錄（僅限本人使用）</p>
           </button>
-          <button type="button" x-show="currentUser && isOwner" @click="view='meeting'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
+          <button type="button" x-show="currentUser && (isOwner || ['mr.chris.d92@gmail.com'].includes(((currentUser&&currentUser.email)||'').toLowerCase()))" @click="view='meeting'" class="home-card paper-card rounded-3xl p-5 shadow-card text-left">
             <div class="flex items-start justify-between gap-2"><span class="text-4xl">🗒️</span></div>
             <h3 class="font-heading font-black text-base mt-3">🔒 會議紀錄</h3>
             <p class="text-xs text-wood-dark/65 mt-1 leading-relaxed">教保會議、園務會議、課發會、勞資會議（僅限本人使用）</p>
@@ -9085,6 +9085,70 @@ const mtCls = () => { try{ const c = asAllCls(); if (c.length) return c; }catch(
 const mtPh = a => (Array.isArray(a)?a:[]).filter(p=>p&&p.id).map(p=>({id:str(p.id), cap:str(p.cap)}));
 const MTC = {}, MTQ = {};
 const mtCan = () => !!(S.d && S.d.currentUser && S.d.isOwner);
+const MT_VIEWERS = ["mr.chris.d92@gmail.com"];
+const mtMail = () => str(((S.d && S.d.currentUser)||{}).email).toLowerCase();
+const mtSee = () => mtCan() || !!(S.d && S.d.currentUser && MT_VIEWERS.includes(mtMail()));
+/* 上傳的 PDF 檔：切成小塊存在 Firestore（meetingFiles/{id}/chunks） */
+const MT_FILES = "meetingFiles", MT_CHUNK = 700000;
+function mtPdfName(m){ return mtTitle(mtNorm(m)).replace(/[\\/:*?"<>|]/g,"_") + ".pdf"; }
+function mtSaveBlob(blob, name){ const u=URL.createObjectURL(blob), a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u), 60000); }
+async function mtDownload(m0, btn){
+  if (!window.PdfUtil){ alert("PDF 元件尚未載入，請重新整理頁面"); return; }
+  const m = mtNorm(m0), label = btn && btn.textContent; if (btn){ btn.disabled = true; btn.textContent = "產生 PDF 中…"; }
+  try{ await Promise.all(mtAllPh(m).map(p=>mtLoad(p.id))); const blob = await PdfUtil.htmlToPdf(mtPrintHtml(m, true), { landscape:false, margin:15, units:".wrap" }); mtSaveBlob(blob, mtPdfName(m)); }
+  catch(e){ alert("PDF 產生失敗：" + (e.message||e)); }
+  finally{ if (btn){ btn.disabled = false; btn.textContent = label; } }
+}
+function mtFileUpload(){
+  const M = S.mt, inp = document.createElement("input"); inp.type = "file"; inp.accept = "application/pdf,.pdf"; inp.multiple = true;
+  inp.onchange = async () => { const fs = [...(inp.files||[])]; if (!fs.length) return; const u = S.d.currentUser;
+    for (const f of fs){
+      if (!/\.pdf$/i.test(f.name) && f.type!=="application/pdf"){ alert("「"+f.name+"」不是 PDF 檔"); continue; }
+      if (f.size > 15*1024*1024){ alert("「"+f.name+"」超過 15MB，請先壓縮再上傳"); continue; }
+      try{
+        toast("上傳中…「"+f.name+"」");
+        const b64 = await new Promise((ok,bad)=>{ const fr=new FileReader(); fr.onload=()=>ok(String(fr.result).split(",")[1]); fr.onerror=bad; fr.readAsDataURL(f); });
+        const n = Math.ceil(b64.length / MT_CHUNK), ref = S.db.collection(MT_FILES).doc();
+        await ref.set({ name:f.name.replace(/\.pdf$/i,""), type: M.type!=="all" ? M.type : "其他", size:f.size, chunks:n, done:false, uid:u.uid, byEmail:mtMail(), byName:str(S.d.myName)||str(u.displayName)||mtMail(), createdAt:Date.now() });
+        for (let i=0;i<n;i++) await ref.collection("chunks").doc(String(i)).set({ d: b64.slice(i*MT_CHUNK,(i+1)*MT_CHUNK) });
+        await ref.update({ done:true }); toast("已上傳「"+f.name+"」");
+      }catch(e){ alert("上傳失敗："+(e.code==="permission-denied"?"沒有權限（請更新 firestore.rules）":(e.message||e))); }
+    } };
+  inp.click();
+}
+async function mtFileBlob(f){
+  const snap = await S.db.collection(MT_FILES).doc(f.id).collection("chunks").get();
+  const parts = snap.docs.sort((a,b)=>(+a.id)-(+b.id)).map(x=>x.data().d||"").join("");
+  const bin = atob(parts), arr = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:"application/pdf"});
+}
+async function mtFileOpen(f, dl){
+  const w = dl ? null : window.open("", "_blank");
+  try{ const b = await mtFileBlob(f); if (dl) return mtSaveBlob(b, f.name+".pdf"); const u = URL.createObjectURL(b); if (w) w.location.href = u; else window.open(u, "_blank"); }
+  catch(e){ if (w) w.close(); alert("讀取 PDF 失敗："+(e.message||e)); }
+}
+async function mtFileDel(f){
+  if (!confirm("刪除「"+f.name+"」？刪除後無法復原。")) return;
+  try{ const ref = S.db.collection(MT_FILES).doc(f.id), cs = await ref.collection("chunks").get(); for (const c of cs.docs) await c.ref.delete(); await ref.delete(); toast("已刪除"); }
+  catch(e){ alert("刪除失敗："+(e.message||e)); }
+}
+function mtFilesSection(){
+  const M = S.mt, fl = (M.files||[]).filter(f=>f.done!==false && (M.type==="all" || f.type===M.type)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const uid = (S.d.currentUser||{}).uid;
+  return h("section",{class:"as-form mt-form",style:"margin-top:14px"},
+    h("div",{style:"display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between"},
+      h("div",{class:"mt-sh",style:"margin:0"},"📎 上傳的 PDF 檔" + (M.type!=="all" ? "（"+M.type+"）" : "")),
+      h("button",{class:"btn primary",onclick:()=>mtFileUpload()},"⬆️ 上傳 PDF 檔")),
+    h("p",{class:"note",style:"font-size:13px;margin:4px 0 8px"}, "已經做好的會議紀錄 PDF 可以直接上傳保存（單檔 15MB 以內）。" + (M.type==="all" ? "先點上面的會議類別再上傳，檔案就會歸到那一類。" : "")),
+    fl.length ? h("div",{class:"list"}, fl.map(f=>h("div",{class:"card row",style:"cursor:default"},
+      h("span",{style:"flex:1;min-width:220px"}, h("span",{class:"mt-badge mt-"+((MT_TYPES.find(x=>x[0]===f.type)||[])[1]||"t0")},f.type||"其他"),
+        h("div",{style:"font-size:16px;font-weight:700;margin-top:4px"},"📄 "+f.name),
+        h("div",{style:"font-size:13px;color:var(--muted);margin-top:2px"},[f.byName?"上傳："+f.byName:"", f.createdAt?new Date(f.createdAt).toLocaleDateString("zh-TW"):"", f.size?(f.size/1048576).toFixed(1)+" MB":""].filter(Boolean).join("｜"))),
+      h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
+        h("button",{class:"btn",onclick:()=>mtFileOpen(f,false)},"檢視"),
+        h("button",{class:"btn",onclick:()=>mtFileOpen(f,true)},"⬇️ 下載"),
+        (mtCan() || f.uid===uid) ? h("button",{class:"btn danger",onclick:()=>mtFileDel(f)},"刪除") : null)))) : h("div",{class:"notice"},"還沒有上傳的 PDF 檔。"));
+}
 function mtLoad(id){ if (MTC[id]) return Promise.resolve(MTC[id]); if (!MTQ[id]) MTQ[id] = S.db.collection(MT_PH).doc(id).get().then(x=>{ const d=x.exists?x.data():null; if (d&&d.data) MTC[id]=d.data; return MTC[id]||null; }).catch(()=>null); return MTQ[id]; }
 function mtImg(id, attrs){ const im = h("img", Object.assign({src:MTC[id]||PH_IMG,alt:""}, attrs||{})); if (!MTC[id]) mtLoad(id).then(u=>{ if (u) im.src=u; }); return im; }
 const mtYear0 = () => { const t=new Date(); return t.getFullYear()-1911-(t.getMonth()<7?1:0); };
@@ -9116,7 +9180,7 @@ function mtNorm(m){
 }
 function renderMeeting(app){
   const M = S.mt;
-  if (!mtCan()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
+  if (!mtSee()){ app.append(h("div",{class:"notice"},"這個頁面只限指定帳號使用。")); return; }
   if (!M.got){ app.append(h("div",{class:"notice"}, S.stale ? "目前連不到資料，請稍後再重新整理。" : "會議紀錄載入中…")); return; }
   if (M.edit) return renderMeetingEditor(app);
   if (M.view) return renderMeetingView(app);
@@ -9144,7 +9208,7 @@ function renderMeeting(app){
       return h("div",null,(a>0?"…":""),parts,(b<t.length?"…":"")); })); };
   app.append(h("section",{class:"intro"},
     h("h1",null,"會議紀錄"),
-    h("p",{class:"note"},"🔒 僅限本人使用，其他人（包含其他管理員）都看不到"),
+    h("p",{class:"note"}, can ? "🔒 只有您和指定的檢視帳號看得到（檢視帳號只能檢視、列印、下載 PDF 和上傳 PDF 檔）" : "👀 您可以檢視、列印、下載 PDF，也可以上傳 PDF 檔"),
     h("p",{class:"note",style:"margin-top:4px"},"教保會議、園務會議、課發會、勞資會議。"),
     h("div",{class:"mt-search"},h("span",null,"🔍"),(()=>{ const i=h("input",{class:"in",type:"search",value:M.q||"",placeholder:"搜尋關鍵字（例如：地震、任務卡、陳泳鉌）。可輸入多個字詞，用空白隔開",oninput:e=>{ M.q=e.target.value; clearTimeout(M._qt); M._qt=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$("#kb-app .mt-search input"); if (n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },250); }}); return i; })(), M.q ? h("button",{class:"btn sm",onclick:()=>{ M.q=""; render(); }},"清除") : null),
     h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
@@ -9153,7 +9217,7 @@ function renderMeeting(app){
     h("span",null, kws.length ? `找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄` : `共 ${list.length} 份`),
     h("label",null,"排序：",h("select",{class:"in",onchange:e=>{ M.sort=e.target.value; try{ localStorage.setItem("mtSort",M.sort); }catch(_){} render(); }},
       [["dateDesc","開會日期（新→舊）"],["dateAsc","開會日期（舊→新）"],["noDesc","學期與次數（新→舊）"],["noAsc","學期與次數（舊→新）"],["type","會議類別"],["title","標題"]].map(([v,l])=>h("option",{value:v,selected:(M.sort||"dateDesc")===v},l))))));
-  if (!list.length){ app.append(h("div",{class:"notice"}, kws.length ? "沒有符合的會議紀錄，換個關鍵字試試看。" : "還沒有會議紀錄，按「＋ 新增會議紀錄」開始。")); return; }
+  if (!list.length){ app.append(h("div",{class:"notice"}, kws.length ? "沒有符合的會議紀錄，換個關鍵字試試看。" : (can ? "還沒有會議紀錄，按「＋ 新增會議紀錄」開始。" : "這一類還沒有會議紀錄。"))); app.append(mtFilesSection()); return; }
   app.append(h("div",{class:"list"}, list.map(m0=>{ const m=mtNorm(m0), ti=MT_TYPES.find(x=>x[0]===m.type);
     return h("div",{class:"card row",style:"cursor:default"},
       h("span",{style:"flex:1;min-width:240px"},
@@ -9163,12 +9227,14 @@ function renderMeeting(app){
       h("span",{style:"display:flex;gap:6px;flex-wrap:wrap"},
         h("button",{class:"btn",onclick:()=>{ M.view=m.id; render(); window.scrollTo(0,0); }},"檢視"),
         h("button",{class:"btn",onclick:()=>printMeeting(m)},"🖨 列印"),
-        MT_FOLDERS[m.type] ? h("button",{class:"btn",title:m0.driveAt?("上次上傳："+new Date(m0.driveAt).toLocaleString("zh-TW",{hour12:false})):"上傳 PDF 到「"+m.type+"」雲端資料夾",onclick:e=>mtUpload(m0,e.currentTarget)},m0.driveAt?"☁️ 上傳雲端 ✓":"☁️ 上傳雲端") : null,
+        h("button",{class:"btn",onclick:e=>mtDownload(m0,e.currentTarget)},"⬇️ 下載 PDF"),
+        can && MT_FOLDERS[m.type] ? h("button",{class:"btn",title:m0.driveAt?("上次上傳："+new Date(m0.driveAt).toLocaleString("zh-TW",{hour12:false})):"上傳 PDF 到「"+m.type+"」雲端資料夾",onclick:e=>mtUpload(m0,e.currentTarget)},m0.driveAt?"☁️ 上傳雲端 ✓":"☁️ 上傳雲端") : null,
         m0.driveUrl ? h("a",{class:"btn",href:m0.driveUrl,target:"_blank",rel:"noopener"},"📄 雲端檔案") : null,
         can ? h("button",{class:"btn",onclick:()=>{ M.edit=m.id; M.draft=mtNorm(m0); M.dirty=false; render(); window.scrollTo(0,0); }},"編輯") : null,
         can ? h("button",{class:"btn",onclick:()=>mtCopy(m)},"複製") : null,
         can ? h("button",{class:"btn danger",onclick:()=>confirmBox("刪除這份會議紀錄？",mtTitle(m)+" 刪除後無法復原。","刪除",async()=>{ await S.db.doc(MT_COL+"/"+m.id).delete(); for (const p of m.photos){ try{ await S.db.collection(MT_PH).doc(p.id).delete(); }catch(_){} } toast("已刪除"); })},"刪除") : null));
   })));
+  app.append(mtFilesSection());
 }
 function mtNextNo(type, year, sem){ return S.mt.list.filter(x=>x.type===type&&str(x.year)===str(year)&&str(x.sem)===str(sem)).reduce((a,x)=>Math.max(a,+x.no||0),0)+1; }
 function mtNew(){
@@ -9311,7 +9377,8 @@ function renderMeetingView(app){
   const m = mtNorm(m0);
   app.append(h("div",{class:"toolbar"}, h("button",{class:"btn",onclick:()=>{ M.view=null; render(); }},"← 返回清單"), h("span",{class:"sp"}),
     h("button",{class:"btn",onclick:()=>printMeeting(m)},"🖨 列印"),
-    MT_FOLDERS[m.type] ? h("button",{class:"btn",onclick:e=>mtUpload(m0,e.currentTarget)},m0.driveAt?"☁️ 上傳雲端 ✓":"☁️ 上傳雲端") : null,
+    h("button",{class:"btn",onclick:e=>mtDownload(m0,e.currentTarget)},"⬇️ 下載 PDF"),
+    mtCan() && MT_FOLDERS[m.type] ? h("button",{class:"btn",onclick:e=>mtUpload(m0,e.currentTarget)},m0.driveAt?"☁️ 上傳雲端 ✓":"☁️ 上傳雲端") : null,
     m0.driveUrl ? h("a",{class:"btn",href:m0.driveUrl,target:"_blank",rel:"noopener"},"📄 雲端檔案") : null,
     mtCan() ? h("button",{class:"btn primary",onclick:()=>{ M.view=null; M.edit=m.id; M.draft=mtNorm(m0); M.dirty=false; render(); }},"編輯") : null));
   const box = h("div",{class:"mt-view"});
@@ -11715,7 +11782,9 @@ function sync(d, view){
     S.as = { tab:"routine", year0:asYear0(), year:String(asYear0()), cls:"", roster:{}, gotR:false, list:[], got:false, assign:{}, open:null, draft:null, mine:false, all:[], gotAll:false, admOpen:{} };
     unsubs.push(d.db.doc("roster/children").onSnapshot(x=>{ const l=(x.exists&&(x.data()||{}).list)||{}; const o={}; Object.keys(l).forEach(k=>{ if (Array.isArray(l[k])) o[k]=l[k].filter(v=>typeof v==="string"); }); S.as.roster=o; S.as.gotR=true; if (!S.as.open) render(); }, ()=>{ S.as.gotR=true; render(); }));
     S.mt = { list:[], got:false, q:"", sort:(()=>{ try{ return localStorage.getItem("mtSort")||"dateDesc"; }catch(_){ return "dateDesc"; } })(), type:"all", view:null, edit:null, draft:null, dirty:false };
-    if (d.isOwner) unsubs.push(subscribe(d.db.collection("meetingMinutes"), S.mt, "got", snap=>{ S.mt.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
+    const mtV = d.isOwner || ["mr.chris.d92@gmail.com"].includes(String(((d.currentUser||{}).email)||"").toLowerCase());
+    if (mtV){ unsubs.push(subscribe(d.db.collection("meetingMinutes"), S.mt, "got", snap=>{ S.mt.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
+      unsubs.push(d.db.collection("meetingFiles").onSnapshot(snap=>{ S.mt.files = snap.docs.map(x=>({id:x.id,...x.data()})); if (S.view==="meeting" && !S.mt.edit) render(); }, ()=>{})); }
     else S.mt.got = true;
     S.wp = { list:[], got:false, kind:"plan", year:"all", view:null, edit:null, draft:null, dirty:false };
     if (d.isOwner) unsubs.push(subscribe(d.db.collection("workPlans"), S.wp, "got", snap=>{ S.wp.list = snap.docs.map(x=>({id:x.id,...x.data()})); }));
