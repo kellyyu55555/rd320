@@ -12312,9 +12312,9 @@ function renderList(){
 ${TPL.map(t=>`<div style="border:1px solid #e3d5b5;border-radius:14px;background:#fff;padding:10px"><div style="font-weight:800">${t.icon} ${esc(t.name)}</div><div style="font-size:12px;color:#7a6f57;margin:2px 0 8px">${esc(t.desc)}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-new="${t.id}">＋ 填寫新的</button>${isAdm()?`<button class="ffbtn" data-blank="${t.id}">🖨️ 印空白表</button>`:""}<button class="ffbtn" data-filt="${t.id}">看已填（${docs.filter(x=>x.tpl===t.id).length}）</button></div></div>`).join("")}
 </div></div>
 <div class="ffcard" style="margin-top:10px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px"><b style="font-size:15px">${isAdm()?"🗂️ 全部的輔導紀錄":"🗂️ 我填的輔導紀錄"}</b>
-<button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}</div>
+<button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${isAdm()?`<button class="ffbtn" data-imp="1">📥 匯入紀錄檔</button>`:""}${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}</div>
 ${listErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(listErr)}</p>`:""}
-<div style="display:flex;flex-direction:column;gap:6px">${rows.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${isAdm()&&x.uid!==u.uid?`　｜　填寫人：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">${rows.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　記錄老師：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
 <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-copy="${x.id}">📄 複製</button>${isAdm()?`<button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button>`:""}</div></div>`).join("")||`<p style="text-align:center;color:#9a917a;padding:18px 0">還沒有輔導紀錄，按上面的「＋ 填寫新的」開始</p>`}</div></div>`;
 }
 
@@ -12416,6 +12416,16 @@ async function makePdf(tpl,vals,photos,title){
   pdf.save(String(title||TP[tpl].name).replace(/[\\/:*?"<>|]/g,"_")+".pdf");
   if(cur&&root)setSt("PDF 已下載 ✓");
  }catch(e){alert("PDF 產生失敗："+(e.message||e))}}
+function importJson(){
+ const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";
+ inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
+  try{const j=JSON.parse(await f.text());const arr=Array.isArray(j)?j:(j.docs||[]);if(!arr.length)throw new Error("檔案裡沒有紀錄");
+   const have=new Set(docs.map(x=>x.title));const u=me();let n=0,skip=0;
+   for(const x of arr){if(!x||!x.data)continue;const t=x.title||defTitle("sped",x.data);if(have.has(t)){skip++;continue}
+    await db().collection("spedDocs").add({tpl:"sped",title:t,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:String(x.data.tch||myName()),data:x.data,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||"",imported:true});n++}
+   alert(`匯入完成：新增 ${n} 份`+(skip?`，略過 ${skip} 份（清單裡已經有同名的紀錄）`:""))}
+  catch(e){alert("匯入失敗："+(e.code==="permission-denied"?"沒有權限（請先發布 firestore.rules）":(e.message||e)))}};
+ inp.click()}
 async function pdfDoc(id){const x=docs.find(z=>z.id===id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}makePdf(x.tpl,x.data||{},ph,x.title)}
 async function copyDoc(id){
  const x=docs.find(z=>z.id===id);if(!x)return;const u=me();
@@ -12434,6 +12444,7 @@ function onClick(e){
  if(ds.c!=null){const on=ds.on!=="1";ds.on=on?"1":"0";const cb=b.querySelector(".cb");if(cb)cb.textContent=on?"☑":"☐";if(ds.c.endsWith("On")){collect();renderEdit()}touch();return}
  if(ds.new)return newDoc(ds.new);
  if((ds.blank||ds.print||ds.del||ds.pdf||ds.printCur!=null||ds.pdfCur!=null)&&!isAdm())return alert("只有特教業務管理員可以列印、下載或刪除");
+ if(ds.imp){if(!isAdm())return;return importJson()}
  if(ds.pdf)return pdfDoc(ds.pdf);
  if(ds.pdfCur!=null){collect();return makePdf(cur.tpl,cur.vals,cur.photos,cur.title)}
  if(ds.blank)return printHtml(ds.blank,{},{},TP[ds.blank].name);
