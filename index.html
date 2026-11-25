@@ -2543,7 +2543,7 @@ async function htmlToPdf(html,o){
    const cv=await window.html2canvas(u,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:Math.round(wpx/z)});
    const W=u.offsetWidth,H=u.offsetHeight,sc=cv.width/W,pageHpx=chmm*MM,top=u.getBoundingClientRect().top;
    if(fitU){if(!first)pdf.addPage();first=false;pdf.addImage(cv.toDataURL("image/jpeg",0.92),"JPEG",m,m,cw,H/W*cw);continue}
-   const cuts=Array.from(u.querySelectorAll("tr,figure,.tool")).map(e=>e.getBoundingClientRect().bottom-top).sort((a,b)=>a-b);
+   const cuts=Array.from(u.querySelectorAll("tr,figure,.tool,.li,.sub,.row,.txt,.tcap")).map(e=>e.getBoundingClientRect().bottom-top).sort((a,b)=>a-b);
    let y=0;
    while(y<H-1){
     let end=Math.min(H,y+pageHpx);
@@ -6345,9 +6345,13 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .mt-ph img{width:100%;height:140px;object-fit:contain;background:#f6f1e4;border-radius:6px}
 #kb .mt-view{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;font-family:"Noto Serif TC",serif;line-height:1.7;max-width:820px;margin:10px auto}
 #kb .mt-view .hd1{text-align:center}#kb .mt-view .hd2{text-align:center;font-size:1.25em;font-weight:700;margin:4px 0 14px}
-#kb .mt-view .row{margin:8px 0}#kb .mt-view .row .no{display:inline-block;width:2.4em}#kb .mt-view .row .rec{margin-left:4em}#kb .mt-view .row span.on{border:1.5px solid #333;padding:0 3px}
+#kb .mt-view .row{margin:8px 0;display:block;text-align:left}#kb .mt-view .row .no{display:inline-block;width:2.4em}#kb .mt-view .row .rec{margin-left:4em}#kb .mt-view .row span.on{border:1.5px solid #333;padding:0 3px}
 #kb .mt-view .sub{margin:10px 0 2px;font-weight:700}#kb .mt-view .txt{margin:2px 0 4px 2.4em}
 #kb .mt-view table.pt{width:100%;border-collapse:collapse;margin-top:12px}#kb .mt-view table.pt td{border:1px solid #999;width:50%;text-align:center;padding:6px}#kb .mt-view table.pt img{max-width:100%;max-height:260px;object-fit:contain}
+#kb .mt-view .tw{margin:4px 0 8px 2.4em;overflow-x:auto}#kb .mt-view .tw .tcap{margin-bottom:3px}
+#kb .mt-view table.mtt{width:100%;border-collapse:collapse;font-size:14px;background:#fff}#kb .mt-view table.mtt th,#kb .mt-view table.mtt td{border:1px solid #333;padding:4px 5px;text-align:center;vertical-align:middle;line-height:1.45;white-space:pre-line}#kb .mt-view table.mtt td.l{text-align:left;vertical-align:top}#kb .mt-view table.mtt th{font-weight:700;background:#f6f1e4}
+#kb .mt-view .li{display:flex;align-items:flex-start}#kb .mt-view .li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em;white-space:nowrap}#kb .mt-view .li .lt{flex:1 1 auto;min-width:0}#kb .mt-view .lc{padding-left:1.95em}#kb .mt-view .l2{margin-left:1.9em}
+#kb .mt-view table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}#kb .mt-view table.pt.in td{border:none}#kb .mt-view .ph-t{text-align:center;margin-top:14px}
 #kb .mt-view .sg{margin-top:10px}#kb .mt-view table.sgt{width:100%;border-collapse:collapse}#kb .mt-view table.sgt td{border:1px solid #999;height:34px}#kb .mt-view .seal{text-align:center;margin:16px 0 0 30%}
 #kb .mt-search{display:flex;gap:8px;align-items:center;margin-top:12px;background:#fff;border:2px solid #c99a2e;border-radius:14px;padding:6px 12px}
 #kb .mt-search input{border:0;flex:1;font-size:16px;background:transparent;outline:none;box-shadow:none}
@@ -9364,7 +9368,7 @@ const MT_CSS = `.hd1{text-align:center;font-size:1.05em}.hd2{text-align:center;f
 .sub{margin:5px 0 0}.ph-t{text-align:center;margin-top:14px}.ph-t div:last-child{margin-top:2px}.txt{margin:0 0 1px 2.4em;white-space:normal;line-height:1.5}
 .li{display:flex;align-items:flex-start}.li .mk{flex:0 0 auto;min-width:1.7em;padding-right:.25em;white-space:nowrap}.li .lt{flex:1 1 auto;min-width:0}.lc{padding-left:1.95em}.l2{margin-left:1.9em}
 table.pt{width:100%;border-collapse:collapse;margin-top:14px}table.pt td{border:1px solid #000;width:50%;text-align:center;padding:6px;vertical-align:middle}table.pt img{max-width:100%;max-height:70mm;object-fit:contain}.cap{font-size:.9em;margin-top:3px}
-table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in td{border:none;padding:4px 3px}table.pt.in td.one img{width:100%;max-height:235mm}.tw{margin:4px 0 8px 2.4em;page-break-inside:avoid;break-inside:avoid}.tw .tcap{margin-bottom:3px}table.mtt{width:100%;border-collapse:collapse;font-size:10pt}table.mtt th,table.mtt td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.35;white-space:pre-line}table.mtt td.l{text-align:left;vertical-align:top;padding:3px 5px}table.mtt th{font-weight:normal}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
+table.pt.in{margin:4px 0 8px 2.4em;width:calc(100% - 2.4em)}table.pt.in td{border:none;padding:4px 3px}table.pt.in td.one img{width:100%;max-height:235mm}.tw{margin:4px 0 8px 2.4em}.tw .tcap{margin-bottom:3px;page-break-after:avoid;break-after:avoid}table.mtt tr{page-break-inside:avoid;break-inside:avoid}table.mtt thead{display:table-header-group}table.mtt{width:100%;border-collapse:collapse;font-size:10pt}table.mtt th,table.mtt td{border:1px solid #000;padding:3px 2px;text-align:center;vertical-align:middle;line-height:1.35;white-space:pre-line}table.mtt td.l{text-align:left;vertical-align:top;padding:3px 5px}table.mtt th{font-weight:normal}table.pt.in img{max-height:55mm}.txt.cls{font-weight:bold;margin-top:8px}.txt.qa{margin-bottom:6px}.sg{margin-top:10px}table.sgt{width:100%;border-collapse:collapse}table.sgt td{border:1px solid #000;height:11mm}.seal{text-align:center;margin:18px 0 0 30%}`;
 function mtPrintHtml(m, forPdf){
   const css = PRINT_BASE + `@page{size:A4 portrait;margin:15mm 18mm}body{font-family:"DFKai-SB","標楷體","BiauKai","BiauKaiTC","TW-Kai","Kaiti TC","STKaiti","KaiTi","AR PL UKai TW","Noto Serif CJK TC",serif;color:#000;font-size:12pt;line-height:1.6}
 .wrap{max-width:174mm;margin:0 auto}@media screen{.wrap{padding:${forPdf?"0":"10mm 0"}}}table.pt tr,.sub{page-break-inside:avoid}.sub{page-break-after:avoid;break-after:avoid}table.pt,table.sgt{width:calc(100% - 2px)}` + MT_CSS;
