@@ -2011,7 +2011,7 @@ const openSems=()=>(Array.isArray(acc.sems)&&acc.sems.length?acc.sems:SEM_DEF);
 const canPlan=p=>admin()||(!!p&&canCls(p.cls)&&openSems().includes(p.sem));
 const showP115=()=>admin()||!!acc.showP115;
 /* 老師進入「計畫編輯」時，如果還是空白新計畫，自動開啟管理員已編好的同年齡層、同學期計畫 */
-function autoPick(){if(admin()||tab!=="plan"||(plan.areas||[]).length||(dirty&&dirty()&&!saved()))return false;
+function autoPick(){if(admin()||tab!=="plan"||(plan.areas||[]).length)return false;
  const ok=plans.filter(canPlan),rank=(a,b)=>(b.areas||[]).length-(a.areas||[]).length||String(b.at||"").localeCompare(String(a.at||""));
  const c=ok.filter(p=>p.cls===plan.cls&&p.sem===plan.sem).sort(rank)[0]||ok.sort(rank)[0];
  if(!c||c.id===plan.id||(saved()&&!(c.areas||[]).length))return false;loadPlan(normPlan(JSON.parse(JSON.stringify(c))));return true}
