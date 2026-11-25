@@ -2395,7 +2395,7 @@ function openRef(kw,cls){const md=document.createElement("div");md.className="pu
     box.querySelectorAll(".pgc").forEach(c=>c.onclick=()=>openPage(+c.dataset.b,+c.dataset.p,[]))};
   if(two.length){grid();md.querySelector("#rsw").onclick=()=>{refUI(box,kw);md.querySelector("#rsw").remove()}}else refUI(box,kw)}
 /* 115學年上學期課程規劃（由 Word 另存的 PDF 匯入，檔案在 /plan115/：PDF 原檔 + 每頁圖片） */
-const P115={title:"115學年上學期課程規劃",docs:[["two","兩歲專班",16],["xz","小中混齡班",24],["zd","中大混齡班",26]]};let p115Sel="two";
+const P115={title:"115學年上學期課程規劃",docs:[["two","兩歲專班",19],["xz","小中混齡班",24],["zd","中大混齡班",26]]};let p115Sel="two";
 function rP115(){
  const doc=P115.docs.find(x=>x[0]===p115Sel)||P115.docs[0],[k,n,cnt]=doc,pdf="/plan115/"+k+".pdf";
  const btn="display:inline-block;text-decoration:none";
