@@ -12435,6 +12435,7 @@ const count=s=>String(s||"").replace(/\s/g,"").length;
 let D=null,root=null,docs=[],unsub=null,subUid=null,subAdm=null,listErr="";
 let cur=null; // {id,tpl,title,vals,photos,uid,ownerName}
 let dirty=false,saving=false,timer=null,stMsg="",filt="";
+let srt="";try{srt=localStorage.getItem("spedSort")||""}catch(e){}
 const db=()=>firebase.firestore(),me=()=>firebase.auth().currentUser;
 const isAdm=()=>!!(D&&D.isAdmin)||SPED_ADM.includes(String((me()||{}).email||"").toLowerCase());
 function myName(){const u=me()||{};return (D&&D.myName)||u.displayName||u.email||""}
@@ -12457,6 +12458,21 @@ async function subscribe(){
  unsub=()=>us.forEach(f=>f());
 }
 
+/* ---------- 清單排序：班級／月份／記錄老師 ---------- */
+const SORTS=[["","最新修改"],["cls","班級"],["mon","月份"],["who","記錄老師"]];
+const zhCmp=(a,b)=>String(a).localeCompare(String(b),"zh-Hant-TW-u-co-stroke");
+function sCls(x){const v=x.data||{};return x.cls||clsKey(v)||((String(x.title||"").match(/－\s*(\S+?班)/)||[])[1])||""}
+function sName(x){const v=x.data||{};return v.name||((String(x.title||"").match(/班\s+(\S+)/)||[])[1])||""}
+function sMon(x){const v=x.data||{};const m=parseInt(v.mon,10)||parseInt((String(x.title||"").match(/(\d{1,2})\s*月/)||[])[1],10);return m>=1&&m<=12?m:0}
+const monOrd=m=>m?(m+4)%12:99; /* 學年順序：8月→7月 */
+function sWho(x){return x.ownerName||x.ownerEmail||""}
+function sortRows(rows){
+ if(!srt)return rows.map(x=>({x,g:""}));
+ const ks={cls:[x=>sCls(x)||"\uffff",x=>monOrd(sMon(x)),sName],mon:[x=>monOrd(sMon(x)),sCls,sName],who:[x=>sWho(x)||"\uffff",sCls,sName,x=>monOrd(sMon(x))]}[srt];
+ const out=rows.slice().sort((a,b)=>{for(const k of ks){const p=k(a),q=k(b);const c=typeof p==="number"?p-q:zhCmp(p,q);if(c)return c}return (b.updatedAt||0)-(a.updatedAt||0)});
+ const gl=x=>srt==="cls"?(sCls(x)||"未填班級"):srt==="mon"?(sMon(x)?sMon(x)+"月":"未填月份"):(sWho(x)||"未填記錄老師");
+ return out.map(x=>({x,g:gl(x)}));
+}
 /* ---------- 清單畫面 ---------- */
 function fmt(t){if(!t)return"";const d=new Date(t);return `${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
 function renderList(){
@@ -12468,9 +12484,9 @@ function renderList(){
 ${TPL.map(t=>`<div style="border:1px solid #e3d5b5;border-radius:14px;background:#fff;padding:10px"><div style="font-weight:800">${t.icon} ${esc(t.name)}</div><div style="font-size:12px;color:#7a6f57;margin:2px 0 8px">${esc(t.desc)}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-new="${t.id}">＋ 填寫新的</button>${isAdm()?`<button class="ffbtn" data-blank="${t.id}">🖨️ 印空白表</button>`:""}<button class="ffbtn" data-filt="${t.id}">看已填（${docs.filter(x=>x.tpl===t.id).length}）</button></div></div>`).join("")}
 </div></div>
 <div class="ffcard" style="margin-top:10px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px"><b style="font-size:15px">${isAdm()?"🗂️ 全部的輔導紀錄":"🗂️ 我和本班的輔導紀錄"}</b>
-<button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${isAdm()?`<button class="ffbtn" data-imp="1">📥 匯入紀錄檔</button>`:""}${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}</div>
+<button class="ffbtn ${filt?"":"on"}" data-filt="">全部（${docs.length}）</button>${isAdm()?`<button class="ffbtn" data-imp="1">📥 匯入紀錄檔</button>`:""}${filt?`<span style="font-size:13px">只看：<b>${esc(TP[filt].name)}</b></span>`:""}<span style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13px;color:#7a6f57">排序：${SORTS.map(([k,n])=>`<button class="ffbtn ${srt===k?"on":""}" data-srt="${k}">${n}</button>`).join("")}</span></div>
 ${listErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(listErr)}</p>`:""}
-<div style="display:flex;flex-direction:column;gap:6px">${rows.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　記錄老師：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">${sortRows(rows).map(({x,g},i,a)=>`${g&&(i===0||a[i-1].g!==g)?`<div style="font-weight:800;color:#5b4a1f;background:#f6edd6;border-radius:8px;padding:3px 10px;margin-top:${i?6:0}px">${esc(g)}（${a.filter(r=>r.g===g).length}）</div>`:""}<div class="ffrow"><div style="min-width:0"><b>${(TP[x.tpl]||{}).icon||"📄"} ${esc(x.title||(TP[x.tpl]||{}).name||"表格")}</b><br><span style="font-size:12px;color:#7a6f57">${esc((TP[x.tpl]||{}).name||"")}　｜　最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　記錄老師：<b>${esc(x.ownerName||x.ownerEmail||"")}</b>`:""}</span></div>
 <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-drive="${x.id}" title="${x.driveAt?"上次上傳："+fmt(x.driveAt):"上傳 PDF 到特教業務雲端資料夾"}">${x.driveAt?"☁️ 已上傳 ✓":"☁️ 上傳雲端"}</button>${x.driveUrl?`<a class="ffbtn" href="${esc(x.driveUrl)}" target="_blank" rel="noopener" style="text-decoration:none">📄 雲端檔案</a>`:""}<button class="ffbtn" data-copy="${x.id}">📄 複製</button>${isAdm()?`<button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button>`:""}</div></div>`).join("")||`<p style="text-align:center;color:#9a917a;padding:18px 0">還沒有輔導紀錄，按上面的「＋ 填寫新的」開始</p>`}</div></div>`;
 }
 
@@ -12901,6 +12917,7 @@ function onClick(e){
  if(ds.pdf)return pdfDoc(ds.pdf);
  if(ds.pdfCur!=null){collect();return makePdf(cur.tpl,cur.vals,cur.photos,cur.title)}
  if(ds.blank)return printHtml(ds.blank,{},{},TP[ds.blank].name);
+ if(ds.srt!=null&&!cur){srt=ds.srt;try{localStorage.setItem("spedSort",srt)}catch(e){}return renderList()}
  if(ds.filt!=null){filt=ds.filt;return renderList()}
  if(ds.open)return openDoc(ds.open);
  if(ds.print)return printDoc(ds.print);
