@@ -12286,7 +12286,34 @@ const TPL=[
 </table></div>`}}
 ];
 
-const TP=Object.fromEntries(TPL.map(t=>[t.id,t]));
+/* 特教助理員分頁的線上表格（存在 spedAideDocs；只有特教助理員本人與管理員能用） */
+const ATPL=[
+{id:"aideYc",col:"spedAideDocs",portrait:true,icon:"📝",name:"到園入班支持紀錄單",desc:"育成社會福利基金會入班支持紀錄",
+ title:v=>`入班支持紀錄單${v.cls?"－"+v.cls:""}${v.date?" "+v.date:""}`,
+ render:h=>`<div class="yc">
+<div class="ttl2">${h.t("org","財團法人育成社會福利基金會",14)}</div>
+<div class="ttl">${h.t("head","桃園市仁德非營利幼兒園到園入班支持紀錄單",22)}</div>
+<table><colgroup><col style="width:13%"><col style="width:22%"><col style="width:13%"><col style="width:19%"><col style="width:13%"><col style="width:20%"></colgroup>
+<tr class="mid"><th>班級名稱</th><td colspan="5">${h.t("cls","",10)}</td></tr>
+<tr class="mid"><th>服務日期</th><td>${h.t("date","",6)}</td><th>服務時間</th><td>${h.t("time","",6)}</td><th>填表日期</th><td>${h.t("fdate","",6)}</td></tr>
+<tr><th>主要問題</th><td colspan="5">${h.b("prob","",56)}</td></tr>
+<tr><th>觀察紀錄</th><td colspan="5" class="tall1">${h.b("obs","",420)}</td></tr>
+<tr><th>建議事項</th><td colspan="5" class="tall2">${h.b("sug","學校支持：\n",300)}</td></tr>
+<tr class="mid"><th>填表人</th><td>${h.t("by","",6)}</td><th>園長/老師</th><td>${h.t("tch","",6)}</td><th>中心督導</th><td>${h.t("sup","",6)}</td></tr>
+</table></div>`},
+{id:"proRec",col:"spedAideDocs",icon:"📝",name:"專業人員輔導紀錄表",desc:"職能／語言／物理／心理治療師早療輔導紀錄",
+ title:v=>`${v.pro||"專業人員"} 輔導紀錄${v.rows_d0_d?"（"+v.rows_d0_d+"）":""}`,
+ render:h=>`<div class="pr2">
+<div class="hd">${h.t("org","桃園市仁德非營利幼兒園委託社團法人臺灣宛靜文教協會辦理",26)}</div>
+<div class="ttl">專業人員輔導紀錄表</div>
+<div class="line">專業類別：${h.c("k0","語言")}${h.c("k1","職能")}${h.c("k2","物理")}${h.c("k3","心理")}　　專業人員：${h.t("pro","",12)}</div>
+<table><colgroup><col style="width:8.5%"><col style="width:8%"><col style="width:9%"><col style="width:29%"><col style="width:20%"><col style="width:25.5%"></colgroup>
+<thead><tr class="mid"><th>服務日期</th><th>幼兒姓名</th><th>服務內容</th><th>建議事項</th><th>照片</th><th>備註</th></tr></thead>
+<tbody>${h.list("rows",[{},{},{}],R=>`<tr><td>${R.t("d","",4)}${R.del()}</td><td>${R.t("n","",4)}</td><td>${R.b("c","",40)}</td><td>${R.b("s","",110)}</td><td>${R.p("ph")}</td><td>${R.b("m","",80)}</td></tr>`)}</tbody>
+</table>${h.addBtn("rows","＋ 新增一位幼兒")}</div>`}
+];
+const TP=Object.fromEntries(TPL.concat(ATPL).map(t=>[t.id,t]));
+const colOf=tpl=>(TP[tpl]&&TP[tpl].col)||"spedDocs";
 
 /* ---------- 版面樣式（編輯畫面與列印共用） ---------- */
 const SHEET_CSS=`
@@ -12326,11 +12353,23 @@ const SHEET_CSS=`
 .sped .spi .ck{white-space:normal}
 .sped tr.dr{break-inside:auto;page-break-inside:auto}
 .sped td.desc{height:84mm}
+.yc .ttl2{text-align:center;font-size:15pt;font-weight:700;margin-top:1mm}
+.yc .ttl{font-size:15pt}
+.yc th{font-size:12pt}
+.yc tr.mid td,.yc tr.mid th{height:9mm;vertical-align:middle}
+.yc td.tall1{height:120mm}
+.yc td.tall2{height:70mm}
+.pr2 .hd{font-size:13pt}
+.pr2 .ttl{font-size:16pt;margin:1mm 0}
+.pr2 .line{margin:1mm 0 2mm;font-size:12pt}
+.pr2 td{font-size:11pt;line-height:1.5}
+.pr2 .ph img{max-height:42mm}
 .ffs thead{display:table-header-group}
 .ffs tr{break-inside:avoid;page-break-inside:avoid}
 `;
 const EDIT_CSS=`
 #spRoot .ffpage{background:#fff;width:297mm;min-height:210mm;box-sizing:border-box;padding:12mm 12mm;margin:0 auto 16px;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+#spRoot .ffpage.pt{width:210mm;min-height:297mm}
 #spRoot .ffs td,#spRoot .ffs th{position:relative}
 #spRoot .ffscroll{overflow-x:auto;padding:8px 0}
 #spRoot .ffs [contenteditable]{background:#fff8d6;outline:none;border-radius:3px;cursor:text}
@@ -12432,10 +12471,10 @@ function renderEdit(){
  root.innerHTML=`<style>${EDIT_CSS}</style>
 <div class="ffbar"><button class="ffbtn" data-back="1">← 回表格清單</button><span style="font-weight:800">${T.icon} ${esc(T.name)}</span>
 <input id="spTitle" value="${esc(cur.title)}" placeholder="這份紀錄的名稱（例如：小明 8月）">
-<button class="ffbtn on" data-save="1">💾 儲存</button><button class="ffbtn" data-drive-cur="1">☁️ 上傳雲端</button>${isAdm()?`<button class="ffbtn" data-print-cur="1">🖨️ 列印（A4 橫式）</button><button class="ffbtn" data-pdf-cur="1">⬇️ 下載 PDF</button>`:""}
+<button class="ffbtn on" data-save="1">💾 儲存</button>${T.col?"":`<button class="ffbtn" data-drive-cur="1">☁️ 上傳雲端</button>`}${canMng(cur.tpl)?`<button class="ffbtn" data-print-cur="1">🖨️ 列印（A4 ${T.portrait?"直式":"橫式"}）</button><button class="ffbtn" data-pdf-cur="1">⬇️ 下載 PDF</button>`:""}
 <span id="spSt" style="font-size:12px;color:#7a6f57">${esc(stMsg)}</span></div>
 <div style="font-size:12px;color:#7a6f57;margin:0 0 4px 4px">黃色底的地方可以直接打字；點 ☐ 可以打勾。所有文字（包含項目名稱）都可以修改。</div>
-<div class="ffscroll"><div class="ffpage"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit")}</div></div>`;
+<div class="ffscroll"><div class="ffpage${T.portrait?" pt":""}"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit")}</div></div>`;
  fitPage();window.scrollTo(0,y);
 }
 /* 整頁顯示：橫式 A4 比畫面寬時，自動縮小到剛好放得下 */
@@ -12457,7 +12496,7 @@ function touch(){dirty=true;setSt("尚未儲存…");clearTimeout(timer);timer=s
 
 async function ensureDoc(){
  if(cur.id)return;const u=me();
- const ref=await db().collection("spedDocs").add({cls:clsKey(cur.vals),tpl:cur.tpl,title:cur.title||TP[cur.tpl].name,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:cur.vals,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
+ const ref=await db().collection(colOf(cur.tpl)).add({...(TP[cur.tpl].col?{cat:cur.cat||""}:{}),cls:clsKey(cur.vals),tpl:cur.tpl,title:cur.title||TP[cur.tpl].name,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:cur.vals,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
  cur.id=ref.id;cur.uid=u.uid;
 }
 async function save(auto){
@@ -12467,22 +12506,24 @@ async function save(auto){
  try{
   if(!cur.title)cur.title=defTitle(cur.tpl,cur.vals);
   if(!cur.id)await ensureDoc();
-  else await db().collection("spedDocs").doc(cur.id).update({cls:clsKey(cur.vals),title:cur.title,data:cur.vals,updatedAt:Date.now(),updatedBy:(me()||{}).email||""});
+  else await db().collection(colOf(cur.tpl)).doc(cur.id).update({cls:clsKey(cur.vals),title:cur.title,data:cur.vals,updatedAt:Date.now(),updatedBy:(me()||{}).email||""});
   dirty=false;setSt("已儲存 ✓ "+fmt(Date.now()).split(" ")[1]);
   const ti=root&&root.querySelector("#spTitle");if(ti&&!ti.value)ti.value=cur.title;
  }catch(e){setSt("❌ 儲存失敗");if(!auto)alert("儲存失敗："+(e.code==="permission-denied"?"沒有權限（請管理員更新 firestore.rules）":(e.message||e)))}
  finally{saving=false}
 }
-function defTitle(tpl,v){const d=new Date();const who=[v.cls?v.cls+"班":"",v.name||"",v.mon?v.mon+"月":""].filter(Boolean).join(" ");return `輔導紀錄${who?"－"+who:""}（${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}）`}
+function defTitle(tpl,v){const d=new Date();if(TP[tpl]&&TP[tpl].title)return TP[tpl].title(v);const who=[v.cls?v.cls+"班":"",v.name||"",v.mon?v.mon+"月":""].filter(Boolean).join(" ");return `輔導紀錄${who?"－"+who:""}（${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}）`}
 
-async function loadPhotos(id){const s=await db().collection("spedDocs").doc(id).collection("photos").get();const o={};s.forEach(x=>{o[x.id]=x.data().data});return o}
+const findDoc=id=>docs.find(z=>z.id===id)||aDocs.find(z=>z.id===id);
+const canMng=tpl=>isAdm()||(!!(TP[tpl]&&TP[tpl].col)&&canAide());
+async function loadPhotos(id){const x=findDoc(id)||(cur&&cur.id===id?cur:{});const s=await db().collection(colOf(x.tpl)).doc(id).collection("photos").get();const o={};s.forEach(x=>{o[x.id]=x.data().data});return o}
 async function openDoc(id){
- const x=docs.find(z=>z.id===id);if(!x)return;
- cur={id:x.id,tpl:x.tpl,title:x.title||"",vals:JSON.parse(JSON.stringify(x.data||{})),photos:{},uid:x.uid};
+ const x=findDoc(id);if(!x)return;
+ cur={id:x.id,tpl:x.tpl,cat:x.cat||"",title:x.title||"",vals:JSON.parse(JSON.stringify(x.data||{})),photos:{},uid:x.uid};
  dirty=false;stMsg="讀取照片中…";renderEdit();window.scrollTo(0,0);
  try{cur.photos=await loadPhotos(id);stMsg="";collect();renderEdit()}catch(e){setSt("照片讀取失敗")}
 }
-function newDoc(tpl){cur={id:"",tpl,title:"",vals:{},photos:{},uid:(me()||{}).uid};dirty=false;stMsg="還沒儲存（開始填寫就會自動儲存）";renderEdit();window.scrollTo(0,0)}
+function newDoc(tpl,vals,cat){cur={id:"",tpl,cat:cat||"",title:"",vals:vals||{},photos:{},uid:(me()||{}).uid};dirty=false;stMsg="還沒儲存（開始填寫就會自動儲存）";renderEdit();window.scrollTo(0,0)}
 async function back(){
  if(dirty){await save(true);if(dirty&&!confirm("還有內容沒有儲存成功，確定要離開嗎？"))return}
  cur=null;renderList();window.scrollTo(0,0)}
@@ -12493,19 +12534,19 @@ function pickPhoto(key){
  const inp=document.createElement("input");inp.type="file";inp.accept="image/*";
  inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
   try{setSt("上傳照片中…");collect();const u=await shrink(f);await save(true);if(!cur.id)throw new Error("表格還沒儲存成功");
-   await db().collection("spedDocs").doc(cur.id).collection("photos").doc(key).set({data:u,at:Date.now()});
-   cur.photos[key]=u;await db().collection("spedDocs").doc(cur.id).update({updatedAt:Date.now()});renderEdit();setSt("照片已上傳 ✓")}
+   await db().collection(colOf(cur.tpl)).doc(cur.id).collection("photos").doc(key).set({data:u,at:Date.now()});
+   cur.photos[key]=u;await db().collection(colOf(cur.tpl)).doc(cur.id).update({updatedAt:Date.now()});renderEdit();setSt("照片已上傳 ✓")}
   catch(e){setSt("❌ 照片上傳失敗");alert("照片上傳失敗："+(e.message||e))}};
  inp.click()}
 async function delPhoto(key){
  if(!confirm("要移除這張照片嗎？"))return;collect();
- try{if(cur.id)await db().collection("spedDocs").doc(cur.id).collection("photos").doc(key).delete();delete cur.photos[key];renderEdit();setSt("照片已移除")}catch(e){alert("移除失敗："+(e.message||e))}}
+ try{if(cur.id)await db().collection(colOf(cur.tpl)).doc(cur.id).collection("photos").doc(key).delete();delete cur.photos[key];renderEdit();setSt("照片已移除")}catch(e){alert("移除失敗："+(e.message||e))}}
 
 /* ---------- 列印（A4 直式） ---------- */
 function printHtml(tpl,vals,photos,title){
  const w=window.open("","_blank");if(!w){alert("瀏覽器擋住了列印視窗，請允許這個網站開啟彈出式視窗");return}
- w.document.open();w.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title||TP[tpl].name)}</title><style>${SHEET_CSS}@page{size:A4 landscape;margin:9mm}html,body{margin:0;background:#fff}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${build(tpl,vals,photos,"print")}<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},350)})<\/script></body></html>`);w.document.close()}
-async function printDoc(id){const x=docs.find(z=>z.id===id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}printHtml(x.tpl,x.data||{},ph,x.title)}
+ w.document.open();w.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>${esc(title||TP[tpl].name)}</title><style>${SHEET_CSS}@page{size:A4 ${TP[tpl].portrait?"portrait":"landscape"};margin:9mm}html,body{margin:0;background:#fff}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${build(tpl,vals,photos,"print")}<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},350)})<\/script></body></html>`);w.document.close()}
+async function printDoc(id){const x=findDoc(id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}printHtml(x.tpl,x.data||{},ph,x.title)}
 
 function ldJs(u){return new Promise((ok,bad)=>{const x=document.createElement("script");x.src=u;x.onload=ok;x.onerror=()=>bad(new Error("無法載入 "+u));document.head.appendChild(x)})}
 async function makePdf(tpl,vals,photos,title,ret){
@@ -12513,11 +12554,11 @@ async function makePdf(tpl,vals,photos,title,ret){
   setSt&&root&&cur&&setSt("產生 PDF 中…");D&&D.showToast&&D.showToast("產生 PDF 中，請稍候…");
   if(!window.html2canvas)await ldJs("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
   if(!(window.jspdf&&window.jspdf.jsPDF))await ldJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-  const box=document.createElement("div");box.style.cssText="position:fixed;left:-10000px;top:0;width:279mm;background:#fff;padding:0";
+  const box=document.createElement("div");const PT=!!TP[tpl].portrait;box.style.cssText="position:fixed;left:-10000px;top:0;width:"+(PT?192:279)+"mm;background:#fff;padding:0";
   box.innerHTML=`<style>${SHEET_CSS}</style>${build(tpl,vals,photos,"print")}`;document.body.appendChild(box);
   await (document.fonts&&document.fonts.ready);
   const cv=await window.html2canvas(box,{scale:2,backgroundColor:"#ffffff",logging:false});box.remove();
-  const pdf=new window.jspdf.jsPDF({orientation:"l",unit:"mm",format:"a4"}),W=279,PH=192,m=9;
+  const pdf=new window.jspdf.jsPDF({orientation:PT?"p":"l",unit:"mm",format:"a4"}),W=PT?192:279,PH=PT?279:192,m=9;
   const pxPerMm=cv.width/W,pagePx=Math.floor(PH*pxPerMm);
   for(let y=0,i=0;y<cv.height;y+=pagePx,i++){
    const h=Math.min(pagePx,cv.height-y),c=document.createElement("canvas");c.width=cv.width;c.height=h;
@@ -12554,16 +12595,16 @@ function importJson(){
    alert(`匯入完成：新增 ${n} 份`+(skip?`，略過 ${skip} 份（清單裡已經有同名的紀錄）`:""))}
   catch(e){alert("匯入失敗："+(e.code==="permission-denied"?"沒有權限（請先發布 firestore.rules）":(e.message||e)))}};
  inp.click()}
-async function pdfDoc(id){const x=docs.find(z=>z.id===id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}makePdf(x.tpl,x.data||{},ph,x.title)}
+async function pdfDoc(id){const x=findDoc(id);if(!x)return;let ph={};try{ph=await loadPhotos(id)}catch(e){}makePdf(x.tpl,x.data||{},ph,x.title)}
 async function copyDoc(id){
- const x=docs.find(z=>z.id===id);if(!x)return;const u=me();
- try{const ref=await db().collection("spedDocs").add({cls:clsKey(x.data||{}),tpl:x.tpl,title:(x.title||TP[x.tpl].name)+"（複製）",uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:x.data||{},createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
+ const x=findDoc(id);if(!x)return;const u=me();
+ try{const ref=await db().collection(colOf(x.tpl)).add({...(x.cat!=null?{cat:x.cat}:{}),cls:clsKey(x.data||{}),tpl:x.tpl,title:(x.title||TP[x.tpl].name)+"（複製）",uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:x.data||{},createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
   const ph=await loadPhotos(id);for(const k of Object.keys(ph))await ref.collection("photos").doc(k).set({data:ph[k],at:Date.now()});
   D.showToast&&D.showToast("已複製一份 ✅")}catch(e){alert("複製失敗："+(e.message||e))}}
 async function delDoc(id){
- const x=docs.find(z=>z.id===id);if(!x)return;
+ const x=findDoc(id);if(!x)return;
  if(!confirm(`確定要刪除「${x.title||TP[x.tpl].name}」嗎？\n刪除後無法復原。`))return;
- try{const ref=db().collection("spedDocs").doc(id);const s=await ref.collection("photos").get();for(const p of s.docs)await p.ref.delete();await ref.delete();D.showToast&&D.showToast("已刪除")}catch(e){alert("刪除失敗："+(e.message||e))}}
+ try{const ref=db().collection(colOf(x.tpl)).doc(id);const s=await ref.collection("photos").get();for(const p of s.docs)await p.ref.delete();await ref.delete();D.showToast&&D.showToast("已刪除")}catch(e){alert("刪除失敗："+(e.message||e))}}
 
 /* ---------- 特教助理員／專業人員：檔案庫（切塊存在 Firestore spedFiles/{id}/chunks） ---------- */
 const SF_COL="spedFiles",SF_CHUNK=700000,SF_MAX=25*1024*1024;
@@ -12571,6 +12612,7 @@ const AREAS={
  aide:{icon:"🧑‍🏫",name:"特教助理員",cats:["育成","呂宜庭 職能治療師","陳景涵 職能治療師","曾可愛 語言治療師"],desc:"育成入班支持紀錄單與各治療師的早療輔導紀錄，每個一頁。"}
 };
 let fExtra=[];
+let aDocs=[],adUnsub=null;
 let tab="forms",files=[],fUnsub=null,fUid=null,fErr="",fCat="",fBusy="",fEdit=null,fUp={cat:"",note:""};
 try{const t=localStorage.getItem("spTab");if(t==="forms"||AREAS[t])tab=t}catch(e){}
 const MIME={pdf:"application/pdf",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",gif:"image/gif",heic:"image/heic",txt:"text/plain",odt:"application/vnd.oasis.opendocument.text"};
@@ -12587,6 +12629,7 @@ const canF=f=>canAide();
 function aSubscribe(){if(aUnsub||!me())return;aUnsub=db().collection("config").doc("spedAides").onSnapshot(d=>{aides=((d.exists&&d.data().emails)||[]).map(x=>String(x).toLowerCase());if(tab!=="forms"&&!canAide())tab="forms";if(tab!=="forms")fSubscribe();if(!cur)renderList()},()=>{aides=[]})}
 async function setAides(list){try{await db().collection("config").doc("spedAides").set({emails:list,updatedAt:Date.now(),updatedBy:myMail()});D&&D.showToast&&D.showToast("已更新特教助理員帳號 ✅")}catch(e){alert("儲存失敗："+perr(e))}}
 function fSubscribe(){if(!canAide())return;
+ if(!adUnsub&&me())adUnsub=db().collection("spedAideDocs").onSnapshot(s=>{aDocs=s.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));if(!cur&&tab!=="forms")renderList()},()=>{});
  const u=me();if(!u||(fUnsub&&fUid===u.uid))return;if(fUnsub)fUnsub();fUid=u.uid;
  fUnsub=db().collection(SF_COL).onSnapshot(s=>{files=s.docs.map(x=>({id:x.id,...x.data()}));fErr="";if(!cur&&tab!=="forms")renderList()},
   e=>{fErr=(e&&e.code==="permission-denied")?"讀取不到檔案：請管理員到 Firebase 主控台發布最新的「firestore.rules」權限規則（新增了 spedFiles）。":"讀取檔案發生問題（"+(e.code||e.message)+"）";if(!cur&&tab!=="forms")renderList()});
@@ -12623,8 +12666,20 @@ ${isAdm()?`<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;ma
 <div class="ffcard" style="margin-top:10px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;border-bottom:2px solid #e3d5b5;padding-bottom:8px">
 ${cats.map(c=>`<button class="ffbtn ${fCat===c?"on":""}" data-fcat="${esc(c)}" style="font-size:14px;padding:5px 12px">📁 ${esc(c)}（${all.filter(f=>f.cat===c).length}）</button>`).join("")}<button class="ffbtn" data-fnewcat="1" title="新增一個分頁（例如新的治療師）">＋ 新增分頁</button></div>
 ${fErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(fErr)}</p>`:""}
-${rows.length?`<div style="display:flex;flex-direction:column;gap:6px">${rows.map(row).join("")}</div>`:`<p style="text-align:center;color:#9a917a;padding:18px 0">「${esc(fCat)}」還沒有檔案，按上面的「選擇檔案並上傳」開始</p>`}</div>`;
+${formsBox(fCat)}
+<div style="font-weight:800;margin:14px 0 6px;color:#5a4632">📎 上傳的檔案（${rows.length}）</div>
+${rows.length?`<div style="display:flex;flex-direction:column;gap:6px">${rows.map(row).join("")}</div>`:`<p style="text-align:center;color:#9a917a;padding:10px 0;font-size:13px">「${esc(fCat)}」還沒有上傳的檔案，按上面的「選擇檔案並上傳」開始</p>`}</div>`;
 }
+/* 每個分頁的線上表格：育成 → 到園入班支持紀錄單；治療師 → 專業人員輔導紀錄表 */
+const tplForCat=c=>/^育成/.test(String(c||""))?"aideYc":"proRec";
+function defsForCat(c){if(tplForCat(c)!=="proRec")return {};const v={pro:c};["語言","職能","物理","心理"].forEach((k,i)=>{if(String(c).includes(k))v["k"+i]=true});return v}
+function formsBox(c){
+ const T=TP[tplForCat(c)],L=aDocs.filter(x=>x.cat===c&&x.tpl===T.id);
+ return `<div style="border:1px solid #b9dcc3;background:#f4faf2;border-radius:14px;padding:10px">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:15px">${T.icon} 線上表格：${esc(T.name)}</b><span style="font-size:12px;color:#7a6f57">${T.portrait?"A4 直式":"A4 橫式"}，格式與原本的紀錄表相同，填寫會自動儲存</span>
+<span style="flex:1"></span><button class="ffbtn on" data-anew="1">＋ 填寫新的</button><button class="ffbtn" data-ablank="1">🖨️ 印空白表</button></div>
+${L.length?`<div style="display:flex;flex-direction:column;gap:6px">${L.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${T.icon} ${esc(x.title||T.name)}</b><br><span style="font-size:12px;color:#7a6f57">最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　${esc(x.ownerName)}`:""}</span></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-copy="${x.id}">📄 複製</button><button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button></div></div>`).join("")}</div>`:`<p style="text-align:center;color:#9a917a;padding:8px 0;font-size:13px">還沒有填寫的表格，按「＋ 填寫新的」開始</p>`}</div>`}
 function fSt(m){fBusy=m;const e=root&&root.querySelector("#spFSt");if(e)e.textContent=m}
 const toB64=b=>new Promise((ok,bad)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(",")[1]||"");fr.onerror=()=>bad(new Error("讀不到檔案"));fr.readAsDataURL(b)});
 async function putChunks(ref,b64,label){
@@ -12715,6 +12770,8 @@ function onFileClick(ds){
  if(ds.aidedel){if(!isAdm())return true;if(confirm(`移除特教助理員帳號「${ds.aidedel}」？`))setAides(aides.filter(x=>x!==ds.aidedel));return true}
  if(ds.fcat!=null){fCat=ds.fcat;fEdit=null;renderList();return true}
  if(ds.fnewcat){const n=(prompt("新分頁的名稱（例如：王小明 物理治療師）")||"").trim();if(n){if(!catsOf(tab).includes(n))fExtra.push(n);fCat=n;renderList()}return true}
+ if(ds.anew){if(canAide())newDoc(tplForCat(fCat),defsForCat(fCat),fCat);return true}
+ if(ds.ablank){const t=tplForCat(fCat);printHtml(t,defsForCat(fCat),{},TP[t].name);return true}
  if(ds.fup)return uploadNew(),true;
  if(ds.fzip){if(isAdm())importZip();return true}
  if(ds.fopen)return openFile(ds.fopen,false),true;
@@ -12733,7 +12790,8 @@ function onClick(e){
  if(!cur&&onFileClick(ds))return;
  if(ds.c!=null){const on=ds.on!=="1";ds.on=on?"1":"0";const cb=b.querySelector(".cb");if(cb)cb.textContent=on?"☑":"☐";if(ds.c.endsWith("On")){collect();renderEdit()}touch();return}
  if(ds.new)return newDoc(ds.new);
- if((ds.blank||ds.print||ds.del||ds.pdf||ds.printCur!=null||ds.pdfCur!=null)&&!isAdm())return alert("只有特教業務管理員可以列印、下載或刪除");
+ const gt=ds.blank||(ds.print||ds.del||ds.pdf?(findDoc(ds.print||ds.del||ds.pdf)||{}).tpl:"")||((ds.printCur!=null||ds.pdfCur!=null)&&cur?cur.tpl:"");
+ if((ds.blank||ds.print||ds.del||ds.pdf||ds.printCur!=null||ds.pdfCur!=null)&&!canMng(gt))return alert("只有特教業務管理員可以列印、下載或刪除");
  if(ds.drive)return uploadDrive(ds.drive,b);
  if(ds.driveCur!=null){if(!cur)return;return (async()=>{await save(true);if(cur.id)uploadDrive(cur.id,b);else alert("請先填寫內容再上傳")})()}
  if(ds.imp){if(!isAdm())return;return importJson()}
@@ -12755,7 +12813,7 @@ function onClick(e){
   const filled=Object.keys(cur.vals).some(x=>x.startsWith(pre)&&cur.vals[x]&&!/^\d+$/.test(String(cur.vals[x]).trim())&&cur.vals[x]!==true)||Object.keys(cur.photos).some(x=>x.startsWith(pre));
   if(filled&&!confirm("這一列有填寫內容，確定要刪除嗎？"))return;
   cur.vals[k]=listIds(k).filter(x=>x!==rid);Object.keys(cur.vals).forEach(x=>{if(x.startsWith(pre))delete cur.vals[x]});
-  Object.keys(cur.photos).forEach(x=>{if(x.startsWith(pre)){delete cur.photos[x];if(cur.id)db().collection("spedDocs").doc(cur.id).collection("photos").doc(x).delete().catch(()=>{})}});
+  Object.keys(cur.photos).forEach(x=>{if(x.startsWith(pre)){delete cur.photos[x];if(cur.id)db().collection(colOf(cur.tpl)).doc(cur.id).collection("photos").doc(x).delete().catch(()=>{})}});
   renderEdit();touch();return}
 }
 function onInput(e){
