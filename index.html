@@ -23,7 +23,7 @@
     // 'off'：不限制；'all'：檢視全系統（全部唯讀）；'owner'：本身是管理員，只有本人專用頁面唯讀
     window.__viewAllMode = 'off';
     // 檢視模式下仍可寫入：登入紀錄、個人設定、自己的老師資料，以及原本就有權限的特教業務
-    const OK_ALL = /^(loginLogs|users|teacherDir|weeklyPrefs|obsPrefs|spedDocs|spedFiles)\/|^config\/spedAides$/;
+    const OK_ALL = /^(loginLogs|users|teacherDir|weeklyPrefs|obsPrefs|spedDocs|spedFiles|spedAideDocs)\/|^config\/spedAides$/;
     const OWNER_COLS = /^(meetingMinutes|meetingPhotos|meetingFiles|workPlans|patrolRecords|caseRecords|staffReviews|indicatorStats)\//;
     let lastToast = 0;
     function say() {

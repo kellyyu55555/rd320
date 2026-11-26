@@ -441,6 +441,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSpedAdmin();
     }
+    // 特教助理員分頁的線上表格（到園入班支持紀錄單、專業人員輔導紀錄表）與照片
+    match /spedAideDocs/{id} {
+      allow read, write: if canSpedFiles();
+      match /photos/{pid} {
+        allow read, write: if canSpedFiles();
+      }
+    }
     match /spedFiles/{id} {
       allow read, delete: if canSpedFiles();
       allow create: if canSpedFiles() && request.resource.data.uid == request.auth.uid;
