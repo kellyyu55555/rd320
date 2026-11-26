@@ -12288,9 +12288,13 @@ const TPL=[
 
 /* 特教助理員分頁的線上表格（存在 spedAideDocs；只有特教助理員本人與管理員能用） */
 const ATPL=[
-{id:"aideYc",col:"spedAideDocs",portrait:true,icon:"📝",name:"到園入班支持紀錄單",desc:"育成社會福利基金會入班支持紀錄",
+{id:"aideYc",col:"spedAideDocs",portrait:true,lock:k=>k!=="sch",icon:"📝",name:"到園入班支持紀錄單",desc:"育成社會福利基金會入班支持紀錄",
  title:v=>`入班支持紀錄單${v.cls?"－"+v.cls:""}${v.date?" "+v.date:""}`,
- render:h=>`<div class="yc">
+ render:h=>{const np=+h.v("_pages",0)||0;
+ if(np)return `<div class="yc">${Array.from({length:np},(_,i)=>`<div class="pgimg">${h.img("pg_"+i)}</div>`).join("")}
+<table><colgroup><col style="width:13%"><col style="width:87%"></colgroup>
+<tr><th>學校支持<div class="sm" style="font-weight:400">（特教助理員填寫）</div></th><td class="tall3">${h.b("sch","",160)}</td></tr></table></div>`;
+ return `<div class="yc">
 <div class="ttl2">${h.t("org","財團法人育成社會福利基金會",14)}</div>
 <div class="ttl">${h.t("head","桃園市仁德非營利幼兒園到園入班支持紀錄單",22)}</div>
 <table><colgroup><col style="width:13%"><col style="width:22%"><col style="width:13%"><col style="width:19%"><col style="width:13%"><col style="width:20%"></colgroup>
@@ -12298,10 +12302,10 @@ const ATPL=[
 <tr class="mid"><th>服務日期</th><td>${h.t("date","",6)}</td><th>服務時間</th><td>${h.t("time","",6)}</td><th>填表日期</th><td>${h.t("fdate","",6)}</td></tr>
 <tr><th>主要問題</th><td colspan="5">${h.b("prob","",56)}</td></tr>
 <tr><th>觀察紀錄</th><td colspan="5" class="tall1">${h.b("obs","",420)}</td></tr>
-<tr><th>建議事項</th><td colspan="5" class="tall2">${h.b("sug","學校支持：\n",300)}</td></tr>
+<tr><th>建議事項</th><td colspan="5" class="tall2">${h.b("sug","",150)}<div class="schh">學校支持：</div>${h.b("sch","",130)}</td></tr>
 <tr class="mid"><th>填表人</th><td>${h.t("by","",6)}</td><th>園長/老師</th><td>${h.t("tch","",6)}</td><th>中心督導</th><td>${h.t("sup","",6)}</td></tr>
-</table></div>`},
-{id:"proRec",col:"spedAideDocs",icon:"📝",name:"專業人員輔導紀錄表",desc:"職能／語言／物理／心理治療師早療輔導紀錄",
+</table></div>`}},
+{id:"proRec",col:"spedAideDocs",lock:k=>!/_(ph|m)$/.test(k),icon:"📝",name:"專業人員輔導紀錄表",desc:"職能／語言／物理／心理治療師早療輔導紀錄",
  title:v=>`${v.pro||"專業人員"} 輔導紀錄${v.rows_d0_d?"（"+v.rows_d0_d+"）":""}`,
  render:h=>`<div class="pr2">
 <div class="hd">${h.t("org","桃園市仁德非營利幼兒園委託社團法人臺灣宛靜文教協會辦理",26)}</div>
@@ -12359,6 +12363,10 @@ const SHEET_CSS=`
 .yc tr.mid td,.yc tr.mid th{height:9mm;vertical-align:middle}
 .yc td.tall1{height:120mm}
 .yc td.tall2{height:70mm}
+.yc td.tall3{height:70mm}
+.yc .schh{font-weight:700;margin-top:2mm}
+.yc .pgimg img{display:block;width:100%;margin:0 auto}
+.yc .pgimg{break-after:page;page-break-after:always;margin-bottom:3mm}
 .pr2 .hd{font-size:13pt}
 .pr2 .ttl{font-size:16pt;margin:1mm 0}
 .pr2 .line{margin:1mm 0 2mm;font-size:12pt}
@@ -12399,23 +12407,25 @@ const EDIT_CSS=`
 `;
 
 /* ---------- 產生表格 HTML ---------- */
-function build(tplId,vals,photos,mode){
+function build(tplId,vals,photos,mode,lock){
  const T=TP[tplId],edit=mode==="edit";vals=vals||{};photos=photos||{};
  const has=k=>Object.prototype.hasOwnProperty.call(vals,k);
  const mk=(pre,defs)=>{
   const K=k=>pre+k,dv=(k,d)=>{const key=K(k);if(has(key))return vals[key];return defs&&defs[k]!=null?defs[k]:d};
+  const ed=k=>edit&&!(lock&&lock(K(k)));
   const H={edit,
+   img:k=>photos[K(k)]?`<img src="${photos[K(k)]}">`:"",
    v:(k,d)=>dv(k,d),
-   t:(k,def="",w=0,ph="")=>{const v=dv(k,def),st=w?` style="min-width:${w}em"`:"";return edit?`<span class="f" contenteditable="true" data-k="${K(k)}"${st}${ph?` data-ph="${esc(ph)}" title="${esc(ph)}"`:""}>${esc(v)}</span>`:`<span class="f"${st}>${esc(v)}</span>`},
-   b:(k,def="",minH=40)=>{const v=dv(k,def),st=minH?` style="min-height:${minH}px"`:"";return edit?`<div class="fb" contenteditable="true" data-k="${K(k)}"${st}>${esc(v)}</div>`:`<div class="fb"${st}>${esc(v)}</div>`},
-   c:(k,label,def=false)=>{const on=!!dv(k,def);return `<span class="ck"${edit?` data-c="${K(k)}" data-on="${on?1:0}"`:""}><span class="cb">${on?"☑":"☐"}</span>${esc(label)}</span>`},
-   p:k=>{const key=K(k),src=photos[key];if(!edit)return src?`<div class="ph"><img src="${src}"></div>`:"";
+   t:(k,def="",w=0,ph="")=>{const v=dv(k,def),st=w?` style="min-width:${w}em"`:"";return ed(k)?`<span class="f" contenteditable="true" data-k="${K(k)}"${st}${ph?` data-ph="${esc(ph)}" title="${esc(ph)}"`:""}>${esc(v)}</span>`:`<span class="f"${st}>${esc(v)}</span>`},
+   b:(k,def="",minH=40)=>{const v=dv(k,def),st=minH?` style="min-height:${minH}px"`:"";return ed(k)?`<div class="fb" contenteditable="true" data-k="${K(k)}"${st}>${esc(v)}</div>`:`<div class="fb"${st}>${esc(v)}</div>`},
+   c:(k,label,def=false)=>{const on=!!dv(k,def);return `<span class="ck"${ed(k)?` data-c="${K(k)}" data-on="${on?1:0}"`:""}><span class="cb">${on?"☑":"☐"}</span>${esc(label)}</span>`},
+   p:k=>{const key=K(k),src=photos[key];if(!ed(k))return src?`<div class="ph"><img src="${src}"></div>`:"";
     return `<div class="ph">${src?`<img src="${src}">`:""}<div class="ffe phb"><button type="button" data-up="${key}">📷 ${src?"換照片":"上傳照片"}</button>${src?`<button type="button" data-pdel="${key}">移除</button>`:""}</div></div>`},
    wc:k=>edit?`<div class="ffe"><span class="wc" data-wc="${K(k)}">字數：${count(dv(k,""))} 字</span></div>`:"",
    hasPhoto:pref=>Object.keys(photos).some(x=>x.startsWith(pre+pref+"_")&&photos[x]),
    list:(lk,defRows,fn)=>{const key=K(lk);let ids=has(key)&&Array.isArray(vals[key])?vals[key]:defRows.map((_,i)=>"d"+i);
-    return ids.map((rid,i)=>{const d=rid[0]==="d"?defRows[+rid.slice(1)]||{}:{};const R=mk(key+"_"+rid+"_",d);R.del=()=>edit?`<span class="ffe del"><button type="button" data-rdel="${key}" data-rid="${rid}" title="刪除這一列">✕</button></span>`:"";return fn(R,i)}).join("")},
-   addBtn:(lk,label)=>edit?`<div class="ffe add"><button type="button" data-radd="${K(lk)}">${esc(label)}</button></div>`:""};
+    return ids.map((rid,i)=>{const d=rid[0]==="d"?defRows[+rid.slice(1)]||{}:{};const R=mk(key+"_"+rid+"_",d);R.del=()=>edit&&!(lock&&lock(key))?`<span class="ffe del"><button type="button" data-rdel="${key}" data-rid="${rid}" title="刪除這一列">✕</button></span>`:"";return fn(R,i)}).join("")},
+   addBtn:(lk,label)=>edit&&!(lock&&lock(K(lk)))?`<div class="ffe add"><button type="button" data-radd="${K(lk)}">${esc(label)}</button></div>`:""};
   return H};
  const h=mk("",null);
  return `<div class="ffs">${T.render(h)}</div>`}
@@ -12466,15 +12476,15 @@ ${listErr?`<p style="color:#c0392b;font-weight:700;font-size:13px">${esc(listErr
 
 /* ---------- 編輯畫面 ---------- */
 function renderEdit(){
- if(!root||!cur)return;const T=TP[cur.tpl];
+ if(!root||!cur)return;const T=TP[cur.tpl],lk=cur.vals._imp&&T.lock&&!cur.unlock?T.lock:null;
  const y=window.scrollY;
  root.innerHTML=`<style>${EDIT_CSS}</style>
 <div class="ffbar"><button class="ffbtn" data-back="1">← 回表格清單</button><span style="font-weight:800">${T.icon} ${esc(T.name)}</span>
 <input id="spTitle" value="${esc(cur.title)}" placeholder="這份紀錄的名稱（例如：小明 8月）">
 <button class="ffbtn on" data-save="1">💾 儲存</button>${T.col?"":`<button class="ffbtn" data-drive-cur="1">☁️ 上傳雲端</button>`}${canMng(cur.tpl)?`<button class="ffbtn" data-print-cur="1">🖨️ 列印（A4 ${T.portrait?"直式":"橫式"}）</button><button class="ffbtn" data-pdf-cur="1">⬇️ 下載 PDF</button>`:""}
 <span id="spSt" style="font-size:12px;color:#7a6f57">${esc(stMsg)}</span></div>
-<div style="font-size:12px;color:#7a6f57;margin:0 0 4px 4px">黃色底的地方可以直接打字；點 ☐ 可以打勾。所有文字（包含項目名稱）都可以修改。</div>
-<div class="ffscroll"><div class="ffpage${T.portrait?" pt":""}"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit")}</div></div>`;
+${lk?`<div style="font-size:13px;color:#2f5597;background:#e8f0fb;border:1px solid #9db8e0;border-radius:10px;padding:5px 10px;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><span>📥 這份是從${cur.tpl==="aideYc"?"育成":"治療師"}的檔案匯入的，內容照原檔顯示；特教助理員只需要填黃色底的${cur.tpl==="aideYc"?"「學校支持」":"「照片」和「備註」"}。</span>${cur.vals._file?`<button class="ffbtn" data-srcfile="${esc(cur.vals._file)}">📄 開啟原始檔</button>`:""}${isAdm()&&!cur.vals._pages?`<button class="ffbtn" data-unlock="1" title="管理員可以修改匯入的內容">🔓 解除鎖定</button>`:""}</div>`:`<div style="font-size:12px;color:#7a6f57;margin:0 0 4px 4px">黃色底的地方可以直接打字；點 ☐ 可以打勾。所有文字（包含項目名稱）都可以修改。</div>`}
+<div class="ffscroll"><div class="ffpage${T.portrait?" pt":""}"><style>${SHEET_CSS}</style>${build(cur.tpl,cur.vals,cur.photos,"edit",lk)}</div></div>`;
  fitPage();window.scrollTo(0,y);
 }
 /* 整頁顯示：橫式 A4 比畫面寬時，自動縮小到剛好放得下 */
@@ -12652,7 +12662,7 @@ function renderFiles(area){
 <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-fsave="1">💾 儲存</button><button class="ffbtn" data-frep="${f.id}">🔁 換檔案</button><button class="ffbtn" data-fcancel="1">取消</button></div></div>`;
   return `<div class="ffrow"><div style="min-width:0;flex:1"><b>${ficon(e)} ${esc(f.title||baseOf(f.name))}</b>${e?` <span style="font-size:11px;color:#7a6f57;border:1px solid #e3d5b5;border-radius:999px;padding:0 6px">${esc(e.toUpperCase())}</span>`:""}<br>
 <span style="font-size:12px;color:#7a6f57">${fsize(f.size)}　｜　${esc(f.ownerName||f.ownerEmail||"")}　｜　${fmt(f.updatedAt||f.createdAt)}${f.note?`　｜　備註：${esc(f.note)}`:""}</span></div>
-<div style="display:flex;gap:6px;flex-wrap:wrap">${e==="pdf"||/^(jpe?g|png|gif|txt)$/.test(e)?`<button class="ffbtn on" data-fopen="${f.id}">👀 開啟</button>`:""}<button class="ffbtn" data-fdl="${f.id}">⬇️ 下載</button>${own?`<button class="ffbtn" data-fedit="${f.id}">✏️ 編輯</button><button class="ffbtn red" data-fdel="${f.id}">🗑 刪除</button>`:""}</div></div>`};
+<div style="display:flex;gap:6px;flex-wrap:wrap">${e==="pdf"||e==="docx"||/^(jpe?g|png|gif|txt)$/.test(e)?`<button class="ffbtn on" data-fopen="${f.id}">👀 線上開啟</button>`:""}${(e==="docx"||(e==="pdf"&&tplForCat(f.cat)==="aideYc"))&&canAide()?`<button class="ffbtn" data-fconv="${f.id}" title="把這個檔案轉成線上表格">📝 轉成線上表格</button>`:""}<button class="ffbtn" data-fdl="${f.id}">⬇️ 下載</button>${own?`<button class="ffbtn" data-fedit="${f.id}">✏️ 編輯</button><button class="ffbtn red" data-fdel="${f.id}">🗑 刪除</button>`:""}</div></div>`};
  root.innerHTML=`<style>${EDIT_CSS}</style>${tabsHtml()}
 <datalist id="spCatList">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
 <div class="ffcard"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:16px">${A.icon} ${esc(A.name)}</b><span style="font-size:12px;color:#7a6f57">${esc(A.desc)}可上傳 PDF、Word、Excel、圖片（單檔 25MB 以內）；只有特教助理員本人與管理員可以檢視、編輯。</span></div>
@@ -12677,7 +12687,8 @@ function formsBox(c){
  const T=TP[tplForCat(c)],L=aDocs.filter(x=>x.cat===c&&x.tpl===T.id);
  return `<div style="border:1px solid #b9dcc3;background:#f4faf2;border-radius:14px;padding:10px">
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:15px">${T.icon} 線上表格：${esc(T.name)}</b><span style="font-size:12px;color:#7a6f57">${T.portrait?"A4 直式":"A4 橫式"}，格式與原本的紀錄表相同，填寫會自動儲存</span>
-<span style="flex:1"></span><button class="ffbtn on" data-anew="1">＋ 填寫新的</button><button class="ffbtn" data-ablank="1">🖨️ 印空白表</button></div>
+<span style="flex:1"></span><button class="ffbtn on" data-aimp="1" title="${T.id==="aideYc"?"育成寄來的入班支持紀錄單（PDF 或 Word）":"治療師寄來的輔導紀錄表（Word 檔）"}">📥 上傳${T.id==="aideYc"?"育成":"治療師"}檔案匯入</button><button class="ffbtn" data-anew="1">＋ 空白填寫</button><button class="ffbtn" data-ablank="1">🖨️ 印空白表</button></div>
+<div style="font-size:12px;color:#5a6b52;margin:-2px 0 6px">${T.id==="aideYc"?"把育成寄來的入班支持紀錄單（PDF 或 Word）上傳，系統會轉成線上表格，原始紀錄單照原樣保留；特教助理員只要填「學校支持」。":"把治療師寄來的輔導紀錄表（Word 檔）上傳，系統會自動填入日期、姓名、服務內容、建議事項和照片；特教助理員只要補「照片」和「備註」。"}</div>
 ${L.length?`<div style="display:flex;flex-direction:column;gap:6px">${L.map(x=>`<div class="ffrow"><div style="min-width:0"><b>${T.icon} ${esc(x.title||T.name)}</b><br><span style="font-size:12px;color:#7a6f57">最後修改：${fmt(x.updatedAt)}${x.ownerName?`　｜　${esc(x.ownerName)}`:""}</span></div>
 <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="ffbtn on" data-open="${x.id}">✏️ 編輯</button><button class="ffbtn" data-copy="${x.id}">📄 複製</button><button class="ffbtn" data-print="${x.id}">🖨️ 列印</button><button class="ffbtn" data-pdf="${x.id}">⬇️ 下載 PDF</button><button class="ffbtn red" data-del="${x.id}">🗑 刪除</button></div></div>`).join("")}</div>`:`<p style="text-align:center;color:#9a917a;padding:8px 0;font-size:13px">還沒有填寫的表格，按「＋ 填寫新的」開始</p>`}</div>`}
 function fSt(m){fBusy=m;const e=root&&root.querySelector("#spFSt");if(e)e.textContent=m}
@@ -12695,7 +12706,7 @@ async function addFile(blob,name,area,cat,note){
  await ref.set({area,cat:cat||AREAS[area].cats[0]||"未分類",name,title:baseOf(name),note:note||"",type:blob.type||MIME[e]||"application/octet-stream",size:blob.size,chunks:0,done:false,uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),createdAt:Date.now(),updatedAt:Date.now()});
  try{const n=await putChunks(ref,b64,name);await ref.update({chunks:n,done:true,updatedAt:Date.now()})}
  catch(err){try{await delChunks(ref);await ref.delete()}catch(_){}throw err}
- return true}
+ return ref.id}
 function pickFiles(multi,cb){const inp=document.createElement("input");inp.type="file";inp.multiple=!!multi;inp.accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.txt,image/*";inp.onchange=()=>{const fs=[...(inp.files||[])];if(fs.length)cb(fs)};inp.click()}
 const perr=e=>e&&e.code==="permission-denied"?"沒有權限（請管理員發布最新的 firestore.rules）":(e&&e.message)||String(e);
 function uploadNew(){
@@ -12730,12 +12741,100 @@ async function fileBlob(f){
  const bin=atob(b64),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
  return new Blob([arr],{type:f.type||MIME[extOf(f.name)]||"application/octet-stream"})}
 async function openFile(id,dl){
- const f=files.find(x=>x.id===id);if(!f)return;const w=dl?null:window.open("","_blank");
+ const f=files.find(x=>x.id===id);if(!f)return alert("找不到原始檔（可能已經刪除）");const w=dl?null:window.open("","_blank");
+ if(w)try{w.document.write('<p style="font:16px sans-serif;padding:20px">讀取中，請稍候…</p>')}catch(_){}
  try{fSt(`讀取中…「${f.title||f.name}」`);const b=await fileBlob(f),u=URL.createObjectURL(b);fSt("");
   if(dl){const a=document.createElement("a");a.href=u;a.download=(f.title||baseOf(f.name)).replace(/[\\/:*?"<>|]/g,"_")+(extOf(f.name)?"."+extOf(f.name):"");document.body.appendChild(a);a.click();a.remove()}
+  else if(extOf(f.name)==="docx"&&w)await viewDocx(b,f.title||baseOf(f.name),w);
   else if(w)w.location.href=u;else window.open(u,"_blank");
   setTimeout(()=>URL.revokeObjectURL(u),120000)}
  catch(e){if(w)w.close();fSt("");alert("讀取檔案失敗："+perr(e))}}
+/* ---------- 上傳檔案匯入線上表格（治療師 Word 檔、育成 PDF／Word） ---------- */
+const needZip=async()=>{if(!window.JSZip)await ldJs("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js")};
+async function viewDocx(b,title,w){
+ await needZip();if(!window.docx)await ldJs("https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js");
+ const box=document.createElement("div");box.style.cssText="position:fixed;left:-30000px;top:0;width:1200px";document.body.appendChild(box);
+ try{await window.docx.renderAsync(b,box,box,{useBase64URL:true,inWrapper:true,ignoreLastRenderedPageBreak:true});
+  w.document.open();w.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>body{margin:0;background:#e9e6df}.docx-wrapper{padding:16px!important}@media print{body{background:#fff}.docx-wrapper{background:#fff!important;padding:0!important}.docx-wrapper>section{box-shadow:none!important;margin:0!important}}</style></head><body>${box.innerHTML}</body></html>`);w.document.close()}
+ finally{box.remove()}}
+function wText(el){let s="";const walk=n=>{for(const c of n.childNodes){if(c.nodeType!==1)continue;const t=c.tagName;
+  if(t==="w:t")s+=c.textContent;else if(t==="w:tab")s+=" ";else if(t==="w:br"||t==="w:cr")s+="\n";else if(t==="w:p"){walk(c);s+="\n"}else if(t==="w:pPr"||t==="w:rPr"||t==="w:tcPr")continue;else walk(c)}};
+ walk(el);return s.replace(/[ \t\u00a0]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim()}
+const kids=(el,tag)=>[...el.childNodes].filter(n=>n.tagName===tag);
+function wGrid(tbl){return kids(tbl,"w:tr").map(tr=>{const out=[];kids(tr,"w:tc").forEach(tc=>{const pr=kids(tc,"w:tcPr")[0],gs=pr&&kids(pr,"w:gridSpan")[0],vm=pr&&kids(pr,"w:vMerge")[0];
+  out.push({text:wText(tc),el:tc,cont:!!(vm&&(vm.getAttribute("w:val")||"continue")!=="restart")});for(let i=1,sp=+(gs&&gs.getAttribute("w:val"))||1;i<sp;i++)out.push({text:"",el:null})});return out})}
+async function docxParts(b){
+ await needZip();const z=await window.JSZip.loadAsync(b),df=z.file("word/document.xml");if(!df)throw new Error("這不是 Word（.docx）檔");
+ const P=x=>new DOMParser().parseFromString(x,"application/xml"),doc=P(await df.async("string")),rels={},rf=z.file("word/_rels/document.xml.rels");
+ if(rf)[...P(await rf.async("string")).getElementsByTagName("Relationship")].forEach(r=>rels[r.getAttribute("Id")]=r.getAttribute("Target"));
+ return {z,doc,rels,body:doc.getElementsByTagName("w:body")[0]}}
+function loadImg(blob){return new Promise((ok,bad)=>{const u=URL.createObjectURL(blob),im=new Image();im.onload=()=>{ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);bad(new Error("img"))};im.src=u})}
+/* 一格裡有多張照片時，上下接成一張 */
+async function cellPhoto(z,rels,el){
+ if(!el)return "";const ids=[...el.getElementsByTagName("a:blip")].map(b=>b.getAttribute("r:embed")).concat([...el.getElementsByTagName("v:imagedata")].map(b=>b.getAttribute("r:id"))).filter(Boolean);
+ const ims=[];for(const id of ids){let t=rels[id];if(!t||!/\.(png|jpe?g|gif|bmp|webp)$/i.test(t))continue;t=t.replace(/^\//,"");const path=t.startsWith("word/")?t:"word/"+t.replace(/^\.\//,"");
+  const zf=z.file(path)||z.file(path.replace("word/../",""));if(!zf)continue;try{ims.push(await loadImg(await zf.async("blob")))}catch(e){}}
+ if(!ims.length)return "";const cols=ims.length>2?2:1,gap=8,W=900,cw=Math.floor((W-gap*(cols-1))/cols),hs=ims.map(m=>Math.round(m.naturalHeight*cw/m.naturalWidth)),rh=[];
+ for(let i=0;i<ims.length;i+=cols)rh.push(Math.max(...hs.slice(i,i+cols)));
+ const c=document.createElement("canvas");c.width=cols===1?Math.min(W,Math.max(...ims.map(m=>m.naturalWidth))):W;
+ const sc=cols===1?c.width/cw:1;c.height=Math.round((rh.reduce((x,y)=>x+y,0)+gap*(rh.length-1))*sc);const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);
+ let y=0;rh.forEach((h,r)=>{for(let j=0;j<cols;j++){const i=r*cols+j,m=ims[i];if(!m)continue;g.drawImage(m,j*(cw+gap)*sc,y,cw*sc,hs[i]*sc);URL.revokeObjectURL(m.src)}y+=(h+gap)*sc});
+ let k=1,q=.8,u=c.toDataURL("image/jpeg",q);while(u.length>800000&&k>.3){if(q>.5)q-=.1;else{k*=.8;const d=document.createElement("canvas");d.width=Math.round(c.width*k);d.height=Math.round(c.height*k);d.getContext("2d").drawImage(c,0,0,d.width,d.height);u=d.toDataURL("image/jpeg",q);continue}u=c.toDataURL("image/jpeg",q)}
+ return u}
+async function parseProDocx(b){
+ const {z,rels,body}=await docxParts(b);let head="";for(const c of body.childNodes){if(c.tagName==="w:tbl")break;if(c.tagName==="w:p")head+=wText(c)+"\n"}
+ const vals={},ks=["語言","職能","物理","心理"],on=ks.map(k=>new RegExp("[■☑☒✓✔√▉█▣]\\s*"+k).test(head));if(on.some(Boolean))on.forEach((x,i)=>vals["k"+i]=x);
+ const pm=head.match(/專業人員\s*[：:]\s*([^\n]*)/);if(pm&&pm[1].trim())vals.pro=pm[1].trim().replace(/\s+/g," ");
+ const org=head.split("\n").map(x=>x.trim()).find(x=>/辦理/.test(x));if(org)vals.org=org;
+ const tbl=body.getElementsByTagName("w:tbl")[0];if(!tbl)throw new Error("檔案裡找不到紀錄表的表格");
+ const rows=wGrid(tbl),hd=rows[0].map(c=>c.text.replace(/\s/g,"")),col=n=>hd.findIndex(h=>h.startsWith(n));
+ const iD=col("服務日期"),iN=col("幼兒姓名"),iC=col("服務內容"),iS=col("建議事項"),iP=col("照片");
+ if(iD<0&&iN<0)throw new Error("看不出是專業人員輔導紀錄表的格式（找不到「服務日期」「幼兒姓名」欄）");
+ const oth=hd.map((h,i)=>i).filter(i=>![iD,iN,iC,iS,iP].includes(i)&&hd[i]);const ids=[],photos={},last={};
+ for(const r of rows.slice(1)){
+  const g=i=>{if(i<0||!r[i])return "";if(r[i].cont&&!r[i].text)return last[i]||"";return r[i].text};
+  const d=g(iD),n=g(iN),c=g(iC),sg=g(iS),m=oth.map(i=>{const t=r[i]&&r[i].text;return t?(hd[i]==="備註"?t:hd[i].replace(/[(（].*$/,"")+"："+t):""}).filter(Boolean).join("\n");
+  const ph=iP>=0&&r[iP]?await cellPhoto(z,rels,r[iP].el):"";
+  [iD,iN].forEach(i=>{if(i>=0&&r[i]&&r[i].text)last[i]=r[i].text});
+  if(!(n||c||sg||m||ph))continue;
+  const rid="n"+ids.length,pre="rows_"+rid+"_";ids.push(rid);
+  vals[pre+"d"]=d||last[iD]||"";vals[pre+"n"]=n;vals[pre+"c"]=c;vals[pre+"s"]=sg;vals[pre+"m"]=m;if(ph)photos[pre+"ph"]=ph}
+ if(!ids.length)throw new Error("表格裡沒有紀錄");vals.rows=ids;return {vals,photos}}
+async function parseYcDocx(b){
+ const {body}=await docxParts(b),L={"班級名稱":"cls","服務日期":"date","服務時間":"time","填表日期":"fdate","主要問題":"prob","觀察紀錄":"obs","建議事項":"sug","填表人":"by","園長/老師":"tch","園長／老師":"tch","中心督導":"sup"},vals={};
+ [...body.getElementsByTagName("w:tbl")].forEach(t=>wGrid(t).forEach(r=>r.forEach((c,i)=>{const k=L[c.text.replace(/\s/g,"")];if(k&&r[i+1]&&vals[k]==null)vals[k]=r[i+1].text})));
+ if(!Object.keys(vals).length)throw new Error("看不出是入班支持紀錄單的格式");
+ if(vals.sug!=null){const m=vals.sug.split(/學校支持\s*[：:]?/);vals.sug=m[0].trim();if(m.length>1)vals.sch=m.slice(1).join("").trim()}
+ return {vals,photos:{}}}
+async function parsePdfPages(b){
+ if(!window.pdfjsLib){await ldJs("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}
+ const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(await b.arrayBuffer())}).promise,n=Math.min(pdf.numPages,60),photos={};
+ for(let i=0;i<n;i++){fSt(`轉換 PDF 第 ${i+1}/${n} 頁…`);const pg=await pdf.getPage(i+1),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:Math.min(2.5,1240/v0.width)});
+  const c=document.createElement("canvas");c.width=Math.round(vp.width);c.height=Math.round(vp.height);const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);
+  await pg.render({canvasContext:g,viewport:vp}).promise;let q=.75,u=c.toDataURL("image/jpeg",q);while(u.length>850000&&q>.3){q-=.1;u=c.toDataURL("image/jpeg",q)}photos["pg_"+i]=u}
+ return {vals:{_pages:n},photos}}
+async function importOne(blob,name,cat,fileId){
+ const tpl=tplForCat(cat),e=extOf(name);
+ const r=e==="pdf"?(tpl==="aideYc"?await parsePdfPages(blob):(()=>{throw new Error("治療師的紀錄表請上傳 Word（.docx）檔")})()):e==="docx"?(tpl==="aideYc"?await parseYcDocx(blob):await parseProDocx(blob)):(()=>{throw new Error("只能匯入 Word（.docx）或 PDF 檔")})();
+ const vals={...defsForCat(cat),...r.vals,_imp:1,_src:name,_file:fileId||""},u=me();
+ const ref=await db().collection("spedAideDocs").add({cat,tpl,title:baseOf(name),cls:clsKey(vals),uid:u.uid,ownerEmail:(u.email||"").toLowerCase(),ownerName:myName(),data:vals,imported:true,createdAt:Date.now(),updatedAt:Date.now(),updatedBy:u.email||""});
+ const ks=Object.keys(r.photos);for(let i=0;i<ks.length;i++){fSt(`儲存圖片 ${i+1}/${ks.length}…`);await ref.collection("photos").doc(ks[i]).set({data:r.photos[ks[i]],at:Date.now()})}
+ return ref.id}
+function importForms(){
+ const cat=fCat,tpl=tplForCat(cat),inp=document.createElement("input");inp.type="file";inp.multiple=true;inp.accept=tpl==="aideYc"?".pdf,.docx":".docx";
+ inp.onchange=async()=>{const fs=[...(inp.files||[])];if(!fs.length)return;let n=0;
+  for(const f of fs){try{fSt(`匯入中…「${f.name}」`);
+   let fid=(files.find(x=>x.area==="aide"&&x.cat===cat&&x.name===f.name&&x.done!==false)||{}).id||"";
+   if(!fid)try{fid=await addFile(f,f.name,"aide",cat,"線上表格匯入的原始檔")||""}catch(e){}
+   await importOne(f,f.name,cat,fid);n++}
+   catch(e){alert(`「${f.name}」匯入失敗：`+perr(e))}}
+  fSt(n?`已匯入 ${n} 份，轉成線上表格 ✓`:"");if(n&&D&&D.showToast)D.showToast(`已匯入 ${n} 份 ✅`);renderList()};
+ inp.click()}
+async function convertFile(id){
+ const f=files.find(x=>x.id===id);if(!f)return;
+ if(aDocs.some(x=>x.data&&x.data._file===id)&&!confirm(`「${f.title||f.name}」已經轉過線上表格了，要再轉一份嗎？`))return;
+ try{fSt(`讀取中…「${f.name}」`);await importOne(await fileBlob(f),f.name,f.cat,f.id);fSt("已轉成線上表格 ✓");D&&D.showToast&&D.showToast("已轉成線上表格 ✅");renderList()}
+ catch(e){fSt("");alert("轉換失敗："+perr(e))}}
 /* 匯入 ZIP：依資料夾分類（特教助理員／專業人員輔導紀錄 → 分頁；下一層資料夾 → 分類） */
 const unU=s=>String(s).replace(/#U([0-9a-f]{4})/gi,(_,h)=>String.fromCharCode(parseInt(h,16)));
 const proCat=s=>s.replace(/^(\S{2,4}?)\s*(職能|語言|物理|心理)/,"$1 $2");
@@ -12770,6 +12869,8 @@ function onFileClick(ds){
  if(ds.aidedel){if(!isAdm())return true;if(confirm(`移除特教助理員帳號「${ds.aidedel}」？`))setAides(aides.filter(x=>x!==ds.aidedel));return true}
  if(ds.fcat!=null){fCat=ds.fcat;fEdit=null;renderList();return true}
  if(ds.fnewcat){const n=(prompt("新分頁的名稱（例如：王小明 物理治療師）")||"").trim();if(n){if(!catsOf(tab).includes(n))fExtra.push(n);fCat=n;renderList()}return true}
+ if(ds.aimp){if(canAide())importForms();return true}
+ if(ds.fconv){if(canAide())convertFile(ds.fconv);return true}
  if(ds.anew){if(canAide())newDoc(tplForCat(fCat),defsForCat(fCat),fCat);return true}
  if(ds.ablank){const t=tplForCat(fCat);printHtml(t,defsForCat(fCat),{},TP[t].name);return true}
  if(ds.fup)return uploadNew(),true;
@@ -12788,6 +12889,8 @@ function onClick(e){
  const b=e.target.closest("button,[data-c]");if(!b||!root.contains(b))return;const ds=b.dataset;
  if(ds.c!=null&&!cur)return;
  if(!cur&&onFileClick(ds))return;
+ if(cur&&ds.unlock!=null){if(isAdm()){collect();cur.unlock=true;renderEdit()}return}
+ if(ds.srcfile){fSubscribe();return openFile(ds.srcfile,false)}
  if(ds.c!=null){const on=ds.on!=="1";ds.on=on?"1":"0";const cb=b.querySelector(".cb");if(cb)cb.textContent=on?"☑":"☐";if(ds.c.endsWith("On")){collect();renderEdit()}touch();return}
  if(ds.new)return newDoc(ds.new);
  const gt=ds.blank||(ds.print||ds.del||ds.pdf?(findDoc(ds.print||ds.del||ds.pdf)||{}).tpl:"")||((ds.printCur!=null||ds.pdfCur!=null)&&cur?cur.tpl:"");
