@@ -199,7 +199,6 @@ async function webhook(request, env) {
 // ───────── /meeting-ai：會議錄音轉逐字稿、整理成會議紀錄草稿 ─────────
 // 網頁先把錄音切成約 1 分鐘一段（16kHz 單聲道 WAV），一段一段送來轉文字，所以 50 分鐘的長錄音也不會超過限制。
 const WHISPER = '@cf/openai/whisper-large-v3-turbo';
-const LLM = '@cf/openai/gpt-oss-120b';
 
 function aiText(r) {
   if (!r) return '';
@@ -207,7 +206,8 @@ function aiText(r) {
   if (typeof r.response === 'string') return r.response;
   if (typeof r.output_text === 'string') return r.output_text;
   const c = r.choices && r.choices[0];
-  if (c && c.message && typeof c.message.content === 'string') return c.message.content;
+  if (c && c.message && typeof c.message.content === 'string' && c.message.content) return c.message.content;
+  if (c && typeof c.text === 'string') return c.text;
   let t = '';
   for (const o of (Array.isArray(r.output) ? r.output : [])) {
     if (o && o.type && o.type !== 'message') continue;
@@ -215,9 +215,24 @@ function aiText(r) {
   }
   return t;
 }
+// 依序嘗試：gpt-oss-120b（messages 格式）→ gpt-oss-120b（Responses 格式）→ llama-3.3-70b，前一個失敗或沒回傳文字就換下一個
+const LLM_TRIES = [
+  ['@cf/openai/gpt-oss-120b', (sys, user, n) => ({ messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: n, reasoning_effort: 'low' })],
+  ['@cf/openai/gpt-oss-120b', (sys, user, n) => ({ instructions: sys, input: user, reasoning: { effort: 'low' }, max_output_tokens: n })],
+  ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', (sys, user, n) => ({ messages: [{ role: 'system', content: sys }, { role: 'user', content: user.slice(0, 30000) }], max_tokens: Math.min(n, 4000) })],
+];
 async function askLLM(env, instructions, input, maxTokens) {
-  const r = await env.AI.run(LLM, { instructions, input, reasoning: { effort: 'low' }, max_output_tokens: maxTokens || 6000 });
-  return aiText(r).trim();
+  const errs = [];
+  for (const [model, mk] of LLM_TRIES) {
+    try {
+      const t = aiText(await env.AI.run(model, mk(instructions, input, maxTokens || 6000))).trim();
+      if (t) return t;
+      errs.push(model.split('/').pop() + '：沒有回傳文字');
+    } catch (e) {
+      errs.push(model.split('/').pop() + '：' + String((e && e.message) || e).slice(0, 200));
+    }
+  }
+  throw new Error('AI 整理失敗（' + errs.join('；') + '）');
 }
 function pickJson(t) {
   const s = String(t || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
