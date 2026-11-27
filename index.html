@@ -16,6 +16,55 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-storage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+  /* 全系統檢視帳號：可以看到系統所有功能與資料（含管理員、本人專用頁面），但只能看、不能新增／修改／刪除。
+     特教業務原本就有編輯權限，維持可編輯。登入後頂端有按鈕可切回一般模式（做自己的工作時用）。 */
+  window.VIEW_ALL_EMAILS = ["babyanitacvc@gmail.com"];
+  (function () {
+    // 'off'：不限制；'all'：檢視全系統（全部唯讀）；'owner'：本身是管理員，只有本人專用頁面唯讀
+    window.__viewAllMode = 'off';
+    // 檢視模式下仍可寫入：登入紀錄、個人設定、自己的老師資料，以及原本就有權限的特教業務
+    const OK_ALL = /^(loginLogs|users|teacherDir|weeklyPrefs|obsPrefs|spedDocs|spedFiles|spedAideDocs)\/|^config\/spedAides$/;
+    const OWNER_COLS = /^(meetingMinutes|meetingPhotos|meetingFiles|workPlans|patrolRecords|caseRecords|staffReviews|indicatorStats)\//;
+    let lastToast = 0;
+    function say() {
+      const now = Date.now(); if (now - lastToast < 4000) return; lastToast = now;
+      try {
+        const a = window.__kgApp;
+        if (a && a.showToast) a.showToast('目前是「檢視全系統」唯讀模式，不能新增、修改或刪除', 5000);
+      } catch (e) {}
+    }
+    function blocked(path) {
+      const m = window.__viewAllMode;
+      if (m === 'off') return false;
+      if (m === 'owner') return path == null ? false : OWNER_COLS.test(path);
+      if (path != null && OK_ALL.test(path)) return false;
+      try { if (path == null && window.__kgApp && window.__kgApp.view === 'sped') return false; } catch (e) {}
+      return true;
+    }
+    function err() { say(); const e = new Error('檢視全系統模式，不能修改'); e.code = '唯讀檢視模式，不能修改'; return e; }
+    try {
+      const fs = firebase.firestore, D = fs.DocumentReference.prototype, C = fs.CollectionReference.prototype;
+      ['set', 'update', 'delete'].forEach(k => { const o = D[k]; D[k] = function () { if (blocked(this.path)) return Promise.reject(err()); return o.apply(this, arguments); }; });
+      const add = C.add; C.add = function () { if (blocked(this.path + '/_')) return Promise.reject(err()); return add.apply(this, arguments); };
+      const B = fs.WriteBatch.prototype, commit = B.commit; B.commit = function () { if (blocked(null)) return Promise.reject(err()); return commit.apply(this, arguments); };
+      const F = fs.Firestore.prototype, tx = F.runTransaction; F.runTransaction = function () { if (blocked(null)) return Promise.reject(err()); return tx.apply(this, arguments); };
+    } catch (e) { console.warn('檢視模式保護（資料庫）未啟用', e); }
+    try {
+      const R = firebase.storage.Reference.prototype;
+      ['put', 'putString', 'delete'].forEach(k => { const o = R[k]; if (o) R[k] = function () { if (blocked(null)) return Promise.reject(err()); return o.apply(this, arguments); }; });
+    } catch (e) { console.warn('檢視模式保護（檔案）未啟用', e); }
+    // 上傳到雲端硬碟、LINE 通知等對外送出的動作也擋下（特教業務頁面除外）
+    const f0 = window.fetch;
+    window.fetch = function (u, o) {
+      const method = String((o && o.method) || (u && u.method) || 'GET').toUpperCase();
+      const url = String((u && u.url) || u || '');
+      const ours = /script\.google(usercontent)?\.com|\/\.netlify\/functions\//.test(url) || (!!window.__driveUrl && url === window.__driveUrl);
+      if (ours && method !== 'GET' && method !== 'HEAD' && window.__viewAllMode === 'all' && blocked(null)) return Promise.reject(err());
+      return f0.apply(this, arguments);
+    };
+  })();
+</script>
+<script>
   /* 績效考評建議模組（個案追蹤、考核與專業成長、學習指標統計）的唯讀檢視帳號；可編輯的是 config/admins 的 owners */
   window.KPI_VIEWERS = ["babyanitacvc@gmail.com"];
   window.kpiSee = (u, owner) => !!u && (!!owner || window.KPI_VIEWERS.includes(String(u.email||"").toLowerCase()));
@@ -315,7 +364,8 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
             <span class="hidden sm:flex items-center gap-2 text-xs bg-brand-dark/40 rounded-full px-3 py-1">
               <span class="font-num">📅</span><span x-text="todayLabel"></span>
             </span>
-            <span class="hidden md:block text-xs bg-brand-dark/30 rounded-full px-3 py-1" x-text="(isAdmin ? '管理者：' : '老師：') + (currentUser.displayName || currentUser.email)"></span>
+            <span class="hidden md:block text-xs bg-brand-dark/30 rounded-full px-3 py-1" x-text="(isViewAll ? '全系統檢視：' : isAdmin ? '管理者：' : '老師：') + (currentUser.displayName || currentUser.email)"></span>
+            <button x-show="canViewAll" @click="toggleViewAll()" class="text-xs font-bold rounded-full px-3 py-1" :class="isViewAll ? 'bg-amber-300 text-wood-dark hover:bg-amber-200' : 'bg-brand-dark/40 hover:bg-brand-dark/60'" :title="isViewAll ? '切回一般模式，才能編輯自己的資料' : '切換到檢視全系統（唯讀）'" x-text="isViewAll ? '👁️ 檢視全系統中 · 切回一般' : '👁️ 檢視全系統'"></button>
             <button @click="signOutUser" class="text-xs font-bold bg-brand-dark/40 hover:bg-brand-dark/60 rounded-full px-3 py-1">登出</button>
           </div>
         </div>
@@ -449,6 +499,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
       </header>
 
       <main class="max-w-6xl mx-auto px-5 mt-6">
+        <div x-show="isViewAll" class="mb-4 rounded-2xl px-4 py-2 text-sm font-bold" style="background:#fff4cc;border:1px solid #e6c65c;color:#6b4f00">👁️ 目前是「檢視全系統」模式：所有功能與資料都看得到，但只能檢視，不能新增、修改或刪除（特教業務維持原本可編輯）。要做自己的工作，請按右上角「切回一般」。</div>
 
         <!-- ============ 目錄 ============ -->
         <section x-show="view==='home'" class="space-y-5">
@@ -3198,7 +3249,7 @@ function kgApp() {
     itemFormOpen: false, categoryFormOpen: false, publisherPanelOpen: false, selectedTeacherName: '',
     lamQ: '', lamFrom: '', lamTo: '', lamStatus: 'all', lamShowAll: false,
     notifPerm: (window.Notification ? Notification.permission : 'unsupported'), baseTitle: '', titleTimer: null, audioCtx: null,
-    isEditor: false, isOwner: false, isStuViewer: false, homeLineBound: null, homeLineAsked: false, weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', formsFolder: '', formsFolderInput: '', blankForms: [], formQ: '', formCatSel: '', formUpName: '', formUpCat: '', formUpCount: 0, formBusy: false, formBusyMsg: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
+    isEditor: false, isOwner: false, isStuViewer: false, isViewAll: false, canViewAll: false, homeLineBound: null, homeLineAsked: false, weeklyMode: 'mine', myName: '', lineUsage: null, driveUrl: '', driveFolder: '', driveUrlInput: '', driveFolderInput: '', driveFolders: {}, driveFolderIn: {}, drivePlanFolder: '', drivePlanFolderInput: '', formsFolder: '', formsFolderInput: '', blankForms: [], formQ: '', formCatSel: '', formUpName: '', formUpCat: '', formUpCount: 0, formBusy: false, formBusyMsg: '', accessState: 'checking', submittedWeekly: [], healthPending: [], members: [], newMemberEmail: '', newMemberName: '', memberQ: '', pollTimer: null,
     teacherPick: '', pairs: [], newPairTeacher: '', newPairClass: '', pairPick: '',
     genres: ['遊戲書','韻文','故事','散文','知識概念','文化類'], cultureSubs: ['新年','母親節','端午節','中秋節','聖誕節'],
     exportGenres: [], exportSubs: [], classifyAll: false, classifyMore: false,
@@ -3234,6 +3285,7 @@ function kgApp() {
     async init() {
       if (this.started) return;
       this.started = true;
+      window.__kgApp = this;
       const today = this.getTaipeiDateString();
       this.todayLabel = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
       this.borrowForm.borrowDate = today;
@@ -3257,7 +3309,7 @@ function kgApp() {
 
       this.auth.onAuthStateChanged(async (user) => {
         this.unsubs.forEach(fn => fn()); this.unsubs = [];
-        this.currentUser = user; this.isAdmin = false; this.isEditor = false; this.isOwner = false; this.isStuViewer = false;
+        this.currentUser = user; this.isAdmin = false; this.isEditor = false; this.isOwner = false; this.isStuViewer = false; this.isViewAll = false; this.canViewAll = false; window.__viewAllMode = 'off';
         this.openGroups = {}; this.itemSearchText = ''; // 每次登入／登出都重置，讓各學習區預設為收合
         this.clearIdleTimer();
         if (user) {
@@ -3276,16 +3328,27 @@ function kgApp() {
               this.showToast(`無法確認管理員身分（${e.code || e.message}），請檢查 Firestore 規則`, 6000);
             }
           }
+          // 全系統檢視帳號：畫面上當作管理員＋本人專用都看得到，但寫入一律擋下（見頁首的檢視模式保護）
+          {
+            const vm = (user.email || '').trim().toLowerCase();
+            this.canViewAll = (window.VIEW_ALL_EMAILS || []).includes(vm) && !this.isOwner;
+            let off = false; try { off = localStorage.getItem('viewAllOff') === '1'; } catch (e3) {}
+            if (this.canViewAll && !off) {
+              window.__viewAllMode = this.isAdmin ? 'owner' : 'all';
+              this.isViewAll = true; this.isOwner = true;
+              if (!this.isAdmin) { this.isAdmin = true; this.isEditor = false; }
+            }
+          }
           this.view = 'home';
           this.accessState = 'ok'; clearInterval(this.pollTimer);
-          if (this.isAdmin) setTimeout(() => this.loadLineUsage(true), 1500);
+          if (this.isAdmin && window.__viewAllMode !== 'all') setTimeout(() => this.loadLineUsage(true), 1500);
           if (!this.isAdmin && !this.isEditor) {
             try { this.accessState = await this.checkAccess(user); }
             catch (e) { console.warn('帳號核准檢查失敗，暫以放行處理（請確認 Firestore 規則已加入 members）', e); this.accessState = 'ok'; }
             if (this.accessState === 'pending') this.pollTimer = setInterval(() => this.recheckAccess(), 30000);
           }
           try {
-            if (this.isAdmin && window.Notification && Notification.permission === 'default') {
+            if (this.isAdmin && window.__viewAllMode !== 'all' && window.Notification && Notification.permission === 'default') {
               const r = Notification.requestPermission();
               if (r && r.catch) r.catch(() => {});
             }
@@ -3317,6 +3380,10 @@ function kgApp() {
       const was = this.accessState; this.accessState = st;
       if (st === 'ok' && was !== 'ok') { clearInterval(this.pollTimer); this.subscribeAll(); this.showToast('帳號已核准，歡迎使用 ✅'); }
       else if (st === 'blocked') clearInterval(this.pollTimer);
+    },
+    toggleViewAll() {
+      try { localStorage.setItem('viewAllOff', this.isViewAll ? '1' : '0'); } catch (e) {}
+      location.reload();
     },
     get restrictedPW() { return ['rdrd320320@gmail.com'].includes(((this.currentUser && this.currentUser.email) || '').trim().toLowerCase()); },
     get pendingMembers() { return this.members.filter(m => m.status === 'pending'); },
