@@ -216,28 +216,31 @@ service cloud.firestore {
         : ['115學年度下學期'];
     }
     function planTeacher() { return isMember() && !noPlan() && planAges().size() > 0; }
+    // 115學年度下學期的課程規劃開放給全部已核准老師（所有年齡層）檢視、新增、編輯；刪除仍只限管理者與編輯者
+    function allTeacherSem(sem) { return isMember() && !noPlan() && sem == '115學年度下學期'; }
     match /config/planAccess {
       allow read: if isMember() || viewAll();
       allow write: if isAdmin();
     }
     match /planPhotos/{pid} {
       allow read: if (isMember() && !noPlan()) || viewAll();
-      allow create: if (canEdit() || planTeacher()) && !noPlan();
+      allow create: if (canEdit() || planTeacher() || isMember()) && !noPlan();
       allow delete: if canEdit() && !noPlan();
       allow update: if false;
     }
 
     match /teachingPlans/{id} {
-      allow read: if viewAll() || (!noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems())));
-      allow create: if !noPlan() && (canEdit() || (isMember() && request.resource.data.cls in planAges() && request.resource.data.sem in planSems()));
-      allow update: if !noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems()
+      allow read: if viewAll() || allTeacherSem(resource.data.sem) || (!noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems())));
+      allow create: if allTeacherSem(request.resource.data.sem) || (!noPlan() && (canEdit() || (isMember() && request.resource.data.cls in planAges() && request.resource.data.sem in planSems())));
+      allow update: if (allTeacherSem(resource.data.sem) && allTeacherSem(request.resource.data.sem)) ||
+                    !noPlan() && (canEdit() || (isMember() && resource.data.cls in planAges() && resource.data.sem in planSems()
                       && request.resource.data.cls in planAges() && request.resource.data.sem in planSems()));
       allow delete: if canEdit() && !noPlan();
     }
     // 修改紀錄：可編輯的人都會寫入；只有管理員看得到
     match /teachingPlanLogs/{id} {
       allow read: if (isAdmin() && !noPlan()) || viewAll();
-      allow create: if (canEdit() || planTeacher()) && !noPlan();
+      allow create: if (canEdit() || planTeacher() || isMember()) && !noPlan();
       allow update, delete: if false;
     }
 
