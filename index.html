@@ -9575,25 +9575,30 @@ async function mtaiRun(file){
     const cc = await ccP; let transcript = texts.filter(Boolean).join("\n");
     if (cc) transcript = cc(transcript);
     if (!transcript.replace(/〔[^〕]*〕/g,"").trim()) throw new Error("錄音裡沒有辨識到說話的內容");
-    /* 很長的逐字稿先分段整理成筆記，再整理成會議紀錄 */
-    let src = transcript, isNotes = false; const LIM = 9000;
-    if (transcript.length > LIM*1.5){
-      const lines = transcript.split("\n"), parts = []; let cur = "";
-      lines.forEach(l=>{ if (cur.length + l.length > LIM && cur){ parts.push(cur); cur = ""; } cur += l + "\n"; }); if (cur.trim()) parts.push(cur);
-      const notes = [];
-      for (let i=0;i<parts.length;i++){ alive(); set(`AI 整理重點中… ${i+1}／${parts.length}`, 0.8 + 0.1*i/parts.length, "逐字稿較長，先分段整理");
-        notes.push((await mtaiRetry(()=>mtaiPost("notes", { text:parts[i], part:i+1, total:parts.length }), 2)).notes); }
-      src = notes.map((t,i)=>`【第 ${i+1} 段】\n${t}`).join("\n\n"); isNotes = true;
-    }
-    alive(); set("AI 整理成會議紀錄格式中…", 0.92, "快好了");
-    const type = M.type!=="all" ? M.type : "教保會議";
-    const r = await mtaiRetry(()=>mtaiPost("draft", { text:src, isNotes, type, classes:mtCls() }), 2); alive();
-    let a = r.draft || {};
-    if (cc) a = JSON.parse(cc(JSON.stringify(a)));
+    /* 很長的逐字稿先分段整理成筆記，再整理成會議紀錄；AI 整理失敗時，仍把逐字稿放進新增表單，錄音不會白轉 */
+    let a = null, aiErr = "";
+    try{
+      let src = transcript, isNotes = false; const LIM = 9000;
+      if (transcript.length > LIM*1.5){
+        const lines = transcript.split("\n"), parts = []; let cur = "";
+        lines.forEach(l=>{ if (cur.length + l.length > LIM && cur){ parts.push(cur); cur = ""; } cur += l + "\n"; }); if (cur.trim()) parts.push(cur);
+        const notes = [];
+        for (let i=0;i<parts.length;i++){ alive(); set(`AI 整理重點中… ${i+1}／${parts.length}`, 0.8 + 0.1*i/parts.length, "逐字稿較長，先分段整理");
+          notes.push((await mtaiRetry(()=>mtaiPost("notes", { text:parts[i], part:i+1, total:parts.length }), 2)).notes); }
+        src = notes.map((t,i)=>`【第 ${i+1} 段】\n${t}`).join("\n\n"); isNotes = true;
+      }
+      alive(); set("AI 整理成會議紀錄格式中…", 0.92, "快好了");
+      const type = M.type!=="all" ? M.type : "教保會議";
+      const r = await mtaiRetry(()=>mtaiPost("draft", { text:src, isNotes, type, classes:mtCls() }), 2); alive();
+      a = r.draft || {};
+      if (cc) a = JSON.parse(cc(JSON.stringify(a)));
+    }catch(e){ if (e && e.message==="__stop") throw e; aiErr = (e && e.message) || String(e); }
     mtNew(); const d = M.draft;
-    M.draft = Object.assign(mtaiFill(d, a, transcript), { aiFrom:file.name });
+    M.draft = Object.assign(a ? mtaiFill(d, a, transcript) : Object.assign(d, { transcript }), { aiFrom:file.name });
     M.dirty = true; closeModal(); render(); window.scrollTo(0,0);
-    alert("✅ 草稿已經填好了！\n\n請逐項檢查、修改 AI 整理的內容（特別是人名、數字、日期），確認後再按「💾 儲存」。"+(fails.length?`\n\n⚠️ 有 ${fails.length} 段錄音沒有辨識成功，逐字稿裡有標示位置。`:"")+"\n完整逐字稿放在編輯畫面最下面，可以對照。");
+    const failNote = fails.length ? `\n\n⚠️ 有 ${fails.length} 段錄音沒有辨識成功，逐字稿裡有標示位置。` : "";
+    if (a) alert("✅ 草稿已經填好了！\n\n請逐項檢查、修改 AI 整理的內容（特別是人名、數字、日期），確認後再按「💾 儲存」。"+failNote+"\n完整逐字稿放在編輯畫面最下面，可以對照。");
+    else alert("⚠️ 逐字稿已經完成，但 AI 整理成會議紀錄格式時失敗了：\n"+aiErr+"\n\n逐字稿已經放在編輯畫面最下面，可以先對照逐字稿手動填寫；也可以稍後再上傳一次錄音重試。"+failNote);
   }catch(e){
     if (e && e.message==="__stop") return;
     closeModal(); alert("產生草稿失敗："+((e && e.message) || e));
