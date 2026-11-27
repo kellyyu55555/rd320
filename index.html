@@ -655,7 +655,7 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
                     :class="(!borrowForm.borrower.trim() || !borrowForm.className) ? 'border-coral/60' : 'border-wood-light/50'">
                     <option value="">請選擇老師／班級</option>
                     <template x-for="p in pairObjs" :key="'pp_'+p.key"><option :value="p.key" x-text="p.key"></option></template>
-                    <option value="__other__">✏️ 其他（手動輸入老師與班級）</option>
+                    <option value="__other__">其他（從名單分別選老師和班級）</option>
                   </select>
                   <p x-show="pairPick!=='__other__' && (!borrowForm.borrower.trim() || !borrowForm.className)" class="text-coral text-xs font-bold mt-1">必填</p>
                 </div>
@@ -663,15 +663,13 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
                 <div>
                   <label class="text-sm font-bold text-wood-dark/80">老師姓名</label>
                   <div>
-                  <select x-model="teacherPick" @change="$nextTick(() => { borrowForm.borrower = (teacherPick==='__other__' ? '' : teacherPick); })"
+                  <select x-model="teacherPick" @change="$nextTick(() => { borrowForm.borrower = teacherPick; })"
                     class="mt-1 w-full rounded-xl border bg-paper px-3 py-2 text-sm"
                     :class="!borrowForm.borrower.trim() ? 'border-coral/60' : 'border-wood-light/50'">
                     <option value="">請選擇老師</option>
                     <template x-for="n in teacherSuggestions" :key="'bt_'+n"><option :value="n" x-text="n"></option></template>
-                    <option value="__other__">✏️ 其他（手動輸入姓名）</option>
                   </select>
-                  <input x-show="teacherPick==='__other__'" x-model="borrowForm.borrower" placeholder="請輸入老師姓名，例如：王老師"
-                    class="mt-2 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                  <p class="text-xs text-wood-dark/50 mt-1">名單由管理員在「班級與老師姓名管理」設定；找不到名字請洽管理員新增。</p>
                   </div>
                   <p x-show="!borrowForm.borrower.trim()" class="text-coral text-xs font-bold mt-1">必填</p>
                 </div>
@@ -697,8 +695,11 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
 
                 <div class="bg-cream rounded-2xl p-3">
                   <label class="text-xs font-bold text-wood-dark/70">🔎 查詢班級／老師已借用未歸還的項目</label>
-                  <input type="text" x-model="borrowLookupText" placeholder="輸入班級或老師姓名，例如：向日葵班 或 林老師"
-                    class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                  <select x-model="borrowLookupText" class="mt-1 w-full rounded-xl border border-wood-light/50 bg-paper px-3 py-2 text-sm">
+                    <option value="">請選擇班級或老師</option>
+                    <optgroup label="👩‍🏫 老師"><template x-for="n in teacherSuggestions" :key="'lk_t_'+n"><option :value="n" x-text="n"></option></template></optgroup>
+                    <optgroup label="🏫 班級"><template x-for="c in classes" :key="'lk_c_'+c"><option :value="c" x-text="c"></option></template></optgroup>
+                  </select>
                   <template x-if="borrowLookupText.trim()">
                     <div class="mt-2 space-y-2 max-h-48 overflow-y-auto">
                       <template x-for="r in borrowLookupMatches" :key="r.id">
@@ -1140,10 +1141,13 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           <div class="paper-card rounded-3xl p-6 shadow-card" x-show="adminTab==='rec'">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">📋</span> 借還紀錄明細</h2>
+              <div class="flex flex-wrap items-center gap-2">
+              <button @click="exportRecordsXLSX()" :disabled="filteredRecords.length===0" class="px-4 py-1.5 rounded-full text-sm font-bold bg-sage text-paper hover:opacity-90 transition disabled:opacity-40" title="把目前篩選、排序的紀錄下載成 Excel 檔">⬇️ 匯出明細</button>
               <div class="flex bg-sage-light rounded-full p-1 text-sm">
                 <button @click="recordFilter='all'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='all' ? 'bg-sage text-paper' : 'text-sage-dark'">全部</button>
                 <button @click="recordFilter='borrowing'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='borrowing' ? 'bg-sage text-paper' : 'text-sage-dark'">借用中</button>
                 <button @click="recordFilter='returned'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='returned' ? 'bg-sage text-paper' : 'text-sage-dark'">已歸還</button>
+              </div>
               </div>
             </div>
             <div class="overflow-x-auto">
@@ -3669,7 +3673,8 @@ function kgApp() {
       return [...new Set(names)].join('、') || '不明';
     },
     get pairObjs() { return this.pairs.map(k => { const [t, c] = String(k).split('／'); return { key: k, t: (t||'').trim(), c: (c||'').trim() }; }); },
-    get teacherSuggestions() { return [...new Set([...this.teacherRoster, ...this.pairObjs.map(p => p.t), ...this.records.map(r => r.borrower)])].filter(Boolean); },
+    // 老師名單只用管理者後台「班級與老師姓名管理」的老師姓名（名單還沒設定時，才暫時沿用組合與紀錄裡的名字）
+    get teacherSuggestions() { const L = (this.teacherRoster || []).map(n => String(n || '').trim()).filter(Boolean); return L.length ? [...new Set(L)] : [...new Set([...this.pairObjs.map(p => p.t), ...this.records.map(r => r.borrower)])].filter(Boolean); },
     outstanding(r) { return r ? r.qty - r.returnedQty : 0; },
     statusOf(r) { return r.returnedQty >= r.qty ? 'returned' : 'borrowing'; },
     statusLabel(s) { return s === 'returned' ? '已歸還' : '借用中'; },
@@ -3767,7 +3772,7 @@ function kgApp() {
       const kw = this.returnForm.itemNameFilter.trim();
       return this.teacherUnreturnedRecords.filter(r => !kw || r.itemName.includes(kw));
     },
-    get borrowLookupMatches() { const text = this.borrowLookupText.trim(); if (!text) return []; return this.openRecords.filter(r=>r.borrower.includes(text)||r.className.includes(text)); },
+    get borrowLookupMatches() { const text = this.borrowLookupText.trim(); if (!text) return []; return this.openRecords.filter(r=>r.borrower===text||r.className===text); },
     get returnDateLookupMatches() { if (!this.returnDateLookup) return []; return this.records.filter(r=>r.returnDate===this.returnDateLookup).sort((a,b)=>(a.returnTimestamp||'').localeCompare(b.returnTimestamp||'')); },
     get pendingReturnRequests() { return this.returnRequests.filter(rq => rq.status==='pending').sort((a,b)=>(a.requestTimestamp||'').localeCompare(b.requestTimestamp||'')); },
     isReturnSelected(id) { return Object.prototype.hasOwnProperty.call(this.returnForm.selected, id); },
@@ -3775,7 +3780,8 @@ function kgApp() {
 
     async submitBorrow() {
       this.borrowError = '';
-      if (!this.borrowForm.borrower.trim()) { this.borrowError = '請輸入老師姓名'; return; }
+      if (!this.borrowForm.borrower.trim()) { this.borrowError = '請選擇老師姓名'; return; }
+      if ((this.teacherRoster || []).length && !this.teacherSuggestions.includes(this.borrowForm.borrower.trim())) { this.borrowError = '老師姓名不在「班級與老師姓名管理」名單裡，請洽管理員新增'; return; }
       if (!this.borrowForm.className) { this.borrowError = '請選擇班級'; return; }
       const entries = Object.entries(this.borrowForm.selected);
       if (entries.length === 0) { this.borrowError = '請至少選擇一項要借用的品項'; return; }
@@ -3938,6 +3944,37 @@ function kgApp() {
         await this.db.collection('deleteLogs').doc(l.id).update({ restored: true, restoredBy: this.whoAmI(), restoredAt: this.getTaipeiTimestamp() });
         this.showToast('已還原，數量已重新計算');
       } catch (e) { console.error(e); this.showToast(e.message === 'stock' ? '護貝膜剩餘張數不足，無法還原此筆已確認的申請' : `還原失敗（${e.code || e.message}）`, 5000); }
+    },
+
+    // 借還紀錄明細：依目前的篩選（全部／借用中／已歸還）與排序，匯出全部筆數（不受「展開其餘」影響）
+    exportRecordsXLSX() {
+      const list = this.filteredRecords;
+      if (!list.length) { this.showToast('目前沒有可以匯出的紀錄'); return; }
+      const label = { all: '全部', borrowing: '借用中', returned: '已歸還' }[this.recordFilter] || '全部';
+      const rows = [['老師', '班級', '項目', '類別', '借用數量', '已歸還數量', '未歸還數量', '借用日', '借用時間', '歸還日', '歸還時間', '狀態', '待確認歸還']];
+      list.forEach(r => {
+        const qty = Number(r.qty) || 0, ret = Number(r.returnedQty) || 0, pend = this.pendingReturnQtyOf(r.id);
+        rows.push([r.borrower || '', r.className || '', r.itemName || '', r.category || '', qty, ret, qty - ret,
+          r.borrowDate || '', this.timeOnly(r.borrowTimestamp) || '', r.returnDate || '', this.timeOnly(r.returnTimestamp) || '',
+          this.statusLabel(this.statusOf(r)), pend > 0 ? pend : '']);
+      });
+      const name = `借還紀錄明細_${label}_${this.getTaipeiDateString()}`;
+      try {
+        if (!window.XLSX) throw new Error('no xlsx');
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [10, 12, 28, 16, 9, 10, 10, 12, 9, 12, 9, 9, 10].map(w => ({ wch: w }));
+        ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: rows[0].length - 1 } }) };
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '借還紀錄明細');
+        XLSX.writeFile(wb, name + '.xlsx');
+      } catch (e) {
+        // Excel 套件沒載入時，改下載 CSV（Excel 也能開）
+        const csv = rows.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(',')).join('\r\n');
+        const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+        const a = document.createElement('a'); a.href = url; a.download = name + '.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      }
+      this.showToast(`已匯出 ${list.length} 筆借還紀錄`);
     },
 
     exportInventoryCSV() {
