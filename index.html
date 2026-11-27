@@ -9365,7 +9365,7 @@ const mtWd = s => { const t=new Date(str(s)+"T00:00:00"); return isNaN(t) ? "" :
 const mtRocDate = s => { const m=str(s).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${+m[1]-1911}年${+m[2]}月${+m[3]}日(${mtWd(s)})` : ""; };
 const mtTime = t => { const m=str(t).match(/^(\d{1,2}):(\d{2})/); return m ? `${+m[1]}時${m[2]}分` : ""; };
 function mtNorm(m){
-  const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：", chairReport:"", motions:"", photoTitle:"", sealPos:"end" }, JSON.parse(JSON.stringify(m||{})));
+  const o = Object.assign({ type:"教保會議", year:String(mtYear0()), sem:mtSem0(), no:1, title:"", autoTitle:true, date:"", ampm:"下午", from:"", to:"", place:"", chair:"", recorder:"", attendees:"(詳簽到表)", reports:[], issues:[], photos:[], signRows:5, signCols:3, signLabel:"園長簽章：", chairReport:"", motions:"", adjourn:"", transcript:"", photoTitle:"", sealPos:"end" }, JSON.parse(JSON.stringify(m||{})));
   o.reports = (Array.isArray(o.reports)?o.reports:[]).map(r=>({title:str(r&&r.title), body:str(r&&r.body), table:mtTbl(r&&r.table), photos:mtPh(r&&r.photos), fixed:!!(r&&r.fixed)}));
   o.issues = (Array.isArray(o.issues)?o.issues:[]).map(r=>({title:str(r&&r.title), content:str(r&&r.content), table:mtTbl(r&&r.table), resolution:str(r&&r.resolution), photos:mtPh(r&&r.photos), resPhotos:mtPh(r&&r.resPhotos), fixed:str(r&&r.fixed),
     classes:(Array.isArray(r&&r.classes)?r.classes:[]).map(c=>({cls:str(c&&c.cls), items:(Array.isArray(c&&c.items)?c.items:[]).map(it=>({q:str(it&&it.q), by:str(it&&it.by), a:str(it&&it.a)}))}))}));
@@ -9419,7 +9419,7 @@ function renderMeeting(app){
     h("p",{class:"note",style:"margin-top:4px"},"教保會議、園務會議、課發會、勞資會議。"),
     h("div",{class:"mt-search"},h("span",null,"🔍"),(()=>{ const i=h("input",{class:"in",type:"search",value:M.q||"",placeholder:"搜尋關鍵字（例如：地震、任務卡、陳泳鉌）。可輸入多個字詞，用空白隔開",oninput:e=>{ M.q=e.target.value; clearTimeout(M._qt); M._qt=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$("#kb-app .mt-search input"); if (n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },250); }}); return i; })(), M.q ? h("button",{class:"btn sm",onclick:()=>{ M.q=""; render(); }},"清除") : null),
     h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
-    can ? h("div",{class:"abs",style:"display:flex;gap:6px"},(M.type!=="all" && MT_FOLDERS[M.type]) ? h("a",{class:"btn",href:"https://drive.google.com/drive/folders/"+MT_FOLDERS[M.type],target:"_blank",rel:"noopener"},"📁 雲端資料夾") : null,h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
+    can ? h("div",{class:"abs",style:"display:flex;gap:6px"},(M.type!=="all" && MT_FOLDERS[M.type]) ? h("a",{class:"btn",href:"https://drive.google.com/drive/folders/"+MT_FOLDERS[M.type],target:"_blank",rel:"noopener"},"📁 雲端資料夾") : null,h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn",title:"上傳會議錄音（m4a），AI 轉成逐字稿並整理成會議紀錄草稿",onclick:()=>mtAudio()},"🎙️ 上傳錄音產生草稿"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
   app.append(h("div",{class:"mt-sortbar"},
     h("span",null, kws.length ? `找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄` : `共 ${list.length} 份`),
     h("label",null,"排序：",h("select",{class:"in",onchange:e=>{ M.sort=e.target.value; try{ localStorage.setItem("mtSort",M.sort); }catch(_){} render(); }},
@@ -9451,6 +9451,153 @@ function mtNew(){
     reports:[{title:"",body:""}], issues:[{title:"",content:"",resolution:""}] });
   if (MT_FIXED[type] && (MT_FIXED[type].reports||[]).length) M.draft.reports = M.draft.reports.filter(r=>r.fixed||r.title||r.body).concat([]);
   M.edit = "__new"; M.dirty = false; render(); window.scrollTo(0,0);
+}
+/* ---------- 會議紀錄：上傳錄音 → Workers AI 轉逐字稿 → 整理成會議紀錄草稿 ----------
+   做法：在瀏覽器把 m4a 解碼成 16kHz 單聲道，於安靜處切成約 1 分鐘一段，
+   一段一段送到 /api/meeting-ai 用 Whisper 轉文字（50 分鐘的錄音約 50 段），
+   再轉成繁體字、交給 AI 整理成會議紀錄格式，填進「新增會議紀錄」的編輯畫面。 */
+const MTAI_SR = 16000, MTAI_SEG = 60, MTAI_PAR = 3;
+const MTAI_JUNK = /(字幕由|字幕提供|Amara\.org|請不吝點贊|点赞|訂閱|订阅|轉發|打賞|明鏡與點點|謝謝觀看|谢谢观看|感謝觀看|感谢观看|謝謝收看|下次再見)/;
+let MTAI_CC = null;
+function mtaiCC(){
+  if (MTAI_CC) return MTAI_CC;
+  MTAI_CC = new Promise(ok=>{ const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js";
+    s.onload = ()=>{ try{ const c = window.OpenCC.Converter({ from:"cn", to:"twp" }); ok(t=>c(t)); }catch(_){ ok(null); } };
+    s.onerror = ()=>ok(null); document.head.append(s); });
+  return MTAI_CC;
+}
+async function mtaiToken(){ const u = firebase.auth().currentUser; if (!u) throw new Error("請先登入"); return u.getIdToken(); }
+async function mtaiPost(action, body, isText){
+  const r = await fetch("/api/meeting-ai?action="+action, { method:"POST",
+    headers:{ "Content-Type": isText ? "text/plain" : "application/json", Authorization:"Bearer "+(await mtaiToken()) },
+    body: isText ? body : JSON.stringify(body) });
+  const t = await r.text(); let j; try{ j = JSON.parse(t); }catch(_){ throw new Error("伺服器回應異常（"+r.status+"）"); }
+  if (!r.ok || j.ok===false) throw new Error(j.error || ("伺服器錯誤（"+r.status+"）"));
+  return j;
+}
+async function mtaiRetry(fn, n){ let e; for (let i=0;i<(n||3);i++){ try{ return await fn(); }catch(x){ e = x; if (/登入|尚未設定/.test(x.message||"")) break; await new Promise(r=>setTimeout(r, 2000*(i+1))); } } throw e; }
+/* 解碼成 16kHz 單聲道 Float32Array */
+async function mtaiDecode(file){
+  const buf = await file.arrayBuffer();
+  const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!AC) throw new Error("這個瀏覽器不支援讀取錄音，請改用電腦版 Chrome、Edge 或 Safari");
+  let ctx; try{ ctx = new AC(1, MTAI_SR, MTAI_SR); }catch(_){ ctx = new AC(1, 44100, 44100); }
+  const ab = await new Promise((ok,bad)=>{ const p = ctx.decodeAudioData(buf, ok, bad); if (p && p.then) p.then(ok, bad); })
+    .catch(()=>{ throw new Error("無法讀取這個錄音檔，請確認是 m4a／mp3／wav 錄音檔"); });
+  const n = ab.length, chs = ab.numberOfChannels; let mono;
+  if (chs===1) mono = ab.getChannelData(0);
+  else { mono = new Float32Array(n); for (let c=0;c<chs;c++){ const d = ab.getChannelData(c); for (let i=0;i<n;i++) mono[i] += d[i]/chs; } }
+  if (ab.sampleRate===MTAI_SR) return mono;
+  const k = ab.sampleRate / MTAI_SR, m = Math.floor(n / k), out = new Float32Array(m);   // 簡單降頻（取區間平均）
+  for (let i=0;i<m;i++){ const a = Math.floor(i*k), b = Math.min(n, Math.floor((i+1)*k)); let s = 0; for (let j=a;j<b;j++) s += mono[j]; out[i] = b>a ? s/(b-a) : 0; }
+  return out;
+}
+/* 在每段結尾前 8 秒內找最安靜的地方切，避免把一句話切成兩半 */
+function mtaiCuts(x){
+  const sr = MTAI_SR, T = MTAI_SEG*sr, W = 8*sr, F = sr/10|0, cuts = [0]; let s = 0;
+  while (x.length - s > T + 15*sr){
+    let best = s+T, bestE = Infinity;
+    for (let p = s+T-W; p+F <= s+T; p += F){ let e = 0; for (let i=p;i<p+F;i++) e += x[i]*x[i]; if (e < bestE){ bestE = e; best = p + (F>>1); } }
+    cuts.push(best); s = best;
+  }
+  cuts.push(x.length); return cuts;
+}
+/* 一段聲音 → base64 WAV（16-bit），太小聲的自動放大 */
+async function mtaiWav(seg){
+  let peak = 0, ss = 0; for (let i=0;i<seg.length;i++){ const v = Math.abs(seg[i]); if (v>peak) peak = v; ss += seg[i]*seg[i]; }
+  const rms = Math.sqrt(ss / Math.max(1, seg.length));
+  if (rms < 0.002) return null;   // 幾乎沒有聲音
+  const g = peak > 0 ? Math.min(8, 0.9/peak) : 1;
+  const n = seg.length, b = new ArrayBuffer(44 + n*2), v = new DataView(b), w = (o,s)=>{ for (let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4, 36+n*2, true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24, MTAI_SR, true); v.setUint32(28, MTAI_SR*2, true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40, n*2, true);
+  for (let i=0;i<n;i++){ const s = Math.max(-1, Math.min(1, seg[i]*g)); v.setInt16(44+i*2, s<0 ? s*0x8000 : s*0x7FFF, true); }
+  return await new Promise((ok,bad)=>{ const fr = new FileReader(); fr.onload = ()=>ok(String(fr.result).split(",")[1]); fr.onerror = bad; fr.readAsDataURL(new Blob([b])); });
+}
+const mtaiMin = s => { const m = Math.floor(s/60), x = Math.round(s%60); return `${m}:${String(x).padStart(2,"0")}`; };
+function mtaiClean(t){ return str(t).split(/\n+/).map(x=>x.trim()).filter(x=>x && !MTAI_JUNK.test(x)).join("\n").replace(/(.{2,20}?)\1{4,}/g, "$1"); }
+/* 把 AI 回傳的內容整理成會議紀錄資料 */
+function mtaiFill(d, a, transcript){
+  const S2 = v => str(v).trim();
+  const hm = v => { const m = S2(v).match(/(\d{1,2})\s*[:：時点點]\s*(\d{1,2})?/); if (!m || +m[1]>23) return ""; let hh = +m[1]; if (hh<12 && /下午|晚上|傍晚|pm/i.test(S2(v))) hh += 12; return String(hh).padStart(2,"0")+":"+String(+(m[2]||0)).padStart(2,"0"); };
+  if (/^\d{4}-\d{2}-\d{2}$/.test(S2(a.date))) d.date = S2(a.date);
+  if (hm(a.from)) d.from = hm(a.from);
+  if (hm(a.to)) d.to = hm(a.to); else if (hm(a.adjourn)) d.to = hm(a.adjourn);
+  if (d.from){ const h0 = +d.from.slice(0,2); d.ampm = h0 < 12 ? "上午" : "下午"; }
+  ["place","chair","recorder"].forEach(k=>{ if (S2(a[k])) d[k] = S2(a[k]); });
+  d.chairReport = S2(a.chairReport);
+  const reps = (Array.isArray(a.reports)?a.reports:[]).map(r=>({ title:S2(r&&r.title), body:S2(r&&r.body) })).filter(r=>r.title||r.body);
+  const iss = (Array.isArray(a.issues)?a.issues:[]).map(r=>({ title:S2(r&&r.title), content:S2(r&&r.content), resolution:S2(r&&r.resolution) })).filter(r=>r.title||r.content||r.resolution);
+  if (S2(a.decisions)) iss.push({ title:"決議事項", content:"", resolution:S2(a.decisions) });
+  const keep = arr => arr.filter(r=>r.fixed);   // 固定項目（例如特教業務）保留，AI 有同名內容時填進去
+  const fill = (fixedArr, aiArr, f) => { const out = []; fixedArr.forEach(fx=>{ const i = aiArr.findIndex(r=>mtKey(r.title)===mtKey(fx.title)); if (i>=0){ const [r] = aiArr.splice(i,1); f(fx, r); } out.push(fx); }); return aiArr.concat(out); };
+  d.reports = fill(keep(d.reports), reps, (fx,r)=>{ fx.body = r.body; });
+  d.issues = fill(keep(d.issues), iss, (fx,r)=>{ fx.content = r.content; fx.resolution = r.resolution; });
+  if (!d.reports.length) d.reports = [{title:"",body:""}];
+  if (!d.issues.length) d.issues = [{title:"",content:"",resolution:""}];
+  d.motions = S2(a.motions) || "無";
+  d.adjourn = S2(a.adjourn);
+  d.transcript = transcript;
+  return mtNorm(d);
+}
+function mtAudio(){
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = "audio/*,.m4a,.mp3,.wav,.aac";
+  inp.onchange = () => { const f = (inp.files||[])[0]; if (f) mtaiRun(f); };
+  inp.click();
+}
+async function mtaiRun(file){
+  if (file.size > 200*1024*1024){ alert("錄音檔超過 200MB，請先剪短或壓縮再上傳"); return; }
+  const M = S.mt; let stop = false;
+  const st = h("div",{style:"font-size:15px;font-weight:700;margin:4px 0"},"準備中…"), sub = h("div",{class:"note",style:"font-size:13px;min-height:18px"});
+  const bar = h("div",{style:"height:100%;width:0;background:var(--accent,#2563eb);transition:width .3s"});
+  const set = (t, p, s) => { st.textContent = t; if (p!=null) bar.style.width = Math.round(p*100)+"%"; sub.textContent = s||""; };
+  openModal(h("div",null,
+    h("div",{class:"mh"},h("h2",null,"🎙️ 上傳錄音產生草稿")),
+    h("div",{class:"mb"},
+      h("div",{style:"font-size:13px;color:var(--muted);margin-bottom:6px"},"「"+file.name+"」"+(file.size/1048576).toFixed(1)+" MB"),
+      st, h("div",{style:"height:10px;border-radius:5px;background:#e5e7eb;overflow:hidden;margin:6px 0"},bar), sub,
+      h("p",{class:"note",style:"font-size:12px;margin:8px 0 0"},"50 分鐘的錄音大約需要 5～10 分鐘。處理期間請不要關閉或切換這個頁面；建議用電腦操作。")),
+    h("div",{class:"mf"},h("button",{class:"btn",onclick:()=>{ stop = true; closeModal(); }},"取消"))), true);
+  const alive = () => { if (stop) throw new Error("__stop"); };
+  try{
+    set("讀取錄音中…", 0.02, "正在解碼，長錄音需要十幾秒");
+    const x = await mtaiDecode(file); alive();
+    const secs = x.length / MTAI_SR, cuts = mtaiCuts(x), N = cuts.length-1;
+    const ccP = mtaiCC();
+    const texts = new Array(N).fill(""), fails = []; let done = 0, next = 0;
+    set(`轉成逐字稿中… 0／${N} 段`, 0.05, `錄音長度 ${mtaiMin(secs)}，切成 ${N} 段處理`);
+    const worker = async () => { while (next < N){ const i = next++; alive();
+      const b64 = await mtaiWav(x.subarray(cuts[i], cuts[i+1]));
+      if (b64){ try{ texts[i] = mtaiClean((await mtaiRetry(()=>mtaiPost("transcribe", b64, true), 3)).text); }
+        catch(e){ if (stop) return; if (/登入|尚未設定/.test(e.message||"")) throw e; fails.push(i); texts[i] = `〔${mtaiMin(cuts[i]/MTAI_SR)} 附近這段沒有辨識成功〕`; } }
+      done++; set(`轉成逐字稿中… ${done}／${N} 段`, 0.05 + 0.75*done/N, `錄音長度 ${mtaiMin(secs)}`+(fails.length?`，${fails.length} 段失敗`:"")); } };
+    await Promise.all(Array.from({length:Math.min(MTAI_PAR, N)}, worker)); alive();
+    const cc = await ccP; let transcript = texts.filter(Boolean).join("\n");
+    if (cc) transcript = cc(transcript);
+    if (!transcript.replace(/〔[^〕]*〕/g,"").trim()) throw new Error("錄音裡沒有辨識到說話的內容");
+    /* 很長的逐字稿先分段整理成筆記，再整理成會議紀錄 */
+    let src = transcript, isNotes = false; const LIM = 9000;
+    if (transcript.length > LIM*1.5){
+      const lines = transcript.split("\n"), parts = []; let cur = "";
+      lines.forEach(l=>{ if (cur.length + l.length > LIM && cur){ parts.push(cur); cur = ""; } cur += l + "\n"; }); if (cur.trim()) parts.push(cur);
+      const notes = [];
+      for (let i=0;i<parts.length;i++){ alive(); set(`AI 整理重點中… ${i+1}／${parts.length}`, 0.8 + 0.1*i/parts.length, "逐字稿較長，先分段整理");
+        notes.push((await mtaiRetry(()=>mtaiPost("notes", { text:parts[i], part:i+1, total:parts.length }), 2)).notes); }
+      src = notes.map((t,i)=>`【第 ${i+1} 段】\n${t}`).join("\n\n"); isNotes = true;
+    }
+    alive(); set("AI 整理成會議紀錄格式中…", 0.92, "快好了");
+    const type = M.type!=="all" ? M.type : "教保會議";
+    const r = await mtaiRetry(()=>mtaiPost("draft", { text:src, isNotes, type, classes:mtCls() }), 2); alive();
+    let a = r.draft || {};
+    if (cc) a = JSON.parse(cc(JSON.stringify(a)));
+    mtNew(); const d = M.draft;
+    M.draft = Object.assign(mtaiFill(d, a, transcript), { aiFrom:file.name });
+    M.dirty = true; closeModal(); render(); window.scrollTo(0,0);
+    alert("✅ 草稿已經填好了！\n\n請逐項檢查、修改 AI 整理的內容（特別是人名、數字、日期），確認後再按「💾 儲存」。"+(fails.length?`\n\n⚠️ 有 ${fails.length} 段錄音沒有辨識成功，逐字稿裡有標示位置。`:"")+"\n完整逐字稿放在編輯畫面最下面，可以對照。");
+  }catch(e){
+    if (e && e.message==="__stop") return;
+    closeModal(); alert("產生草稿失敗："+((e && e.message) || e));
+  }
 }
 function mtCopy(m){
   const M = S.mt, d = mtNorm(m); delete d.id; d.no = mtNextNo(d.type,d.year,d.sem); d.date=""; d.photos=[]; d.title = d.autoTitle ? "" : d.title;
@@ -9566,6 +9713,7 @@ function renderMeetingEditor(app){
   app.append(listEd("報告事項","reports",()=>({title:"",body:"",photos:[]})));
   app.append(listEd("議題討論","issues",()=>({title:"",content:"",resolution:"",photos:[],resPhotos:[],fixed:"",classes:[]})));
   app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"臨時動議（選填，例如：無）"), ta(d,"motions","臨時動議內容",2)));
+  app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"散會（選填，有填才會印出，例如：17時30分散會）"), h("input",{class:"in",value:str(d.adjourn),placeholder:"例如：17時30分散會",oninput:e=>{ d.adjourn=e.target.value; mark(); }})));
   const ps = h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"會議照片（開會現場）"),
     h("p",{class:"note",style:"font-size:13px;margin:0 0 8px"},"可以一次選多張，列印時每列兩張。"),
     fld("影像紀錄標題（選填，印在照片上方，例如：115學年度第1次園務會議影像紀錄）",inp("photoTitle","")),
@@ -9574,6 +9722,15 @@ function renderMeetingEditor(app){
   const st = h("span",{class:"err",style:"margin-left:8px"});
   ps.append(h("div",null,h("button",{class:"btn",onclick:()=>pickImages(true, async fs=>{ for (let i=0;i<fs.length;i++){ st.textContent=`上傳中… ${i+1}/${fs.length}`; try{ const data=await shrinkToDataUrl(fs[i]); const ref=S.db.collection(MT_PH).doc(); await ref.set({ data, name:str(fs[i].name), createdAt:Date.now() }); MTC[ref.id]=data; d.photos.push({id:ref.id,cap:""}); mark(); }catch(e){ st.textContent="上傳失敗："+errText(e); return; } } st.textContent=""; render(); })},"📷 從電腦上傳照片"),st));
   app.append(ps);
+  if (str(d.transcript).trim()) app.append(h("section",{class:"as-form mt-form"},
+    h("div",{style:"display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between"},
+      h("div",{class:"mt-sh",style:"margin:0"},"🎙️ 錄音逐字稿（參考用，不會印出）"),
+      h("span",{style:"display:flex;gap:6px"},
+        h("button",{class:"btn sm",onclick:()=>{ navigator.clipboard.writeText(str(d.transcript)).then(()=>toast("已複製逐字稿"),()=>toast("複製失敗，請手動選取")); }},"📋 複製"),
+        h("button",{class:"btn sm",onclick:()=>mtSaveBlob(new Blob(["\ufeff"+str(d.transcript)],{type:"text/plain;charset=utf-8"}), mtTitle(d).replace(/[\\/:*?"<>|]/g,"_")+"_逐字稿.txt")},"⬇️ 下載"),
+        h("button",{class:"btn sm danger",onclick:()=>{ if (!confirm("刪除這份逐字稿？（會議紀錄內容不受影響）")) return; d.transcript=""; mark(); render(); }},"刪除逐字稿"))),
+    h("p",{class:"note",style:"font-size:12px;margin:4px 0 6px"},"AI 自動辨識的結果，可能有錯字；請對照上面的草稿修改。"+(d.aiFrom?"錄音檔：「"+d.aiFrom+"」":"")),
+    h("textarea",{class:"in",rows:"10",style:"font-size:14px;line-height:1.6",oninput:e=>{ d.transcript=e.target.value; mark(); }}, str(d.transcript))));
   app.append(h("section",{class:"as-form mt-form"}, h("div",{class:"mt-sh"},"與會人員簽到表"),
     h("div",{class:"f4"}, fld("列數",inp("signRows","5","number")), fld("欄數",inp("signCols","3","number")), fld("簽章欄文字",inp("signLabel","園長簽章：")), fld("簽章位置",h("select",{class:"in",onchange:e=>{ d.sealPos=e.target.value; mark(); }},[["end","最後面（簽到表下面）"],["body","會議內容後面（照片前面）"]].map(([v,l])=>h("option",{value:v,selected:(d.sealPos||"end")===v},l)))))));
   app.append(tb());
@@ -9630,6 +9787,7 @@ function mtBodyHtml(m, withImgs, forPdf){
       its.forEach((x,j)=>{ body += `<div class="txt qa"><b>Ｑ${fw(j+1)}：</b>${ind(x.q)}</div><div class="txt qa"><b>Ａ${fw(j+1)}${esc(x.by)}：</b>${ind(x.a)}</div>`; }); }); }
     if (r.resolution.trim() || r.resPhotos.length) body += (resTbl ? withTbl("決議：", r.resolution, r.table) : `<div class="txt">決議：${ind(r.resolution)}</div>`) + pg(r.resPhotos); });
   if (str(m.motions).trim()){ const mo = str(m.motions).trim(); body += /\n/.test(mo) ? `<div class="row">${no()}臨時動議：</div><div class="txt">${ind(mo)}</div>` : `<div class="row">${no()}臨時動議：${esc(mo)}</div>`; }
+  if (str(m.adjourn).trim()) body += `<div class="row">${no()}散會：${esc(str(m.adjourn).trim().replace(/^散會[：:]?/,""))}</div>`;
   if (m.sealPos==="body") body += `<div class="seal">${esc(m.signLabel||"")}</div>`;
   if (m.photos.length && str(m.photoTitle).trim()) body += `<div class="ph-t"><div>${ORG_L1}</div><div>${ORG_L2.replace(/^\(/,"（").replace(/\)$/,"）")}</div><div>${esc(m.photoTitle)}</div></div>`;
   if (m.photos.length){ body += `<table class="pt">`; for (let i=0;i<m.photos.length;i+=2){ body += "<tr>"+[m.photos[i],m.photos[i+1]].map(p=>p?`<td><img data-mtph="${esc(p.id)}" src="${withImgs?(MTC[p.id]||""):PH_IMG}">${p.cap?`<div class="cap">${esc(p.cap)}</div>`:""}</td>`:"<td></td>").join("")+"</tr>"; } body += `</table>`; }
