@@ -1140,10 +1140,13 @@ body.obs-printing main{max-width:none!important;margin:0!important;padding:0!imp
           <div class="paper-card rounded-3xl p-6 shadow-card" x-show="adminTab==='rec'">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 class="font-heading font-black text-lg flex items-center gap-2"><span class="text-2xl">📋</span> 借還紀錄明細</h2>
+              <div class="flex flex-wrap items-center gap-2">
+              <button @click="exportRecordsXLSX()" :disabled="filteredRecords.length===0" class="px-4 py-1.5 rounded-full text-sm font-bold bg-sage text-paper hover:opacity-90 transition disabled:opacity-40" title="把目前篩選、排序的紀錄下載成 Excel 檔">⬇️ 匯出明細</button>
               <div class="flex bg-sage-light rounded-full p-1 text-sm">
                 <button @click="recordFilter='all'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='all' ? 'bg-sage text-paper' : 'text-sage-dark'">全部</button>
                 <button @click="recordFilter='borrowing'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='borrowing' ? 'bg-sage text-paper' : 'text-sage-dark'">借用中</button>
                 <button @click="recordFilter='returned'; recordsShowAll=false" class="px-4 py-1.5 rounded-full font-bold transition" :class="recordFilter==='returned' ? 'bg-sage text-paper' : 'text-sage-dark'">已歸還</button>
+              </div>
               </div>
             </div>
             <div class="overflow-x-auto">
@@ -3938,6 +3941,37 @@ function kgApp() {
         await this.db.collection('deleteLogs').doc(l.id).update({ restored: true, restoredBy: this.whoAmI(), restoredAt: this.getTaipeiTimestamp() });
         this.showToast('已還原，數量已重新計算');
       } catch (e) { console.error(e); this.showToast(e.message === 'stock' ? '護貝膜剩餘張數不足，無法還原此筆已確認的申請' : `還原失敗（${e.code || e.message}）`, 5000); }
+    },
+
+    // 借還紀錄明細：依目前的篩選（全部／借用中／已歸還）與排序，匯出全部筆數（不受「展開其餘」影響）
+    exportRecordsXLSX() {
+      const list = this.filteredRecords;
+      if (!list.length) { this.showToast('目前沒有可以匯出的紀錄'); return; }
+      const label = { all: '全部', borrowing: '借用中', returned: '已歸還' }[this.recordFilter] || '全部';
+      const rows = [['老師', '班級', '項目', '類別', '借用數量', '已歸還數量', '未歸還數量', '借用日', '借用時間', '歸還日', '歸還時間', '狀態', '待確認歸還']];
+      list.forEach(r => {
+        const qty = Number(r.qty) || 0, ret = Number(r.returnedQty) || 0, pend = this.pendingReturnQtyOf(r.id);
+        rows.push([r.borrower || '', r.className || '', r.itemName || '', r.category || '', qty, ret, qty - ret,
+          r.borrowDate || '', this.timeOnly(r.borrowTimestamp) || '', r.returnDate || '', this.timeOnly(r.returnTimestamp) || '',
+          this.statusLabel(this.statusOf(r)), pend > 0 ? pend : '']);
+      });
+      const name = `借還紀錄明細_${label}_${this.getTaipeiDateString()}`;
+      try {
+        if (!window.XLSX) throw new Error('no xlsx');
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [10, 12, 28, 16, 9, 10, 10, 12, 9, 12, 9, 9, 10].map(w => ({ wch: w }));
+        ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: rows[0].length - 1 } }) };
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '借還紀錄明細');
+        XLSX.writeFile(wb, name + '.xlsx');
+      } catch (e) {
+        // Excel 套件沒載入時，改下載 CSV（Excel 也能開）
+        const csv = rows.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(',')).join('\r\n');
+        const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+        const a = document.createElement('a'); a.href = url; a.download = name + '.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      }
+      this.showToast(`已匯出 ${list.length} 筆借還紀錄`);
     },
 
     exportInventoryCSV() {
