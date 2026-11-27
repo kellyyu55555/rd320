@@ -7,6 +7,7 @@
     "directory": "./",
     "binding": "ASSETS"
   },
+  "ai": { "binding": "AI" },
   "kv_namespaces": [
     { "binding": "LINE_KV", "id": "241129ed3eaf429098d70429493c11d4" }
   ]

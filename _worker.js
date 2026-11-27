@@ -4,6 +4,7 @@
 //
 // 需要的「機密」(Secrets)：LINE_CHANNEL_ACCESS_TOKEN、LINE_CHANNEL_SECRET、LINE_TO
 // 老師綁定 LINE 另需要 KV 儲存空間，綁定名稱：LINE_KV（沒有設定時，只有「老師綁定」不能用，管理員通知不受影響）
+// 會議紀錄「上傳錄音產生草稿」需要 Workers AI，綁定名稱：AI（已寫在 wrangler.jsonc，部署時會自動加上）
 
 const DEFAULT_API_KEY = 'AIzaSyC9xKAQYcfyUyA815fUD3I-T3fVIikW0jU';
 const DEFAULT_PROJECT = 'rd320-3681667';
@@ -195,13 +196,115 @@ async function webhook(request, env) {
   return json(200, { ok: true });
 }
 
+// ───────── /meeting-ai：會議錄音轉逐字稿、整理成會議紀錄草稿 ─────────
+// 網頁先把錄音切成約 1 分鐘一段（16kHz 單聲道 WAV），一段一段送來轉文字，所以 50 分鐘的長錄音也不會超過限制。
+const WHISPER = '@cf/openai/whisper-large-v3-turbo';
+const LLM = '@cf/openai/gpt-oss-120b';
+
+function aiText(r) {
+  if (!r) return '';
+  if (typeof r === 'string') return r;
+  if (typeof r.response === 'string') return r.response;
+  if (typeof r.output_text === 'string') return r.output_text;
+  const c = r.choices && r.choices[0];
+  if (c && c.message && typeof c.message.content === 'string') return c.message.content;
+  let t = '';
+  for (const o of (Array.isArray(r.output) ? r.output : [])) {
+    if (o && o.type && o.type !== 'message') continue;
+    for (const x of (Array.isArray(o && o.content) ? o.content : [])) if (x && typeof x.text === 'string') t += x.text;
+  }
+  return t;
+}
+async function askLLM(env, instructions, input, maxTokens) {
+  const r = await env.AI.run(LLM, { instructions, input, reasoning: { effort: 'low' }, max_output_tokens: maxTokens || 6000 });
+  return aiText(r).trim();
+}
+function pickJson(t) {
+  const s = String(t || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  const a = s.indexOf('{'), b = s.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(s.slice(a, b + 1)); } catch (e) { return null; }
+}
+
+const NOTES_PROMPT = `你是幼兒園的會議記錄員。下面是一場會議錄音逐字稿的其中一段（語音辨識結果，可能有錯字、口語贅詞、簡體字）。
+請用「繁體中文（台灣用語）」把這一段整理成重點筆記，保留：誰（職稱或班級）說了什麼、報告事項、各班分享的內容、討論內容、提出的問題與回覆、做出的決定、數字、日期、時間、人名。
+去掉口語贅詞與重複的話，不要自己編造內容。只輸出筆記本文，用條列方式。`;
+
+const DRAFT_PROMPT = `你是幼兒園的會議記錄員，要把會議錄音的逐字稿（或分段筆記）整理成正式的會議紀錄草稿。
+規則：
+1. 全部使用繁體中文（台灣用語），語氣正式、精簡，像公文的會議紀錄；去掉口語贅詞，修正明顯的語音辨識錯字。
+2. 只能根據內容整理，不要編造；聽不出來的欄位留空字串 ""。
+3. 內容分點時，每點一行，用「1. 2. 3.」編號。
+4. 只輸出一個 JSON 物件，不要有其他文字，格式如下：
+{
+  "date": "會議日期 YYYY-MM-DD，聽不出來就留空",
+  "from": "開始時間 HH:MM（24小時制），聽不出來就留空",
+  "to": "散會時間 HH:MM（24小時制），聽不出來就留空",
+  "place": "地點",
+  "chair": "主席（例如：林佳靜園長）",
+  "recorder": "記錄",
+  "chairReport": "主席報告內容",
+  "reports": [ { "title": "報告事項標題（例如：特教業務、總務報告）", "body": "報告內容" } ],
+  "issues": [ { "title": "議題或班級名稱（各班分享時，一個班一則，標題例如：幸運草班分享）", "content": "分享與討論內容", "resolution": "決議（沒有就留空）" } ],
+  "decisions": "會議中所有決議事項的總整理（逐點列出）",
+  "motions": "臨時動議內容，沒有就寫「無」",
+  "adjourn": "散會時間或散會說明，例如：17時30分散會"
+}`;
+
+async function meetingAi(request, env) {
+  if (request.method === 'GET') return json(200, { ok: true, aiSet: !!env.AI });
+  if (request.method !== 'POST') return json(405, { error: 'Method Not Allowed' });
+  const me = await whoami(request, env);
+  if (!me) return json(401, { ok: false, error: '請先登入' });
+  if (!env.AI) return json(500, { ok: false, error: '尚未設定 Workers AI（綁定名稱 AI），請確認 wrangler.jsonc 已部署' });
+  const action = new URL(request.url).searchParams.get('action') || '';
+
+  // 一段錄音（base64 的 WAV，直接放在 body）→ 文字
+  if (action === 'transcribe') {
+    const audio = (await request.text()).trim();
+    if (!audio) return json(400, { ok: false, error: '沒有收到錄音' });
+    if (audio.length > 8 * 1024 * 1024) return json(413, { ok: false, error: '這一段錄音太大' });
+    const r = await env.AI.run(WHISPER, {
+      audio, task: 'transcribe', language: 'zh', vad_filter: true,
+      initial_prompt: '以下是幼兒園會議的繁體中文逐字稿，內容包含園長報告、各班老師分享與討論、決議事項。',
+    });
+    return json(200, { ok: true, text: String((r && r.text) || '').trim() });
+  }
+
+  const body = await readBody(request);
+  // 很長的逐字稿：先一段一段整理成重點筆記
+  if (action === 'notes') {
+    const text = String(body.text || '').slice(0, 20000);
+    if (!text.trim()) return json(200, { ok: true, notes: '' });
+    const notes = await askLLM(env, NOTES_PROMPT, `（第 ${+body.part || 1} 段，共 ${+body.total || 1} 段）\n${text}`, 4000);
+    return json(200, { ok: true, notes });
+  }
+  // 逐字稿（或筆記）→ 會議紀錄格式（JSON）
+  if (action === 'draft') {
+    const text = String(body.text || '').slice(0, 60000);
+    if (!text.trim()) return json(400, { ok: false, error: '逐字稿是空的' });
+    const hint = [body.type ? '會議類別：' + body.type : '', body.date ? '會議日期（已知）：' + body.date : '', Array.isArray(body.classes) && body.classes.length ? '本園班級：' + body.classes.join('、') : ''].filter(Boolean).join('\n');
+    const input = (hint ? hint + '\n\n' : '') + (body.isNotes ? '以下是依序整理的分段筆記：\n' : '以下是逐字稿：\n') + text;
+    let out = await askLLM(env, DRAFT_PROMPT, input, 8000);
+    let draft = pickJson(out);
+    if (!draft) { // 再試一次，要求只輸出 JSON
+      out = await askLLM(env, DRAFT_PROMPT + '\n\n上一次的輸出不是正確的 JSON，這次請只輸出 JSON 物件。', input, 8000);
+      draft = pickJson(out);
+    }
+    if (!draft) return json(200, { ok: false, error: 'AI 沒有回傳正確格式，請再試一次', raw: out.slice(0, 2000) });
+    return json(200, { ok: true, draft });
+  }
+  return json(400, { ok: false, error: 'unknown action' });
+}
+
 // ───────── 路由 ─────────
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
-    const m = path.match(/^(?:\/\.netlify\/functions|\/api)?\/(line-notify|line-bind|line-webhook)$/);
+    const m = path.match(/^(?:\/\.netlify\/functions|\/api)?\/(line-notify|line-bind|line-webhook|meeting-ai)$/);
     try {
       if (m) {
+        if (m[1] === 'meeting-ai') return await meetingAi(request, env);
         if (m[1] === 'line-notify') return await notify(request, env);
         if (m[1] === 'line-bind') return await bind(request, env);
         return await webhook(request, env);
