@@ -3252,6 +3252,7 @@ function setMode(m){mode=m;clsSel=null;cur=null;viewOnly=false;if(d&&root&&root.
 return{sync,setMode,_viewOnly:()=>viewOnly,_seedUpload:seedUpload,_seedList:seedList,_seedGo:seedImportSel,_impState:()=>impState,_shareOpen:shareOpen,_shareSave:shareSave,_shareState:()=>shareState,_seedImport:async c=>{await seedList(c);impState.sel=new Set(impState.seeds.filter(x=>!impState.have.has(x.sid)).map(x=>x.sid));await seedImportSel()},_seedToLog:s=>seedToLog(s,"wtest",[],[]),_strat:()=>({n:STRAT_EX.length,o:SOPTS}),_ph:x=>Object.assign(photos,x),_list:()=>listHtml(),_setlogs:x=>{logs=x},_edit:()=>{cur=logs[0];return editorHtml()},_doc:docHtml,_new:newLog,_css:PRINT_CSS,_setd:x=>{d=x}}})();
 </script>
 <script>
+const LAMINATE_WATCHER = 'rdrd320320@gmail.com';   // 護貝膜申請被確認時，另外通知這個管理員帳號
 function kgApp() {
   return {
     view: 'home', formMode: 'borrow', adminTab: 'todo',
@@ -3558,6 +3559,14 @@ function kgApp() {
       let lamFirst = true;
       this.unsubs.push(this.db.collection('laminateRequests').onSnapshot(s => {
         if (this.isAdmin && !lamFirst) s.docChanges().forEach(c => { if (c.type === 'added' && !c.doc.metadata.hasPendingWrites) { const d = c.doc.data(); this.notifyAdmin('新的護貝膜申請', `${d.borrower||''}（${d.className||''}）申請 ${d.qty||''} 張，用途：${d.purpose||''}`); } });
+        /* 護貝膜申請被確認：申請的老師、rdrd320320 管理員收到系統通知（確認的人自己不通知） */
+        if (!lamFirst) { const me = firebase.auth().currentUser, myMail = ((me && me.email) || '').trim().toLowerCase();
+          s.docChanges().forEach(c => { const d = c.doc.data();
+            if (c.type !== 'modified' || c.doc.metadata.hasPendingWrites || d.status !== 'confirmed' || !d.confirmedAt || d.confirmedAt < Date.now() - 120000 || d.confirmedBy === myMail) return;
+            const mine = me && ((d.uid && d.uid === me.uid) || (d.requesterEmail && d.requesterEmail === myMail));
+            if (mine) this.notifyMe('護貝膜申請已確認', `您申請的 ${d.qty||''} 張護貝膜（用途：${d.purpose||''}）已由管理員確認`, '護貝膜申請', 'lam-' + c.doc.id);
+            else if (myMail === LAMINATE_WATCHER) this.notifyMe('護貝膜申請已確認', `${d.borrower||''}（${d.className||''}）申請的 ${d.qty||''} 張護貝膜已確認`, '管理者後台', 'lam-' + c.doc.id);
+          }); }
         this.laminateRequests = s.docs.map(d => ({ id:d.id, ...d.data() }));
         lamFirst = false;
       }, this.snapErr('讀取護貝膜申請發生問題')));
@@ -4372,6 +4381,7 @@ function kgApp() {
         await this.db.collection('laminateRequests').add({
           borrower: f.borrower.trim(), className: f.className, qty, purpose: f.purpose.trim(), fileNote: f.fileNote.trim(),
           requestDate: f.requestDate, requestTimestamp: this.getTaipeiTimestamp(), status: 'pending', createdAt: Date.now(),
+          uid: (firebase.auth().currentUser || {}).uid || '', requesterEmail: (((this.currentUser && this.currentUser.email) || '') + '').trim().toLowerCase(),
         });
         this.showToast(`已送出護貝膜申請：${qty} 張，請等待管理員確認`);
         this.notifyLine(`🧷 新的護貝膜申請（待確認）\n${f.borrower.trim()}（${f.className}）\n張數：${qty} 張\n用途：${f.purpose.trim()}\n請至管理者後台確認`);
@@ -4383,7 +4393,7 @@ function kgApp() {
     async confirmLaminateRequest(req, ev) {
       const btn = ev && ev.currentTarget; if (btn) { if (btn.disabled) return; btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '處理中…'; }
       const stockRef = this.db.collection('laminateStock').doc('main'), reqRef = this.db.collection('laminateRequests').doc(req.id);
-      const qty = Math.max(0, parseInt(req.qty, 10) || 0);
+      const qty = Math.max(0, parseInt(req.qty, 10) || 0), myMail = (((this.currentUser && this.currentUser.email) || '') + '').trim().toLowerCase();
       const msgOf = e => e.message === 'stock' ? '剩餘張數不足，請先在上方「調整剩餘張數」補貨後再確認。' : e.message === 'already' ? '這筆申請已經被處理過了。' : e.message === 'qty' ? '這筆申請的張數不正確，無法確認。' : (e.code === 'permission-denied' ? '沒有權限確認（您的帳號需要在管理者名單中）。' : `確認失敗（${e.code || e.message}），請重新整理後再試一次。`);
       try {
         if (!qty) throw new Error('qty');
@@ -4394,7 +4404,7 @@ function kgApp() {
             const remain = st.exists ? Number(st.data().remaining || 0) : 0;
             if (remain < qty) throw new Error('stock');
             tx.set(stockRef, { remaining: remain - qty }, { merge: true });
-            tx.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() });
+            tx.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp(), confirmedAt: Date.now(), confirmedBy: myMail });
           });
         } catch (e) {
           if (['stock', 'already', 'qty'].includes(e.message) || e.code === 'permission-denied') throw e;
@@ -4403,9 +4413,14 @@ function kgApp() {
           if (!rq.exists || rq.data().status !== 'pending') throw new Error('already');
           const remain = st.exists ? Number(st.data().remaining || 0) : 0;
           if (remain < qty) throw new Error('stock');
-          const bt = this.db.batch(); bt.set(stockRef, { remaining: remain - qty }, { merge: true }); bt.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp() }); await bt.commit();
+          const bt = this.db.batch(); bt.set(stockRef, { remaining: remain - qty }, { merge: true }); bt.update(reqRef, { status: 'confirmed', confirmedTimestamp: this.getTaipeiTimestamp(), confirmedAt: Date.now(), confirmedBy: myMail }); await bt.commit();
         }
         this.showToast(`已確認：${req.borrower} 護貝膜 ${qty} 張`);
+        /* LINE 通知：申請的老師（已確認）＋ rdrd320320 管理員（哪位老師的幾張已確認） */
+        const who = `${req.borrower || ''}（${req.className || ''}）`, left = this.laminateStock ? `\n目前剩餘：${this.laminateRemaining} 張` : '';
+        const toT = String(req.requesterEmail || '').trim().toLowerCase();
+        if (toT && toT !== myMail) this.notifyLineTo(toT, `✅ 您的護貝膜申請已確認\n張數：${qty} 張\n用途：${req.purpose || ''}\n申請日：${req.requestDate || ''}`).catch(() => {});
+        if (myMail !== LAMINATE_WATCHER && toT !== LAMINATE_WATCHER) this.notifyLineTo(LAMINATE_WATCHER, `🧷 護貝膜申請已確認\n${who}申請的 ${qty} 張護貝膜已確認${left}`).catch(() => {});
       } catch (e) {
         console.error('confirmLaminateRequest', e);
         alert(msgOf(e));
@@ -4449,6 +4464,10 @@ function kgApp() {
       this.titleTimer = setInterval(() => { on = !on; document.title = on ? `🔔 ${text}` : this.baseTitle; }, 1000);
     },
     stopTitleFlash() { if (this.titleTimer) { clearInterval(this.titleTimer); this.titleTimer = null; document.title = this.baseTitle; } },
+    notifyMe(title, body, where, tag) {
+      this.showToast(`🔔 ${title}：${body}`, 10000); this.playBeep(); this.flashTitle(title);
+      if (window.Notification && Notification.permission === 'granted') { try { new Notification(`教具借還系統 － ${title}`, { body: `${body}。請至「${where}」查看。`, tag: tag || ('me-' + Date.now()), requireInteraction: true }); } catch (e) {} }
+    },
     notifyAdmin(title, body) {
       this.showToast(`🔔 ${title}：${body}`, 8000);
       this.playBeep();
