@@ -6708,6 +6708,7 @@ ${pdf ? '' : '<div class="bar"><button onclick="window.print()">🖨 列印／�
 #kb .stu-tb td.b{font-weight:800}
 #kb .stu-tb tr.left td{color:#9a9384;text-decoration:line-through}
 #kb .stu-tb tr.left td.act{text-decoration:none}
+#kb .stu-tb tr.gap td{background:#fbf9f3;height:38px}
 #kb .stu-tb tr.tot td{background:#faf6ec;font-weight:800;border-top:2px solid var(--line)}
 #kb .stu-tag{display:inline-block;font-size:12px;background:#fde8e1;color:#9a3a24;border-radius:6px;padding:0 6px;margin:1px 3px 1px 0}
 #kb .stu-h2{font-size:17px;margin:14px 0 6px}
@@ -10231,6 +10232,19 @@ function stuCmp(T){
     leave: (a,b) => str(b.leaveDate).localeCompare(str(a.leaveDate)) || seat(a,b)
   })[k] || seat;
 }
+/* 跳號留空：依座號排序、沒有搜尋時，每班從 1 號到最大座號之間缺的號碼補一列空白（只是顯示用，不是真的資料） */
+function stuWithGaps(list, T){
+  const k = (T.sort && !(T.sort==="leave" && T.tab!=="left")) ? T.sort : (T.tab==="left" ? "leave" : "no");
+  if (k!=="no" || T.tab==="left" || str(T.q).trim()) return list;
+  const out = []; let cls = null, last = 0;
+  list.forEach(x=>{
+    const c = str(x.cls); if (c!==cls){ cls = c; last = 0; }
+    const n = parseInt(str(x.no),10);
+    if (!isNaN(n) && n > 0){ for (let i = last+1; i < n; i++) out.push({ _gap:true, id:`gap-${c}-${i}`, no:String(i), cls:c }); if (n > last) last = n; }
+    out.push(x);
+  });
+  return out;
+}
 function stuClsList(){
   if (stuTch()) return stuMyCls();
   const T = S.stu, extra = [...new Set(T.list.map(x=>str(x.cls)).filter(Boolean))];
@@ -10304,7 +10318,7 @@ function stuToolbar(T, list, title){
     h("button",{class:"btn"+(T.inline?" primary":""),onclick:()=>{ T.inline=!T.inline; render(); }}, T.inline ? "✅ 完成表格編輯" : "✏️ 直接在表格中編輯"),
     h("button",{class:"btn",onclick:()=>stuImport(T)},"📥 從 Excel 匯入"),
     (()=>{ const n = stuDupGroups(T.list).length; return h("button",{class:"btn"+(n?" warn":""),onclick:()=>stuDupView(T)}, n ? `⚠️ 重複資料 ${n} 組` : "🔍 檢查重複"); })(),
-    h("button",{class:"btn",onclick:()=>stuExport(list, title)},"📤 匯出 Excel"),
+    h("button",{class:"btn",onclick:()=>stuExport(list, title, T)},"📤 匯出 Excel"),
     h("button",{class:"btn",onclick:()=>stuPrint(list, title, T)},"🖨️ 列印"),
     (()=>{ const st = h("span",{class:"err",style:"align-self:center"}); const b = h("button",{class:"btn",onclick:()=>stuUpload(list, title, T, b, st)},"☁️ 上傳雲端"); return [b, st]; })(),
     (()=>{ const u = (T.ups||{})[stuUpKey(title)]; return u ? h("span",{class:"note",style:"align-self:center"},"☁️ 已上傳 ",h("a",{href:str(u.url),target:"_blank",rel:"noopener",style:"color:var(--accent);text-decoration:underline"},str(u.name)),`（${new Date(u.at).toLocaleString("zh-TW",{hour12:false})}${u.by?"・"+u.by:""}）`) : null; })());
@@ -10346,7 +10360,7 @@ function stuTableInline(list, T, withCls){
   const th = ["座號",...(withCls?["班級"]:[]),"姓名","性別","班別","出生日期","身分證字號","今天年紀","入學學年","入學日期","父親姓名","父親電話","母親姓名","母親電話","其他家人","關係","其他家人電話","狀態",""];
   return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb inl"},
     h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
-    h("tbody",null,list.map(x=>h("tr",{class:str(x.status)==="離園"?"left":""},
+    h("tbody",null,stuWithGaps(list,T).map(x=>x._gap ? h("tr",{class:"gap"}, h("td",{class:"c"},x.no), th.slice(1).map(()=>h("td",null))) : h("tr",{class:str(x.status)==="離園"?"left":""},
       h("td",null,stuCell(x,"no",{w:"xs"})), ...(withCls?[h("td",null,stuCell(x,"cls",{sel:stuClsList().map(c=>[c,c])}))]:[]),
       h("td",null,stuCell(x,"name",{w:"md"})), h("td",null,stuCell(x,"gender",{sel:[["男","男"],["女","女"]]})),
       h("td",null,stuCell(x,"grade",{sel:[["","自動："+stuGrade(Object.assign({},x,{grade:""}),T.year)],...STU_GR.map(g=>[g,g])]})),
@@ -10365,7 +10379,7 @@ function stuTable(list, T, withCls){
   const fam = (n,p,r) => (str(n)||str(p)) ? h("div",{class:"stu-fam"}, r?h("small",null,r+"　"):null, h("b",null,str(n)||"—"), str(p)?h("div",{class:"ph"},"📞 "+str(p)):null) : h("span",{class:"note"},"—");
   return h("div",{class:"stu-wrap stu-full"}, h("table",{class:"stu-tb"},
     h("thead",null,h("tr",null,th.map(t=>h("th",null,t)))),
-    h("tbody",null,list.map(x=>h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
+    h("tbody",null,stuWithGaps(list,T).map(x=>x._gap ? h("tr",{class:"gap"}, h("td",{class:"c"},x.no), th.slice(1).map(()=>h("td",null))) : h("tr",{class:(str(x.status)==="離園"?"left ":"")+(stuIds(x).some(t=>t!=="一般生")?"flag":"")},
       h("td",{class:"c"},str(x.no)), ...(withCls?[h("td",null,str(x.cls))]:[]),
       h("td",{class:"nm"},str(x.name), str(x.entry)?h("div",{class:"note",style:"font-size:11px;font-weight:400"},str(x.entry)):null), h("td",{class:"c"},str(x.gender)), h("td",{class:"c"},h("span",{class:"stu-gr g"+STU_GR.indexOf(stuGrade(x,T.year))},stuGrade(x,T.year))),
       h("td",{class:"c"},stuBirthEl(x.birthday)), h("td",{class:"c idno"},str(x.idno)||h("span",{class:"note"},"—")), h("td",{class:"c"},stuAgeNow(x.birthday)),
@@ -10627,9 +10641,9 @@ function stuDupView(T){
   openModal(h("div",null, h("div",{class:"mh"},h("h2",null,"🔍 檢查重複的幼兒資料")), body,
     h("div",{class:"mf"}, h("span",{class:"sp"}), keepNewest, h("button",{class:"btn",onclick:closeModal},"關閉"))));
 }
-function stuExport(list, title){
+function stuExport(list, title, T){
   if (!window.XLSX){ alert("Excel 元件還沒載入，請重新整理頁面後再試。"); return; }
-  const rows = list.map(x=>({ 班級:str(x.cls), 座號:str(x.no), 姓名:str(x.name), 性別:str(x.gender), 班別:stuGrade(x,x.year), 出生日期:stuRoc(x.birthday), "出生日期（西元）":stuAd(x.birthday), 今天年紀:stuAgeNow(x.birthday), 身分證字號:str(x.idno),
+  const rows = (T ? stuWithGaps(list,T) : list).map(x=>x._gap ? { 班級:str(x.cls), 座號:x.no } : ({ 班級:str(x.cls), 座號:str(x.no), 姓名:str(x.name), 性別:str(x.gender), 班別:stuGrade(x,x.year), 出生日期:stuRoc(x.birthday), "出生日期（西元）":stuAd(x.birthday), 今天年紀:stuAgeNow(x.birthday), 身分證字號:str(x.idno),
     入園身分:str(x.entry), 身分別:stuIds(x).join("、"), 父親姓名:str(x.fatherName), 父親電話:str(x.fatherPhone), 母親姓名:str(x.motherName), 母親電話:str(x.motherPhone),
     其他家人:str(x.otherName||x.parent), 其他家人關係:str(x.otherRel||x.relation), 其他家人電話:str(x.otherPhone||x.phone), 地址:str(x.address),
     入學學年:String(stuEnrollYear(x)||""), 入學日期:stuRoc(x.enrollDate), 狀態:str(x.status)||"在學", 離園日期:stuRoc(x.leaveDate), 備註:str(x.note) }));
@@ -10698,11 +10712,11 @@ function stuPrint(list, title, T){
     h("div",{class:"mf"}, h("span",{class:"sp"}), h("button",{class:"btn",onclick:closeModal},"取消"),
       h("button",{class:"btn primary",onclick:()=>{
         const ks = colCbs.map(l=>l.querySelector("input")).filter(c=>c.checked).map(c=>c.value);
-        const sel = list.filter(x=>picked.has(x.id));
+        const sel = list.filter(x=>picked.has(x.id)), rows = stuWithGaps(list,T).filter(x=>x._gap || picked.has(x.id));
         if (!sel.length){ err.textContent = "請至少選一位幼兒。"; return; }
         if (!ks.length){ err.textContent = "請至少選一個欄位。"; return; }
         try{ localStorage.setItem("stuPrintCols", JSON.stringify(ks)); }catch(e){}
-        closeModal(); openPrint(stuPrintHtml(sel, title, T, false, ks, { stat: stat.checked, partial: sel.length < list.length }));
+        closeModal(); openPrint(stuPrintHtml(sel, title, T, false, ks, { stat: stat.checked, partial: sel.length < list.length, rows }));
       }},"🖨️ 預覽列印"))));
 }
 function stuPrintHtml(list, title, T, forPdf, keys, opt){
@@ -10723,7 +10737,7 @@ ${forPdf?"":`<div class="bar"><button onclick="window.print()">🖨 列印／存
 ${opt.stat && gs.length && T.tab!=="left"?`<table class="st"><tr><th>班別</th>${gs.map(gr=>`<th>${gr}</th>`).join("")}<th>總人數</th></tr><tr><td>男</td>${gs.map(gr=>`<td>${n(gr,"男")}</td>`).join("")}<td>${g("男")}</td></tr><tr><td>女</td>${gs.map(gr=>`<td>${n(gr,"女")}</td>`).join("")}<td>${g("女")}</td></tr><tr><td>合計</td>${gs.map(gr=>`<td>${n(gr)}</td>`).join("")}<td><b>${live.length}</b></td></tr></table>`:""}
 <table><colgroup>${cols.map(c=>c.w?`<col style="width:${c.w}mm">`:"<col>").join("")}</colgroup>
 <thead><tr>${cols.map(c=>`<th>${c.l}</th>`).join("")}</tr></thead>
-<tbody>${list.map(x=>`<tr>${cols.map(c=>`<td${c.cls?` class="${c.cls}"`:""}${c.k==="blank"?' class="bl"':""}>${c.v(x,T)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></body></html>`);
+<tbody>${(opt.rows||list).map(x=>x._gap ? `<tr>${cols.map(c=>`<td${c.k==="blank"?' class="bl"':""}>${c.k==="no"?esc(x.no):c.k==="cls"?esc(x.cls):""}</td>`).join("")}</tr>` : `<tr>${cols.map(c=>`<td${c.cls?` class="${c.cls}"`:""}${c.k==="blank"?' class="bl"':""}>${c.v(x,T)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></body></html>`);
 }
 /* ---------- 上傳雲端（PDF）：同一份名冊上傳過會先提醒，確認後覆蓋舊檔 ---------- */
 const stuUpKey = title => String(title).replace(/[\s\/\\.#$\[\]]+/g,"_");
@@ -10736,7 +10750,7 @@ async function stuUpload(list, title, T, btn, st){
   if (old && !confirm(`⚠️ 這份名冊已經上傳過了！\n\n檔名：${old.name}\n上傳時間：${new Date(old.at).toLocaleString("zh-TW",{hour12:false})}${old.by?"\n上傳者："+old.by:""}${old.count?"\n當時人數："+old.count+" 位":""}\n\n要再上傳一次並覆蓋舊檔嗎？\n（按「取消」就不上傳）`)) return;
   const label = btn.textContent; btn.disabled = true; btn.textContent = "產生 PDF 中…"; st.textContent = "";
   try{
-    const blob = await PdfUtil.htmlToPdf(stuPrintHtml(list, title, T, true), { landscape:true, margin:9, units:".wrap", keepRows:true });
+    const blob = await PdfUtil.htmlToPdf(stuPrintHtml(list, title, T, true, null, { rows: stuWithGaps(list,T) }), { landscape:true, margin:9, units:".wrap", keepRows:true });
     btn.textContent = "上傳中…";
     const nm = title.replace(/[\\/:*?"<>|]/g,"_") + ".pdf";
     const oldId = old ? ((String(old.url||"").match(/\/d\/([\w-]{20,})/) || String(old.url||"").match(/[?&]id=([\w-]{20,})/) || [])[1] || "") : "";
