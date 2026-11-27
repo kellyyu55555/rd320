@@ -9520,7 +9520,7 @@ const mtaiMin = s => { const m = Math.floor(s/60), x = Math.round(s%60); return 
 function mtaiClean(t){ return str(t).split(/\n+/).map(x=>x.trim()).filter(x=>x && !MTAI_JUNK.test(x)).join("\n").replace(/(.{2,20}?)\1{4,}/g, "$1"); }
 /* 把 AI 回傳的內容整理成會議紀錄資料 */
 function mtaiFill(d, a, transcript){
-  const S2 = v => str(v).trim();
+  const S2 = v => str(v).trim().replace(/\r/g,"").replace(/^[ \t]*[-*＊・●▪][ \t]*/gm,"• ").replace(/^[ \t]*(\d{1,2})[、．.](?!\d)[ \t]*/gm,"$1. ");
   const hm = v => { const m = S2(v).match(/(\d{1,2})\s*[:：時点點]\s*(\d{1,2})?/); if (!m || +m[1]>23) return ""; let hh = +m[1]; if (hh<12 && /下午|晚上|傍晚|pm/i.test(S2(v))) hh += 12; return String(hh).padStart(2,"0")+":"+String(+(m[2]||0)).padStart(2,"0"); };
   if (/^\d{4}-\d{2}-\d{2}$/.test(S2(a.date))) d.date = S2(a.date);
   if (hm(a.from)) d.from = hm(a.from);
@@ -9530,15 +9530,14 @@ function mtaiFill(d, a, transcript){
   d.chairReport = S2(a.chairReport);
   const reps = (Array.isArray(a.reports)?a.reports:[]).map(r=>({ title:S2(r&&r.title), body:S2(r&&r.body) })).filter(r=>r.title||r.body);
   const iss = (Array.isArray(a.issues)?a.issues:[]).map(r=>({ title:S2(r&&r.title), content:S2(r&&r.content), resolution:S2(r&&r.resolution) })).filter(r=>r.title||r.content||r.resolution);
-  if (S2(a.decisions)) iss.push({ title:"決議事項", content:"", resolution:S2(a.decisions) });
   const keep = arr => arr.filter(r=>r.fixed);   // 固定項目（例如特教業務）保留，AI 有同名內容時填進去
   const fill = (fixedArr, aiArr, f) => { const out = []; fixedArr.forEach(fx=>{ const i = aiArr.findIndex(r=>mtKey(r.title)===mtKey(fx.title)); if (i>=0){ const [r] = aiArr.splice(i,1); f(fx, r); } out.push(fx); }); return aiArr.concat(out); };
   d.reports = fill(keep(d.reports), reps, (fx,r)=>{ fx.body = r.body; });
   d.issues = fill(keep(d.issues), iss, (fx,r)=>{ fx.content = r.content; fx.resolution = r.resolution; });
   if (!d.reports.length) d.reports = [{title:"",body:""}];
   if (!d.issues.length) d.issues = [{title:"",content:"",resolution:""}];
-  d.motions = S2(a.motions) || "無";
-  d.adjourn = S2(a.adjourn);
+  d.motions = /^(無|沒有|none)?$/i.test(S2(a.motions)) ? "" : S2(a.motions);   // 跟範本一樣：沒有臨時動議就不印
+  d.adjourn = "";
   d.transcript = transcript;
   return mtNorm(d);
 }
