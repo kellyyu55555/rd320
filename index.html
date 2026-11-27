@@ -9420,7 +9420,7 @@ function renderMeeting(app){
     h("p",{class:"note",style:"margin-top:4px"},"教保會議、園務會議、課發會、勞資會議。"),
     h("div",{class:"mt-search"},h("span",null,"🔍"),(()=>{ const i=h("input",{class:"in",type:"search",value:M.q||"",placeholder:"搜尋關鍵字（例如：地震、任務卡、陳泳鉌）。可輸入多個字詞，用空白隔開",oninput:e=>{ M.q=e.target.value; clearTimeout(M._qt); M._qt=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$("#kb-app .mt-search input"); if (n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } },250); }}); return i; })(), M.q ? h("button",{class:"btn sm",onclick:()=>{ M.q=""; render(); }},"清除") : null),
     h("div",{class:"as-tabs"}, [["all","📚 全部"],...MT_TYPES.map(([t,c])=>[t,t])].map(([k,l],i)=>h("button",{class:"as-tab mt-"+(i?MT_TYPES[i-1][1]:"t0")+(M.type===k?" on":""),onclick:()=>{ M.type=k; render(); }},l+(k==="all"?"":`（${M.list.filter(x=>x.type===k).length}）`)))),
-    can ? h("div",{class:"abs",style:"display:flex;gap:6px"},(M.type!=="all" && MT_FOLDERS[M.type]) ? h("a",{class:"btn",href:"https://drive.google.com/drive/folders/"+MT_FOLDERS[M.type],target:"_blank",rel:"noopener"},"📁 雲端資料夾") : null,h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn",title:"上傳會議錄音（m4a），AI 轉成逐字稿並整理成會議紀錄草稿",onclick:()=>mtAudio()},"🎙️ 上傳錄音產生草稿"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
+    can ? h("div",{class:"abs",style:"display:flex;gap:6px"},(M.type!=="all" && MT_FOLDERS[M.type]) ? h("a",{class:"btn",href:"https://drive.google.com/drive/folders/"+MT_FOLDERS[M.type],target:"_blank",rel:"noopener"},"📁 雲端資料夾") : null,h("button",{class:"btn",onclick:()=>mtImport()},"📥 匯入紀錄檔"),h("button",{class:"btn",title:"上傳會議錄音（m4a），AI 轉成逐字稿、整理成會議紀錄後匯入系統",onclick:()=>mtAudio()},"🎙️ 上傳錄音產生草稿"),h("button",{class:"btn primary",onclick:()=>mtNew()},"＋ 新增會議紀錄")) : null));
   app.append(h("div",{class:"mt-sortbar"},
     h("span",null, kws.length ? `找到 ${list.length} 份含有「${kws.join(" ")}」的會議紀錄` : `共 ${list.length} 份`),
     h("label",null,"排序：",h("select",{class:"in",onchange:e=>{ M.sort=e.target.value; try{ localStorage.setItem("mtSort",M.sort); }catch(_){} render(); }},
@@ -9445,13 +9445,14 @@ function renderMeeting(app){
   app.append(mtFilesSection());
 }
 function mtNextNo(type, year, sem){ return S.mt.list.filter(x=>x.type===type&&str(x.year)===str(year)&&str(x.sem)===str(sem)).reduce((a,x)=>Math.max(a,+x.no||0),0)+1; }
-function mtNew(){
-  const M = S.mt, type = M.type!=="all" ? M.type : "教保會議", y=String(mtYear0()), s=mtSem0();
+function mtNew(){ const M = S.mt; M.draft = mtBlank(M.type!=="all" ? M.type : "教保會議"); M.edit = "__new"; M.dirty = false; render(); window.scrollTo(0,0); }
+function mtBlank(type){
+  const M = S.mt, y=String(mtYear0()), s=mtSem0();
   const last = [...M.list].filter(x=>x.type===type).sort((a,b)=>str(b.date).localeCompare(str(a.date)))[0];
-  M.draft = mtNorm({ type, year:y, sem:s, no:mtNextNo(type,y,s), place:last?last.place:"", chair:last?last.chair:"", recorder:last?last.recorder:"", ampm:last?last.ampm:"下午", from:last?last.from:"", to:last?last.to:"",
+  let d = mtNorm({ type, year:y, sem:s, no:mtNextNo(type,y,s), place:last?last.place:"", chair:last?last.chair:"", recorder:last?last.recorder:"", ampm:last?last.ampm:"下午", from:last?last.from:"", to:last?last.to:"",
     reports:[{title:"",body:""}], issues:[{title:"",content:"",resolution:""}] });
-  if (MT_FIXED[type] && (MT_FIXED[type].reports||[]).length) M.draft.reports = M.draft.reports.filter(r=>r.fixed||r.title||r.body).concat([]);
-  M.edit = "__new"; M.dirty = false; render(); window.scrollTo(0,0);
+  if (MT_FIXED[type] && (MT_FIXED[type].reports||[]).length) d.reports = d.reports.filter(r=>r.fixed||r.title||r.body).concat([]);
+  return d;
 }
 /* ---------- 會議紀錄：上傳錄音 → Workers AI 轉逐字稿 → 整理成會議紀錄草稿 ----------
    做法：在瀏覽器把 m4a 解碼成 16kHz 單聲道，於安靜處切成約 1 分鐘一段，
@@ -9519,7 +9520,7 @@ const mtaiMin = s => { const m = Math.floor(s/60), x = Math.round(s%60); return 
 function mtaiClean(t){ return str(t).split(/\n+/).map(x=>x.trim()).filter(x=>x && !MTAI_JUNK.test(x)).join("\n").replace(/(.{2,20}?)\1{4,}/g, "$1"); }
 /* 把 AI 回傳的內容整理成會議紀錄資料 */
 function mtaiFill(d, a, transcript){
-  const S2 = v => str(v).trim();
+  const S2 = v => str(v).trim().replace(/\r/g,"").replace(/^[ \t]*[-*＊・●▪][ \t]*/gm,"• ").replace(/^[ \t]*(\d{1,2})[、．.](?!\d)[ \t]*/gm,"$1. ");
   const hm = v => { const m = S2(v).match(/(\d{1,2})\s*[:：時点點]\s*(\d{1,2})?/); if (!m || +m[1]>23) return ""; let hh = +m[1]; if (hh<12 && /下午|晚上|傍晚|pm/i.test(S2(v))) hh += 12; return String(hh).padStart(2,"0")+":"+String(+(m[2]||0)).padStart(2,"0"); };
   if (/^\d{4}-\d{2}-\d{2}$/.test(S2(a.date))) d.date = S2(a.date);
   if (hm(a.from)) d.from = hm(a.from);
@@ -9529,15 +9530,14 @@ function mtaiFill(d, a, transcript){
   d.chairReport = S2(a.chairReport);
   const reps = (Array.isArray(a.reports)?a.reports:[]).map(r=>({ title:S2(r&&r.title), body:S2(r&&r.body) })).filter(r=>r.title||r.body);
   const iss = (Array.isArray(a.issues)?a.issues:[]).map(r=>({ title:S2(r&&r.title), content:S2(r&&r.content), resolution:S2(r&&r.resolution) })).filter(r=>r.title||r.content||r.resolution);
-  if (S2(a.decisions)) iss.push({ title:"決議事項", content:"", resolution:S2(a.decisions) });
   const keep = arr => arr.filter(r=>r.fixed);   // 固定項目（例如特教業務）保留，AI 有同名內容時填進去
   const fill = (fixedArr, aiArr, f) => { const out = []; fixedArr.forEach(fx=>{ const i = aiArr.findIndex(r=>mtKey(r.title)===mtKey(fx.title)); if (i>=0){ const [r] = aiArr.splice(i,1); f(fx, r); } out.push(fx); }); return aiArr.concat(out); };
   d.reports = fill(keep(d.reports), reps, (fx,r)=>{ fx.body = r.body; });
   d.issues = fill(keep(d.issues), iss, (fx,r)=>{ fx.content = r.content; fx.resolution = r.resolution; });
   if (!d.reports.length) d.reports = [{title:"",body:""}];
   if (!d.issues.length) d.issues = [{title:"",content:"",resolution:""}];
-  d.motions = S2(a.motions) || "無";
-  d.adjourn = S2(a.adjourn);
+  d.motions = /^(無|沒有|none)?$/i.test(S2(a.motions)) ? "" : S2(a.motions);   // 跟範本一樣：沒有臨時動議就不印
+  d.adjourn = "";
   d.transcript = transcript;
   return mtNorm(d);
 }
@@ -9594,12 +9594,20 @@ async function mtaiRun(file){
       a = r.draft || {};
       if (cc) a = JSON.parse(cc(JSON.stringify(a)));
     }catch(e){ if (e && e.message==="__stop") throw e; aiErr = (e && e.message) || String(e); }
-    mtNew(); const d = M.draft;
-    M.draft = Object.assign(a ? mtaiFill(d, a, transcript) : Object.assign(d, { transcript }), { aiFrom:file.name });
-    M.dirty = true; closeModal(); render(); window.scrollTo(0,0);
+    closeModal();
     const failNote = fails.length ? `\n\n⚠️ 有 ${fails.length} 段錄音沒有辨識成功，逐字稿裡有標示位置。` : "";
-    if (a) alert("✅ 草稿已經填好了！\n\n請逐項檢查、修改 AI 整理的內容（特別是人名、數字、日期），確認後再按「💾 儲存」。"+failNote+"\n完整逐字稿放在編輯畫面最下面，可以對照。");
-    else alert("⚠️ 逐字稿已經完成，但 AI 整理成會議紀錄格式時失敗了：\n"+aiErr+"\n\n逐字稿已經放在編輯畫面最下面，可以先對照逐字稿手動填寫；也可以稍後再上傳一次錄音重試。"+failNote);
+    if (a){
+      /* 跟「📥 匯入紀錄檔」一樣，直接匯入成一份會議紀錄 */
+      const m = Object.assign(mtaiFill(mtBlank(M.type!=="all" ? M.type : "教保會議"), a, transcript), { aiFrom:file.name });
+      const dl = () => mtSaveBlob(new Blob([JSON.stringify({ meetings:[m] }, null, 1)], { type:"application/json" }), mtTitle(m).replace(/[\\/:*?"<>|]/g,"_")+"_匯入檔.json");
+      await mtImportList([m], file.name+"（AI 錄音整理）", {
+        ask: "AI 已經把錄音整理成會議紀錄。\n\n",
+        done: "\n\n請在清單裡打開這份紀錄，逐項檢查 AI 整理的內容（特別是人名、數字、日期），需要修改就按「編輯」。完整逐字稿在編輯畫面最下面。"+failNote,
+        onCancel: () => { if (confirm("沒有匯入。要把 AI 整理好的內容下載成匯入檔嗎？\n（之後可以用「📥 匯入紀錄檔」匯入）")) dl(); } });
+    } else {
+      mtNew(); M.draft = Object.assign(M.draft, { transcript, aiFrom:file.name }); M.dirty = true; render();
+      alert("⚠️ 逐字稿已經完成，但 AI 整理成會議紀錄格式時失敗了：\n"+aiErr+"\n\n逐字稿已經放在編輯畫面最下面，可以先對照逐字稿手動填寫；也可以稍後再上傳一次錄音重試。"+failNote);
+    }
   }catch(e){
     if (e && e.message==="__stop") return;
     closeModal(); alert("產生草稿失敗："+((e && e.message) || e));
@@ -9849,8 +9857,15 @@ function mtImport(){
     let j; try{ j = JSON.parse(await f.text()); }catch(e){ alert("這個檔案不是正確的會議紀錄匯入檔（JSON 格式錯誤）。"); return; }
     const list = Array.isArray(j) ? j : Array.isArray(j.meetings) ? j.meetings : (j && j.type ? [j] : []);
     if (!list.length){ alert("檔案裡沒有會議紀錄。"); return; }
+    await mtImportList(list, f.name);
+  });
+  document.body.append(inp); inp.click();
+}
+/* 匯入會議紀錄（📥 匯入紀錄檔、🎙️ 上傳錄音產生草稿 共用） */
+async function mtImportList(list, srcName, opts){
+  opts = opts || {};
     const dup = list.filter(m=>S.mt.list.some(x=>str(x.date)===str(m.date) && mtTitle(mtNorm(x))===mtTitle(mtNorm(m))));
-    if (!confirm(`要匯入 ${list.length} 份會議紀錄嗎？\n`+list.map(m=>"・"+mtTitle(mtNorm(m))+"（"+mtRocDate(m.date)+"）").join("\n")+(dup.length?`\n\n其中 ${dup.length} 份看起來已經匯入過，會再新增一份。`:""))) return;
+    if (!confirm((opts.ask||"")+`要匯入 ${list.length} 份會議紀錄嗎？\n`+list.map(m=>"・"+mtTitle(mtNorm(m))+"（"+mtRocDate(m.date)+"）").join("\n")+(dup.length?`\n\n其中 ${dup.length} 份看起來已經匯入過，會再新增一份。`:""))){ if (opts.onCancel) opts.onCancel(); return 0; }
     let ok = 0; const bad = [];
     for (const m0 of list){
       try{
@@ -9864,15 +9879,15 @@ function mtImport(){
         for (const r of (Array.isArray(m1.reports)?m1.reports:[])) r.photos = await up(r.photos);
         for (const r of (Array.isArray(m1.issues)?m1.issues:[])){ r.photos = await up(r.photos); r.resPhotos = await up(r.resPhotos); }
         const body = mtNorm(Object.assign({}, m1, { photos:[] })); delete body.id; body.photos = photos; body.no = +body.no||1; if (body.autoTitle) body.title="";
-        body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||""; body.importedFrom = f.name;
+        body.updatedAt = Date.now(); body.updatedBy = (S.d.currentUser||{}).email||""; body.importedFrom = srcName;
         [...body.reports,...body.issues].forEach(r=>{ r.table = mtTblSave(r.table); });
         const ref = S.db.collection(MT_COL).doc(); await ref.set(body); S.mt.list = S.mt.list.filter(x=>x.id!==ref.id).concat([{id:ref.id,...body}]); ok++;
       }catch(e){ bad.push(mtTitle(mtNorm(m0))+"（"+errText(e)+"）"); }
     }
-    render(); alert(bad.length ? `匯入 ${ok} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已匯入 ${ok} 份會議紀錄 ✅`);
-  });
-  document.body.append(inp); inp.click();
+    render(); alert(bad.length ? `匯入 ${ok} 份，失敗 ${bad.length} 份：\n`+bad.join("\n") : `已匯入 ${ok} 份會議紀錄 ✅`+(opts.done||""));
+  return ok;
 }
+
 
 /* ---------- 會議紀錄：編號／項目符號清單 ---------- */
 const MT_NUM_RE = /^(\s*)(?:(\d{1,2})\s*[.、．)）](?!\d)|[(（]\s*(\d+|[一二三四五六七八九十]+)\s*[)）]|([一二三四五六七八九十]+)\s*、|([①-⑳]))\s*/;
